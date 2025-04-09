@@ -7,18 +7,26 @@ show-heading="true"
 show-metadata="true"
 expanded="true"
 root="false"
-xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>2930</fr:anchor><fr:addr
-type="machine">#396</fr:addr><fr:route>unstable-396.xml</fr:route><fr:taxon>Proof</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>10</fr:month><fr:day>31</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter>
-    We want to maximize
-<fr:tex
-display="block"><![CDATA[     \begin {align*} \mathcal {L}(\theta ) &= \mathbb {E}_{x \sim  p_X, y \sim  p_Y}\Big [\log \sigma (f_{\theta }(x)) + \log (1-\sigma (f_{\theta }(y)))\Big ] \\ &= \int  \log \sigma (f_{\theta }(x)) P_X(x) + \int  \log (1-\sigma (f_{\theta }(y))) P_Y(y) \\ &= \int  \log \sigma (f_{\theta }(z)) P_X(z) + \log (1-\sigma (f_{\theta }(z))) P_Y(z)     \end {align*}     ]]></fr:tex>
-    Since we are maximizing <fr:tex
-display="inline"><![CDATA[f(s)]]></fr:tex>, we can just maximize the integrand i.e.
-<fr:tex
-display="block"><![CDATA[       \begin {align*}         \frac {\mathrm {d}}{\mathrm {d}f(z)} \Big [\log \sigma (f_{\theta }(z)) P_X(z) + \log (1-\sigma (f_{\theta }(z))) P_Y(z)\Big ] = 0       \end {align*}     ]]></fr:tex>
-    Solving,
-    <fr:tex
-display="block"><![CDATA[         \begin {align*}           P_X(z)\big (1 - \sigma (f(z))\big ) - P_Y(z)\sigma (f(z)) = 0 &\iff  \sigma (f(z)) = \frac {P_X(z)}{P_X(z) + P_Y(z)} \\           &\iff  f(z) = \log \left (\frac {P_X(z)}{P_Y(z)}\right )         \end {align*}       ]]></fr:tex>
+xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>3034</fr:anchor><fr:addr
+type="machine">#396</fr:addr><fr:route>unstable-396.xml</fr:route><fr:taxon>Question</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>5</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter>
+  <fr:ol><fr:li>In section 9.5.2, what do they mean when they say you can select <fr:tex
+display="inline"><![CDATA[n]]></fr:tex> so all the fourier features can be used?
+    <fr:ol><fr:li>Pick <fr:tex
+display="inline"><![CDATA[n]]></fr:tex> so that <fr:tex
+display="inline"><![CDATA[(n + 1)^k < mk^2]]></fr:tex>.</fr:li>
+        <fr:li>Pick <fr:tex
+display="inline"><![CDATA[n]]></fr:tex> so that <fr:tex
+display="inline"><![CDATA[(n + 1)^k]]></fr:tex> is reasonable.</fr:li></fr:ol></fr:li>
+    <fr:p>In the tabular case, I think (a) is correct. My initial understanding of state representation is as a representation learning i.e. compression type objective. If we assume that <fr:tex
+display="inline"><![CDATA[s_i \in  [m]]]></fr:tex>, then we do not gain anything in the tabular setting if our value function vector is the same size as the underlying transition kernel. When in the continuous state space regime i.e. <fr:tex
+display="inline"><![CDATA[s_i \in  [0,1]]]></fr:tex>, there is no amount of features that would overfit the transition kernel. Therefore, it is just about trying to learn as much as possible about the underlying relations of the state dimensions.</fr:p>
+    <fr:p>In the <fr:tex
+display="inline"><![CDATA[2]]></fr:tex>-dimensional case, the feature vector <fr:tex
+display="inline"><![CDATA[c_i = [1,1]]]></fr:tex> would provide information on how <fr:tex
+display="inline"><![CDATA[s_1]]></fr:tex> and <fr:tex
+display="inline"><![CDATA[s_2]]></fr:tex> relate not just their specific values. You want the learning algorithm to understand the relationships, so that it can make better use of the internal parameters when learning something like a <fr:tex
+display="inline"><![CDATA[Q]]></fr:tex> function. This is basically just SVD but instead of classification you are learning a <fr:tex
+display="inline"><![CDATA[Q]]></fr:tex> function. The compression</fr:p></fr:ol>
   </fr:mainmatter><fr:backmatter><fr:tree
 toc="false"
 numbered="false"
@@ -34,111 +42,40 @@ show-heading="true"
 show-metadata="true"
 expanded="false"
 root="false"
-xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>2931</fr:anchor><fr:addr
-type="user">kak-0009</fr:addr><fr:route>kak-0009.xml</fr:route><fr:title
-text="Contrastive Learning">Contrastive Learning</fr:title><fr:date><fr:year>2024</fr:year><fr:month>10</fr:month><fr:day>31</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter><fr:p>Prior to understanding contrastive reinforcement learning, it is important to have an at least rudimentary understanding of contrastive learning. Historically, contrastive learning has been used to learn representations. The fundamental idea behind contrastive learning is to encourage the representations of similar outputs to be similar in representation space.</fr:p><fr:p><fr:strong>Supervised setting:</fr:strong> For now, assume we are in the supervised setting (we have access to lables). Suppose that we are learning a representation in <fr:tex
-display="inline"><![CDATA[\mathbb {R}^d]]></fr:tex>. Our model is a classifier on dogs and cats. If we have two dogs <fr:tex
-display="inline"><![CDATA[y_1]]></fr:tex> and <fr:tex
-display="inline"><![CDATA[y_2]]></fr:tex> then we want the learned representation map <fr:tex
-display="block"><![CDATA[\phi : \{\text {dogs}, \text {cats}\} \to  \mathbb {R}^d]]></fr:tex> to be such that <fr:tex
-display="inline"><![CDATA[\phi (y_1)]]></fr:tex> and <fr:tex
-display="inline"><![CDATA[\phi (y_2)]]></fr:tex> are "close" in <fr:tex
-display="inline"><![CDATA[\mathbb {R}^d]]></fr:tex>. Now the notion of "close" is to be determined by the user. An example could be to minimize the inner product between their representation maps i.e. we could learn a feature map parametrized by <fr:tex
-display="inline"><![CDATA[\theta ]]></fr:tex> with the following objective <fr:tex
-display="block"><![CDATA[\max _{\theta }\ \langle  \phi _{\theta }(y_1), \phi _{\theta }(y_2) \rangle .]]></fr:tex> Similarly, we want dissimilar outputs to be far apart in representation space. If <fr:tex
-display="inline"><![CDATA[y_3]]></fr:tex> is a cat, then we can introduce a regularization to encourage this i.e.
-<fr:tex
-display="block"><![CDATA[\max _{\theta }\ \langle  \phi _{\theta }(y_1), \phi _{\theta }(y_2) \rangle  - \sum _{i \in  \{1, 2\}} \langle  \phi _{\theta }(y_i), \phi _{\theta }(y_3) \rangle .]]></fr:tex></fr:p><fr:p><fr:strong>Unsupervised setting:</fr:strong> Now suppose that we get rid of labels and are just given <fr:tex
-display="inline"><![CDATA[n]]></fr:tex> dog samples <fr:tex
-display="inline"><![CDATA[\mathcal {D}]]></fr:tex> from some distribution <fr:tex
-display="inline"><![CDATA[p_{\mathcal {D}}]]></fr:tex>. We now want to be able to learn <fr:tex
-display="inline"><![CDATA[p_{\theta }]]></fr:tex> to somehow estimate this distribution. An approach is to learn to distinguish the sample dogs given from random noise. To do so, we generate <fr:tex
-display="inline"><![CDATA[n]]></fr:tex> random images <fr:tex
-display="inline"><![CDATA[\mathcal {R}]]></fr:tex> according to some distribution <fr:tex
-display="inline"><![CDATA[p_{\mathcal {R}}]]></fr:tex>. We can now return to the supervised learning setting, where we treat <fr:tex
-display="inline"><![CDATA[\mathcal {D}]]></fr:tex> and <fr:tex
-display="inline"><![CDATA[\mathcal {R}]]></fr:tex> as two classes. If we recall standard supervised learning practice, given a sample <fr:tex
-display="inline"><![CDATA[x]]></fr:tex>, we then want to find <fr:tex
-display="block"><![CDATA[p(\mathcal {D} \mid  x) = 1 - p(\mathcal {R} \mid  X).]]></fr:tex> 
-As an explicit example, we will use logistic regression. Namely, we will model <fr:tex
-display="inline"><![CDATA[p(x) = p(\mathcal {D} \mid  x)]]></fr:tex> as <fr:tex
-display="block"><![CDATA[p_{\theta }(x) = \frac {1}{1 + e^{-G_{\theta }(x)}}.]]></fr:tex> However, <fr:tex
-display="inline"><![CDATA[p_{\theta }(x)]]></fr:tex> is estimating <fr:tex
-display="inline"><![CDATA[p(\mathcal {D} \mid  x)]]></fr:tex>, where we care about <fr:tex
-display="inline"><![CDATA[p(x \mid  \mathcal {D})]]></fr:tex>. To estimate the correct quantity, we need to leverage our knowledge of the noise distribution. Recall that if <fr:tex
-display="inline"><![CDATA[p_{\theta }(x) = p(\mathcal {D} \mid  x)]]></fr:tex> then <fr:tex
-display="inline"><![CDATA[G_{\theta }(x) = \log  \frac {p(x \mid  \mathcal {D})}{p(x \mid  \mathcal {R})}]]></fr:tex>. Since we generated the samples from <fr:tex
-display="inline"><![CDATA[\mathcal {R}]]></fr:tex>, we have the explicit distribution i.e. <fr:tex
-display="inline"><![CDATA[p(x \mid  \mathcal {R}) = p_{\mathcal {R}}(x)]]></fr:tex>. Therefore, we can restrict <fr:tex
-display="inline"><![CDATA[G_{\theta }]]></fr:tex> to explicitly learn <fr:tex
-display="inline"><![CDATA[p(x \mid  \mathcal {D})]]></fr:tex> by considering <fr:tex
-display="block"><![CDATA[G_{\theta }(x) = \log  p_{\theta }(x \mid  \mathcal {D}) - \log  p_{\mathcal {R}}(x),]]></fr:tex> considering the cross entropy loss we get the <fr:link
-type="external"
-href="nce">NCE loss</fr:link></fr:p><fr:tree
-toc="true"
-numbered="true"
+xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>3035</fr:anchor><fr:addr
+type="user">kak-000G</fr:addr><fr:route>kak-000G.xml</fr:route><fr:title
+text="On-policy Prediction with Approximation">On-policy Prediction with Approximation</fr:title><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>5</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter><fr:p>In my opinion, the most important part of this chapter is now that when we update say a <fr:tex
+display="inline"><![CDATA[Q]]></fr:tex> function for a specific state action pair <fr:tex
+display="inline"><![CDATA[(s,a)]]></fr:tex>, then this update can affect the value of the <fr:tex
+display="inline"><![CDATA[Q(s', a')]]></fr:tex> due to the reuse of the internal parameters.</fr:p>
+  
+    
+    
+    <fr:tree
+toc="false"
+numbered="false"
 show-heading="true"
 show-metadata="false"
 expanded="true"
 root="false"
-xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>745</fr:anchor><fr:addr
-type="user">kak-000E</fr:addr><fr:route>kak-000E.xml</fr:route><fr:title
-text="NCE loss">NCE loss</fr:title><fr:taxon>Definition</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>4</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter><fr:p>The <fr:em><fr:link
-type="external"
-href="nce">NCE</fr:link></fr:em> loss aims to minimize the following objective <fr:tex
-display="block"><![CDATA[\mathcal {L}_{N} = - \sum _{t} \log  \left [h(x_t; \theta )\right ] + \log \left [1 - h(y_t; \theta )\right ],]]></fr:tex> where <fr:tex
-display="inline"><![CDATA[x_t]]></fr:tex> are samples from the data distribution and <fr:tex
-display="inline"><![CDATA[y_t]]></fr:tex> are randomly generated samples and <fr:tex
-display="block"><![CDATA[\begin {array}{r c l}{{h({\bf  u};\theta )}}&{{=}}&{{\frac {1}{1+\exp \left [-G({\bf  u};\theta )\right ]},}}\\ {{G({\bf  u};\theta )}}&{{=}}&{{\ln  p_{m}({\bf  u};\theta )-\ln  p_{n}({\bf  u}).}}\end {array}]]></fr:tex></fr:p></fr:mainmatter><fr:backmatter /></fr:tree><fr:p>In <fr:link
+xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>1537</fr:anchor><fr:addr
+type="machine">#390</fr:addr><fr:route>unstable-390.xml</fr:route><fr:title
+text=" [sutton2022, 9.1]"> <html:span
+xmlns:html="http://www.w3.org/1999/xhtml"
+class="link-reference"
+tid="9.1"
+refid="sutton2022"><fr:link
 type="local"
-href="gutmann2012.xml"
-addr="gutmann2012"
-title="Noise-contrastive Estimation">Noise-contrastive Estimation</fr:link>, they show under mild conditions that the estimator <fr:tex
-display="inline"><![CDATA[p_{\theta }(x \mid  D) \to  p_{\mathcal {D}}(x)]]></fr:tex> in probability as the number of samples in the loss goes to infinity. Equivalently, the estimator is <fr:link
-type="local"
-href="kak-000F.xml"
-addr="kak-000F"
-title="Consistent estimator">consistent</fr:link>.</fr:p><fr:p><fr:strong>Time series:</fr:strong> Before we get to contrastive RL, it is a natural question to wonder how does this apply to temporal sequences? Concretely, we want to make predictions about the future given the current "context". However, we want to do so in an unsupervised way, meaning we are only given trajectories not a notion of what it means for a trajectory to be good. Naively, one can try to do this in a supervised manner. For a <fr:tex
-display="inline"><![CDATA[k]]></fr:tex> step prediction, this would just be your model predicting what will happen in <fr:tex
-display="inline"><![CDATA[k]]></fr:tex> steps then seeing if it matches what occured <fr:tex
-display="inline"><![CDATA[k]]></fr:tex> steps in the future in the sample trajectory. However, if your sample space <fr:tex
-display="inline"><![CDATA[\mathcal {X}]]></fr:tex> is very high-dimensional, modeling this relationship can require an exorbinant amount of trajectories.</fr:p><fr:p>Fast forwarding to contrastive RL, current work is primarily considered with a particular contrastive objective.</fr:p><fr:tree
-toc="true"
-numbered="true"
-show-heading="true"
-show-metadata="false"
-expanded="true"
-root="false"
-xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>746</fr:anchor><fr:addr
-type="user">kak-000B</fr:addr><fr:route>kak-000B.xml</fr:route><fr:title
-text="InfoNCE">InfoNCE</fr:title><fr:taxon>Definition</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>4</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter><fr:p>The <fr:em><fr:link
-type="local"
-href="vandenOord2018.xml"
-addr="vandenOord2018"
-title="Contrastive Predictive Decoding">InfoNCE</fr:link></fr:em> loss aims to minimize the following information-theoretic objective <fr:tex
-display="block"><![CDATA[\mathcal {L}_{N} = - \mathbb {E}_{\mathcal {X}} \left [\log  \frac {f_k(x_{t + k}, c_t)}{\sum _{x_j \in  \mathcal {X}} f_k(x_j, c_t)}\right ]]]></fr:tex></fr:p></fr:mainmatter><fr:backmatter /></fr:tree><fr:p>Now we need to unpack this very ominous loss. To start, what are <fr:tex
-display="inline"><![CDATA[x_k]]></fr:tex> and <fr:tex
-display="inline"><![CDATA[c_t]]></fr:tex>?</fr:p><fr:tree
-toc="true"
-numbered="true"
-show-heading="true"
-show-metadata="false"
-expanded="true"
-root="false"
-xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>747</fr:anchor><fr:addr
-type="user">kak-000C</fr:addr><fr:route>kak-000C.xml</fr:route><fr:title
-text="Maximize Mutual info">Maximize Mutual info</fr:title><fr:taxon>Theorem</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>4</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter><fr:p><fr:tex
-display="inline"><![CDATA[\mathcal {L}_N]]></fr:tex> from <fr:link
-type="local"
-href="vandenOord2018.xml"
-addr="vandenOord2018"
-title="Contrastive Predictive Decoding">Contrastive Predictive Decoding</fr:link> maximizes a lower bound on the <fr:link
-type="local"
-href="kak-000V.xml"
-addr="kak-000V"
-title="Mutual Information">Mutual Information</fr:link> between <fr:tex
-display="inline"><![CDATA[x_{t + k}]]></fr:tex> and <fr:tex
-display="inline"><![CDATA[c_t]]></fr:tex>.</fr:p>
+href="sutton2022.xml"
+addr="sutton2022"
+title="Reinforcement Learning: An Introduction">[sutton2022, 9.1]</fr:link></html:span></fr:title><fr:taxon>Exercise</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>5</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter>
+  
+  <fr:p>Show that tabular methods are a special case of linear function approximation. What would the feature vectors be?</fr:p>
+
+</fr:mainmatter><fr:backmatter /></fr:tree>
+  
+
+ 
    
    <fr:tree
 toc="false"
@@ -147,21 +84,57 @@ show-heading="true"
 show-metadata="false"
 expanded="true"
 root="false"
-xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>748</fr:anchor><fr:addr
-type="machine">#395</fr:addr><fr:route>unstable-395.xml</fr:route><fr:taxon>Proof</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>4</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter>All we must do is plug <fr:tex
-display="inline"><![CDATA[\frac {p(x \mid  c)}{p(x)}]]></fr:tex> back into the objective.
-  <fr:tex
-display="block"><![CDATA[\begin {align*}     \mathcal {L}_{\mathbb {N}}^{\text {opt}}&=-\,\mathbb {E}\log \left [\frac {\frac {p(x_{t+k}|c_{t})}{p(x_{t+k})}}{\frac {p(x_{t+k}|c_{t})}{p(x_{t+k})}+\sum _{x_{j}\in  X_{\text {neg}}}\frac {p(x_{j}|c_{t})}{p(x_{j})}}\right ] \\     &=\mathbb {E}\log \left [1+\frac {p(x_{t+k})}{p(x_{t+k}|c_{t})}\sum _{x_{j}\in  X_{\text {neg}}}\frac {p(x_{j}|c_{t})}{p(x_{j})}\right ] \\     &\approx \mathbb {E}\log \left [1+\frac {p(x_{t+k})}{p(x_{t+k}|c_{t})}(N-1)\,\mathbb {E}\,\frac {p(x_{j}|c_{t})}{p(x_{j})}\right ] \\     &=\mathbb {E}\log \left [1+\frac {p(x_{t+k})}{p(x_{t+k} \mid  c_t)}N\right ] \\     &\geq  \mathbb {E} \log  \left [\frac {p(x_{t + k})}{p(x_{t + k} \mid  c_t)}N \right ] \\     &= - I(x_{t + k}, c_t) + \log  N  \end {align*}   ]]></fr:tex>
+xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>1538</fr:anchor><fr:addr
+type="machine">#391</fr:addr><fr:route>unstable-391.xml</fr:route><fr:taxon>Solution</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>5</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter>
+<fr:p>As a linear function approximation method, we have two quantities <fr:tex
+display="inline"><![CDATA[\boldsymbol {w}]]></fr:tex> and <fr:tex
+display="inline"><![CDATA[\boldsymbol {x}(s)]]></fr:tex>. We make the update
+<fr:tex
+display="block"><![CDATA[w_{t + 1} = w_{t} + \alpha (r_t + \gamma  w_{t}^{\top } x_{t+1} - w_t^{\top } x_t) x_t]]></fr:tex>
+In the tabular setting, we just assume that we have the capacity to represent every possible state. This means that <fr:tex
+display="inline"><![CDATA[x(s) \in  \mathbb {R}^{|S|}]]></fr:tex>. Therefore, if we define the features as <fr:tex
+display="inline"><![CDATA[x : s_i \mapsto  \boldsymbol {e}_i]]></fr:tex> then we can recover policy evaluation by taking,
+<fr:tex
+display="block"><![CDATA[r_i = \mathbb {E}_{a \sim  \pi , s \sim  p}[r(s_i)], \quad  w_i = v_{\pi }(s_i)]]></fr:tex></fr:p>
+Substituting, we get 
+<fr:tex
+display="block"><![CDATA[ w_{t + 1} = w_{t} + \alpha (\mathbb {E}_{a \sim  \pi , s \sim  p}[r(s_i)] + v(s_{t + 1}) - v(s_{t})) \cdot  \boldsymbol {e}_i ]]></fr:tex>
+Since <fr:tex
+display="inline"><![CDATA[\boldsymbol {w}]]></fr:tex> is our vector of values, updating the <fr:tex
+display="inline"><![CDATA[i]]></fr:tex>th entry is exactly performing exactly one update to <fr:tex
+display="inline"><![CDATA[v_{\pi }(s_i)]]></fr:tex> in the tabular setting.
 </fr:mainmatter><fr:backmatter /></fr:tree>
  
 
-</fr:mainmatter><fr:backmatter /></fr:tree><fr:tex
-display="block"><![CDATA[ \operatorname *{max}_{f(u,v)}\mathbb {E}_{(u,v^{+})\sim  p(u,v)}\left [\log \sigma (\underbrace {f(u,{\green  v^{+}})}_{\phi (u)^{T}\psi ({\green  v^{+}})})+\log (1-\sigma (\underbrace {f(u,{\red  v^{-}})}_{\phi (u)^{T}\psi ({\red  v^{-}})}))\right ] ]]></fr:tex><fr:tex
-display="block"><![CDATA[ \begin {align*} &\operatorname *{max}_{f}\mathbb {E}_{(s,a)\sim  p(s,a),s_{f}^{-}\sim  p(s_{f})}\left [\mathcal {L}(s,a,s_{f}^{+},s_{f}^{-})\right ] \\ \end {align*} ]]></fr:tex><fr:tex
-display="block"><![CDATA[ \mathcal {L}_1(\theta ) = \log \sigma (f_{\theta }(s_1,a_1,{\color {green} s_{8}})) + \log (1-\sigma (f_{\theta }(s_1,a_1, {\color {red} s_3}))) ]]></fr:tex><fr:tex
-display="block"><![CDATA[ \begin {align*} \widehat {\mathcal {L}}(\theta ) &= \frac {1}{n} \sum _{i = 1}^{n} \mathcal {L}_i \\ &= \frac {1}{n} \sum _{i = 1}^{n} \Big [\log \sigma (f_{\theta }(s_i,a_i,{\color {green} s_{f}^{+}})) + \log (1-\sigma (f_{\theta }(s_i,a_i, {\color {red} s_{f}^{-}})))\Big ] \end {align*} ]]></fr:tex><fr:tex
-display="block"><![CDATA[ \mathcal {L}(\theta ) = \mathbb {E}_{x \sim  p_X, y \sim  p_Y}\Big [\log \sigma (f_{\theta }(x)) + \log (1-\sigma (f_{\theta }(y)))\Big ] ]]></fr:tex><fr:tex
-display="block"><![CDATA[f^*(s, a, s_g) = \log \left (\frac {p^{\pi (\cdot  \mid  \cdot )}(s_g \mid  s, a)}{p(s_g)}\right )]]></fr:tex>
+  
+    
+    
+    <fr:tree
+toc="false"
+numbered="false"
+show-heading="true"
+show-metadata="false"
+expanded="true"
+root="false"
+xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>1539</fr:anchor><fr:addr
+type="machine">#392</fr:addr><fr:route>unstable-392.xml</fr:route><fr:title
+text=" [sutton2022, 9.2]"> <html:span
+xmlns:html="http://www.w3.org/1999/xhtml"
+class="link-reference"
+tid="9.2"
+refid="sutton2022"><fr:link
+type="local"
+href="sutton2022.xml"
+addr="sutton2022"
+title="Reinforcement Learning: An Introduction">[sutton2022, 9.2]</fr:link></html:span></fr:title><fr:taxon>Exercise</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>5</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter>
+  
+  <fr:p>Why does (9.17) define <fr:tex
+display="inline"><![CDATA[(n + 1)^k]]></fr:tex> distinct features for dimension k?</fr:p>
+
+</fr:mainmatter><fr:backmatter /></fr:tree>
+  
+
+ 
    
    <fr:tree
 toc="false"
@@ -170,38 +143,155 @@ show-heading="true"
 show-metadata="false"
 expanded="true"
 root="false"
-xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>749</fr:anchor><fr:addr
-type="machine">#396</fr:addr><fr:route>unstable-396.xml</fr:route><fr:taxon>Proof</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>10</fr:month><fr:day>31</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter>
-    We want to maximize
+xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>1540</fr:anchor><fr:addr
+type="machine">#393</fr:addr><fr:route>unstable-393.xml</fr:route><fr:taxon>Solution</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>5</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter>
+  <fr:p>For each <fr:tex
+display="inline"><![CDATA[s_j]]></fr:tex>, there are <fr:tex
+display="inline"><![CDATA[n + 1]]></fr:tex> options for <fr:tex
+display="inline"><![CDATA[c_{i, j}]]></fr:tex>. Since there are <fr:tex
+display="inline"><![CDATA[k]]></fr:tex>, <fr:tex
+display="inline"><![CDATA[s_{j}]]></fr:tex>'s, there are <fr:tex
+display="inline"><![CDATA[(n + 1)^k]]></fr:tex> total possible features for <fr:tex
+display="inline"><![CDATA[x_i]]></fr:tex>.</fr:p>
+</fr:mainmatter><fr:backmatter /></fr:tree>
+ 
+
+  
+    
+    
+    <fr:tree
+toc="false"
+numbered="false"
+show-heading="true"
+show-metadata="false"
+expanded="true"
+root="false"
+xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>1541</fr:anchor><fr:addr
+type="machine">#394</fr:addr><fr:route>unstable-394.xml</fr:route><fr:title
+text=" [sutton2022, 9.3]"> <html:span
+xmlns:html="http://www.w3.org/1999/xhtml"
+class="link-reference"
+tid="9.3"
+refid="sutton2022"><fr:link
+type="local"
+href="sutton2022.xml"
+addr="sutton2022"
+title="Reinforcement Learning: An Introduction">[sutton2022, 9.3]</fr:link></html:span></fr:title><fr:taxon>Exercise</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>5</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter>
+  
+<fr:p>What <fr:tex
+display="inline"><![CDATA[n]]></fr:tex> and <fr:tex
+display="inline"><![CDATA[c_{i,j}]]></fr:tex> produce the feature vectors <fr:tex
+display="block"><![CDATA[\mathbf {x}(s)=(1,s_{1},s_{2},s_{1}s_{2},s_{1}^{2},s_{2}^{2},s_{1}^{2}s_{2}^{2},s_{1}s_{2}^{2},s_{1}^{2}s_{2}^{2})^{\top }?]]></fr:tex></fr:p>
+
+</fr:mainmatter><fr:backmatter /></fr:tree>
+  
+
+ 
+   
+   <fr:tree
+toc="false"
+numbered="true"
+show-heading="true"
+show-metadata="false"
+expanded="true"
+root="false"
+xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>1542</fr:anchor><fr:addr
+type="machine">#395</fr:addr><fr:route>unstable-395.xml</fr:route><fr:taxon>Solution</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>5</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter>
+  <fr:p><fr:tex
+display="inline"><![CDATA[n = 2]]></fr:tex> and <fr:tex
+display="inline"><![CDATA[c_{ij}]]></fr:tex> as 
 <fr:tex
-display="block"><![CDATA[     \begin {align*} \mathcal {L}(\theta ) &= \mathbb {E}_{x \sim  p_X, y \sim  p_Y}\Big [\log \sigma (f_{\theta }(x)) + \log (1-\sigma (f_{\theta }(y)))\Big ] \\ &= \int  \log \sigma (f_{\theta }(x)) P_X(x) + \int  \log (1-\sigma (f_{\theta }(y))) P_Y(y) \\ &= \int  \log \sigma (f_{\theta }(z)) P_X(z) + \log (1-\sigma (f_{\theta }(z))) P_Y(z)     \end {align*}     ]]></fr:tex>
-    Since we are maximizing <fr:tex
-display="inline"><![CDATA[f(s)]]></fr:tex>, we can just maximize the integrand i.e.
-<fr:tex
-display="block"><![CDATA[       \begin {align*}         \frac {\mathrm {d}}{\mathrm {d}f(z)} \Big [\log \sigma (f_{\theta }(z)) P_X(z) + \log (1-\sigma (f_{\theta }(z))) P_Y(z)\Big ] = 0       \end {align*}     ]]></fr:tex>
-    Solving,
-    <fr:tex
-display="block"><![CDATA[         \begin {align*}           P_X(z)\big (1 - \sigma (f(z))\big ) - P_Y(z)\sigma (f(z)) = 0 &\iff  \sigma (f(z)) = \frac {P_X(z)}{P_X(z) + P_Y(z)} \\           &\iff  f(z) = \log \left (\frac {P_X(z)}{P_Y(z)}\right )         \end {align*}       ]]></fr:tex>
+display="block"><![CDATA[\boldsymbol {c_0} = [0, 0], \quad    \boldsymbol {c_1} = [1, 0] \\   \boldsymbol {c_2} = [0, 1], \quad    \boldsymbol {c_3} = [1, 1] \\   \boldsymbol {c_4} = [2, 0], \quad    \boldsymbol {c_5} = [0, 2] \\   \boldsymbol {c_6} = [2, 2], \quad    \boldsymbol {c_7} = [1, 2], \quad    \boldsymbol {c_8} = [2, 2]   ]]></fr:tex></fr:p>
+</fr:mainmatter><fr:backmatter /></fr:tree>
+ 
+
+    <fr:tree
+toc="false"
+numbered="true"
+show-heading="true"
+show-metadata="false"
+expanded="true"
+root="false"
+xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>1543</fr:anchor><fr:addr
+type="machine">#396</fr:addr><fr:route>unstable-396.xml</fr:route><fr:taxon>Question</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>5</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter>
+  <fr:ol><fr:li>In section 9.5.2, what do they mean when they say you can select <fr:tex
+display="inline"><![CDATA[n]]></fr:tex> so all the fourier features can be used?
+    <fr:ol><fr:li>Pick <fr:tex
+display="inline"><![CDATA[n]]></fr:tex> so that <fr:tex
+display="inline"><![CDATA[(n + 1)^k < mk^2]]></fr:tex>.</fr:li>
+        <fr:li>Pick <fr:tex
+display="inline"><![CDATA[n]]></fr:tex> so that <fr:tex
+display="inline"><![CDATA[(n + 1)^k]]></fr:tex> is reasonable.</fr:li></fr:ol></fr:li>
+    <fr:p>In the tabular case, I think (a) is correct. My initial understanding of state representation is as a representation learning i.e. compression type objective. If we assume that <fr:tex
+display="inline"><![CDATA[s_i \in  [m]]]></fr:tex>, then we do not gain anything in the tabular setting if our value function vector is the same size as the underlying transition kernel. When in the continuous state space regime i.e. <fr:tex
+display="inline"><![CDATA[s_i \in  [0,1]]]></fr:tex>, there is no amount of features that would overfit the transition kernel. Therefore, it is just about trying to learn as much as possible about the underlying relations of the state dimensions.</fr:p>
+    <fr:p>In the <fr:tex
+display="inline"><![CDATA[2]]></fr:tex>-dimensional case, the feature vector <fr:tex
+display="inline"><![CDATA[c_i = [1,1]]]></fr:tex> would provide information on how <fr:tex
+display="inline"><![CDATA[s_1]]></fr:tex> and <fr:tex
+display="inline"><![CDATA[s_2]]></fr:tex> relate not just their specific values. You want the learning algorithm to understand the relationships, so that it can make better use of the internal parameters when learning something like a <fr:tex
+display="inline"><![CDATA[Q]]></fr:tex> function. This is basically just SVD but instead of classification you are learning a <fr:tex
+display="inline"><![CDATA[Q]]></fr:tex> function. The compression</fr:p></fr:ol>
   </fr:mainmatter><fr:backmatter /></fr:tree>
- 
 
-
-   
-   <fr:tree
+    <fr:tree
 toc="false"
 numbered="true"
 show-heading="true"
 show-metadata="false"
 expanded="true"
 root="false"
-xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>750</fr:anchor><fr:addr
-type="machine">#397</fr:addr><fr:route>unstable-397.xml</fr:route><fr:taxon>Proof</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>10</fr:month><fr:day>31</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter>
-The first step is to prove that the average Q-values are close to the task-conditioned Q-values. Below, we will use <fr:tex
-display="inline"><![CDATA[R_{c}(\tau )\triangleq \sum _{\ell =0}^{\infty }\gamma ^{\ell }r_{\ell }(s_{\ell },a_{\ell })]]></fr:tex>:
+xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>1544</fr:anchor><fr:addr
+type="machine">#397</fr:addr><fr:route>unstable-397.xml</fr:route><fr:taxon>Question</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>5</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter>
+  <fr:ol><fr:li>In Figure 9.5, why do fourier features outperform polynomial features?
+    <fr:ol><fr:li>The fourier features got lucky on the seeds (lol).</fr:li>
+        <fr:li>The choice of <fr:tex
+display="inline"><![CDATA[\boldsymbol {c}]]></fr:tex> is not specified. A good choice can provide improvement specific to the problem?</fr:li>
+        <fr:li>Polynomial features range is very large. Can suffer from blowup or vanishing of features.</fr:li></fr:ol></fr:li>
+    One of the advantages of fourier features mentioned previously is the ability to select which features to serve as your basis. However, for this setup I assume they just use all of the fourier features. This likely means it is more of an issue with the polynomial features and (c). If you have a large polynomial then even relative similar states <fr:tex
+display="inline"><![CDATA[s_1 = 1.1]]></fr:tex>, <fr:tex
+display="inline"><![CDATA[s_2 = 0.9]]></fr:tex>, <fr:tex
+display="inline"><![CDATA[\ldots ]]></fr:tex> can blow up or vanish making them likely more unstable when using gradient-based methods.</fr:ol>
+  </fr:mainmatter><fr:backmatter /></fr:tree>
 
-<fr:tex
-display="block"><![CDATA[ \begin {align*} \left |Q^{\beta (\cdot |\cdot ,a)}(s,a,e)-Q^{\beta (\cdot |\cdot ,\epsilon ^{\prime })}(s,a,e)\right |&=\left |\int \beta (\tau \mid  s,a,e)R_{e}(\tau )d\tau -\int \beta (\tau \mid  s,a,e^{\prime })R_{e}(\tau )d\tau \right |\\  &=\left |\int \beta (\tau \mid  s,a,e)-\beta (\tau \mid  s,a,e^{\prime })R_{e}(\tau )d\tau \right | \\ &=\left |\int \beta (\tau \mid  s,a,e)\left (1-\frac {\beta (\tau \mid  s,a,e^{\prime })}{\beta (\tau \mid  s,a,e)}\right )R_{e}(\tau )d\tau \right | \\ &\leq \int \left |\beta (\tau \mid  s,a,e)\left (1-\frac {\beta (\tau \mid  s,a,e^{\prime })}{\beta (\tau \mid  s,a,e)}\right )\right |d\tau \cdot \operatorname *{max}_{\tau }|R_{e}(\tau )d\tau | \\ &\leq \int \beta (\tau \mid  s,a,e)\left |1-\frac {\beta (\tau \mid  s,a,e^{\prime })}{\beta (\tau \mid  s,a,e)}\right |d\tau \cdot  1 \\ &=\mathbb {E}_{\beta (\tau |s,a,e)}\left [\left |1-{\frac {\beta (\tau \mid  s,a,e^{\prime })}{\beta (\tau \mid  s,a,e)}}\right |\right ] \\ &\leq  \epsilon . \end {align*}   ]]></fr:tex>
+  
+    
+    
+    <fr:tree
+toc="false"
+numbered="false"
+show-heading="true"
+show-metadata="false"
+expanded="true"
+root="false"
+xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>1545</fr:anchor><fr:addr
+type="machine">#398</fr:addr><fr:route>unstable-398.xml</fr:route><fr:title
+text=" [sutton2022, 9.4]"> <html:span
+xmlns:html="http://www.w3.org/1999/xhtml"
+class="link-reference"
+tid="9.4"
+refid="sutton2022"><fr:link
+type="local"
+href="sutton2022.xml"
+addr="sutton2022"
+title="Reinforcement Learning: An Introduction">[sutton2022, 9.4]</fr:link></html:span></fr:title><fr:taxon>Exercise</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>5</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter>
+  
+  <fr:p>You could do anisotropic (big word for asymmetric) tile partitioning. If we consider the two state dimensions as (x,y) coordinates and suppose that we want to only generalize across the <fr:tex
+display="inline"><![CDATA[y]]></fr:tex>-direction i.e. we want states with the same <fr:tex
+display="inline"><![CDATA[x]]></fr:tex> coordinate to have similar values then we would tile with long thin tiles. Therefore, states with the same <fr:tex
+display="inline"><![CDATA[x]]></fr:tex> coordinate would lie in the same vertical tile and if the tiles are very thin any change in <fr:tex
+display="inline"><![CDATA[x]]></fr:tex>-coordinate would lie in disjoint tiles.</fr:p>
+
 </fr:mainmatter><fr:backmatter /></fr:tree>
- 
+  
 
+    <fr:tree
+toc="false"
+numbered="true"
+show-heading="true"
+show-metadata="false"
+expanded="true"
+root="false"
+xmlns:fr="http://www.jonmsterling.com/jms-005P.xml"><fr:frontmatter><fr:anchor>1546</fr:anchor><fr:addr
+type="machine">#399</fr:addr><fr:route>unstable-399.xml</fr:route><fr:taxon>Remark</fr:taxon><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>5</fr:day></fr:date><fr:authors /></fr:frontmatter><fr:mainmatter>I think that RBF as a continuous generalization coarse-coding is a nice intuition I want to remember here. Essentially, you just weight a state by how close it is to the center of the receptive field. This weighting is done via a Gaussian kernel, which I believe is arbitrary and can be any distance measure of choice.</fr:mainmatter><fr:backmatter /></fr:tree>
 </fr:mainmatter><fr:backmatter /></fr:tree></fr:mainmatter><fr:backmatter /></fr:tree></fr:backmatter></fr:tree>
