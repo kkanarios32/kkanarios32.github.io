@@ -20,7 +20,6 @@
           </xsl:if>
         </script>
         <script type="module" src="{/f:tree/@base-url}forester.js"></script>
-        <script src="/reload.js"></script>
         <title>
           <xsl:value-of select="/f:tree/f:frontmatter/f:title/@text" />
         </title>
@@ -245,8 +244,6 @@
           <xsl:apply-templates select="f:meta[@name='orcid']" />
           <xsl:apply-templates select="f:meta[@name='external']" />
           <xsl:apply-templates select="f:meta[@name='slides']" />
-          <xsl:apply-templates select="f:meta[@name='poster']" />
-          <xsl:apply-templates select="f:meta[@name='paper']" />
           <xsl:apply-templates select="f:meta[@name='video']" />
         </ul>
       </div>
