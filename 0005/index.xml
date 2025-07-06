@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors>
+      <fr:author>
+        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+      </fr:author>
+    </fr:authors>
+    <fr:date>
+      <fr:year>2024</fr:year>
+      <fr:month>10</fr:month>
+      <fr:day>29</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/0005/</fr:uri>
+    <fr:display-uri>0005</fr:display-uri>
+    <fr:route>/0005/</fr:route>
+    <fr:title text="Contrastive Reinforcement Learning">Contrastive Reinforcement Learning</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter>
+    <html:p>In this blog post, we aim to demistify <fr:link href="/eysenbachContrastiveLearningGoalConditioned2023/" title="Contrastive Learning as Goal-Conditioned Reinforcement Learning" uri="https://kellenkanarios.com/eysenbachContrastiveLearningGoalConditioned2023/" display-uri="eysenbachContrastiveLearningGoalConditioned2023" type="local"><html:em>Contrastive Reinforcement Learning</html:em></fr:link>. This term often gets thrown around in the dark inner circles of the reinforcement learning community. However, for those that are not familiar with contrastive learning, what does contrastive even mean? For those that are, how can reinforcement learning be contrastive? Throughout this blog post, we will answer these questions and many more.</html:p>
+    <fr:tree show-metadata="false">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:date>
+          <fr:year>2024</fr:year>
+          <fr:month>10</fr:month>
+          <fr:day>31</fr:day>
+        </fr:date>
+        <fr:uri>https://kellenkanarios.com/0009/</fr:uri>
+        <fr:display-uri>0009</fr:display-uri>
+        <fr:route>/0009/</fr:route>
+        <fr:title text="Contrastive Learning">Contrastive Learning</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter><html:p>Prior to understanding contrastive reinforcement learning, it is important to have an at least rudimentary understanding of contrastive learning. Historically, contrastive learning has been used to learn representations. The fundamental idea behind contrastive learning is to encourage the representations of similar outputs to be similar in representation space.</html:p><html:p><html:strong>Supervised setting:</html:strong> For now, assume we are in the supervised setting (we have access to lables). Suppose that we are learning a representation in <fr:tex display="inline"><![CDATA[\mathbb {R}^d]]></fr:tex>. Our model is a classifier on dogs and cats. If we have two dogs <fr:tex display="inline"><![CDATA[y_1]]></fr:tex> and <fr:tex display="inline"><![CDATA[y_2]]></fr:tex> then we want the learned representation map <fr:tex display="block"><![CDATA[\phi : \{\text {dogs}, \text {cats}\} \to  \mathbb {R}^d]]></fr:tex> to be such that <fr:tex display="inline"><![CDATA[\phi (y_1)]]></fr:tex> and <fr:tex display="inline"><![CDATA[\phi (y_2)]]></fr:tex> are "close" in <fr:tex display="inline"><![CDATA[\mathbb {R}^d]]></fr:tex>. Now the notion of "close" is to be determined by the user. An example could be to minimize the inner product between their representation maps i.e. we could learn a feature map parametrized by <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> with the following objective <fr:tex display="block"><![CDATA[\max _{\theta }\ \langle  \phi _{\theta }(y_1), \phi _{\theta }(y_2) \rangle .]]></fr:tex> Similarly, we want dissimilar outputs to be far apart in representation space. If <fr:tex display="inline"><![CDATA[y_3]]></fr:tex> is a cat, then we can introduce a regularization to encourage this i.e.
+<fr:tex display="block"><![CDATA[\max _{\theta }\ \langle  \phi _{\theta }(y_1), \phi _{\theta }(y_2) \rangle  - \sum _{i \in  \{1, 2\}} \langle  \phi _{\theta }(y_i), \phi _{\theta }(y_3) \rangle .]]></fr:tex></html:p><html:p><html:strong>Unsupervised setting:</html:strong> Now suppose that we get rid of labels and are just given <fr:tex display="inline"><![CDATA[n]]></fr:tex> dog samples <fr:tex display="inline"><![CDATA[\mathcal {D}]]></fr:tex> from some distribution <fr:tex display="inline"><![CDATA[p_{\mathcal {D}}]]></fr:tex>. We now want to be able to learn <fr:tex display="inline"><![CDATA[p_{\theta }]]></fr:tex> to somehow estimate this distribution. An approach is to learn to distinguish the sample dogs given from random noise. To do so, we generate <fr:tex display="inline"><![CDATA[n]]></fr:tex> random images <fr:tex display="inline"><![CDATA[\mathcal {R}]]></fr:tex> according to some distribution <fr:tex display="inline"><![CDATA[p_{\mathcal {R}}]]></fr:tex>. We can now return to the supervised learning setting, where we treat <fr:tex display="inline"><![CDATA[\mathcal {D}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathcal {R}]]></fr:tex> as two classes. If we recall standard supervised learning practice, given a sample <fr:tex display="inline"><![CDATA[x]]></fr:tex>, we then want to find <fr:tex display="block"><![CDATA[p(\mathcal {D} \mid  x) = 1 - p(\mathcal {R} \mid  X).]]></fr:tex> 
+As an explicit example, we will use logistic regression. Namely, we will model <fr:tex display="inline"><![CDATA[p(x) = p(\mathcal {D} \mid  x)]]></fr:tex> as <fr:tex display="block"><![CDATA[p_{\theta }(x) = \frac {1}{1 + e^{-G_{\theta }(x)}}.]]></fr:tex> However, <fr:tex display="inline"><![CDATA[p_{\theta }(x)]]></fr:tex> is estimating <fr:tex display="inline"><![CDATA[p(\mathcal {D} \mid  x)]]></fr:tex>, where we care about <fr:tex display="inline"><![CDATA[p(x \mid  \mathcal {D})]]></fr:tex>. To estimate the correct quantity, we need to leverage our knowledge of the noise distribution. Recall that if <fr:tex display="inline"><![CDATA[p_{\theta }(x) = p(\mathcal {D} \mid  x)]]></fr:tex> then <fr:tex display="inline"><![CDATA[G_{\theta }(x) = \log  \frac {p(x \mid  \mathcal {D})}{p(x \mid  \mathcal {R})}]]></fr:tex>. Since we generated the samples from <fr:tex display="inline"><![CDATA[\mathcal {R}]]></fr:tex>, we have the explicit distribution i.e. <fr:tex display="inline"><![CDATA[p(x \mid  \mathcal {R}) = p_{\mathcal {R}}(x)]]></fr:tex>. Therefore, we can restrict <fr:tex display="inline"><![CDATA[G_{\theta }]]></fr:tex> to explicitly learn <fr:tex display="inline"><![CDATA[p(x \mid  \mathcal {D})]]></fr:tex> by considering <fr:tex display="block"><![CDATA[G_{\theta }(x) = \log  p_{\theta }(x \mid  \mathcal {D}) - \log  p_{\mathcal {R}}(x),]]></fr:tex> considering the cross entropy loss we get the <fr:link href="/000E/" title="NCE loss" uri="https://kellenkanarios.com/000E/" display-uri="000E" type="local">NCE loss</fr:link></html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>4</fr:day></fr:date><fr:uri>https://kellenkanarios.com/000E/</fr:uri><fr:display-uri>000E</fr:display-uri><fr:route>/000E/</fr:route><fr:title text="NCE loss">NCE loss</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>The <html:em><fr:link href="/gutmannNoisecontrastiveEstimationNew2010/" title="Noise-contrastive estimation: A new estimation principle for unnormalized statistical models" uri="https://kellenkanarios.com/gutmannNoisecontrastiveEstimationNew2010/" display-uri="gutmannNoisecontrastiveEstimationNew2010" type="local">NCE</fr:link></html:em> loss aims to minimize the following objective <fr:tex display="block"><![CDATA[\mathcal {L}_{N} = - \sum _{t} \log  \left [h(x_t; \theta )\right ] + \log \left [1 - h(y_t; \theta )\right ],]]></fr:tex> where <fr:tex display="inline"><![CDATA[x_t]]></fr:tex> are samples from the data distribution and <fr:tex display="inline"><![CDATA[y_t]]></fr:tex> are randomly generated samples and <fr:tex display="block"><![CDATA[\begin {array}{r c l}{{h({\bf  u};\theta )}}&{{=}}&{{\frac {1}{1+\exp \left [-G({\bf  u};\theta )\right ]},}}\\ {{G({\bf  u};\theta )}}&{{=}}&{{\ln  p_{m}({\bf  u};\theta )-\ln  p_{n}({\bf  u}).}}\end {array}]]></fr:tex></html:p></fr:mainmatter></fr:tree><html:p>In <fr:link href="/gutmannNoisecontrastiveEstimationNew2010/" title="Noise-contrastive estimation: A new estimation principle for unnormalized statistical models" uri="https://kellenkanarios.com/gutmannNoisecontrastiveEstimationNew2010/" display-uri="gutmannNoisecontrastiveEstimationNew2010" type="local">Noise-contrastive estimation: A new estimation principle for unnormalized statistical models</fr:link>, they show under mild conditions that the estimator <fr:tex display="inline"><![CDATA[p_{\theta }(x \mid  D) \to  p_{\mathcal {D}}(x)]]></fr:tex> in probability as the number of samples in the loss goes to infinity. Equivalently, the estimator is <fr:link href="/000F/" title="Consistent estimator" uri="https://kellenkanarios.com/000F/" display-uri="000F" type="local">consistent</fr:link>.</html:p><html:p><html:strong>Time series:</html:strong> Before we get to contrastive RL, it is a natural question to wonder how does this apply to temporal sequences? Concretely, we want to make predictions about the future given the current "context". However, we want to do so in an unsupervised way, meaning we are only given trajectories not a notion of what it means for a trajectory to be good. Naively, one can try to do this in a supervised manner. For a <fr:tex display="inline"><![CDATA[k]]></fr:tex> step prediction, this would just be your model predicting what will happen in <fr:tex display="inline"><![CDATA[k]]></fr:tex> steps then seeing if it matches what occured <fr:tex display="inline"><![CDATA[k]]></fr:tex> steps in the future in the sample trajectory. However, if your sample space <fr:tex display="inline"><![CDATA[\mathcal {X}]]></fr:tex> is very high-dimensional, modeling this relationship can require an exorbinant amount of trajectories.</html:p><html:p>Fast forwarding to contrastive RL, current work is primarily considered with a particular contrastive objective.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>4</fr:day></fr:date><fr:uri>https://kellenkanarios.com/000B/</fr:uri><fr:display-uri>000B</fr:display-uri><fr:route>/000B/</fr:route><fr:title text="InfoNCE">InfoNCE</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>The <html:em><fr:link href="/oordRepresentationLearningContrastive2019/" title="Representation Learning with Contrastive Predictive Coding" uri="https://kellenkanarios.com/oordRepresentationLearningContrastive2019/" display-uri="oordRepresentationLearningContrastive2019" type="local">InfoNCE</fr:link></html:em> loss aims to minimize the following information-theoretic objective <fr:tex display="block"><![CDATA[\mathcal {L}_{N} = - \mathbb {E}_{\mathcal {X}} \left [\log  \frac {f_k(x_{t + k}, c_t)}{\sum _{x_j \in  \mathcal {X}} f_k(x_j, c_t)}\right ]]]></fr:tex></html:p></fr:mainmatter></fr:tree><html:p>Now we need to unpack this very ominous loss. To start, what are <fr:tex display="inline"><![CDATA[x_k]]></fr:tex> and <fr:tex display="inline"><![CDATA[c_t]]></fr:tex>?</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>4</fr:day></fr:date><fr:uri>https://kellenkanarios.com/000C/</fr:uri><fr:display-uri>000C</fr:display-uri><fr:route>/000C/</fr:route><fr:title text="Maximize Mutual info">Maximize Mutual info</fr:title><fr:taxon>Theorem</fr:taxon></fr:frontmatter><fr:mainmatter><html:p><fr:tex display="inline"><![CDATA[\mathcal {L}_N]]></fr:tex> from <fr:link href="/oordRepresentationLearningContrastive2019/" title="Representation Learning with Contrastive Predictive Coding" uri="https://kellenkanarios.com/oordRepresentationLearningContrastive2019/" display-uri="oordRepresentationLearningContrastive2019" type="local">Representation Learning with Contrastive Predictive Coding</fr:link> maximizes a lower bound on the <fr:link href="/000V/" title="Mutual Information" uri="https://kellenkanarios.com/000V/" display-uri="000V" type="local">Mutual Information</fr:link> between <fr:tex display="inline"><![CDATA[x_{t + k}]]></fr:tex> and <fr:tex display="inline"><![CDATA[c_t]]></fr:tex>.</html:p>
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>4</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>All we must do is plug <fr:tex display="inline"><![CDATA[\frac {p(x \mid  c)}{p(x)}]]></fr:tex> back into the objective.
+  <fr:tex display="block"><![CDATA[\begin {align*}
+    \mathcal {L}_{\mathbb {N}}^{\text {opt}}&=-\,\mathbb {E}\log \left [\frac {\frac {p(x_{t+k}|c_{t})}{p(x_{t+k})}}{\frac {p(x_{t+k}|c_{t})}{p(x_{t+k})}+\sum _{x_{j}\in  X_{\text {neg}}}\frac {p(x_{j}|c_{t})}{p(x_{j})}}\right ] \\
+    &=\mathbb {E}\log \left [1+\frac {p(x_{t+k})}{p(x_{t+k}|c_{t})}\sum _{x_{j}\in  X_{\text {neg}}}\frac {p(x_{j}|c_{t})}{p(x_{j})}\right ] \\
+    &\approx \mathbb {E}\log \left [1+\frac {p(x_{t+k})}{p(x_{t+k}|c_{t})}(N-1)\,\mathbb {E}\,\frac {p(x_{j}|c_{t})}{p(x_{j})}\right ] \\
+    &=\mathbb {E}\log \left [1+\frac {p(x_{t+k})}{p(x_{t+k} \mid  c_t)}N\right ] \\
+    &\geq  \mathbb {E} \log  \left [\frac {p(x_{t + k})}{p(x_{t + k} \mid  c_t)}N \right ] \\
+    &= - I(x_{t + k}, c_t) + \log  N
+ \end {align*}
+  ]]></fr:tex>
+</fr:mainmatter></fr:tree>
+ 
+
+</fr:mainmatter></fr:tree><fr:tex display="block"><![CDATA[
+\operatorname *{max}_{f(u,v)}\mathbb {E}_{(u,v^{+})\sim  p(u,v)}\left [\log \sigma (\underbrace {f(u,{\green  v^{+}})}_{\phi (u)^{T}\psi ({\green  v^{+}})})+\log (1-\sigma (\underbrace {f(u,{\red  v^{-}})}_{\phi (u)^{T}\psi ({\red  v^{-}})}))\right ]
+]]></fr:tex><fr:tex display="block"><![CDATA[
+\begin {align*}
+&\operatorname *{max}_{f}\mathbb {E}_{(s,a)\sim  p(s,a),s_{f}^{-}\sim  p(s_{f})}\left [\mathcal {L}(s,a,s_{f}^{+},s_{f}^{-})\right ] \\
+\end {align*}
+]]></fr:tex><fr:tex display="block"><![CDATA[
+\mathcal {L}_1(\theta ) = \log \sigma (f_{\theta }(s_1,a_1,{\color {green} s_{8}})) + \log (1-\sigma (f_{\theta }(s_1,a_1, {\color {red} s_3})))
+]]></fr:tex><fr:tex display="block"><![CDATA[
+\begin {align*}
+\widehat {\mathcal {L}}(\theta ) &= \frac {1}{n} \sum _{i = 1}^{n} \mathcal {L}_i \\
+&= \frac {1}{n} \sum _{i = 1}^{n} \Big [\log \sigma (f_{\theta }(s_i,a_i,{\color {green} s_{f}^{+}})) + \log (1-\sigma (f_{\theta }(s_i,a_i, {\color {red} s_{f}^{-}})))\Big ]
+\end {align*}
+]]></fr:tex><fr:tex display="block"><![CDATA[
+\mathcal {L}(\theta ) = \mathbb {E}_{x \sim  p_X, y \sim  p_Y}\Big [\log \sigma (f_{\theta }(x)) + \log (1-\sigma (f_{\theta }(y)))\Big ]
+]]></fr:tex><fr:tex display="block"><![CDATA[f^*(s, a, s_g) = \log \left (\frac {p^{\pi (\cdot  \mid  \cdot )}(s_g \mid  s, a)}{p(s_g)}\right )]]></fr:tex>
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2024</fr:year><fr:month>10</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>
+    We want to maximize
+<fr:tex display="block"><![CDATA[
+    \begin {align*}
+\mathcal {L}(\theta ) &= \mathbb {E}_{x \sim  p_X, y \sim  p_Y}\Big [\log \sigma (f_{\theta }(x)) + \log (1-\sigma (f_{\theta }(y)))\Big ] \\
+&= \int  \log \sigma (f_{\theta }(x)) P_X(x) + \int  \log (1-\sigma (f_{\theta }(y))) P_Y(y) \\
+&= \int  \log \sigma (f_{\theta }(z)) P_X(z) + \log (1-\sigma (f_{\theta }(z))) P_Y(z)
+    \end {align*}
+    ]]></fr:tex>
+    Since we are maximizing <fr:tex display="inline"><![CDATA[f(s)]]></fr:tex>, we can just maximize the integrand i.e.
+<fr:tex display="block"><![CDATA[
+      \begin {align*}
+        \frac {\mathrm {d}}{\mathrm {d}f(z)} \Big [\log \sigma (f_{\theta }(z)) P_X(z) + \log (1-\sigma (f_{\theta }(z))) P_Y(z)\Big ] = 0
+      \end {align*}
+    ]]></fr:tex>
+    Solving,
+    <fr:tex display="block"><![CDATA[
+        \begin {align*}
+          P_X(z)\big (1 - \sigma (f(z))\big ) - P_Y(z)\sigma (f(z)) = 0 &\iff  \sigma (f(z)) = \frac {P_X(z)}{P_X(z) + P_Y(z)} \\
+          &\iff  f(z) = \log \left (\frac {P_X(z)}{P_Y(z)}\right )
+        \end {align*}
+      ]]></fr:tex>
+  </fr:mainmatter></fr:tree>
+ 
+
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2024</fr:year><fr:month>10</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>
+The first step is to prove that the average Q-values are close to the task-conditioned Q-values. Below, we will use <fr:tex display="inline"><![CDATA[R_{c}(\tau )\triangleq \sum _{\ell =0}^{\infty }\gamma ^{\ell }r_{\ell }(s_{\ell },a_{\ell })]]></fr:tex>:
+
+<fr:tex display="block"><![CDATA[
+\begin {align*}
+\left |Q^{\beta (\cdot |\cdot ,a)}(s,a,e)-Q^{\beta (\cdot |\cdot ,\epsilon ^{\prime })}(s,a,e)\right |&=\left |\int \beta (\tau \mid  s,a,e)R_{e}(\tau )d\tau -\int \beta (\tau \mid  s,a,e^{\prime })R_{e}(\tau )d\tau \right |\\ 
+&=\left |\int \beta (\tau \mid  s,a,e)-\beta (\tau \mid  s,a,e^{\prime })R_{e}(\tau )d\tau \right | \\
+&=\left |\int \beta (\tau \mid  s,a,e)\left (1-\frac {\beta (\tau \mid  s,a,e^{\prime })}{\beta (\tau \mid  s,a,e)}\right )R_{e}(\tau )d\tau \right | \\
+&\leq \int \left |\beta (\tau \mid  s,a,e)\left (1-\frac {\beta (\tau \mid  s,a,e^{\prime })}{\beta (\tau \mid  s,a,e)}\right )\right |d\tau \cdot \operatorname *{max}_{\tau }|R_{e}(\tau )d\tau | \\
+&\leq \int \beta (\tau \mid  s,a,e)\left |1-\frac {\beta (\tau \mid  s,a,e^{\prime })}{\beta (\tau \mid  s,a,e)}\right |d\tau \cdot  1 \\
+&=\mathbb {E}_{\beta (\tau |s,a,e)}\left [\left |1-{\frac {\beta (\tau \mid  s,a,e^{\prime })}{\beta (\tau \mid  s,a,e)}}\right |\right ] \\
+&\leq  \epsilon .
+\end {align*}
+  ]]></fr:tex>
+</fr:mainmatter></fr:tree>
+ 
+
+</fr:mainmatter>
+    </fr:tree>
+    <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="contrastive-rl" theme="boxy-light" crossorigin="anonymous" async="" />
+  </fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>Benjamin Eysenbach</fr:author>
+              <fr:author>Tianjun Zhang</fr:author>
+              <fr:author>Ruslan Salakhutdinov</fr:author>
+              <fr:author>Sergey Levine</fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2023</fr:year>
+              <fr:month>2</fr:month>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/eysenbachContrastiveLearningGoalConditioned2023/</fr:uri>
+            <fr:display-uri>eysenbachContrastiveLearningGoalConditioned2023</fr:display-uri>
+            <fr:route>/eysenbachContrastiveLearningGoalConditioned2023/</fr:route>
+            <fr:title text="Contrastive Learning as Goal-Conditioned Reinforcement Learning">Contrastive Learning as Goal-Conditioned Reinforcement Learning</fr:title>
+            <fr:taxon>Reference</fr:taxon>
+            <fr:meta name="doi">10.48550/arXiv.2206.07568</fr:meta>
+            <fr:meta name="external">https://arxiv.org/abs/2206.07568</fr:meta>
+            <fr:meta name="bibtex"><![CDATA[@misc{eysenbachContrastiveLearningGoalConditioned2023,
+ title = {Contrastive {{Learning}} as {{Goal-Conditioned Reinforcement Learning}}},
+ author = {Eysenbach, Benjamin and Zhang, Tianjun and Salakhutdinov, Ruslan and Levine, Sergey},
+ year = {2023},
+ doi = {10.48550/arXiv.2206.07568},
+ urldate = {2024-09-06},
+ number = {arXiv:2206.07568},
+ publisher = {arXiv},
+ file = {/home/kellen/Downloads/pdfs/storage/WVQKIMN4/Eysenbach et al. - 2023 - Contrastive Learning as Goal-Conditioned Reinforcement Learning.pdf},
+ keywords = {Computer Science - Artificial Intelligence,Computer Science - Machine Learning},
+ archiveprefix = {arXiv},
+ abstract = {In reinforcement learning (RL), it is easier to solve a task if given a good representation. While deep RL should automatically acquire such good representations, prior work often finds that learning representations in an end-to-end fashion is unstable and instead equip RL algorithms with additional representation learning parts (e.g., auxiliary losses, data augmentation). How can we design RL algorithms that directly acquire good representations? In this paper, instead of adding representation learning parts to an existing RL algorithm, we show (contrastive) representation learning methods can be cast as RL algorithms in their own right. To do this, we build upon prior work and apply contrastive representation learning to action-labeled trajectories, in such a way that the (inner product of) learned representations exactly corresponds to a goal-conditioned value function. We use this idea to reinterpret a prior RL method as performing contrastive learning, and then use the idea to propose a much simpler method that achieves similar performance. Across a range of goal-conditioned RL tasks, we demonstrate that contrastive RL methods achieve higher success rates than prior non-contrastive methods, including in the offline RL setting. We also show that contrastive RL outperforms prior methods on image-based tasks, without using data augmentation or auxiliary objectives.},
+ primaryclass = {cs},
+ eprint = {2206.07568},
+ month = {February}
+}]]></fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter />
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>Aaron van den Oord</fr:author>
+              <fr:author>Yazhe Li</fr:author>
+              <fr:author>Oriol Vinyals</fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2019</fr:year>
+              <fr:month>1</fr:month>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/oordRepresentationLearningContrastive2019/</fr:uri>
+            <fr:display-uri>oordRepresentationLearningContrastive2019</fr:display-uri>
+            <fr:route>/oordRepresentationLearningContrastive2019/</fr:route>
+            <fr:title text="Representation Learning with Contrastive Predictive Coding">Representation Learning with Contrastive Predictive Coding</fr:title>
+            <fr:taxon>Reference</fr:taxon>
+            <fr:meta name="external">https://arxiv.org/abs/1807.03748</fr:meta>
+            <fr:meta name="bibtex"><![CDATA[@misc{oordRepresentationLearningContrastive2019,
+ title = {Representation {{Learning}} with {{Contrastive Predictive Coding}}},
+ author = {van den Oord, Aaron and Li, Yazhe and Vinyals, Oriol},
+ year = {2019},
+ urldate = {2024-11-21},
+ number = {arXiv:1807.03748},
+ publisher = {arXiv},
+ file = {/home/kellen/Downloads/pdfs/storage/8ZBPFQEK/Oord et al. - 2019 - Representation Learning with Contrastive Predictive Coding.pdf;/home/kellen/Downloads/pdfs/storage/H9PLPKN6/Oord et al. - 2019 - Representation Learning with Contrastive Predictive Coding.pdf},
+ keywords = {Computer Science - Machine Learning,Statistics - Machine Learning},
+ langid = {english},
+ archiveprefix = {arXiv},
+ abstract = {While supervised learning has enabled great progress in many applications, unsupervised learning has not seen such widespread adoption, and remains an important and challenging endeavor for artificial intelligence. In this work, we propose a universal unsupervised learning approach to extract useful representations from high-dimensional data, which we call Contrastive Predictive Coding. The key insight of our model is to learn such representations by predicting the future in latent space by using powerful autoregressive models. We use a probabilistic contrastive loss which induces the latent space to capture information that is maximally useful to predict future samples. It also makes the model tractable by using negative sampling. While most prior work has focused on evaluating representations for a particular modality, we demonstrate that our approach is able to learn useful representations achieving strong performance on four distinct domains: speech, images, text and reinforcement learning in 3D environments.},
+ primaryclass = {cs},
+ eprint = {1807.03748},
+ month = {January}
+}]]></fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter />
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>Michael Gutmann</fr:author>
+              <fr:author>Aapo Hyvärinen</fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2010</fr:year>
+              <fr:month>3</fr:month>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/gutmannNoisecontrastiveEstimationNew2010/</fr:uri>
+            <fr:display-uri>gutmannNoisecontrastiveEstimationNew2010</fr:display-uri>
+            <fr:route>/gutmannNoisecontrastiveEstimationNew2010/</fr:route>
+            <fr:title text="Noise-contrastive estimation: A new estimation principle for unnormalized statistical models">Noise-contrastive estimation: A new estimation principle for unnormalized statistical models</fr:title>
+            <fr:taxon>Reference</fr:taxon>
+            <fr:meta name="bibtex"><![CDATA[@inproceedings{gutmannNoisecontrastiveEstimationNew2010,
+ title = {Noise-Contrastive Estimation: {{A}} New Estimation Principle for Unnormalized Statistical Models},
+ author = {Gutmann, Michael and Hyv{\"a}rinen, Aapo},
+ year = {2010},
+ urldate = {2025-01-24},
+ booktitle = {Proceedings of the {{Thirteenth International Conference}} on {{Artificial Intelligence}} and {{Statistics}}},
+ pages = {297--304},
+ publisher = {{JMLR Workshop and Conference Proceedings}},
+ file = {/home/kellenkanarios/Downloads/Papers/Papers/Contrastive RL/Gutmann_Hyvärinen_2010_Noise-contrastive estimation.pdf},
+ langid = {english},
+ abstract = {We present a new estimation principle for parameterized statistical models. The idea is to perform nonlinear logistic regression to discriminate between the observed data and some artificially generated noise, using the model log-density function in the regression nonlinearity.  We show that this leads to a consistent (convergent) estimator of the parameters, and analyze the asymptotic variance.  In particular, the method is shown to directly work for unnormalized models, i.e. models where the density function does not integrate to one. The normalization constant can be estimated just like any other parameter. For a tractable ICA model, we compare the method with other estimation methods that can be used to learn unnormalized models, including score matching, contrastive divergence, and maximum-likelihood where the normalization constant is estimated with importance sampling. Simulations show that noise-contrastive estimation offers the best trade-off between computational and statistical efficiency. The method is then applied to the modeling of natural images: We show that the method can successfully estimate a large-scale two-layer model and a Markov random field.},
+ issn = {1938-7228},
+ month = {March},
+ shorttitle = {Noise-Contrastive Estimation}
+}]]></fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter />
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>6</fr:month>
+              <fr:day>5</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/007M/</fr:uri>
+            <fr:display-uri>007M</fr:display-uri>
+            <fr:route>/007M/</fr:route>
+            <fr:title text="Upcoming Blogs">Upcoming Blogs</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:ul><html:li><fr:link href="/0005/" title="Contrastive Reinforcement Learning" uri="https://kellenkanarios.com/0005/" display-uri="0005" type="local">Contrastive Reinforcement Learning</fr:link></html:li>
+  <html:li><fr:link href="/003Y/" title="The History and Evolution of Policy Gradient Algorithms" uri="https://kellenkanarios.com/003Y/" display-uri="003Y" type="local">The History and Evolution of Policy Gradient Algorithms</fr:link></html:li>
+  <html:li><fr:link href="/006Q/" title="A Dynamic Duo: Tree Search + RL" uri="https://kellenkanarios.com/006Q/" display-uri="006Q" type="local">A Dynamic Duo: Tree Search + RL</fr:link></html:li>
+  <html:li><fr:link href="/003D/" title="Deepseek v1 through R1: RL is back!" uri="https://kellenkanarios.com/003D/" display-uri="003D" type="local">Deepseek v1 through R1: RL is back!</fr:link></html:li>
+  <html:li><fr:link href="/007O/" title="RL as Probablistic Inference" uri="https://kellenkanarios.com/007O/" display-uri="007O" type="local">RL as Probablistic Inference</fr:link></html:li>
+  <html:li><fr:link href="/007P/" title="Constrained MDPs?" uri="https://kellenkanarios.com/007P/" display-uri="007P" type="local">Constrained MDPs?</fr:link></html:li>
+  <html:li><fr:link href="/006Q/" title="A Dynamic Duo: Tree Search + RL" uri="https://kellenkanarios.com/006Q/" display-uri="006Q" type="local">A Dynamic Duo: Tree Search + RL</fr:link></html:li></html:ul>
+            <html:p>Request more below!</html:p>
+            <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="blog-requests" theme="boxy-light" crossorigin="anonymous" async="" />
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

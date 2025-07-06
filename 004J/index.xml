@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors />
+    <fr:date>
+      <fr:year>2025</fr:year>
+      <fr:month>2</fr:month>
+      <fr:day>3</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/004J/</fr:uri>
+    <fr:display-uri>004J</fr:display-uri>
+    <fr:route>/004J/</fr:route>
+    <fr:title text="Word Embeddings">Word Embeddings</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter>
+    <fr:tex display="block"><![CDATA[\mathrm {Tok}(\mathbf {x})=\begin {bmatrix} 132\\ 17 \\ 87\\ 83\\ 184\end {bmatrix}]]></fr:tex>
+  </fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>1</fr:month>
+              <fr:day>27</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/003D/</fr:uri>
+            <fr:display-uri>003D</fr:display-uri>
+            <fr:route>/003D/</fr:route>
+            <fr:title text="Deepseek v1 through R1: RL is back!">Deepseek v1 through R1: RL is back!</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>In this blog, we will aim to understand the key contributions of <fr:link href="/deepseek-aiDeepSeekR1IncentivizingReasoning2025/" title="DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning" uri="https://kellenkanarios.com/deepseek-aiDeepSeekR1IncentivizingReasoning2025/" display-uri="deepseek-aiDeepSeekR1IncentivizingReasoning2025" type="local">DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning</fr:link>. It will serve as the complement to my group meeting presentation possibly consisting of more in-depth explanations. Time permitting, we might go over the engineering innovations introduced in <fr:link href="/deepseek-aiDeepSeekV3TechnicalReport2025/" title="DeepSeek-V3 Technical Report" uri="https://kellenkanarios.com/deepseek-aiDeepSeekV3TechnicalReport2025/" display-uri="deepseek-aiDeepSeekV3TechnicalReport2025" type="local">DeepSeek-V3 Technical Report</fr:link>.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>1</fr:month><fr:day>27</fr:day></fr:date><fr:title text="Background">Background</fr:title></fr:frontmatter><fr:mainmatter>
+    By request of my advisor, I will cover the basics of LLMs prior to the innovations in the Deepseek lineage. For those familiar with LLMs, please skip this section.
+    <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>2</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/004J/</fr:uri><fr:display-uri>004J</fr:display-uri><fr:route>/004J/</fr:route><fr:title text="Word Embeddings">Word Embeddings</fr:title></fr:frontmatter><fr:mainmatter><fr:tex display="block"><![CDATA[\mathrm {Tok}(\mathbf {x})=\begin {bmatrix} 132\\ 17 \\ 87\\ 83\\ 184\end {bmatrix}]]></fr:tex></fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>2</fr:month><fr:day>1</fr:day></fr:date><fr:uri>https://kellenkanarios.com/004G/</fr:uri><fr:display-uri>004G</fr:display-uri><fr:route>/004G/</fr:route><fr:title text="Self-Attention">Self-Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p>
+    TLDR: Learned weighting of token embeddings. Essentially, learning which words to "attend" to in the input sequence. Have matrices
+<fr:tex display="inline"><![CDATA[\mathbf {Q} = \begin {bmatrix}
+  \begin {bmatrix}
+    \text {---} & \mathbf {q}^{(1)} & \text {---}
+  \end {bmatrix} \\
+  \vdots  \\
+  \begin {bmatrix}
+    \text {---} & \mathbf {q}^{(n)} & \text {---}
+  \end {bmatrix}
+\end {bmatrix} \in  \mathbb {R}^{n \times  d_q}]]></fr:tex>, 
+<fr:tex display="inline"><![CDATA[
+\mathbf {K} = \begin {bmatrix}
+  \begin {bmatrix}
+    \text {---} & \mathbf {k}^{(1)} & \text {---}
+  \end {bmatrix} \\
+  \vdots  \\
+  \begin {bmatrix}
+    \text {---} & \mathbf {k}^{(n)} & \text {---}
+  \end {bmatrix}
+\end {bmatrix} \in  \mathbb {R}^{n \times  d_k}
+]]></fr:tex>
+<fr:tex display="inline"><![CDATA[
+\mathbf {V} = \begin {bmatrix}
+  \begin {bmatrix}
+    \text {---} & \mathbf {v}^{(1)} & \text {---}
+  \end {bmatrix} \\
+  \vdots  \\
+  \begin {bmatrix}
+    \text {---} & \mathbf {v}^{(n)} & \text {---}
+  \end {bmatrix}
+\end {bmatrix} \in  \mathbb {R}^{n \times  d_v}
+]]></fr:tex></html:p><html:p><html:strong>Intuition 1:</html:strong> Convex re-weighting of input tokens.
+  Note that
+<fr:tex display="block"><![CDATA[
+\begin {align*}
+  \begin {bmatrix}
+    p_1 & p_2 & p_3
+  \end {bmatrix} \begin {bmatrix}
+  \begin {bmatrix}
+    \text {---} & \mathbf {v}^{(1)} & \text {---}
+  \end {bmatrix} \\
+  \begin {bmatrix}
+    \text {---} & \mathbf {v}^{(2)} & \text {---}
+  \end {bmatrix} \\
+  \begin {bmatrix}
+    \text {---} & \mathbf {v}^{(3)} & \text {---}
+  \end {bmatrix}
+  \end {bmatrix} = p_1 \mathbf {v}^{(1)} + p_2 \mathbf {v}^{(2)} + p_3 \mathbf {v}^{(3)}
+\end {align*}
+  ]]></fr:tex>
+<fr:tex display="block"><![CDATA[
+\begin {align*}
+  \begin {bmatrix}
+    p_{11} & 0 & 0 \\
+    p_{21} & p_{22} & 0 \\
+    p_{31} & p_{32} & p_{33}
+  \end {bmatrix} \begin {bmatrix}
+  \begin {bmatrix}
+    \text {---} & \mathbf {v}^{(1)} & \text {---}
+  \end {bmatrix} \\
+  \begin {bmatrix}
+    \text {---} & \mathbf {v}^{(2)} & \text {---}
+  \end {bmatrix} \\
+  \begin {bmatrix}
+    \text {---} & \mathbf {v}^{(3)} & \text {---}
+  \end {bmatrix}
+  \end {bmatrix} = 
+  \begin {bmatrix}
+  p_{11} \mathbf {v}^{(1)}  \\
+  p_{21} \mathbf {v}^{(1)} + p_{22} \mathbf {v}^{(2)} \\
+  p_{31} \mathbf {v}^{(1)} + p_{32} \mathbf {v}^{(2)} + p_{33} \mathbf {v}^{(3)}
+  \end {bmatrix}
+\end {align*}
+  ]]></fr:tex>
+  <html:strong>Intuition 2:</html:strong> Context dependent re-weighting.
+      If <fr:tex display="inline"><![CDATA[\mathbf {p} = \mathbb {S}(\mathbf {Q} \mathbf {K}^T)]]></fr:tex> then
+      <fr:tex display="block"><![CDATA[
+        \begin {align*}
+          p_{ij} = \frac {\mathbf {q}^{(i)} \cdot  \mathbf {k}^{(j)}}{\sum _{j} \mathbf {q}^{(i)} \cdot  \mathbf {k}^{(j)}}
+        \end {align*}
+      ]]></fr:tex></html:p>
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>2</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+    Suppose that <fr:tex display="inline"><![CDATA[\mathbf {x} = \text {I play with the ball}]]></fr:tex>. Then 
+<fr:tex display="block"><![CDATA[
+    \begin {align*}
+      \mathbf {x}^{(5)} = \mathrm {Embed}(\text {``ball"})
+    \end {align*}
+  ]]></fr:tex>
+  A feasible query for "ball" would be a verb describing the action of the ball, so maybe
+  <fr:tex display="block"><![CDATA[
+  \begin {align*}
+      W_q \mathbf {x}^{(5)} = \mathrm {Embed}(\text {``play"})
+  \end {align*}
+  ]]></fr:tex>
+  and a key for "play" would be what you are playing with like a ball, so 
+  <fr:tex display="block"><![CDATA[
+  \begin {align*}
+      W_k \mathbf {x}^{(2)} = \mathrm {Embed}(\text {``ball"})
+  \end {align*}
+  ]]></fr:tex>
+  i.e.
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+    \mathrm {Query}(\text {``quantum"}) \cdot  \mathrm {Key}(\text {``mechanics"}) \approx 
+    ||\mathrm {Query}(\text {``quantum"})|| \cdot  ||\mathrm {Key}(\text {``mechanics"})||
+  \end {align*}
+]]></fr:tex>
+
+</fr:mainmatter></fr:tree>
+ 
+<html:p><fr:tex display="block"><![CDATA[
+  \begin {align*}
+\left [\mathbb {S}(\mathbf {Q}\mathbf {K}^T)\right ]_{4} &= \mathbb {S}\left (\begin {bmatrix}
+\mathbf {q}^{(4)} \cdot  \mathbf {k}^{(1)} & \mathbf {q}^{(4)} \cdot  \mathbf {k}^{(2)} & \mathbf {q}^{(4)} \cdot  \mathbf {k}^{(3)} & \mathbf {q}^{(4)} \cdot  \mathbf {k}^{(4)} & \mathbf {q}^{(4)} \cdot  \mathbf {k}^{(5)} & \mathbf {q}^{(4)} \cdot  \mathbf {k}^{(6)}
+\end {bmatrix}
+\right ) \\
+&= \begin {bmatrix}
+0 & 0.2 & 0.3 & 0.5 & 0 & 0
+\end {bmatrix}
+  \end {align*}
+]]></fr:tex>
+<fr:tex display="block"><![CDATA[
+\left [\mathbb {S}(\mathbf {Q}\mathbf {K}^T)\right ]_{4} \mathbf {V} = 0.2 \mathbf {v}^{(2)} + 0.3 \mathbf {v}^{(3)} + 0.5 \mathbf {v}^{(5)}
+]]></fr:tex></html:p></fr:mainmatter></fr:tree>
+    
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>1</fr:month><fr:day>27</fr:day></fr:date><fr:title text="Deepseek v1 through R1: RL is back! › RLHF"><fr:link href="/003D/" title="Deepseek v1 through R1: RL is back!" uri="https://kellenkanarios.com/003D/" display-uri="003D" type="local">Deepseek v1 through R1: RL is back!</fr:link> › RLHF</fr:title></fr:frontmatter><fr:mainmatter>
+<fr:tex display="block"><![CDATA[\mathrm {loss}\left (\phi \right )=E_{\left (x,y\right )\sim  D_{\pi _{\phi }^{\mathrm {RL}}}}\left [r_\theta (x,y)-\beta \log \left (\pi _{\phi }^{\mathrm {RL}}(y\mid  x)/\pi ^{\mathrm {SFT}}(y\mid  x)\right )\right ] + \gamma  E_{x\sim  D_{\mathrm {pretrain}}}\left [\log (\pi _{\phi }^{\mathrm {RL}}(x))\right ]]]></fr:tex>
+      </fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>1</fr:month><fr:day>27</fr:day></fr:date><fr:title text="Deepseek v2">Deepseek v2</fr:title></fr:frontmatter><fr:mainmatter>
+    Paper 
+  </fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>1</fr:month><fr:day>27</fr:day></fr:date><fr:title text="Deepseek v3">Deepseek v3</fr:title></fr:frontmatter><fr:mainmatter>
+TODO. Kinda wanna look into the architectural / training innovations from this paper.
+  </fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>1</fr:month><fr:day>27</fr:day></fr:date><fr:title text="Deepseek R1">Deepseek R1</fr:title></fr:frontmatter><fr:mainmatter>
+
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>1</fr:month><fr:day>27</fr:day></fr:date><fr:title text="Deepseek v1 through R1: RL is back! › How is R1 different then previous iterations of models?"><fr:link href="/003D/" title="Deepseek v1 through R1: RL is back!" uri="https://kellenkanarios.com/003D/" display-uri="003D" type="local">Deepseek v1 through R1: RL is back!</fr:link> › How is R1 different then previous iterations of models?</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:ul><html:li>In R1-Zero, they do <html:strong>ZERO</html:strong> SFT on the base model - directly apply reinforcement learning.</html:li>
+    <html:li>Use PPO like policy optimization but do <html:strong>NOT</html:strong> learn a reward model.</html:li>
+    <html:ul><html:li>Use very simple reward: 
+        <html:ul><html:li><fr:tex display="inline"><![CDATA[+1]]></fr:tex> for correct answer</html:li> 
+          <html:li><fr:tex display="inline"><![CDATA[-0.5]]></fr:tex> for incorrect answer</html:li> 
+          <html:li><fr:tex display="inline"><![CDATA[-1]]></fr:tex> for inability to answer.</html:li></html:ul></html:li></html:ul></html:ul>
+</fr:mainmatter></fr:tree>
+
+
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>1</fr:month><fr:day>30</fr:day></fr:date><fr:uri>https://kellenkanarios.com/003X/</fr:uri><fr:display-uri>003X</fr:display-uri><fr:route>/003X/</fr:route><fr:title text="Group Relative Policy Optimization">Group Relative Policy Optimization</fr:title></fr:frontmatter><fr:mainmatter><html:p>Traditional actor critic RL algorithms, require training both an actor and a critic (as the name implies). Typically, these components are both of equal size. In the field of RL, this is non-problematic because models are typically rather small (at least in comparison to LLMs).
+In <fr:link href="/shaoDeepSeekMathPushingLimits2024/" title="DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models" uri="https://kellenkanarios.com/shaoDeepSeekMathPushingLimits2024/" display-uri="shaoDeepSeekMathPushingLimits2024" type="local">DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models</fr:link></html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>1</fr:month><fr:day>30</fr:day></fr:date><fr:title text="Math">Math</fr:title></fr:frontmatter><fr:mainmatter>
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+    {\mathcal {J}}_{\mathrm {GRPO}}(\theta )&= \mathbb {E}[q\sim  P(Q),\{o_{i}\}_{i=1}^{G}\sim \pi _{\theta _{o l d}}(O|q)] \\
+    &= \frac {1}{G}\sum _{i=1}^{G}\left (\operatorname *{min}\left (\frac {\pi _{\theta }(o_{i}|q)}{\pi _{\theta _{o d}}(o_{i}|q)}A_{i},\operatorname *{clip}\left (\frac {\pi _{\theta }(o_{i}|q)}{\pi _{\theta _{o d d}}(o_{i}|q)},1-\varepsilon ,1+\varepsilon \right )A_{i}\right )-\beta \mathbb {D}_{K L}\left (\pi _{\theta }||\pi _{r e f}\right )\right )
+    \end {align*}
+  ]]></fr:tex>
+  where
+  <fr:tex display="block"><![CDATA[
+        \mathbb {D}_{\mathrm {K L}}\left (\pi _{\theta }||\pi _{\mathrm {ref}}\right )=\frac {\pi _{\mathrm {ref}}(o_{i}|q)}{\pi _{\theta }(o_{i}|q)}-\log \frac {\pi _{\mathrm {ref}}(o_{i}|q)}{\pi _{\theta }(o_{i}|q)}-1
+    ]]></fr:tex>
+    The astute RL reader will notice this is essentially <fr:link href="/schulmanProximalPolicyOptimization2017/" title="Proximal Policy Optimization Algorithms" uri="https://kellenkanarios.com/schulmanProximalPolicyOptimization2017/" display-uri="schulmanProximalPolicyOptimization2017" type="local">PPO</fr:link>.
+    The key distinction here is that the advantage <fr:tex display="inline"><![CDATA[A_i]]></fr:tex> is not computed using a critic model. Instead, 
+<fr:tex display="block"><![CDATA[A_{i}=\frac {r_{i}-\mathrm {mean}(\{r_{1},r_{2},\cdots ,r_{G}\})}{\mathrm {std}(\{r_{1},r_{2},\cdots ,r_{G}\})}.]]></fr:tex>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>1</fr:month><fr:day>27</fr:day></fr:date><fr:title text="Deepseek v1 through R1: RL is back! › Post-training"><fr:link href="/003D/" title="Deepseek v1 through R1: RL is back!" uri="https://kellenkanarios.com/003D/" display-uri="003D" type="local">Deepseek v1 through R1: RL is back!</fr:link> › Post-training</fr:title></fr:frontmatter><fr:mainmatter>
+    <html:ul><html:li><html:em>Reinforcement Learning for all Scenarios:</html:em> Seems like they do RLHF after the pure RL stage.</html:li>
+        <html:ul><html:li>Do traditional helpfulness harmfulness RLHF with trained reward model.</html:li></html:ul></html:ul>
+  </fr:mainmatter></fr:tree>
+
+
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>1</fr:month><fr:day>27</fr:day></fr:date><fr:title text="Deepseek v1 through R1: RL is back! › Distilling Models with R1"><fr:link href="/003D/" title="Deepseek v1 through R1: RL is back!" uri="https://kellenkanarios.com/003D/" display-uri="003D" type="local">Deepseek v1 through R1: RL is back!</fr:link> › Distilling Models with R1</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:ul><html:li>To distill, they do only SFT with R1 generated COT.</html:li>
+      <html:li>They show that distillation outperforms doing pure RL approach on smaller model</html:li></html:ul>
+  </fr:mainmatter></fr:tree>
+
+
+</fr:mainmatter></fr:tree>
+
+  <html:hr />
+<html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="deepseek-r1" theme="boxy-light" crossorigin="anonymous" async="" /></fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

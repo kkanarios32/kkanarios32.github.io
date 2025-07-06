@@ -1,0 +1,623 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors>
+      <fr:author>
+        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+      </fr:author>
+    </fr:authors>
+    <fr:date>
+      <fr:year>2025</fr:year>
+      <fr:month>6</fr:month>
+      <fr:day>30</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/0082/</fr:uri>
+    <fr:display-uri>0082</fr:display-uri>
+    <fr:route>/0082/</fr:route>
+    <fr:title text="Evidence Lower Bound">Evidence Lower Bound</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter><html:p><html:strong>Setup:</html:strong>
+We are given a joint distribution <fr:tex display="inline"><![CDATA[p(X, Z; \theta )]]></fr:tex>, where <fr:tex display="inline"><![CDATA[X]]></fr:tex> and <fr:tex display="inline"><![CDATA[Z]]></fr:tex> are random variables with their joint parametrized by <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex>. We are also given a dataset <fr:tex display="inline"><![CDATA[\mathcal {D}]]></fr:tex> containing realizations of <html:strong>only</html:strong> <fr:tex display="inline"><![CDATA[X]]></fr:tex> i.e. <fr:tex display="inline"><![CDATA[Z]]></fr:tex> is a <fr:link href="/0083/" title="Latent Variable" uri="https://kellenkanarios.com/0083/" display-uri="0083" type="local">latent random variable</fr:link>.
+  </html:p>
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  "><html:strong>Goal:</html:strong> We want to learn <fr:tex display="inline"><![CDATA[p(x; \theta )]]></fr:tex>.</html:div>
+<html:p> However, <fr:tex display="block"><![CDATA[p(x; \theta ) = \int  p(x, z; \theta ) \mathrm {d}z = \int  p(x | z; \theta )p(z) \mathrm {d}z,]]></fr:tex> which is computationally intractable for most continuous <fr:tex display="inline"><![CDATA[Z]]></fr:tex>.</html:p>
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  "><html:strong>Question:</html:strong> Can we update <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> for a given realization of <fr:tex display="inline"><![CDATA[x]]></fr:tex> and <fr:tex display="inline"><![CDATA[z]]></fr:tex>?</html:div>
+
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  "><html:strong>Answer:</html:strong> Yes!!!</html:div>
+<html:p><html:strong>Motivation:</html:strong> Suppose we had some <fr:tex display="inline"><![CDATA[q(z)]]></fr:tex> that we could sample realizations of <fr:tex display="inline"><![CDATA[Z]]></fr:tex> from. Then we want to find some reasonable <fr:tex display="inline"><![CDATA[\ell _{\theta }]]></fr:tex>, such that
+<fr:tex display="block"><![CDATA[\theta ^* \approx  \arg \max _{\theta } \mathbb {E}_{x, \sim  p(x; \theta ^*), z \sim  q(z)}[\ell _{\theta }(X, Z)]]]></fr:tex>
+
+    <fr:tree show-metadata="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>6</fr:month><fr:day>30</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+<fr:tex display="inline"><![CDATA[q(z)]]></fr:tex> can potentially (and will) depend on the sample <fr:tex display="inline"><![CDATA[x_i]]></fr:tex>. This is OK because we are given <fr:tex display="inline"><![CDATA[x_i]]></fr:tex>'s, which we can then just pass to <fr:tex display="inline"><![CDATA[q]]></fr:tex> to get the corresponding <fr:tex display="inline"><![CDATA[z_i]]></fr:tex>.
+</fr:mainmatter></fr:tree>
+
+Why is this the case? Because then (for well-behaved <fr:tex display="inline"><![CDATA[\ell _{\theta }]]></fr:tex>)
+<fr:tex display="block"><![CDATA[\theta _{t + 1} = \theta _{t} - \alpha  \nabla _{\theta _{t}}\ell _{\theta _{t}}(x_i, z_i) \to  \theta ^*]]></fr:tex>
+i.e. SGD is a reasonable thing to do, where the gradient is for a <html:strong>single</html:strong> sample of <fr:tex display="inline"><![CDATA[x_i]]></fr:tex> and <fr:tex display="inline"><![CDATA[z_i]]></fr:tex> which we have readily available from our dataset <fr:tex display="inline"><![CDATA[\mathcal {D}]]></fr:tex> and our distribution <fr:tex display="inline"><![CDATA[q]]></fr:tex> that we can sample from. This idea comes up a lot in optimization, such as the <fr:tex display="inline"><![CDATA[\log ]]></fr:tex> trick in the original <fr:link href="/003Y/" title="The History and Evolution of Policy Gradient Algorithms" uri="https://kellenkanarios.com/003Y/" display-uri="003Y" type="local">policy gradient</fr:link>.
+</html:p><html:p>Similar to the <fr:tex display="inline"><![CDATA[\log ]]></fr:tex> trick, the <html:em>Evidence Lower Bound</html:em> (ELBO) comes from a simple multiply and divide trick. Namely,
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \log  p(x; \theta ) &= \log  \int  p(x, z; \theta ) \mathrm {d}z \\
+  &= \log  \int  p(x, z; \theta ) \frac {q(z)}{q(z)} \mathrm {d}z \\
+  &= \log  \mathbb {E}_{z \sim  q(z)} \frac {p(x, Z; \theta )}{q(z)} \\
+  &\geq  \mathbb {E}_{z \sim  q(z)} \log  \frac {p(x, Z; \theta )}{q(z)}
+.\end {align*}]]></fr:tex>
+The last inequality follows directly from <fr:link href="/002G/" title="Jensen's Inequality" uri="https://kellenkanarios.com/002G/" display-uri="002G" type="local">Jensen's Inequality</fr:link>. However, note that this is only a lower bound and therefore not exactly what we want. For example, if we were to pick <fr:tex display="inline"><![CDATA[q \sim  N(0, 1)]]></fr:tex> and then optimize the ELBO for <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> we would not necessarily find a good <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> for the likelihood <fr:tex display="inline"><![CDATA[\log  p(x; \theta )]]></fr:tex>. Luckily, we can actually get the difference <fr:tex display="inline"><![CDATA[\log  p(x; \theta ) - ]]></fr:tex>ELBO in closed form! Namely,
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \log  p(x; \theta ) - \mathrm {ELBO} &= \log  p(x; \theta ) - \mathbb {E}_{z \sim  q(z)} \log  \frac {p(x, Z; \theta )}{q(z)} \\ 
+&= \int  \left (\log  p(x; \theta ) - \log  \frac {p(x, z; \theta )}{q(z)}\right )q(z) \\ 
+&= \int  \left (\log  \frac {p(x; \theta )q(z)}{p(x, z; \theta )}\right )q(z) \\ 
+&= \int  \left (\log  \frac {p(x; \theta )q(z)}{p(z | x; \theta )p(x; \theta )}\right )q(z) \\ 
+&= \int  \left (\log  \frac {q(z)}{p(z | x; \theta )}\right )q(z) \\ 
+&= \mathrm {KL}\big (q(z) \mid \mid  p(z | x; \theta )\big )
+.\end {align*}]]></fr:tex>
+Thus, to tighten the lower bound we can optimize <fr:tex display="inline"><![CDATA[q_{\phi }(z)]]></fr:tex> to try to match <fr:tex display="inline"><![CDATA[p(z | x; \theta )]]></fr:tex>. As a sanity check, lets make sure these match when <fr:tex display="inline"><![CDATA[q(z) = p(z \mid  x; \theta )]]></fr:tex>. 
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \mathbb {E}_{z \sim  q(z)} \log  \frac {p(x, Z; \theta )}{q(z)} &= \int  \log  \frac {p(x, z; \theta )}{q(z)}\mathrm {d}z \\
+  &= \int  \log  \frac {p(x; \theta )p(z \mid  x; \theta )}{p(z \mid  x; \theta )}\mathrm {d}z \\
+  &= \int  \log  p(x; \theta )\mathrm {d}z \\
+  &= \log (x; \theta )
+.\end {align*}]]></fr:tex>
+You may be wondering how we use this algorithmically to find <fr:tex display="inline"><![CDATA[\theta ^*]]></fr:tex>? This will be the main idea of <fr:link href="/0088/" title="Expectation Maximization" uri="https://kellenkanarios.com/0088/" display-uri="0088" type="local">expectation maximization</fr:link>. Feel free to check it out!
+</html:p></fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:contributor>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:contributor>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>6</fr:month>
+              <fr:day>5</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/007L/</fr:uri>
+            <fr:display-uri>007L</fr:display-uri>
+            <fr:route>/007L/</fr:route>
+            <fr:title text="Marginalia">Marginalia</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>This is my short-form blog, where I will jot down (primarily) self-contained notes about things I find interesting or other random stuff in my life.</html:p>
+            <fr:tree show-metadata="true" expanded="false" numbered="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2025</fr:year>
+                  <fr:month>7</fr:month>
+                  <fr:day>1</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/0088/</fr:uri>
+                <fr:display-uri>0088</fr:display-uri>
+                <fr:route>/0088/</fr:route>
+                <fr:title text="Expectation Maximization">Expectation Maximization</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>This is the follow up to the previous note on the <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link>. Mainly, here we aim to show how we can use the ELBO to find <fr:tex display="inline"><![CDATA[\theta ^*]]></fr:tex> i.e. 
+<fr:tex display="block"><![CDATA[
+\begin {align*}
+ \theta ^* &= \arg \max  \mathbb {E}_{x \sim  \mathcal {D}} \log  p(x; \theta ) \\ 
+ &= \arg \max  \mathbb {E}_{x \sim  \mathcal {D}} \log  \int  p(x, z; \theta ) \mathrm {d}z 
+.\end {align*}
+]]></fr:tex>
+Notably, <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link> gives us the lower bound 
+<fr:tex display="block"><![CDATA[\log  p(x; \theta ) \geq  \mathbb {E}_{z \sim  q}\left [\log  \frac {p(x,  Z; \theta )}{q(z)}\right ]  \eqqcolon  \mathsf {ELBO}(x, q, \theta )]]></fr:tex>
+for a <html:strong>fixed</html:strong> theta <html:strong>and</html:strong> <fr:tex display="inline"><![CDATA[q]]></fr:tex>. Therefore, <html:strong>for each</html:strong> <fr:tex display="inline"><![CDATA[\theta  ]]></fr:tex>, we want to find some <fr:tex display="inline"><![CDATA[q]]></fr:tex>, such that
+  <fr:tex display="block"><![CDATA[\mathsf {ELBO}(x, q, \theta ) = \log  p(x, \theta )]]></fr:tex>
+  With this, we can easily perform gradient ascent
+  <fr:tex display="block"><![CDATA[\theta _{t + 1} \gets  \theta _t + \nabla _{\theta } \mathsf {ELBO}(x, q, \theta _t),]]></fr:tex>
+  to maximize the log-likelihood <fr:tex display="inline"><![CDATA[\log  p(x; \theta )]]></fr:tex>. 
+</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Note that the gradient is with respect to <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex>, where <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> is just the third argument to <fr:tex display="inline"><![CDATA[\mathsf {ELBO}]]></fr:tex> as defined above. Notably, <fr:tex display="inline"><![CDATA[\theta _t]]></fr:tex> will show up elsewhere later but will <html:strong>NOT</html:strong> be backpropagated through.
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:title text="Expectation">Expectation</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The above motivates the <html:em>expectation</html:em> step of the EM algorithm. Namely how can we compute the lower bound expectation for the <html:strong>best</html:strong> possible <fr:tex display="inline"><![CDATA[q]]></fr:tex>.</html:p>
+<html:p>Recall (or review) from the discussion on <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link> that <fr:tex display="inline"><![CDATA[q(z) = p(z | x; \theta )]]></fr:tex> maximizes the ELBO for a given <fr:tex display="inline"><![CDATA[x]]></fr:tex> and <fr:tex display="inline"><![CDATA[\theta  ]]></fr:tex>. Therefore, we actually want to learn <fr:tex display="inline"><![CDATA[q_{\phi }(z, x, \theta ) \approx  p(z | x; \theta )]]></fr:tex>. To do so, we can simply maximize the ELBO (duh). Formally,
+<fr:tex display="block"><![CDATA[\phi _{t+1} = \argmax _{\phi } \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q}\left [\log  \frac {p(x,  Z; \theta _t)}{q_{\phi }(Z, x, \theta _t)}\right ]]]></fr:tex></html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>
+Now this is all cool theoretically but how TF do we actually maximize this thing? 
+</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>
+  It is highly dependent on the parametrization of <fr:tex display="inline"><![CDATA[p]]></fr:tex> and <fr:tex display="inline"><![CDATA[q]]></fr:tex>.
+</fr:mainmatter></fr:tree>
+
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+  <html:p>
+  We define the problem as 
+  <html:ol><html:li><fr:tex display="inline"><![CDATA[p(z) \sim  N(0, 1)]]></fr:tex></html:li>
+    <html:li><fr:tex display="inline"><![CDATA[p(x | z; \theta ) \sim  N(\mu _{\theta }(z), \sigma _{\theta }(z))]]></fr:tex></html:li>
+    <html:li><fr:tex display="inline"><![CDATA[q_{\phi }(z | x, \theta ) \sim  N(\mu _{\phi }(x), \sigma _\phi (x))]]></fr:tex></html:li></html:ol>
+  where <fr:tex display="inline"><![CDATA[\mu _{\{\phi , \theta \}}, \sigma _{\{\phi , \theta \}}]]></fr:tex> are parametrized neural networks. Then we can rewrite the <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link> as (ignoring constants)
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+     \mathsf {ELBO}(x, q, \theta ) &= \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q(\cdot  \mid  x, \theta )} \left [\log  p(Z) - \log  \frac {p(x \mid  Z; \theta )}{q_{\phi }(Z, x, \theta )}\right ] \\
+&= \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q(\cdot  \mid  x, \theta )} \left [-\frac {Z^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((Z - \mu _{\theta }(Z))^2 - (Z - \mu _{\phi }(x))^2\big )\right ]
+    .\end {align*}
+    ]]></fr:tex>
+    We face one more obstacle.
+  </html:p>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>
+    We need to sample realization <fr:tex display="inline"><![CDATA[z \sim  q_{\phi }(\cdot  |x, \theta )]]></fr:tex>. So isn't our realization <fr:tex display="inline"><![CDATA[z]]></fr:tex> a function of <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. How would we optimize this?
+  </fr:mainmatter></fr:tree>
+
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>
+    The <fr:link href="/0089/" title="Reparametrization Trick" uri="https://kellenkanarios.com/0089/" display-uri="0089" type="local">reparametrization trick</fr:link>!!
+  </fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:uri>https://kellenkanarios.com/0089/</fr:uri><fr:display-uri>0089</fr:display-uri><fr:route>/0089/</fr:route><fr:title text="Reparametrization Trick">Reparametrization Trick</fr:title></fr:frontmatter><fr:mainmatter><html:p>For <fr:tex display="inline"><![CDATA[q_{\phi }(\cdot  | x) \sim  N(\mu _{\phi }(x), \sigma _{\phi }(x))]]></fr:tex>. The <html:em>reparametrization trick</html:em> allows us to differentate through a random sample by sampling from <fr:tex display="inline"><![CDATA[q_{\phi }(\cdot  | x)]]></fr:tex> via 
+<fr:tex display="block"><![CDATA[z(\phi ) = \mu _{\phi }(x) + \sigma _{\phi }(x) \cdot  \epsilon ,]]></fr:tex>
+where <fr:tex display="inline"><![CDATA[\epsilon  \sim  N(0, 1)]]></fr:tex>. Then, for a given sample <fr:tex display="inline"><![CDATA[\epsilon ]]></fr:tex>, we can easily compute
+<fr:tex display="block"><![CDATA[\nabla _{\phi } z(\phi ) = \nabla _{\phi } \mu _{\phi }(x) + \nabla _{\phi }\sigma _{\phi }(x) \cdot  \epsilon ]]></fr:tex></html:p></fr:mainmatter></fr:tree>
+  <html:p>Now for a given sample <fr:tex display="inline"><![CDATA[x_i \sim  \mathcal {D}]]></fr:tex>, we can get a sample <fr:tex display="inline"><![CDATA[z_i(\phi ) \sim  q(\cdot  \mid  x_i, \theta )]]></fr:tex> that is differentiable with respect to <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. Using this, we can get the stochastic gradient estimate
+  <fr:tex display="block"><![CDATA[\nabla _q \widetilde {\mathsf {ELBO}}(x, q, \theta ) = \nabla _{\phi } \left [\frac {z_i(\phi )^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((z_i(\phi ) - \mu _{\theta }(z_i(\phi )))^2 - (z_i(\phi ) - \mu _{\phi }(x))^2\big )\right ]]]></fr:tex></html:p>
+
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  ">
+  <html:strong>Algorithm:</html:strong> input <fr:tex display="inline"><![CDATA[\theta _t]]></fr:tex>
+  <html:ol><html:li>Sample <fr:tex display="inline"><![CDATA[x_i]]></fr:tex> from dataset <fr:tex display="inline"><![CDATA[\mathcal {D}]]></fr:tex></html:li>
+    <html:li>Sample <fr:tex display="inline"><![CDATA[z_i(\phi ) \sim  q_{\phi }(\cdot  \mid  x_i, \theta _t)]]></fr:tex> via <fr:link href="/0089/" title="Reparametrization Trick" uri="https://kellenkanarios.com/0089/" display-uri="0089" type="local">trick</fr:link>.</html:li>
+    <html:li>Compute <fr:tex display="inline"><![CDATA[\nabla _q \widetilde {\mathsf {ELBO}}]]></fr:tex></html:li>
+    <html:li>Update via SGD</html:li></html:ol>
+</html:div>
+
+</fr:mainmatter></fr:tree>
+ 
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:title text="Maximization">Maximization</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Finally, we have reached the maximization step. This step is fairly straightforward after all the progress we have made. Once we have a tight lower bound i.e. <fr:tex display="inline"><![CDATA[q(z) \approx  p(z \mid  x; \theta )]]></fr:tex> then we simply fix <fr:tex display="inline"><![CDATA[q]]></fr:tex> and maximize the <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link> for <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> i.e. in the above example and algorithm we instead compute
+<fr:tex display="block"><![CDATA[\nabla _\theta  \widetilde {\mathsf {ELBO}}(x, q, \theta ) = \nabla _{\theta } \left [\frac {z_i(\phi )^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((z_i(\phi ) - \mu _{\theta }(z_i(\phi )))^2 - (z_i(\phi ) - \mu _{\phi }(x))^2\big )\right ]]]></fr:tex>
+Alternating between these steps yields the <html:em>expectation-maximization</html:em> algorithm the ML oldheads mythologize.
+</html:p>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="true" expanded="false" numbered="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2025</fr:year>
+                  <fr:month>6</fr:month>
+                  <fr:day>30</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/0082/</fr:uri>
+                <fr:display-uri>0082</fr:display-uri>
+                <fr:route>/0082/</fr:route>
+                <fr:title text="Evidence Lower Bound">Evidence Lower Bound</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p><html:strong>Setup:</html:strong>
+We are given a joint distribution <fr:tex display="inline"><![CDATA[p(X, Z; \theta )]]></fr:tex>, where <fr:tex display="inline"><![CDATA[X]]></fr:tex> and <fr:tex display="inline"><![CDATA[Z]]></fr:tex> are random variables with their joint parametrized by <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex>. We are also given a dataset <fr:tex display="inline"><![CDATA[\mathcal {D}]]></fr:tex> containing realizations of <html:strong>only</html:strong> <fr:tex display="inline"><![CDATA[X]]></fr:tex> i.e. <fr:tex display="inline"><![CDATA[Z]]></fr:tex> is a <fr:link href="/0083/" title="Latent Variable" uri="https://kellenkanarios.com/0083/" display-uri="0083" type="local">latent random variable</fr:link>.
+  </html:p>
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  "><html:strong>Goal:</html:strong> We want to learn <fr:tex display="inline"><![CDATA[p(x; \theta )]]></fr:tex>.</html:div>
+<html:p> However, <fr:tex display="block"><![CDATA[p(x; \theta ) = \int  p(x, z; \theta ) \mathrm {d}z = \int  p(x | z; \theta )p(z) \mathrm {d}z,]]></fr:tex> which is computationally intractable for most continuous <fr:tex display="inline"><![CDATA[Z]]></fr:tex>.</html:p>
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  "><html:strong>Question:</html:strong> Can we update <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> for a given realization of <fr:tex display="inline"><![CDATA[x]]></fr:tex> and <fr:tex display="inline"><![CDATA[z]]></fr:tex>?</html:div>
+
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  "><html:strong>Answer:</html:strong> Yes!!!</html:div>
+<html:p><html:strong>Motivation:</html:strong> Suppose we had some <fr:tex display="inline"><![CDATA[q(z)]]></fr:tex> that we could sample realizations of <fr:tex display="inline"><![CDATA[Z]]></fr:tex> from. Then we want to find some reasonable <fr:tex display="inline"><![CDATA[\ell _{\theta }]]></fr:tex>, such that
+<fr:tex display="block"><![CDATA[\theta ^* \approx  \arg \max _{\theta } \mathbb {E}_{x, \sim  p(x; \theta ^*), z \sim  q(z)}[\ell _{\theta }(X, Z)]]]></fr:tex>
+
+    <fr:tree show-metadata="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>6</fr:month><fr:day>30</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+<fr:tex display="inline"><![CDATA[q(z)]]></fr:tex> can potentially (and will) depend on the sample <fr:tex display="inline"><![CDATA[x_i]]></fr:tex>. This is OK because we are given <fr:tex display="inline"><![CDATA[x_i]]></fr:tex>'s, which we can then just pass to <fr:tex display="inline"><![CDATA[q]]></fr:tex> to get the corresponding <fr:tex display="inline"><![CDATA[z_i]]></fr:tex>.
+</fr:mainmatter></fr:tree>
+
+Why is this the case? Because then (for well-behaved <fr:tex display="inline"><![CDATA[\ell _{\theta }]]></fr:tex>)
+<fr:tex display="block"><![CDATA[\theta _{t + 1} = \theta _{t} - \alpha  \nabla _{\theta _{t}}\ell _{\theta _{t}}(x_i, z_i) \to  \theta ^*]]></fr:tex>
+i.e. SGD is a reasonable thing to do, where the gradient is for a <html:strong>single</html:strong> sample of <fr:tex display="inline"><![CDATA[x_i]]></fr:tex> and <fr:tex display="inline"><![CDATA[z_i]]></fr:tex> which we have readily available from our dataset <fr:tex display="inline"><![CDATA[\mathcal {D}]]></fr:tex> and our distribution <fr:tex display="inline"><![CDATA[q]]></fr:tex> that we can sample from. This idea comes up a lot in optimization, such as the <fr:tex display="inline"><![CDATA[\log ]]></fr:tex> trick in the original <fr:link href="/003Y/" title="The History and Evolution of Policy Gradient Algorithms" uri="https://kellenkanarios.com/003Y/" display-uri="003Y" type="local">policy gradient</fr:link>.
+</html:p><html:p>Similar to the <fr:tex display="inline"><![CDATA[\log ]]></fr:tex> trick, the <html:em>Evidence Lower Bound</html:em> (ELBO) comes from a simple multiply and divide trick. Namely,
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \log  p(x; \theta ) &= \log  \int  p(x, z; \theta ) \mathrm {d}z \\
+  &= \log  \int  p(x, z; \theta ) \frac {q(z)}{q(z)} \mathrm {d}z \\
+  &= \log  \mathbb {E}_{z \sim  q(z)} \frac {p(x, Z; \theta )}{q(z)} \\
+  &\geq  \mathbb {E}_{z \sim  q(z)} \log  \frac {p(x, Z; \theta )}{q(z)}
+.\end {align*}]]></fr:tex>
+The last inequality follows directly from <fr:link href="/002G/" title="Jensen's Inequality" uri="https://kellenkanarios.com/002G/" display-uri="002G" type="local">Jensen's Inequality</fr:link>. However, note that this is only a lower bound and therefore not exactly what we want. For example, if we were to pick <fr:tex display="inline"><![CDATA[q \sim  N(0, 1)]]></fr:tex> and then optimize the ELBO for <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> we would not necessarily find a good <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> for the likelihood <fr:tex display="inline"><![CDATA[\log  p(x; \theta )]]></fr:tex>. Luckily, we can actually get the difference <fr:tex display="inline"><![CDATA[\log  p(x; \theta ) - ]]></fr:tex>ELBO in closed form! Namely,
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \log  p(x; \theta ) - \mathrm {ELBO} &= \log  p(x; \theta ) - \mathbb {E}_{z \sim  q(z)} \log  \frac {p(x, Z; \theta )}{q(z)} \\ 
+&= \int  \left (\log  p(x; \theta ) - \log  \frac {p(x, z; \theta )}{q(z)}\right )q(z) \\ 
+&= \int  \left (\log  \frac {p(x; \theta )q(z)}{p(x, z; \theta )}\right )q(z) \\ 
+&= \int  \left (\log  \frac {p(x; \theta )q(z)}{p(z | x; \theta )p(x; \theta )}\right )q(z) \\ 
+&= \int  \left (\log  \frac {q(z)}{p(z | x; \theta )}\right )q(z) \\ 
+&= \mathrm {KL}\big (q(z) \mid \mid  p(z | x; \theta )\big )
+.\end {align*}]]></fr:tex>
+Thus, to tighten the lower bound we can optimize <fr:tex display="inline"><![CDATA[q_{\phi }(z)]]></fr:tex> to try to match <fr:tex display="inline"><![CDATA[p(z | x; \theta )]]></fr:tex>. As a sanity check, lets make sure these match when <fr:tex display="inline"><![CDATA[q(z) = p(z \mid  x; \theta )]]></fr:tex>. 
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \mathbb {E}_{z \sim  q(z)} \log  \frac {p(x, Z; \theta )}{q(z)} &= \int  \log  \frac {p(x, z; \theta )}{q(z)}\mathrm {d}z \\
+  &= \int  \log  \frac {p(x; \theta )p(z \mid  x; \theta )}{p(z \mid  x; \theta )}\mathrm {d}z \\
+  &= \int  \log  p(x; \theta )\mathrm {d}z \\
+  &= \log (x; \theta )
+.\end {align*}]]></fr:tex>
+You may be wondering how we use this algorithmically to find <fr:tex display="inline"><![CDATA[\theta ^*]]></fr:tex>? This will be the main idea of <fr:link href="/0088/" title="Expectation Maximization" uri="https://kellenkanarios.com/0088/" display-uri="0088" type="local">expectation maximization</fr:link>. Feel free to check it out!
+</html:p></fr:mainmatter>
+            </fr:tree>
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>1</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/0088/</fr:uri>
+            <fr:display-uri>0088</fr:display-uri>
+            <fr:route>/0088/</fr:route>
+            <fr:title text="Expectation Maximization">Expectation Maximization</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>This is the follow up to the previous note on the <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link>. Mainly, here we aim to show how we can use the ELBO to find <fr:tex display="inline"><![CDATA[\theta ^*]]></fr:tex> i.e. 
+<fr:tex display="block"><![CDATA[
+\begin {align*}
+ \theta ^* &= \arg \max  \mathbb {E}_{x \sim  \mathcal {D}} \log  p(x; \theta ) \\ 
+ &= \arg \max  \mathbb {E}_{x \sim  \mathcal {D}} \log  \int  p(x, z; \theta ) \mathrm {d}z 
+.\end {align*}
+]]></fr:tex>
+Notably, <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link> gives us the lower bound 
+<fr:tex display="block"><![CDATA[\log  p(x; \theta ) \geq  \mathbb {E}_{z \sim  q}\left [\log  \frac {p(x,  Z; \theta )}{q(z)}\right ]  \eqqcolon  \mathsf {ELBO}(x, q, \theta )]]></fr:tex>
+for a <html:strong>fixed</html:strong> theta <html:strong>and</html:strong> <fr:tex display="inline"><![CDATA[q]]></fr:tex>. Therefore, <html:strong>for each</html:strong> <fr:tex display="inline"><![CDATA[\theta  ]]></fr:tex>, we want to find some <fr:tex display="inline"><![CDATA[q]]></fr:tex>, such that
+  <fr:tex display="block"><![CDATA[\mathsf {ELBO}(x, q, \theta ) = \log  p(x, \theta )]]></fr:tex>
+  With this, we can easily perform gradient ascent
+  <fr:tex display="block"><![CDATA[\theta _{t + 1} \gets  \theta _t + \nabla _{\theta } \mathsf {ELBO}(x, q, \theta _t),]]></fr:tex>
+  to maximize the log-likelihood <fr:tex display="inline"><![CDATA[\log  p(x; \theta )]]></fr:tex>. 
+</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Note that the gradient is with respect to <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex>, where <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> is just the third argument to <fr:tex display="inline"><![CDATA[\mathsf {ELBO}]]></fr:tex> as defined above. Notably, <fr:tex display="inline"><![CDATA[\theta _t]]></fr:tex> will show up elsewhere later but will <html:strong>NOT</html:strong> be backpropagated through.
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:title text="Expectation">Expectation</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The above motivates the <html:em>expectation</html:em> step of the EM algorithm. Namely how can we compute the lower bound expectation for the <html:strong>best</html:strong> possible <fr:tex display="inline"><![CDATA[q]]></fr:tex>.</html:p>
+<html:p>Recall (or review) from the discussion on <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link> that <fr:tex display="inline"><![CDATA[q(z) = p(z | x; \theta )]]></fr:tex> maximizes the ELBO for a given <fr:tex display="inline"><![CDATA[x]]></fr:tex> and <fr:tex display="inline"><![CDATA[\theta  ]]></fr:tex>. Therefore, we actually want to learn <fr:tex display="inline"><![CDATA[q_{\phi }(z, x, \theta ) \approx  p(z | x; \theta )]]></fr:tex>. To do so, we can simply maximize the ELBO (duh). Formally,
+<fr:tex display="block"><![CDATA[\phi _{t+1} = \argmax _{\phi } \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q}\left [\log  \frac {p(x,  Z; \theta _t)}{q_{\phi }(Z, x, \theta _t)}\right ]]]></fr:tex></html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>
+Now this is all cool theoretically but how TF do we actually maximize this thing? 
+</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>
+  It is highly dependent on the parametrization of <fr:tex display="inline"><![CDATA[p]]></fr:tex> and <fr:tex display="inline"><![CDATA[q]]></fr:tex>.
+</fr:mainmatter></fr:tree>
+
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+  <html:p>
+  We define the problem as 
+  <html:ol><html:li><fr:tex display="inline"><![CDATA[p(z) \sim  N(0, 1)]]></fr:tex></html:li>
+    <html:li><fr:tex display="inline"><![CDATA[p(x | z; \theta ) \sim  N(\mu _{\theta }(z), \sigma _{\theta }(z))]]></fr:tex></html:li>
+    <html:li><fr:tex display="inline"><![CDATA[q_{\phi }(z | x, \theta ) \sim  N(\mu _{\phi }(x), \sigma _\phi (x))]]></fr:tex></html:li></html:ol>
+  where <fr:tex display="inline"><![CDATA[\mu _{\{\phi , \theta \}}, \sigma _{\{\phi , \theta \}}]]></fr:tex> are parametrized neural networks. Then we can rewrite the <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link> as (ignoring constants)
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+     \mathsf {ELBO}(x, q, \theta ) &= \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q(\cdot  \mid  x, \theta )} \left [\log  p(Z) - \log  \frac {p(x \mid  Z; \theta )}{q_{\phi }(Z, x, \theta )}\right ] \\
+&= \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q(\cdot  \mid  x, \theta )} \left [-\frac {Z^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((Z - \mu _{\theta }(Z))^2 - (Z - \mu _{\phi }(x))^2\big )\right ]
+    .\end {align*}
+    ]]></fr:tex>
+    We face one more obstacle.
+  </html:p>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>
+    We need to sample realization <fr:tex display="inline"><![CDATA[z \sim  q_{\phi }(\cdot  |x, \theta )]]></fr:tex>. So isn't our realization <fr:tex display="inline"><![CDATA[z]]></fr:tex> a function of <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. How would we optimize this?
+  </fr:mainmatter></fr:tree>
+
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>
+    The <fr:link href="/0089/" title="Reparametrization Trick" uri="https://kellenkanarios.com/0089/" display-uri="0089" type="local">reparametrization trick</fr:link>!!
+  </fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:uri>https://kellenkanarios.com/0089/</fr:uri><fr:display-uri>0089</fr:display-uri><fr:route>/0089/</fr:route><fr:title text="Reparametrization Trick">Reparametrization Trick</fr:title></fr:frontmatter><fr:mainmatter><html:p>For <fr:tex display="inline"><![CDATA[q_{\phi }(\cdot  | x) \sim  N(\mu _{\phi }(x), \sigma _{\phi }(x))]]></fr:tex>. The <html:em>reparametrization trick</html:em> allows us to differentate through a random sample by sampling from <fr:tex display="inline"><![CDATA[q_{\phi }(\cdot  | x)]]></fr:tex> via 
+<fr:tex display="block"><![CDATA[z(\phi ) = \mu _{\phi }(x) + \sigma _{\phi }(x) \cdot  \epsilon ,]]></fr:tex>
+where <fr:tex display="inline"><![CDATA[\epsilon  \sim  N(0, 1)]]></fr:tex>. Then, for a given sample <fr:tex display="inline"><![CDATA[\epsilon ]]></fr:tex>, we can easily compute
+<fr:tex display="block"><![CDATA[\nabla _{\phi } z(\phi ) = \nabla _{\phi } \mu _{\phi }(x) + \nabla _{\phi }\sigma _{\phi }(x) \cdot  \epsilon ]]></fr:tex></html:p></fr:mainmatter></fr:tree>
+  <html:p>Now for a given sample <fr:tex display="inline"><![CDATA[x_i \sim  \mathcal {D}]]></fr:tex>, we can get a sample <fr:tex display="inline"><![CDATA[z_i(\phi ) \sim  q(\cdot  \mid  x_i, \theta )]]></fr:tex> that is differentiable with respect to <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. Using this, we can get the stochastic gradient estimate
+  <fr:tex display="block"><![CDATA[\nabla _q \widetilde {\mathsf {ELBO}}(x, q, \theta ) = \nabla _{\phi } \left [\frac {z_i(\phi )^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((z_i(\phi ) - \mu _{\theta }(z_i(\phi )))^2 - (z_i(\phi ) - \mu _{\phi }(x))^2\big )\right ]]]></fr:tex></html:p>
+
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  ">
+  <html:strong>Algorithm:</html:strong> input <fr:tex display="inline"><![CDATA[\theta _t]]></fr:tex>
+  <html:ol><html:li>Sample <fr:tex display="inline"><![CDATA[x_i]]></fr:tex> from dataset <fr:tex display="inline"><![CDATA[\mathcal {D}]]></fr:tex></html:li>
+    <html:li>Sample <fr:tex display="inline"><![CDATA[z_i(\phi ) \sim  q_{\phi }(\cdot  \mid  x_i, \theta _t)]]></fr:tex> via <fr:link href="/0089/" title="Reparametrization Trick" uri="https://kellenkanarios.com/0089/" display-uri="0089" type="local">trick</fr:link>.</html:li>
+    <html:li>Compute <fr:tex display="inline"><![CDATA[\nabla _q \widetilde {\mathsf {ELBO}}]]></fr:tex></html:li>
+    <html:li>Update via SGD</html:li></html:ol>
+</html:div>
+
+</fr:mainmatter></fr:tree>
+ 
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:title text="Maximization">Maximization</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Finally, we have reached the maximization step. This step is fairly straightforward after all the progress we have made. Once we have a tight lower bound i.e. <fr:tex display="inline"><![CDATA[q(z) \approx  p(z \mid  x; \theta )]]></fr:tex> then we simply fix <fr:tex display="inline"><![CDATA[q]]></fr:tex> and maximize the <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link> for <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> i.e. in the above example and algorithm we instead compute
+<fr:tex display="block"><![CDATA[\nabla _\theta  \widetilde {\mathsf {ELBO}}(x, q, \theta ) = \nabla _{\theta } \left [\frac {z_i(\phi )^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((z_i(\phi ) - \mu _{\theta }(z_i(\phi )))^2 - (z_i(\phi ) - \mu _{\phi }(x))^2\big )\right ]]]></fr:tex>
+Alternating between these steps yields the <html:em>expectation-maximization</html:em> algorithm the ML oldheads mythologize.
+</html:p>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>1</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/0088/</fr:uri>
+            <fr:display-uri>0088</fr:display-uri>
+            <fr:route>/0088/</fr:route>
+            <fr:title text="Expectation Maximization">Expectation Maximization</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>This is the follow up to the previous note on the <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link>. Mainly, here we aim to show how we can use the ELBO to find <fr:tex display="inline"><![CDATA[\theta ^*]]></fr:tex> i.e. 
+<fr:tex display="block"><![CDATA[
+\begin {align*}
+ \theta ^* &= \arg \max  \mathbb {E}_{x \sim  \mathcal {D}} \log  p(x; \theta ) \\ 
+ &= \arg \max  \mathbb {E}_{x \sim  \mathcal {D}} \log  \int  p(x, z; \theta ) \mathrm {d}z 
+.\end {align*}
+]]></fr:tex>
+Notably, <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link> gives us the lower bound 
+<fr:tex display="block"><![CDATA[\log  p(x; \theta ) \geq  \mathbb {E}_{z \sim  q}\left [\log  \frac {p(x,  Z; \theta )}{q(z)}\right ]  \eqqcolon  \mathsf {ELBO}(x, q, \theta )]]></fr:tex>
+for a <html:strong>fixed</html:strong> theta <html:strong>and</html:strong> <fr:tex display="inline"><![CDATA[q]]></fr:tex>. Therefore, <html:strong>for each</html:strong> <fr:tex display="inline"><![CDATA[\theta  ]]></fr:tex>, we want to find some <fr:tex display="inline"><![CDATA[q]]></fr:tex>, such that
+  <fr:tex display="block"><![CDATA[\mathsf {ELBO}(x, q, \theta ) = \log  p(x, \theta )]]></fr:tex>
+  With this, we can easily perform gradient ascent
+  <fr:tex display="block"><![CDATA[\theta _{t + 1} \gets  \theta _t + \nabla _{\theta } \mathsf {ELBO}(x, q, \theta _t),]]></fr:tex>
+  to maximize the log-likelihood <fr:tex display="inline"><![CDATA[\log  p(x; \theta )]]></fr:tex>. 
+</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Note that the gradient is with respect to <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex>, where <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> is just the third argument to <fr:tex display="inline"><![CDATA[\mathsf {ELBO}]]></fr:tex> as defined above. Notably, <fr:tex display="inline"><![CDATA[\theta _t]]></fr:tex> will show up elsewhere later but will <html:strong>NOT</html:strong> be backpropagated through.
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:title text="Expectation">Expectation</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The above motivates the <html:em>expectation</html:em> step of the EM algorithm. Namely how can we compute the lower bound expectation for the <html:strong>best</html:strong> possible <fr:tex display="inline"><![CDATA[q]]></fr:tex>.</html:p>
+<html:p>Recall (or review) from the discussion on <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link> that <fr:tex display="inline"><![CDATA[q(z) = p(z | x; \theta )]]></fr:tex> maximizes the ELBO for a given <fr:tex display="inline"><![CDATA[x]]></fr:tex> and <fr:tex display="inline"><![CDATA[\theta  ]]></fr:tex>. Therefore, we actually want to learn <fr:tex display="inline"><![CDATA[q_{\phi }(z, x, \theta ) \approx  p(z | x; \theta )]]></fr:tex>. To do so, we can simply maximize the ELBO (duh). Formally,
+<fr:tex display="block"><![CDATA[\phi _{t+1} = \argmax _{\phi } \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q}\left [\log  \frac {p(x,  Z; \theta _t)}{q_{\phi }(Z, x, \theta _t)}\right ]]]></fr:tex></html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>
+Now this is all cool theoretically but how TF do we actually maximize this thing? 
+</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>
+  It is highly dependent on the parametrization of <fr:tex display="inline"><![CDATA[p]]></fr:tex> and <fr:tex display="inline"><![CDATA[q]]></fr:tex>.
+</fr:mainmatter></fr:tree>
+
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+  <html:p>
+  We define the problem as 
+  <html:ol><html:li><fr:tex display="inline"><![CDATA[p(z) \sim  N(0, 1)]]></fr:tex></html:li>
+    <html:li><fr:tex display="inline"><![CDATA[p(x | z; \theta ) \sim  N(\mu _{\theta }(z), \sigma _{\theta }(z))]]></fr:tex></html:li>
+    <html:li><fr:tex display="inline"><![CDATA[q_{\phi }(z | x, \theta ) \sim  N(\mu _{\phi }(x), \sigma _\phi (x))]]></fr:tex></html:li></html:ol>
+  where <fr:tex display="inline"><![CDATA[\mu _{\{\phi , \theta \}}, \sigma _{\{\phi , \theta \}}]]></fr:tex> are parametrized neural networks. Then we can rewrite the <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link> as (ignoring constants)
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+     \mathsf {ELBO}(x, q, \theta ) &= \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q(\cdot  \mid  x, \theta )} \left [\log  p(Z) - \log  \frac {p(x \mid  Z; \theta )}{q_{\phi }(Z, x, \theta )}\right ] \\
+&= \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q(\cdot  \mid  x, \theta )} \left [-\frac {Z^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((Z - \mu _{\theta }(Z))^2 - (Z - \mu _{\phi }(x))^2\big )\right ]
+    .\end {align*}
+    ]]></fr:tex>
+    We face one more obstacle.
+  </html:p>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>
+    We need to sample realization <fr:tex display="inline"><![CDATA[z \sim  q_{\phi }(\cdot  |x, \theta )]]></fr:tex>. So isn't our realization <fr:tex display="inline"><![CDATA[z]]></fr:tex> a function of <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. How would we optimize this?
+  </fr:mainmatter></fr:tree>
+
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>
+    The <fr:link href="/0089/" title="Reparametrization Trick" uri="https://kellenkanarios.com/0089/" display-uri="0089" type="local">reparametrization trick</fr:link>!!
+  </fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:uri>https://kellenkanarios.com/0089/</fr:uri><fr:display-uri>0089</fr:display-uri><fr:route>/0089/</fr:route><fr:title text="Reparametrization Trick">Reparametrization Trick</fr:title></fr:frontmatter><fr:mainmatter><html:p>For <fr:tex display="inline"><![CDATA[q_{\phi }(\cdot  | x) \sim  N(\mu _{\phi }(x), \sigma _{\phi }(x))]]></fr:tex>. The <html:em>reparametrization trick</html:em> allows us to differentate through a random sample by sampling from <fr:tex display="inline"><![CDATA[q_{\phi }(\cdot  | x)]]></fr:tex> via 
+<fr:tex display="block"><![CDATA[z(\phi ) = \mu _{\phi }(x) + \sigma _{\phi }(x) \cdot  \epsilon ,]]></fr:tex>
+where <fr:tex display="inline"><![CDATA[\epsilon  \sim  N(0, 1)]]></fr:tex>. Then, for a given sample <fr:tex display="inline"><![CDATA[\epsilon ]]></fr:tex>, we can easily compute
+<fr:tex display="block"><![CDATA[\nabla _{\phi } z(\phi ) = \nabla _{\phi } \mu _{\phi }(x) + \nabla _{\phi }\sigma _{\phi }(x) \cdot  \epsilon ]]></fr:tex></html:p></fr:mainmatter></fr:tree>
+  <html:p>Now for a given sample <fr:tex display="inline"><![CDATA[x_i \sim  \mathcal {D}]]></fr:tex>, we can get a sample <fr:tex display="inline"><![CDATA[z_i(\phi ) \sim  q(\cdot  \mid  x_i, \theta )]]></fr:tex> that is differentiable with respect to <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. Using this, we can get the stochastic gradient estimate
+  <fr:tex display="block"><![CDATA[\nabla _q \widetilde {\mathsf {ELBO}}(x, q, \theta ) = \nabla _{\phi } \left [\frac {z_i(\phi )^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((z_i(\phi ) - \mu _{\theta }(z_i(\phi )))^2 - (z_i(\phi ) - \mu _{\phi }(x))^2\big )\right ]]]></fr:tex></html:p>
+
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  ">
+  <html:strong>Algorithm:</html:strong> input <fr:tex display="inline"><![CDATA[\theta _t]]></fr:tex>
+  <html:ol><html:li>Sample <fr:tex display="inline"><![CDATA[x_i]]></fr:tex> from dataset <fr:tex display="inline"><![CDATA[\mathcal {D}]]></fr:tex></html:li>
+    <html:li>Sample <fr:tex display="inline"><![CDATA[z_i(\phi ) \sim  q_{\phi }(\cdot  \mid  x_i, \theta _t)]]></fr:tex> via <fr:link href="/0089/" title="Reparametrization Trick" uri="https://kellenkanarios.com/0089/" display-uri="0089" type="local">trick</fr:link>.</html:li>
+    <html:li>Compute <fr:tex display="inline"><![CDATA[\nabla _q \widetilde {\mathsf {ELBO}}]]></fr:tex></html:li>
+    <html:li>Update via SGD</html:li></html:ol>
+</html:div>
+
+</fr:mainmatter></fr:tree>
+ 
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:title text="Maximization">Maximization</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Finally, we have reached the maximization step. This step is fairly straightforward after all the progress we have made. Once we have a tight lower bound i.e. <fr:tex display="inline"><![CDATA[q(z) \approx  p(z \mid  x; \theta )]]></fr:tex> then we simply fix <fr:tex display="inline"><![CDATA[q]]></fr:tex> and maximize the <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link> for <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> i.e. in the above example and algorithm we instead compute
+<fr:tex display="block"><![CDATA[\nabla _\theta  \widetilde {\mathsf {ELBO}}(x, q, \theta ) = \nabla _{\theta } \left [\frac {z_i(\phi )^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((z_i(\phi ) - \mu _{\theta }(z_i(\phi )))^2 - (z_i(\phi ) - \mu _{\phi }(x))^2\big )\right ]]]></fr:tex>
+Alternating between these steps yields the <html:em>expectation-maximization</html:em> algorithm the ML oldheads mythologize.
+</html:p>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>6</fr:month>
+              <fr:day>30</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/0083/</fr:uri>
+            <fr:display-uri>0083</fr:display-uri>
+            <fr:route>/0083/</fr:route>
+            <fr:title text="Latent Variable">Latent Variable</fr:title>
+            <fr:taxon>Definition</fr:taxon>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>Given a joint distribution <fr:tex display="inline"><![CDATA[p(X,Z)]]></fr:tex> for two random variables <fr:tex display="inline"><![CDATA[X]]></fr:tex> and <fr:tex display="inline"><![CDATA[Z]]></fr:tex>. We call a random variable a <html:em>latent</html:em> random variable if we have a dataset <fr:tex display="inline"><![CDATA[\mathcal {D}]]></fr:tex> that only consists of realizations of <fr:tex display="inline"><![CDATA[X]]></fr:tex>.</html:p>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>1</fr:month>
+              <fr:day>30</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/003Y/</fr:uri>
+            <fr:display-uri>003Y</fr:display-uri>
+            <fr:route>/003Y/</fr:route>
+            <fr:title text="The History and Evolution of Policy Gradient Algorithms">The History and Evolution of Policy Gradient Algorithms</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>
+  Rough itinerary,
+  <html:ul><html:li>Vanilla policy gradient
+      <html:ul><html:li>Policy gradient theorem + proof</html:li>
+          <html:li>Deterministic policy gradient theorem + (maybe)proof</html:li></html:ul></html:li>
+      <html:li>Actor critic method
+      <html:ul><html:li>A2C: Variance reduction method</html:li>
+        <html:li>(Maybe) A3C: Asynchronous update</html:li></html:ul></html:li>
+      <html:li>Trust region policy optimization</html:li>
+      <html:li>Soft Actor Critic</html:li>
+      <html:li><fr:link href="/schulmanProximalPolicyOptimization2017/" title="Proximal Policy Optimization Algorithms" uri="https://kellenkanarios.com/schulmanProximalPolicyOptimization2017/" display-uri="schulmanProximalPolicyOptimization2017" type="local">Proximal Policy Optimization</fr:link></html:li>
+      <html:li><fr:link href="/003X/" title="Group Relative Policy Optimization" uri="https://kellenkanarios.com/003X/" display-uri="003X" type="local">Group Relative Policy Optimization</fr:link></html:li></html:ul></html:p>
+            <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="policy-gradient" theme="boxy-light" crossorigin="anonymous" async="" />
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2024</fr:year>
+              <fr:month>12</fr:month>
+              <fr:day>29</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/002G/</fr:uri>
+            <fr:display-uri>002G</fr:display-uri>
+            <fr:route>/002G/</fr:route>
+            <fr:title text="Jensen's Inequality">Jensen's Inequality</fr:title>
+            <fr:taxon>Theorem</fr:taxon>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>If <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex> is a convex function on the range of <fr:tex display="inline"><![CDATA[X]]></fr:tex> then <fr:tex display="block"><![CDATA[\phi (\mathbb {E}[X]) \leq  \mathbb {E}[\phi (X)]]]></fr:tex></html:p>
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>
