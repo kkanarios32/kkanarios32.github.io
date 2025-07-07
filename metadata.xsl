@@ -154,6 +154,14 @@
     </li>
   </xsl:template>
 
+  <xsl:template match="f:meta[@name='paper']">
+    <li class="meta-item">
+      <a class="link external" href="{.}">
+        <xsl:text>Paper</xsl:text>
+      </a>
+    </li>
+  </xsl:template>
+
   <xsl:template match="f:meta[@name='video']">
     <li class="meta-item">
       <a class="link external" href="{.}">

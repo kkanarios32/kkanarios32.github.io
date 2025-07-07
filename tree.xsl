@@ -244,6 +244,7 @@
           <xsl:apply-templates select="f:meta[@name='orcid']" />
           <xsl:apply-templates select="f:meta[@name='external']" />
           <xsl:apply-templates select="f:meta[@name='slides']" />
+          <xsl:apply-templates select="f:meta[@name='paper']" />
           <xsl:apply-templates select="f:meta[@name='video']" />
         </ul>
       </div>
