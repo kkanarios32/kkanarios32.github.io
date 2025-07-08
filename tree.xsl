@@ -235,6 +235,34 @@
           <xsl:apply-templates select="f:source-path" />
         </h1>
         <div class="metadata">
+
+          <xsl:if test="f:taxon='Reference'">
+          <xsl:if test="not(f:date/.='false')">
+            <ul>
+              <xsl:apply-templates select="f:date" />
+            </ul>
+            <br></br>
+          </xsl:if>
+          <xsl:if test="not(f:meta[@name = 'author']/.='false')">
+            <ul>
+            <xsl:apply-templates select="f:authors" />
+            </ul>
+            <br></br>
+          </xsl:if>
+          <ul>
+            <xsl:apply-templates select="f:meta[@name='orcid']" />
+            <xsl:apply-templates select="f:meta[@name='doi']" />
+            <xsl:apply-templates select="f:meta[@name='external']" />
+            <xsl:apply-templates select="f:meta[@name='position']" />
+            <xsl:apply-templates select="f:meta[@name='institution']" />
+            <xsl:apply-templates select="f:meta[@name='venue']" />
+            <xsl:apply-templates select="f:meta[@name='source']" />
+            <xsl:apply-templates select="f:meta[@name='slides']" />
+            <xsl:apply-templates select="f:meta[@name='paper']" />
+            <xsl:apply-templates select="f:meta[@name='video']" />
+          </ul>
+          </xsl:if>
+          <xsl:if test="not(f:taxon='Reference')">
           <ul>
             <xsl:apply-templates select="f:date" />
             <xsl:if test="not(f:meta[@name = 'author']/.='false')">
@@ -244,13 +272,14 @@
             <xsl:apply-templates select="f:meta[@name='institution']" />
             <xsl:apply-templates select="f:meta[@name='venue']" />
             <xsl:apply-templates select="f:meta[@name='source']" />
-            <xsl:apply-templates select="f:meta[@name='doi']" />
             <xsl:apply-templates select="f:meta[@name='orcid']" />
+            <xsl:apply-templates select="f:meta[@name='doi']" />
             <xsl:apply-templates select="f:meta[@name='external']" />
             <xsl:apply-templates select="f:meta[@name='slides']" />
             <xsl:apply-templates select="f:meta[@name='paper']" />
             <xsl:apply-templates select="f:meta[@name='video']" />
           </ul>
+          </xsl:if>
         </div>
       </header>
   </xsl:template>
