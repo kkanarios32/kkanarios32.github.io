@@ -237,7 +237,7 @@
         <div class="metadata">
 
           <xsl:if test="f:taxon='Reference'">
-          <xsl:if test="not(f:date/.='false')">
+          <xsl:if test="f:date[string-length(normalize-space(.)) > 0]">
             <ul>
               <xsl:apply-templates select="f:date" />
             </ul>
