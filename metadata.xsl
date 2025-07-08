@@ -132,6 +132,12 @@
     </pre>
   </xsl:template>
 
+  <xsl:template match="f:meta[@name='image']">
+    <div class="frontmatter-image">
+      <img class="frontmatter-image" src="{.}" />
+    </div>
+  </xsl:template>
+
   <xsl:template match="f:meta[@name='venue']|f:meta[@name='position']|f:meta[@name='institution']|f:meta[@name='source']">
     <li class="meta-item">
       <xsl:apply-templates />
