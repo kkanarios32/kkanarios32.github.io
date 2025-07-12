@@ -3,27 +3,31 @@
 <fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
   <fr:frontmatter>
     <fr:authors />
-    <fr:date>
-      <fr:year>2025</fr:year>
-      <fr:month>7</fr:month>
-      <fr:day>3</fr:day>
-    </fr:date>
-    <fr:uri>https://kellenkanarios.com/DEQV/</fr:uri>
-    <fr:display-uri>DEQV</fr:display-uri>
-    <fr:route>/DEQV/</fr:route>
-    <fr:title text="Low Precision Data Types">Low Precision Data Types</fr:title>
+    <fr:uri>https://kellenkanarios.com/DYIV/</fr:uri>
+    <fr:display-uri>DYIV</fr:display-uri>
+    <fr:route>/DYIV/</fr:route>
+    <fr:title text="Torch Tensors">Torch Tensors</fr:title>
   </fr:frontmatter>
-  <fr:mainmatter>
-    <html:p><html:code>float16</html:code>: here, we decrease both the fraction and exponent bits. Importantly, there are only <fr:tex display="inline"><![CDATA[5]]></fr:tex> exponent bits making the effective range <fr:tex display="inline"><![CDATA[(2^{-6}, 2^{6})]]></fr:tex>. The dynamic range for small numbers is pretty bad. This can cause small numbers to "die" effectively killing these neurons for the remainder of learning due to backpropagation.
-</html:p>
-    <html:p><html:code>bfloat16</html:code>: to fix the problems with <html:code>float16</html:code>, they instead keep <fr:tex display="inline"><![CDATA[8]]></fr:tex> exponent bits and reduce the fraction bits to <fr:tex display="inline"><![CDATA[7]]></fr:tex>. This maintains the same dynamic range as <html:code>float32</html:code> while still only using <fr:tex display="inline"><![CDATA[16]]></fr:tex> bits. 
-</html:p>
-    <html:p><html:code>fp8</html:code>: Two variants
-<html:ol><html:li>E4M3: has 4 exponent bits and 3 mantissa bits</html:li> 
-<html:li>E5M2: has 5 exponent bits and 2 mantissa bits</html:li></html:ol>
-Requires modern Hopper Architecture i.e. H100 to perform operations. Also supported by TPUs.
-</html:p>
-  </fr:mainmatter>
+  <fr:mainmatter><html:p>
+In pytorch, tensors are <html:em>contiguous</html:em> blocks of memory, where their shape is controlled by <html:em>strides</html:em>. A stride basically just refers to how far you have to jump in physical memory to correspond to incrementing the logical index i.e. in a (2, 3) matrix each row requires jumping <fr:tex display="inline"><![CDATA[3]]></fr:tex> spots in physical memory. Thus, <html:code>stride[1] = 3</html:code>.
+  </html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Calling <html:code>.view((m, n))</html:code> just changes the stride but does <html:strong>not</html:strong> modify the physical memory. If you call <html:code>.view</html:code> that results in a non-contiguous view, then you cannot call <html:code>.view</html:code> again because it assumes contiguous indexing to properly adjust the strides. To deal with this, they have <html:code>.contiguous()</html:code> and <html:code>.reshape()</html:code> is basically <html:code>.contiguous().view()</html:code>.
+</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+All <html:strong>elementwise</html:strong> operations make a copy i.e. <html:code>x + y</html:code>. A useful function for masked attention is <html:code>triu()</html:code>.
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:title text="Einops">Einops</fr:title></fr:frontmatter><fr:mainmatter>
+Einops is a useful python library to keep track of high-dimensional matrix operations i.e. matmuls over <html:code>batch_size</html:code>, <html:code>seqlen</html:code>, etc. High level overview
+<html:ul><html:li>Initialize like <html:code>X[float.tensor, "batch seq hidden"] = torch.tensor((2, 3, 4))</html:code></html:li>
+  <html:li>Can perform matmul with named dims like</html:li>
+  <html:code>z = einsum(x, y, "batch seq1 hidden, batch seq2 hidden -&gt; batch seq1 seq2")</html:code>
+  <html:li><html:code>reduce</html:code>: <html:code>x = reduce(x, "x y z -&gt; x y 1")</html:code> is just like <html:code>mean(x, axis=-1)</html:code></html:li>
+  <html:li><html:code>rearrange</html:code>: <html:code>x = rearrange(x, "... (heads hidden1) -&gt; ... heads hidden 1")</html:code></html:li></html:ul>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
   <fr:backmatter>
     <fr:tree show-metadata="false" hidden-when-empty="true">
       <fr:frontmatter>
@@ -38,110 +42,6 @@ Requires modern Hopper Architecture i.e. H100 to perform operations. Also suppor
         <fr:title text="Context">Context</fr:title>
       </fr:frontmatter>
       <fr:mainmatter>
-        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
-          <fr:frontmatter>
-            <fr:authors />
-            <fr:date>
-              <fr:year>2025</fr:year>
-              <fr:month>7</fr:month>
-              <fr:day>3</fr:day>
-            </fr:date>
-            <fr:uri>https://kellenkanarios.com/DEQU/</fr:uri>
-            <fr:display-uri>DEQU</fr:display-uri>
-            <fr:route>/DEQU/</fr:route>
-            <fr:title text="Memory Accounting">Memory Accounting</fr:title>
-          </fr:frontmatter>
-          <fr:mainmatter>
-            <html:p><html:strong>Tensor Memory</html:strong>:
-Tensors are stored as a <html:em>floating point number</html:em>. Memory is determined by (i) number of values in tensor and (ii) data type of each value.
-</html:p>
-            <fr:tree show-metadata="false">
-              <fr:frontmatter>
-                <fr:authors />
-                <fr:date>
-                  <fr:year>2025</fr:year>
-                  <fr:month>7</fr:month>
-                  <fr:day>3</fr:day>
-                </fr:date>
-                <fr:uri>https://kellenkanarios.com/DEQV/</fr:uri>
-                <fr:display-uri>DEQV</fr:display-uri>
-                <fr:route>/DEQV/</fr:route>
-                <fr:title text="Low Precision Data Types">Low Precision Data Types</fr:title>
-              </fr:frontmatter>
-              <fr:mainmatter>
-                <html:p><html:code>float16</html:code>: here, we decrease both the fraction and exponent bits. Importantly, there are only <fr:tex display="inline"><![CDATA[5]]></fr:tex> exponent bits making the effective range <fr:tex display="inline"><![CDATA[(2^{-6}, 2^{6})]]></fr:tex>. The dynamic range for small numbers is pretty bad. This can cause small numbers to "die" effectively killing these neurons for the remainder of learning due to backpropagation.
-</html:p>
-                <html:p><html:code>bfloat16</html:code>: to fix the problems with <html:code>float16</html:code>, they instead keep <fr:tex display="inline"><![CDATA[8]]></fr:tex> exponent bits and reduce the fraction bits to <fr:tex display="inline"><![CDATA[7]]></fr:tex>. This maintains the same dynamic range as <html:code>float32</html:code> while still only using <fr:tex display="inline"><![CDATA[16]]></fr:tex> bits. 
-</html:p>
-                <html:p><html:code>fp8</html:code>: Two variants
-<html:ol><html:li>E4M3: has 4 exponent bits and 3 mantissa bits</html:li> 
-<html:li>E5M2: has 5 exponent bits and 2 mantissa bits</html:li></html:ol>
-Requires modern Hopper Architecture i.e. H100 to perform operations. Also supported by TPUs.
-</html:p>
-              </fr:mainmatter>
-            </fr:tree>
-            <html:p><html:strong>Training Implications</html:strong>
-<html:ol><html:li><html:code>float32</html:code> training works but requires lots of memory</html:li>
-  <html:li>Using <fr:link href="/DEQV/" title="Low Precision Data Types" uri="https://kellenkanarios.com/DEQV/" display-uri="DEQV" type="local">lower precision data types</fr:link> allows you to train larger models due to lower memory requirements, but can cause instability</html:li>
-  <html:li>To optimize this tradeoff, use <html:em>mixed-precision training</html:em>.</html:li></html:ol></html:p>
-          </fr:mainmatter>
-        </fr:tree>
-      </fr:mainmatter>
-    </fr:tree>
-    <fr:tree show-metadata="false" hidden-when-empty="true">
-      <fr:frontmatter>
-        <fr:authors />
-        <fr:title text="Backlinks">Backlinks</fr:title>
-      </fr:frontmatter>
-      <fr:mainmatter>
-        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
-          <fr:frontmatter>
-            <fr:authors />
-            <fr:date>
-              <fr:year>2025</fr:year>
-              <fr:month>7</fr:month>
-              <fr:day>3</fr:day>
-            </fr:date>
-            <fr:uri>https://kellenkanarios.com/DEQU/</fr:uri>
-            <fr:display-uri>DEQU</fr:display-uri>
-            <fr:route>/DEQU/</fr:route>
-            <fr:title text="Memory Accounting">Memory Accounting</fr:title>
-          </fr:frontmatter>
-          <fr:mainmatter>
-            <html:p><html:strong>Tensor Memory</html:strong>:
-Tensors are stored as a <html:em>floating point number</html:em>. Memory is determined by (i) number of values in tensor and (ii) data type of each value.
-</html:p>
-            <fr:tree show-metadata="false">
-              <fr:frontmatter>
-                <fr:authors />
-                <fr:date>
-                  <fr:year>2025</fr:year>
-                  <fr:month>7</fr:month>
-                  <fr:day>3</fr:day>
-                </fr:date>
-                <fr:uri>https://kellenkanarios.com/DEQV/</fr:uri>
-                <fr:display-uri>DEQV</fr:display-uri>
-                <fr:route>/DEQV/</fr:route>
-                <fr:title text="Low Precision Data Types">Low Precision Data Types</fr:title>
-              </fr:frontmatter>
-              <fr:mainmatter>
-                <html:p><html:code>float16</html:code>: here, we decrease both the fraction and exponent bits. Importantly, there are only <fr:tex display="inline"><![CDATA[5]]></fr:tex> exponent bits making the effective range <fr:tex display="inline"><![CDATA[(2^{-6}, 2^{6})]]></fr:tex>. The dynamic range for small numbers is pretty bad. This can cause small numbers to "die" effectively killing these neurons for the remainder of learning due to backpropagation.
-</html:p>
-                <html:p><html:code>bfloat16</html:code>: to fix the problems with <html:code>float16</html:code>, they instead keep <fr:tex display="inline"><![CDATA[8]]></fr:tex> exponent bits and reduce the fraction bits to <fr:tex display="inline"><![CDATA[7]]></fr:tex>. This maintains the same dynamic range as <html:code>float32</html:code> while still only using <fr:tex display="inline"><![CDATA[16]]></fr:tex> bits. 
-</html:p>
-                <html:p><html:code>fp8</html:code>: Two variants
-<html:ol><html:li>E4M3: has 4 exponent bits and 3 mantissa bits</html:li> 
-<html:li>E5M2: has 5 exponent bits and 2 mantissa bits</html:li></html:ol>
-Requires modern Hopper Architecture i.e. H100 to perform operations. Also supported by TPUs.
-</html:p>
-              </fr:mainmatter>
-            </fr:tree>
-            <html:p><html:strong>Training Implications</html:strong>
-<html:ol><html:li><html:code>float32</html:code> training works but requires lots of memory</html:li>
-  <html:li>Using <fr:link href="/DEQV/" title="Low Precision Data Types" uri="https://kellenkanarios.com/DEQV/" display-uri="DEQV" type="local">lower precision data types</fr:link> allows you to train larger models due to lower memory requirements, but can cause instability</html:li>
-  <html:li>To optimize this tradeoff, use <html:em>mixed-precision training</html:em>.</html:li></html:ol></html:p>
-          </fr:mainmatter>
-        </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
             <fr:authors>
@@ -256,6 +156,13 @@ Another useful trick is to use <fr:link href="/DEQV/" title="Low Precision Data 
 </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
     </fr:tree>
     <fr:tree show-metadata="false" hidden-when-empty="true">
       <fr:frontmatter>

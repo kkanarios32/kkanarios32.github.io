@@ -6,23 +6,17 @@
     <fr:date>
       <fr:year>2025</fr:year>
       <fr:month>7</fr:month>
-      <fr:day>3</fr:day>
+      <fr:day>12</fr:day>
     </fr:date>
-    <fr:uri>https://kellenkanarios.com/DEQV/</fr:uri>
-    <fr:display-uri>DEQV</fr:display-uri>
-    <fr:route>/DEQV/</fr:route>
-    <fr:title text="Low Precision Data Types">Low Precision Data Types</fr:title>
+    <fr:uri>https://kellenkanarios.com/99G8/</fr:uri>
+    <fr:display-uri>99G8</fr:display-uri>
+    <fr:route>/99G8/</fr:route>
+    <fr:title text="Model FLOP Utilization (MFU)">Model FLOP Utilization (MFU)</fr:title>
+    <fr:taxon>Definition</fr:taxon>
   </fr:frontmatter>
   <fr:mainmatter>
-    <html:p><html:code>float16</html:code>: here, we decrease both the fraction and exponent bits. Importantly, there are only <fr:tex display="inline"><![CDATA[5]]></fr:tex> exponent bits making the effective range <fr:tex display="inline"><![CDATA[(2^{-6}, 2^{6})]]></fr:tex>. The dynamic range for small numbers is pretty bad. This can cause small numbers to "die" effectively killing these neurons for the remainder of learning due to backpropagation.
-</html:p>
-    <html:p><html:code>bfloat16</html:code>: to fix the problems with <html:code>float16</html:code>, they instead keep <fr:tex display="inline"><![CDATA[8]]></fr:tex> exponent bits and reduce the fraction bits to <fr:tex display="inline"><![CDATA[7]]></fr:tex>. This maintains the same dynamic range as <html:code>float32</html:code> while still only using <fr:tex display="inline"><![CDATA[16]]></fr:tex> bits. 
-</html:p>
-    <html:p><html:code>fp8</html:code>: Two variants
-<html:ol><html:li>E4M3: has 4 exponent bits and 3 mantissa bits</html:li> 
-<html:li>E5M2: has 5 exponent bits and 2 mantissa bits</html:li></html:ol>
-Requires modern Hopper Architecture i.e. H100 to perform operations. Also supported by TPUs.
-</html:p>
+    <html:p>Given a promised <fr:link href="/4K5H/" title="Floating Point Operations" uri="https://kellenkanarios.com/4K5H/" display-uri="4K5H" type="local">FLOP/s</fr:link>, the <html:em>model flop utilization</html:em> is given by
+<fr:tex display="block"><![CDATA[\frac {\text {actual FLOP/s}}{\text {promised FLOP/s}}]]></fr:tex></html:p>
   </fr:mainmatter>
   <fr:backmatter>
     <fr:tree show-metadata="false" hidden-when-empty="true">
@@ -38,110 +32,6 @@ Requires modern Hopper Architecture i.e. H100 to perform operations. Also suppor
         <fr:title text="Context">Context</fr:title>
       </fr:frontmatter>
       <fr:mainmatter>
-        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
-          <fr:frontmatter>
-            <fr:authors />
-            <fr:date>
-              <fr:year>2025</fr:year>
-              <fr:month>7</fr:month>
-              <fr:day>3</fr:day>
-            </fr:date>
-            <fr:uri>https://kellenkanarios.com/DEQU/</fr:uri>
-            <fr:display-uri>DEQU</fr:display-uri>
-            <fr:route>/DEQU/</fr:route>
-            <fr:title text="Memory Accounting">Memory Accounting</fr:title>
-          </fr:frontmatter>
-          <fr:mainmatter>
-            <html:p><html:strong>Tensor Memory</html:strong>:
-Tensors are stored as a <html:em>floating point number</html:em>. Memory is determined by (i) number of values in tensor and (ii) data type of each value.
-</html:p>
-            <fr:tree show-metadata="false">
-              <fr:frontmatter>
-                <fr:authors />
-                <fr:date>
-                  <fr:year>2025</fr:year>
-                  <fr:month>7</fr:month>
-                  <fr:day>3</fr:day>
-                </fr:date>
-                <fr:uri>https://kellenkanarios.com/DEQV/</fr:uri>
-                <fr:display-uri>DEQV</fr:display-uri>
-                <fr:route>/DEQV/</fr:route>
-                <fr:title text="Low Precision Data Types">Low Precision Data Types</fr:title>
-              </fr:frontmatter>
-              <fr:mainmatter>
-                <html:p><html:code>float16</html:code>: here, we decrease both the fraction and exponent bits. Importantly, there are only <fr:tex display="inline"><![CDATA[5]]></fr:tex> exponent bits making the effective range <fr:tex display="inline"><![CDATA[(2^{-6}, 2^{6})]]></fr:tex>. The dynamic range for small numbers is pretty bad. This can cause small numbers to "die" effectively killing these neurons for the remainder of learning due to backpropagation.
-</html:p>
-                <html:p><html:code>bfloat16</html:code>: to fix the problems with <html:code>float16</html:code>, they instead keep <fr:tex display="inline"><![CDATA[8]]></fr:tex> exponent bits and reduce the fraction bits to <fr:tex display="inline"><![CDATA[7]]></fr:tex>. This maintains the same dynamic range as <html:code>float32</html:code> while still only using <fr:tex display="inline"><![CDATA[16]]></fr:tex> bits. 
-</html:p>
-                <html:p><html:code>fp8</html:code>: Two variants
-<html:ol><html:li>E4M3: has 4 exponent bits and 3 mantissa bits</html:li> 
-<html:li>E5M2: has 5 exponent bits and 2 mantissa bits</html:li></html:ol>
-Requires modern Hopper Architecture i.e. H100 to perform operations. Also supported by TPUs.
-</html:p>
-              </fr:mainmatter>
-            </fr:tree>
-            <html:p><html:strong>Training Implications</html:strong>
-<html:ol><html:li><html:code>float32</html:code> training works but requires lots of memory</html:li>
-  <html:li>Using <fr:link href="/DEQV/" title="Low Precision Data Types" uri="https://kellenkanarios.com/DEQV/" display-uri="DEQV" type="local">lower precision data types</fr:link> allows you to train larger models due to lower memory requirements, but can cause instability</html:li>
-  <html:li>To optimize this tradeoff, use <html:em>mixed-precision training</html:em>.</html:li></html:ol></html:p>
-          </fr:mainmatter>
-        </fr:tree>
-      </fr:mainmatter>
-    </fr:tree>
-    <fr:tree show-metadata="false" hidden-when-empty="true">
-      <fr:frontmatter>
-        <fr:authors />
-        <fr:title text="Backlinks">Backlinks</fr:title>
-      </fr:frontmatter>
-      <fr:mainmatter>
-        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
-          <fr:frontmatter>
-            <fr:authors />
-            <fr:date>
-              <fr:year>2025</fr:year>
-              <fr:month>7</fr:month>
-              <fr:day>3</fr:day>
-            </fr:date>
-            <fr:uri>https://kellenkanarios.com/DEQU/</fr:uri>
-            <fr:display-uri>DEQU</fr:display-uri>
-            <fr:route>/DEQU/</fr:route>
-            <fr:title text="Memory Accounting">Memory Accounting</fr:title>
-          </fr:frontmatter>
-          <fr:mainmatter>
-            <html:p><html:strong>Tensor Memory</html:strong>:
-Tensors are stored as a <html:em>floating point number</html:em>. Memory is determined by (i) number of values in tensor and (ii) data type of each value.
-</html:p>
-            <fr:tree show-metadata="false">
-              <fr:frontmatter>
-                <fr:authors />
-                <fr:date>
-                  <fr:year>2025</fr:year>
-                  <fr:month>7</fr:month>
-                  <fr:day>3</fr:day>
-                </fr:date>
-                <fr:uri>https://kellenkanarios.com/DEQV/</fr:uri>
-                <fr:display-uri>DEQV</fr:display-uri>
-                <fr:route>/DEQV/</fr:route>
-                <fr:title text="Low Precision Data Types">Low Precision Data Types</fr:title>
-              </fr:frontmatter>
-              <fr:mainmatter>
-                <html:p><html:code>float16</html:code>: here, we decrease both the fraction and exponent bits. Importantly, there are only <fr:tex display="inline"><![CDATA[5]]></fr:tex> exponent bits making the effective range <fr:tex display="inline"><![CDATA[(2^{-6}, 2^{6})]]></fr:tex>. The dynamic range for small numbers is pretty bad. This can cause small numbers to "die" effectively killing these neurons for the remainder of learning due to backpropagation.
-</html:p>
-                <html:p><html:code>bfloat16</html:code>: to fix the problems with <html:code>float16</html:code>, they instead keep <fr:tex display="inline"><![CDATA[8]]></fr:tex> exponent bits and reduce the fraction bits to <fr:tex display="inline"><![CDATA[7]]></fr:tex>. This maintains the same dynamic range as <html:code>float32</html:code> while still only using <fr:tex display="inline"><![CDATA[16]]></fr:tex> bits. 
-</html:p>
-                <html:p><html:code>fp8</html:code>: Two variants
-<html:ol><html:li>E4M3: has 4 exponent bits and 3 mantissa bits</html:li> 
-<html:li>E5M2: has 5 exponent bits and 2 mantissa bits</html:li></html:ol>
-Requires modern Hopper Architecture i.e. H100 to perform operations. Also supported by TPUs.
-</html:p>
-              </fr:mainmatter>
-            </fr:tree>
-            <html:p><html:strong>Training Implications</html:strong>
-<html:ol><html:li><html:code>float32</html:code> training works but requires lots of memory</html:li>
-  <html:li>Using <fr:link href="/DEQV/" title="Low Precision Data Types" uri="https://kellenkanarios.com/DEQV/" display-uri="DEQV" type="local">lower precision data types</fr:link> allows you to train larger models due to lower memory requirements, but can cause instability</html:li>
-  <html:li>To optimize this tradeoff, use <html:em>mixed-precision training</html:em>.</html:li></html:ol></html:p>
-          </fr:mainmatter>
-        </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
             <fr:authors>
@@ -260,9 +150,35 @@ Another useful trick is to use <fr:link href="/DEQV/" title="Low Precision Data 
     <fr:tree show-metadata="false" hidden-when-empty="true">
       <fr:frontmatter>
         <fr:authors />
-        <fr:title text="Related">Related</fr:title>
+        <fr:title text="Backlinks">Backlinks</fr:title>
       </fr:frontmatter>
       <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/4K5H/</fr:uri>
+            <fr:display-uri>4K5H</fr:display-uri>
+            <fr:route>/4K5H/</fr:route>
+            <fr:title text="Floating Point Operations">Floating Point Operations</fr:title>
+            <fr:taxon>Definition</fr:taxon>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>We refer to the <html:strong>total</html:strong> number of floating point operatings as <html:em>FLOPS</html:em>. Alternatively, we refer to the number of floating point operations per second as <html:em>FLOP/s</html:em>.</html:p>
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
     </fr:tree>
     <fr:tree show-metadata="false" hidden-when-empty="true">
       <fr:frontmatter>

@@ -46,6 +46,119 @@
             <fr:date>
               <fr:year>2025</fr:year>
               <fr:month>7</fr:month>
+              <fr:day>3</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/DEQS/</fr:uri>
+            <fr:display-uri>DEQS</fr:display-uri>
+            <fr:route>/DEQS/</fr:route>
+            <fr:title text="CS336 Lecture 2"><fr:link href="/0085/" title="Notebook: Stanford CS336" uri="https://kellenkanarios.com/0085/" display-uri="0085" type="local">CS336</fr:link> Lecture 2</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p><fr:link href="/007U/" title="Deliberate-Practice" uri="https://kellenkanarios.com/007U/" display-uri="007U" type="local">Deliberate-Practice</fr:link> (4/66)</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Motivating Questions">Motivating Questions</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p>We start by discussing a few essential questions one hopes to answer when they set out to train a large model.</html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>How long to train a 70b parameter model on 15T tokens on 1024 H100s?
+</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>Mysteriously, we spawn from the ether (will be explained later) that <html:code>total_flops = 6 * 70e9 * 15e12</html:code>. Intuitively, we know that we need to perform some computation for each parameter for each token. However, the 6 is still an ominous mystery. Given the total flops, we then can just take the GPUs FLOP/s multiply by the number of seconds in the day and divide <html:code>total_flops</html:code> by this number i.e. 
+<html:code>days = total_flops / flops_per_day</html:code>
+</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+In practice, we must also consider the <html:em>model flop utilization</html:em> (MFU). Basically, our algorithm cannot utilize the entirety of the maximum FLOP/s provided by the hardware due to things like memory bandwidth, etc. To account for this in the calculation, they just take <html:code>flops_per_day / 2</html:code>.
+</fr:mainmatter></fr:tree>
+
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>
+  What is the largest model that you can train on 8 H100s using AdamW?
+</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>
+  An H100 has 80gb of shared memory i.e. <html:code>h100_bytes = 80e9</html:code>. The calculation then proceeds as
+  <html:pre><![CDATA[# parameters, gradients, optimizer state
+bytest_per_param = 4 + 4 + (4 + 4)
+num_parameters = (h100_bytes * 8) / bytes_per_parameter]]></html:pre>
+  what we need each of parameters, gradients, optimizer state will become clear later.
+</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+In practice, we also need to account for activations, which will depend on <html:strong>both</html:strong> batch size and sequence length.
+</fr:mainmatter></fr:tree>
+
+  </fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/DEQU/</fr:uri><fr:display-uri>DEQU</fr:display-uri><fr:route>/DEQU/</fr:route><fr:title text="Memory Accounting">Memory Accounting</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:strong>Tensor Memory</html:strong>:
+Tensors are stored as a <html:em>floating point number</html:em>. Memory is determined by (i) number of values in tensor and (ii) data type of each value.
+</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/DEQV/</fr:uri><fr:display-uri>DEQV</fr:display-uri><fr:route>/DEQV/</fr:route><fr:title text="Low Precision Data Types">Low Precision Data Types</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:code>float16</html:code>: here, we decrease both the fraction and exponent bits. Importantly, there are only <fr:tex display="inline"><![CDATA[5]]></fr:tex> exponent bits making the effective range <fr:tex display="inline"><![CDATA[(2^{-6}, 2^{6})]]></fr:tex>. The dynamic range for small numbers is pretty bad. This can cause small numbers to "die" effectively killing these neurons for the remainder of learning due to backpropagation.
+</html:p><html:p><html:code>bfloat16</html:code>: to fix the problems with <html:code>float16</html:code>, they instead keep <fr:tex display="inline"><![CDATA[8]]></fr:tex> exponent bits and reduce the fraction bits to <fr:tex display="inline"><![CDATA[7]]></fr:tex>. This maintains the same dynamic range as <html:code>float32</html:code> while still only using <fr:tex display="inline"><![CDATA[16]]></fr:tex> bits. 
+</html:p><html:p><html:code>fp8</html:code>: Two variants
+<html:ol><html:li>E4M3: has 4 exponent bits and 3 mantissa bits</html:li> 
+<html:li>E5M2: has 5 exponent bits and 2 mantissa bits</html:li></html:ol>
+Requires modern Hopper Architecture i.e. H100 to perform operations. Also supported by TPUs.
+</html:p></fr:mainmatter></fr:tree><html:p><html:strong>Training Implications</html:strong>
+<html:ol><html:li><html:code>float32</html:code> training works but requires lots of memory</html:li>
+  <html:li>Using <fr:link href="/DEQV/" title="Low Precision Data Types" uri="https://kellenkanarios.com/DEQV/" display-uri="DEQV" type="local">lower precision data types</fr:link> allows you to train larger models due to lower memory requirements, but can cause instability</html:li>
+  <html:li>To optimize this tradeoff, use <html:em>mixed-precision training</html:em>.</html:li></html:ol></html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:uri>https://kellenkanarios.com/DYIV/</fr:uri><fr:display-uri>DYIV</fr:display-uri><fr:route>/DYIV/</fr:route><fr:title text="Torch Tensors">Torch Tensors</fr:title></fr:frontmatter><fr:mainmatter><html:p>
+In pytorch, tensors are <html:em>contiguous</html:em> blocks of memory, where their shape is controlled by <html:em>strides</html:em>. A stride basically just refers to how far you have to jump in physical memory to correspond to incrementing the logical index i.e. in a (2, 3) matrix each row requires jumping <fr:tex display="inline"><![CDATA[3]]></fr:tex> spots in physical memory. Thus, <html:code>stride[1] = 3</html:code>.
+  </html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Calling <html:code>.view((m, n))</html:code> just changes the stride but does <html:strong>not</html:strong> modify the physical memory. If you call <html:code>.view</html:code> that results in a non-contiguous view, then you cannot call <html:code>.view</html:code> again because it assumes contiguous indexing to properly adjust the strides. To deal with this, they have <html:code>.contiguous()</html:code> and <html:code>.reshape()</html:code> is basically <html:code>.contiguous().view()</html:code>.
+</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+All <html:strong>elementwise</html:strong> operations make a copy i.e. <html:code>x + y</html:code>. A useful function for masked attention is <html:code>triu()</html:code>.
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:title text="Einops">Einops</fr:title></fr:frontmatter><fr:mainmatter>
+Einops is a useful python library to keep track of high-dimensional matrix operations i.e. matmuls over <html:code>batch_size</html:code>, <html:code>seqlen</html:code>, etc. High level overview
+<html:ul><html:li>Initialize like <html:code>X[float.tensor, "batch seq hidden"] = torch.tensor((2, 3, 4))</html:code></html:li>
+  <html:li>Can perform matmul with named dims like</html:li>
+  <html:code>z = einsum(x, y, "batch seq1 hidden, batch seq2 hidden -&gt; batch seq1 seq2")</html:code>
+  <html:li><html:code>reduce</html:code>: <html:code>x = reduce(x, "x y z -&gt; x y 1")</html:code> is just like <html:code>mean(x, axis=-1)</html:code></html:li>
+  <html:li><html:code>rearrange</html:code>: <html:code>x = rearrange(x, "... (heads hidden1) -&gt; ... heads hidden 1")</html:code></html:li></html:ul>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Computation">Computation</fr:title></fr:frontmatter><fr:mainmatter>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/4K5H/</fr:uri><fr:display-uri>4K5H</fr:display-uri><fr:route>/4K5H/</fr:route><fr:title text="Floating Point Operations">Floating Point Operations</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>We refer to the <html:strong>total</html:strong> number of floating point operatings as <html:em>FLOPS</html:em>. Alternatively, we refer to the number of floating point operations per second as <html:em>FLOP/s</html:em>.</html:p></fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/99G8/</fr:uri><fr:display-uri>99G8</fr:display-uri><fr:route>/99G8/</fr:route><fr:title text="Model FLOP Utilization (MFU)">Model FLOP Utilization (MFU)</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>Given a promised <fr:link href="/4K5H/" title="Floating Point Operations" uri="https://kellenkanarios.com/4K5H/" display-uri="4K5H" type="local">FLOP/s</fr:link>, the <html:em>model flop utilization</html:em> is given by
+<fr:tex display="block"><![CDATA[\frac {\text {actual FLOP/s}}{\text {promised FLOP/s}}]]></fr:tex></html:p></fr:mainmatter></fr:tree>
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+Performing a matrix multiplication <fr:tex display="inline"><![CDATA[A \cdot  B]]></fr:tex> for <fr:tex display="inline"><![CDATA[A \in  \mathbb {R}^{(B \times  D)}]]></fr:tex> and <fr:tex display="inline"><![CDATA[B \in  \mathbb {R}^{(D \times  K)}]]></fr:tex>, requires <fr:tex display="inline"><![CDATA[2 \times  B \times  D \times  K]]></fr:tex> <fr:link href="/4K5H/" title="Floating Point Operations" uri="https://kellenkanarios.com/4K5H/" display-uri="4K5H" type="local">FLOPS</fr:link></fr:mainmatter></fr:tree>
+ 
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Optimizers">Optimizers</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>I hope to do a formal blog touring optimizers because I have written a paper on deep learning optimizers for my <fr:link href="/0033/" title="Notebook: Optimization Theory" uri="https://kellenkanarios.com/0033/" display-uri="0033" type="local">optimization course</fr:link>. Due to this, I will leave this blank for now. A brief list of the covered concepts are below:</html:p>
+<html:ul><html:li>momentum</html:li>
+  <html:li>adagrad</html:li>
+  <html:li>RMSProp</html:li>
+  <html:li>Adam</html:li></html:ul>
+<html:p>A key formula to remember:
+<fr:tex display="block"><![CDATA[\text {total memory} \approx  4 \times  (\text {params} + \text {activations} + \text {grad size} + \text {optimizer state size})]]></fr:tex></html:p>
+</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Another useful trick is to use <fr:link href="/DEQV/" title="Low Precision Data Types" uri="https://kellenkanarios.com/DEQV/" display-uri="DEQV" type="local">low precision</fr:link> for forward pass activations, then use <html:code>float32</html:code> for gradients and network parameters.
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
               <fr:day>1</fr:day>
             </fr:date>
             <fr:uri>https://kellenkanarios.com/0086/</fr:uri>
