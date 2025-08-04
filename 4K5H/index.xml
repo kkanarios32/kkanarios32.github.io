@@ -154,6 +154,126 @@ Another useful trick is to use <fr:link href="/DEQV/" title="Low Precision Data 
       <fr:mainmatter>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>14</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/W4YP/</fr:uri>
+            <fr:display-uri>W4YP</fr:display-uri>
+            <fr:route>/W4YP/</fr:route>
+            <fr:title text="Multi Query Attention">Multi Query Attention</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>Notes on the paper <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">Fast Transformer Decoding: One Write-Head is All You Need</fr:link>.</html:p><html:p>For, 
+<html:ul><html:li><fr:tex display="inline"><![CDATA[b]]></fr:tex> batch dimension,</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[n]]></fr:tex> sequence length,</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d]]></fr:tex> hidden dimension,</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[h]]></fr:tex> number of heads.</html:li></html:ul>
+The total <fr:link href="/4K5H/" title="Floating Point Operations" uri="https://kellenkanarios.com/4K5H/" display-uri="4K5H" type="local">FLOPS</fr:link> for <fr:link href="/004G/" title="Self-Attention" uri="https://kellenkanarios.com/004G/" display-uri="004G" type="local">attention</fr:link> are roughly <fr:tex display="inline"><![CDATA[bnd^2]]></fr:tex>. This comes from 
+<html:ol><html:li><fr:tex display="inline"><![CDATA[3nd^2]]></fr:tex> FLOPS to compute <fr:tex display="inline"><![CDATA[Q = XW_Q, K = XW_K, V = XW_V]]></fr:tex>.</html:li>
+  <html:li>Need to do this <fr:tex display="inline"><![CDATA[b]]></fr:tex> times for each input in batch.</html:li></html:ol>
+and the total memory accesses are roughly <fr:tex display="inline"><![CDATA[\underbrace {bnd}_{X} + \underbrace {bhn^2}_{\text {softmax}} + \underbrace {d^2}_{\text {projection}}]]></fr:tex>.
+This gives high arithmetic intensity
+<fr:tex display="block"><![CDATA[O\left (\left (\frac {h}{d} + \frac {1}{bn}\right )^{-1}\right )]]></fr:tex></html:p><html:p>However, if we do incremental inference then we must multiply our total number of memory accesses by <fr:tex display="inline"><![CDATA[n]]></fr:tex> i.e. <fr:tex display="inline"><![CDATA[bn^2d + nd^2]]></fr:tex>. This gives arithmetic intensity
+<fr:tex display="block"><![CDATA[O\left (\left (\frac {n}{d} + \frac {1}{b}\right )^{-1}\right ),]]></fr:tex>
+which requires large batch and short sequence length.
+</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+I believe we just ignore the softmax memory contribution in the inference case because it does not scale with <fr:tex display="inline"><![CDATA[n]]></fr:tex> anymore as we are computing the logits just for the next token. Therefore, it becomes a <fr:tex display="inline"><![CDATA[\frac {d}{h}]]></fr:tex> term, which we can safely ignore?
+</fr:mainmatter></fr:tree>
+<html:p>The key is that the <fr:tex display="inline"><![CDATA[\frac {n}{d}]]></fr:tex> term comes from the <fr:tex display="inline"><![CDATA[bn^2d]]></fr:tex> term, where we are loading <fr:tex display="inline"><![CDATA[h]]></fr:tex> <fr:tex display="inline"><![CDATA[(b \times  n \times  d / h)]]></fr:tex> <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrices <fr:tex display="inline"><![CDATA[n]]></fr:tex> times. Thus, we can improve the <fr:tex display="inline"><![CDATA[\frac {n}{d}]]></fr:tex> term by a factor of <fr:tex display="inline"><![CDATA[h]]></fr:tex> by simply not using a different <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrix for each head. This is the entire idea behind <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">MQA</fr:link>.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Similar to the <fr:link href="https://kellenkanarios.com/TJLA/" type="external">TJLA</fr:link>, we still can use <fr:tex display="inline"><![CDATA[h]]></fr:tex> <fr:tex display="inline"><![CDATA[Q]]></fr:tex> matrices because we do not need to load <fr:tex display="inline"><![CDATA[n]]></fr:tex> of them into memory because only the last one matters for inference.
+</fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XUVV/</fr:uri><fr:display-uri>XUVV</fr:display-uri><fr:route>/XUVV/</fr:route><fr:title text="Group Query Attention">Group Query Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:em>Group query attention</html:em> is the same idea as <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">MQA</fr:link> but instead of using one <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> for every head, they use a <html:em>group</html:em> of them. Where obviously the number of groups needs to be less than the number of heads.</html:p><html:figure><html:img width="80%" src="/bafkrmicmjlgi2o3oetsssjdwk6y2pqce4vrdwiw2ah4wwe3ulnt74upkiu.png" />
+<html:figcaption>Grouped query uses subset of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrices.</html:figcaption></html:figure></fr:mainmatter></fr:tree><html:p>Also inspired by this idea of reducing the dependence of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> on the sequence length is sliding window attention.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/WM3M/</fr:uri><fr:display-uri>WM3M</fr:display-uri><fr:route>/WM3M/</fr:route><fr:title text="Sliding Window Attention">Sliding Window Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p>The idea behind <html:em>sliding window attention</html:em> is to ensure the number of weight matrices needed for the keys <fr:tex display="inline"><![CDATA[K]]></fr:tex> and values <fr:tex display="inline"><![CDATA[V]]></fr:tex> does not scale with the sequence length. Intuitively, this means allowing each word to "attend" to only some fixed number of previous words rather than the whole sequence</html:p><html:figure><html:img width="80%" src="/bafkrmidqeoo6wx6s4ry6u74fcelfzxvwreyf7d44whnql4ffnnyd2dwcha.png" />
+<html:figcaption>"the" only sees "on" and "sat" rather than the full sentence.</html:figcaption></html:figure></fr:mainmatter></fr:tree></fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>13</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/W4WB/</fr:uri>
+            <fr:display-uri>W4WB</fr:display-uri>
+            <fr:route>/W4WB/</fr:route>
+            <fr:title text="Architecture Variations">Architecture Variations</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>13</fr:day></fr:date><fr:title text="Norms">Norms</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p><html:strong>Pre-norm vs. Post-norm</html:strong>: The first architecture variation discussed is when to apply the <fr:link href="/LVV4/" title="Layer Normalization" uri="https://kellenkanarios.com/LVV4/" display-uri="LVV4" type="local">layer norm</fr:link>. As can be seen in the figure below, rather than apply the <fr:link href="/LVV4/" title="Layer Normalization" uri="https://kellenkanarios.com/LVV4/" display-uri="LVV4" type="local">layer norm</fr:link> in the residual stream. They instead place it before the FFN and MHA layers.</html:p>
+<html:figure><html:img width="40%" src="/bafkrmiawz4eenenwuvnx3pzxjniwghlortvgc5ytxzq5z5oyznugozl22y.png" />
+<html:figcaption>Post norm (a) vs. pre norm (b).</html:figcaption></html:figure>
+<html:p>They actually found that adding <fr:link href="/LVV4/" title="Layer Normalization" uri="https://kellenkanarios.com/LVV4/" display-uri="LVV4" type="local">layer normalization</fr:link> before and after the MHA and FFN works the best. This is known as <html:em>double norm</html:em>.</html:p>
+<html:p><html:strong><fr:link href="/1XNO/" title="RMS Norm" uri="https://kellenkanarios.com/1XNO/" display-uri="1XNO" type="local">RMSNorm</fr:link> vs. <fr:link href="/LVV4/" title="Layer Normalization" uri="https://kellenkanarios.com/LVV4/" display-uri="LVV4" type="local">LayerNorm</fr:link></html:strong>:
+Another useful trick is to use the <fr:link href="/1XNO/" title="RMS Norm" uri="https://kellenkanarios.com/1XNO/" display-uri="1XNO" type="local">RMSNorm</fr:link> instead of <fr:link href="/LVV4/" title="Layer Normalization" uri="https://kellenkanarios.com/LVV4/" display-uri="LVV4" type="local">LayerNorm</fr:link>.
+</html:p>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/1XNO/</fr:uri><fr:display-uri>1XNO</fr:display-uri><fr:route>/1XNO/</fr:route><fr:title text="RMS Norm">RMS Norm</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>The RMS norm is simply the <fr:link href="/LVV4/" title="Layer Normalization" uri="https://kellenkanarios.com/LVV4/" display-uri="LVV4" type="local">layer norm</fr:link> without the added bias term and centering i.e. 
+<fr:tex display="block"><![CDATA[\mathrm {RMSNorm}: \mathbb {R}^d \to  \mathbb {R}^d, \quad  \mathbf {x} \mapsto  \frac {\mathbf {x}}{\sqrt {\mathrm {Var}[\mathbf {x}_i] + \epsilon }}*\gamma .]]></fr:tex>
+This is used to spare memory movement of <fr:link href="/LVV4/" title="Layer Normalization" uri="https://kellenkanarios.com/LVV4/" display-uri="LVV4" type="local">layernorm</fr:link>, where the bias term <fr:tex display="inline"><![CDATA[\beta  \in  \mathbb {R}^d]]></fr:tex> and has been found to be empirically almost if not as good.
+</html:p></fr:mainmatter></fr:tree>
+<html:p>One might wonder if matrix multiplies are the only thing that matters what can such a small change really accomplish.</html:p>
+<html:ul><html:li>Due to memory movement, despite being .17<![CDATA[%]]> of <fr:link href="/4K5H/" title="Floating Point Operations" uri="https://kellenkanarios.com/4K5H/" display-uri="4K5H" type="local">FLOPS</fr:link>, provided 25<![CDATA[%]]> speedup in runtime!!</html:li></html:ul>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>13</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Most people apparently just drop the bias term and keep the centering i.e. subtracting the mean. This makes sense because computing the mean does not require loading any additional information back to memory.
+</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>13</fr:day></fr:date><fr:title text="Activations">Activations</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p>Despite a long list of activations, the two focused on are <fr:link href="/BEA2/" title="Rectified Linear Unit (ReLU)" uri="https://kellenkanarios.com/BEA2/" display-uri="BEA2" type="local">ReLU</fr:link> and <fr:link href="/5SPM/" title="Gaussian Error Linear Unit (GELU)" uri="https://kellenkanarios.com/5SPM/" display-uri="5SPM" type="local">GELU</fr:link>.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/BEA2/</fr:uri><fr:display-uri>BEA2</fr:display-uri><fr:route>/BEA2/</fr:route><fr:title text="Rectified Linear Unit (ReLU)">Rectified Linear Unit (ReLU)</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>The <html:em>rectified linear unit</html:em>(ReLU) is defined as
+<fr:tex display="block"><![CDATA[\mathrm {ReLU} : \mathbb {R}^d \to  \mathbb {R}^d, \quad  \mathbf {x} \mapsto  \max (0, \mathbf {x}),]]></fr:tex>
+where the <fr:tex display="inline"><![CDATA[\max ]]></fr:tex> is done elementwise i.e. <fr:tex display="inline"><![CDATA[\mathrm {ReLU}(\mathbf {x})_i = \max (0, x_i)]]></fr:tex>
+This provides "nice" gradients, making it common when training neural networks.
+</html:p></fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/5SPM/</fr:uri><fr:display-uri>5SPM</fr:display-uri><fr:route>/5SPM/</fr:route><fr:title text="Gaussian Error Linear Unit (GELU)">Gaussian Error Linear Unit (GELU)</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>The <html:em>Gaussian Error Linear Unit</html:em> (GELU) is a slight modification to the <fr:link href="/BEA2/" title="Rectified Linear Unit (ReLU)" uri="https://kellenkanarios.com/BEA2/" display-uri="BEA2" type="local">ReLU</fr:link> to account for the non-differentiability at <fr:tex display="inline"><![CDATA[0]]></fr:tex>. Namely,
+<fr:tex display="block"><![CDATA[\mathrm {GELU}(\mathbf {x}) : \mathbb {R}^d \to  \mathbb {R}^d, \quad  \mathbf {x} \mapsto  \mathbf {x} \cdot  \psi (\mathbf {x}),]]></fr:tex>
+where <fr:tex display="inline"><![CDATA[\psi (\mathbf {x}) = \mathrm {CDF}(\mathcal {N}(\mathbf {x}, \mathbf {I}))]]></fr:tex></html:p><html:figure><html:img width="70%" src="/bafkrmian7h7ke2dp6nqdq4624wx4off5lk346f7d5pp6mv7bbimcy7azni.png" />
+<html:figcaption>GELU vs. ReLU activation and derivative. Taken from <fr:link href="https://www.baeldung.com/cs/gelu-activation-function" type="external">here</fr:link>.</html:figcaption></html:figure></fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/OZD8/</fr:uri><fr:display-uri>OZD8</fr:display-uri><fr:route>/OZD8/</fr:route><fr:title text="Swish Activation">Swish Activation</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>The <html:em>Swish</html:em> activation is given by
+<fr:tex display="block"><![CDATA[\mathrm {Swish}(\mathbf {x}) : \mathbb {R}^d \to  \mathbb {R}^d, \quad  \mathbf {x} \mapsto  \mathbf {x} s(\mathbf {x}),]]></fr:tex>
+where <fr:tex display="inline"><![CDATA[s : \mathbb {R}^d \to  \mathbb {R}^d]]></fr:tex> is the <fr:link href="/NNDS/" title="Sigmoid" uri="https://kellenkanarios.com/NNDS/" display-uri="NNDS" type="local">sigmoid function</fr:link>.
+</html:p></fr:mainmatter></fr:tree>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>13</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+  The extra computation required by <fr:link href="/5SPM/" title="Gaussian Error Linear Unit (GELU)" uri="https://kellenkanarios.com/5SPM/" display-uri="5SPM" type="local">GELU</fr:link> or <fr:link href="/OZD8/" title="Swish Activation" uri="https://kellenkanarios.com/OZD8/" display-uri="OZD8" type="local">Swish</fr:link> is a non-factor because <fr:link href="/4K5H/" title="Floating Point Operations" uri="https://kellenkanarios.com/4K5H/" display-uri="4K5H" type="local">FLOPS</fr:link> are dominated by matrix multiplication and there is no increase in memory pressure.
+  </fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/K2N7/</fr:uri><fr:display-uri>K2N7</fr:display-uri><fr:route>/K2N7/</fr:route><fr:title text="Gated Linear Unit (GLU)">Gated Linear Unit (GLU)</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>A <html:em>gated linear unit</html:em> is an activation function combined with an elementwise multiplication i.e. 
+<html:ul><html:li><fr:tex display="inline"><![CDATA[\mathrm {ReGLU} = \mathrm {ReLU}(\mathbf {x}) \otimes  \mathbf {V} \mathbf {x},]]></fr:tex></html:li>
+  <html:li><fr:tex display="inline"><![CDATA[\mathrm {SwiGLU} = \mathrm {Swish}(\mathbf {x}) \otimes  \mathbf {V} \mathbf {x},]]></fr:tex></html:li></html:ul>
+where <fr:tex display="inline"><![CDATA[\mathrm {ReLU}]]></fr:tex> is the <fr:link href="/BEA2/" title="Rectified Linear Unit (ReLU)" uri="https://kellenkanarios.com/BEA2/" display-uri="BEA2" type="local">ReLU</fr:link> activation and <fr:tex display="inline"><![CDATA[\mathrm {Swish}]]></fr:tex> is the <fr:link href="/OZD8/" title="Swish Activation" uri="https://kellenkanarios.com/OZD8/" display-uri="OZD8" type="local">Swish</fr:link> activation respectively.
+</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+The matrix <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex> introduces additional learnable parameters. Therefore, an architecture that uses gating typically reduces their other parameters by a factor of <fr:tex display="inline"><![CDATA[\frac {2}{3}]]></fr:tex>.
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>13</fr:day></fr:date><fr:title text="Serial vs. Parallel">Serial vs. Parallel</fr:title></fr:frontmatter><fr:mainmatter>
+Another small trick is to parallelize computation. Traditionally, one computes the <fr:tex display="inline"><![CDATA[\mathrm {MHA}]]></fr:tex> output and then passes this to the <fr:tex display="inline"><![CDATA[\mathrm {FFN}]]></fr:tex> i.e.
+<fr:tex display="block"><![CDATA[\mathbf {y} = \mathbf {x} + \mathrm {FFN}(\mathrm {LN}(\mathbf {x} + \mathrm {MHA}(\mathrm {LN}(\mathbf {x})))).]]></fr:tex>
+However, this requires waiting for the <fr:tex display="inline"><![CDATA[\mathrm {MHA}]]></fr:tex> to complete before performing the <fr:tex display="inline"><![CDATA[\mathrm {FFN}]]></fr:tex> computation. It has been found that performing these in parallel does not cause any severe degradation in performance. Explicitly, instead they do
+<fr:tex display="block"><![CDATA[\mathbf {y} = \mathbf {x} + \mathrm {FFN}(\mathrm {LN}(\mathbf {x})) + \mathrm {MHA}(\mathrm {LN}(\mathbf {x}))]]></fr:tex>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
             <fr:authors />
             <fr:date>
               <fr:year>2025</fr:year>

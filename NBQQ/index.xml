@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors />
+    <fr:date>
+      <fr:year>2025</fr:year>
+      <fr:month>7</fr:month>
+      <fr:day>24</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/NBQQ/</fr:uri>
+    <fr:display-uri>NBQQ</fr:display-uri>
+    <fr:route>/NBQQ/</fr:route>
+    <fr:title text="Policy Gradient Theorem">Policy Gradient Theorem</fr:title>
+    <fr:taxon>Theorem</fr:taxon>
+  </fr:frontmatter>
+  <fr:mainmatter><html:p>We can compute the gradient of the expected return with respect to the behavior policy as
+<fr:tex display="block"><![CDATA[\nabla _{\theta } v_{\pi _{\theta }}(s_{0}) = \mathbb {E}_{m_{\pi _{\theta }}(s), \pi _{\theta }(a \mid  s)}\left [\nabla _{\theta } \log  \pi _{\theta }(a \mid  s) Q_{\pi _{\theta }}(s, a)\right ] ]]></fr:tex></html:p>
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>
+  We want to compute the quantity <fr:tex display="inline"><![CDATA[\nabla _{\theta }v_{\pi _{\theta }}(s_{0})]]></fr:tex>. We expand this as
+  <fr:tex display="block"><![CDATA[\begin {align*}
+    \nabla _{\theta }v_{\pi _{\theta }}(s_{0}) &= \nabla _{\theta } \left (\sum _{a} \pi (a \mid  s_{0}) Q_{\pi _{\theta }}(s_{0}, a)\right ) \\
+&= \sum _{a} \nabla _{\theta } \pi _{\theta }(a \mid  s_{0}) Q_{\pi _{\theta }}(s_{0}, a) + \pi _{\theta }(a \mid  s_{0})\underbrace {\nabla _{\theta }Q_{\pi _{\theta }}(s_{0}, a)}_{\text {problem}}
+  .\end {align*}]]></fr:tex>
+  The gradient <fr:tex display="inline"><![CDATA[\nabla _{\theta }Q_{\pi _{\theta }}(s, a)]]></fr:tex> implicitly relies on <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex>. Therefore, we must unroll it i.e.
+  <fr:tex display="block"><![CDATA[\begin {align*}
+    \nabla _{\theta } Q_{\pi _{\theta }}(s_{0},a) &= \nabla _{\theta } \left [\sum _{r} p(r \mid  s_{0}, a) r + \gamma  \sum _{s} p(s \mid  s_{0}, a) \sum _{a'} \pi (a' \mid  s) Q_{\pi _{\theta }}(s, a')\right ] \\
+&= \gamma  \sum _{s} p(s \mid  s_{0}, a) \nabla _{\theta } \left (\sum _{a'} \pi (a' \mid  s) Q_{\pi _{\theta }}(s, a')\right ) \\
+&= \gamma  \sum _{s} p(s \mid  s_{0}, a) \left [\sum _{a'} \nabla _{\theta } \pi (a' \mid  s) Q_{\pi _{\theta }}(s, a') + \pi (a' \mid  s) \nabla _{\theta } Q_{\pi _{\theta }}(s, a')\right ]
+  .\end {align*}]]></fr:tex>
+  We define <fr:tex display="inline"><![CDATA[p_{\pi }^{k}(s_{0} \to  s)]]></fr:tex> to be the probability of transitioning from <fr:tex display="inline"><![CDATA[s_{0}]]></fr:tex> to <fr:tex display="inline"><![CDATA[s]]></fr:tex> in <fr:tex display="inline"><![CDATA[k]]></fr:tex> steps under policy <fr:tex display="inline"><![CDATA[\pi ]]></fr:tex>. Then continuously unrolling we observe that 
+  <fr:tex display="block"><![CDATA[\begin {align*}
+    \nabla _{\theta }v_{\pi _{\theta }}(s_{0}) &= \sum _{k}^{\infty } \sum _{a} \sum _{s} \gamma ^{k} p_{\pi _{\theta }}^k(s_{0} \to  s) \nabla _{\theta } \pi _{\theta }(a \mid  s) Q_{\pi _{\theta }}(s, a) \\
+    &= \sum _{s} \sum _{a} \nabla _{\theta } \pi _{\theta }(a \mid  s) Q_{\pi _{\theta }}(s, a) \underbrace {\sum _{k}^{\infty }  \gamma ^{k} p_{\pi _{\theta }}^k(s_{0} \to  s)}_{M_{\pi _{\theta }}(s)}
+  ,\end {align*}]]></fr:tex>
+  where we introduce <fr:tex display="inline"><![CDATA[M_{\pi _{\theta }}(s)]]></fr:tex> to be the unnormalized state occupancy measure. We want this as an expectation we can estimate with samples. To do this, we simply multiply and divide by the normalizing constant i.e. for <fr:tex display="inline"><![CDATA[m_{\pi _{\theta }}(s) = \frac {M_{\pi _{\theta }}(s)}{\sum _{s'} M_{\pi _{\theta }}(s')}]]></fr:tex>
+  <fr:tex display="block"><![CDATA[\begin {align*}
+    &= \left (\sum _{s'} M_{\pi _{\theta }}(s')\right )\sum _{s} \left (\sum _{a} \nabla _{\theta } \pi _{\theta }(a \mid  s) Q_{\pi _{\theta }}(s, a)\right ) m_{\pi _{\theta }}(s) \\
+    &\propto  \mathbb {E}_{m_{\pi _{\theta }}(s)} \left [\sum _{a} \nabla _{\theta } \pi _{\theta }(a \mid  s) Q_{\pi _{\theta }}(s, a)\right ]
+  .\end {align*}]]></fr:tex>
+  Now this in itself is a policy gradient, but it is a <html:em>batched</html:em> policy gradient in the sense that it requires summing over all <fr:tex display="inline"><![CDATA[a]]></fr:tex>. To get around this, we use the <html:em>log trick</html:em>. Namely,
+  <fr:tex display="block"><![CDATA[\begin {align*}
+    \sum _{a} \nabla _{\theta } \pi _{\theta }(a \mid  s) Q_{\pi _{\theta }}(s, a) &= 
+    \sum _{a} \nabla _{\theta } \pi _{\theta }(a \mid  s) Q_{\pi _{\theta }}(s, a) \frac {\pi _{\theta }(a \mid  s)}{\pi _{\theta }(a \mid  s)} \\
+    &= \sum _{a} \nabla _{\theta } \log  \pi _{\theta }(a \mid  s) Q_{\pi _{\theta }}(s, a) \pi _{\theta }(a \mid  s) \\
+    &= \mathbb {E}_{\pi (a \mid  s)} \left [\nabla _{\theta } \log  \pi _{\theta }(a \mid  s) Q_{\pi _{\theta }}(s', a)\right ]
+  .\end {align*}]]></fr:tex>
+  Putting it all together, 
+  <fr:tex display="block"><![CDATA[
+    \nabla _{\theta }v_{\pi _{\theta }}(s_{0}) = 
+    \mathbb {E}_{m_{\pi _{\theta }}(s), \pi (a \mid  s)} \left [\nabla _{\theta } \log  \pi _{\theta }(a \mid  s) Q_{\pi _{\theta }}(s, a)\right ]
+    ]]></fr:tex>
+  </fr:mainmatter></fr:tree>
+ 
+
+</fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

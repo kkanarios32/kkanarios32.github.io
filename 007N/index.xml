@@ -91,10 +91,57 @@
             <fr:uri>https://kellenkanarios.com/005G/</fr:uri>
             <fr:display-uri>005G</fr:display-uri>
             <fr:route>/005G/</fr:route>
-            <fr:title text="Papers of a Week">Papers of a Week</fr:title>
+            <fr:title text="Research Bible">Research Bible</fr:title>
           </fr:frontmatter>
           <fr:mainmatter>
-            <html:p>I will be reading and reviewing one paper a week (tentatively). More accurately, I will allocate ~6hrs a week to read a paper. However much I accomplish in this time will determine the actual rate of these reviews. This will be an infinitely expanding blog to keep track of all of these reviews. More ambitiously, I may try to reproduce any paper that I find particularly interesting. These special papers might be a Paper of the Month!. See <fr:link href="/007N/" title="Upcoming papers of the week" uri="https://kellenkanarios.com/007N/" display-uri="007N" type="local">upcoming papers</fr:link>!</html:p>
+            <html:p>I will be reading and reviewing ~2ish paper a week (tentatively). More accurately, I have allocated roughly 8hrs a week to reading papers. However much I accomplish in this time will determine the actual rate of these reviews. These reviews are mainly just for my own understanding. Rather than techinical details, I will aim to cover
+<html:ol><html:li>Existing / related work and their issues.</html:li>
+  <html:li>Key components of the methodology and how it solves these issues.</html:li>
+  <html:li>Limitations / future directions or relationships to my work.</html:li></html:ol></html:p>
+            <html:p>For more in-depth coverage of papers I find particularly interesting, see my <fr:link href="/0002/" title="Blog" uri="https://kellenkanarios.com/0002/" display-uri="0002" type="local">blog</fr:link>. There will likely be overlap i.e. most blogs will start here...</html:p>
+            <html:p>See <fr:link href="/007N/" title="Upcoming papers of the week" uri="https://kellenkanarios.com/007N/" display-uri="007N" type="local">upcoming papers</fr:link>!</html:p>
+            <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2025</fr:year>
+                  <fr:month>7</fr:month>
+                  <fr:day>14</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/W4YP/</fr:uri>
+                <fr:display-uri>W4YP</fr:display-uri>
+                <fr:route>/W4YP/</fr:route>
+                <fr:title text="Multi Query Attention">Multi Query Attention</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>Notes on the paper <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">Fast Transformer Decoding: One Write-Head is All You Need</fr:link>.</html:p><html:p>For, 
+<html:ul><html:li><fr:tex display="inline"><![CDATA[b]]></fr:tex> batch dimension,</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[n]]></fr:tex> sequence length,</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d]]></fr:tex> hidden dimension,</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[h]]></fr:tex> number of heads.</html:li></html:ul>
+The total <fr:link href="/4K5H/" title="Floating Point Operations" uri="https://kellenkanarios.com/4K5H/" display-uri="4K5H" type="local">FLOPS</fr:link> for <fr:link href="/004G/" title="Self-Attention" uri="https://kellenkanarios.com/004G/" display-uri="004G" type="local">attention</fr:link> are roughly <fr:tex display="inline"><![CDATA[bnd^2]]></fr:tex>. This comes from 
+<html:ol><html:li><fr:tex display="inline"><![CDATA[3nd^2]]></fr:tex> FLOPS to compute <fr:tex display="inline"><![CDATA[Q = XW_Q, K = XW_K, V = XW_V]]></fr:tex>.</html:li>
+  <html:li>Need to do this <fr:tex display="inline"><![CDATA[b]]></fr:tex> times for each input in batch.</html:li></html:ol>
+and the total memory accesses are roughly <fr:tex display="inline"><![CDATA[\underbrace {bnd}_{X} + \underbrace {bhn^2}_{\text {softmax}} + \underbrace {d^2}_{\text {projection}}]]></fr:tex>.
+This gives high arithmetic intensity
+<fr:tex display="block"><![CDATA[O\left (\left (\frac {h}{d} + \frac {1}{bn}\right )^{-1}\right )]]></fr:tex></html:p><html:p>However, if we do incremental inference then we must multiply our total number of memory accesses by <fr:tex display="inline"><![CDATA[n]]></fr:tex> i.e. <fr:tex display="inline"><![CDATA[bn^2d + nd^2]]></fr:tex>. This gives arithmetic intensity
+<fr:tex display="block"><![CDATA[O\left (\left (\frac {n}{d} + \frac {1}{b}\right )^{-1}\right ),]]></fr:tex>
+which requires large batch and short sequence length.
+</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+I believe we just ignore the softmax memory contribution in the inference case because it does not scale with <fr:tex display="inline"><![CDATA[n]]></fr:tex> anymore as we are computing the logits just for the next token. Therefore, it becomes a <fr:tex display="inline"><![CDATA[\frac {d}{h}]]></fr:tex> term, which we can safely ignore?
+</fr:mainmatter></fr:tree>
+<html:p>The key is that the <fr:tex display="inline"><![CDATA[\frac {n}{d}]]></fr:tex> term comes from the <fr:tex display="inline"><![CDATA[bn^2d]]></fr:tex> term, where we are loading <fr:tex display="inline"><![CDATA[h]]></fr:tex> <fr:tex display="inline"><![CDATA[(b \times  n \times  d / h)]]></fr:tex> <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrices <fr:tex display="inline"><![CDATA[n]]></fr:tex> times. Thus, we can improve the <fr:tex display="inline"><![CDATA[\frac {n}{d}]]></fr:tex> term by a factor of <fr:tex display="inline"><![CDATA[h]]></fr:tex> by simply not using a different <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrix for each head. This is the entire idea behind <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">MQA</fr:link>.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Similar to the <fr:link href="https://kellenkanarios.com/TJLA/" type="external">TJLA</fr:link>, we still can use <fr:tex display="inline"><![CDATA[h]]></fr:tex> <fr:tex display="inline"><![CDATA[Q]]></fr:tex> matrices because we do not need to load <fr:tex display="inline"><![CDATA[n]]></fr:tex> of them into memory because only the last one matters for inference.
+</fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XUVV/</fr:uri><fr:display-uri>XUVV</fr:display-uri><fr:route>/XUVV/</fr:route><fr:title text="Group Query Attention">Group Query Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:em>Group query attention</html:em> is the same idea as <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">MQA</fr:link> but instead of using one <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> for every head, they use a <html:em>group</html:em> of them. Where obviously the number of groups needs to be less than the number of heads.</html:p><html:figure><html:img width="80%" src="/bafkrmicmjlgi2o3oetsssjdwk6y2pqce4vrdwiw2ah4wwe3ulnt74upkiu.png" />
+<html:figcaption>Grouped query uses subset of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrices.</html:figcaption></html:figure></fr:mainmatter></fr:tree><html:p>Also inspired by this idea of reducing the dependence of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> on the sequence length is sliding window attention.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/WM3M/</fr:uri><fr:display-uri>WM3M</fr:display-uri><fr:route>/WM3M/</fr:route><fr:title text="Sliding Window Attention">Sliding Window Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p>The idea behind <html:em>sliding window attention</html:em> is to ensure the number of weight matrices needed for the keys <fr:tex display="inline"><![CDATA[K]]></fr:tex> and values <fr:tex display="inline"><![CDATA[V]]></fr:tex> does not scale with the sequence length. Intuitively, this means allowing each word to "attend" to only some fixed number of previous words rather than the whole sequence</html:p><html:figure><html:img width="80%" src="/bafkrmidqeoo6wx6s4ry6u74fcelfzxvwreyf7d44whnql4ffnnyd2dwcha.png" />
+<html:figcaption>"the" only sees "on" and "sat" rather than the full sentence.</html:figcaption></html:figure></fr:mainmatter></fr:tree></fr:mainmatter>
+            </fr:tree>
           </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>

@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors />
+    <fr:date>
+      <fr:year>2025</fr:year>
+      <fr:month>7</fr:month>
+      <fr:day>31</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/P9UM/</fr:uri>
+    <fr:display-uri>P9UM</fr:display-uri>
+    <fr:route>/P9UM/</fr:route>
+    <fr:title text="Culler's Law">Culler's Law</fr:title>
+    <fr:taxon>Definition</fr:taxon>
+  </fr:frontmatter>
+  <fr:mainmatter>
+    <html:p><html:em>"Ram is not always ram"</html:em>. Referring to the fact that a physical memory access takes a substantial different amount of time depending on whether it hit in the TLB.</html:p>
+  </fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>31</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/SB61/</fr:uri>
+            <fr:display-uri>SB61</fr:display-uri>
+            <fr:route>/SB61/</fr:route>
+            <fr:title text="Paging">Paging</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>Previously, we have only dealt with memory allocations as variable sized chunks i.e. the amount of memory allocated can be anything. A simple idea to avoid the drastic fragmentation this can induce is to instead divide memory into fixed size chunks. This idea is called <html:em>paging</html:em>, where each chunk is a <html:em>page</html:em>.</html:p>
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  ">
+  <html:strong>Main question:</html:strong> <html:em>how do we virtualize memory with pages?</html:em>
+</html:div>
+<html:p><html:strong>Idea:</html:strong> we decompose the address into a <html:em>virtual page number</html:em> (VPN) and offset i.e. 
+<fr:tex display="block"><![CDATA[\underbrace {01}_{\text {VPN}}\underbrace {110\cdots  01}_{\text {offset}}]]></fr:tex>
+we then maintain a datastructure to map <fr:tex display="inline"><![CDATA[\text {VPN} \mapsto  \text {PPN}]]></fr:tex>, where the PPN is the <html:em>physical page number</html:em> (we divide both virtual and physical memory into pages). We call this data structure a <html:em>page table</html:em>.
+</html:p><html:p><html:strong>Problem 1:</html:strong> The page table can get ridiculously large.</html:p>
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+For now, we consider a linear page table (an array with entry for each VPN). If we support a 32 bit address space with 4kb pages and each entry in the page table is 4 bytes then this is <fr:tex display="inline"><![CDATA[2^{32} / 2^{12} * 4 = 2^{22}]]></fr:tex> bytes of memory for the page table!
+</fr:mainmatter></fr:tree>
+ 
+<html:p>Before, we relied on the MMU to translate between physical and virtual addresses via simple operations like base and bound. However, there is no way the MMU could support this many arbitrary translations. Therefore, the page table itself must be stored in physical memory.</html:p><html:p>In addition to the address translation, the page table also keeps track of the following bits:
+<html:ol><html:li>
+Valid bit: whether this particular VPN has memory allocated to it i.e. mem between stack / heap does not need to be allocated.
+  </html:li>
+  <html:li>
+Protection bit: determines whether the calling program can read / write / execute.
+  </html:li>
+  <html:li>
+Present bit: whether the page currently resides in physical memory.
+  </html:li>
+  <html:li>
+Dirty bit: has the page been modified since being paged in.
+  </html:li>
+  <html:li>
+Reference bit: has the page been accessed (used for eviction policy).
+    </html:li></html:ol></html:p><html:p><html:strong>Problem 2:</html:strong> Every time we want to perform an address translation (very often) we must
+<html:ol><html:li>Compute VPN from address</html:li>
+  <html:li>Access page table entry in physical memory (slow)</html:li>
+  <html:li>Compute address with offset + PPN.</html:li>
+  <html:li>Access corresponding physical page in physical memory.</html:li></html:ol>
+This is very slow!
+</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:title text="TLB">TLB</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Due to the previously discussed issues, we need a faster way of performing address translation to make paging a feasible option. A common theme: we will throw hardware at it</html:p>
+<html:p>Specifically, we will add an additional cache known as the <html:em>translation lookaside buffer</html:em> that caches address translations. Generally, an address translation proceeds as:
+<html:ol><html:li>Extract VPN</html:li>
+  <html:li>Check if VPN in TLB</html:li>
+  <html:li>If in TLB: get translation</html:li>
+  <html:li>Otherwise: TLB miss -&gt; trap to OS (RISC)</html:li></html:ol></html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+We have to be a little careful. The OS code itself is located in memory and is therefore subject to our paging system. We can imagine that on TLB miss the hardware tries to load the TLB miss handler code by checking the TLB, getting the translation, and loading the code. But what if the translation for the TLB miss handler is not in the TLB?!?! To not worry about these things the TLB miss handler gets a permanent spot in physical memory.
+</fr:mainmatter></fr:tree>
+
+<html:p>Formally, an entry in the TLB consists of 
+<html:ol><html:li>VPN</html:li>
+  <html:li>PPN</html:li>
+  <html:li>Other bits</html:li>
+  <html:ul><html:li>Valid bit: has valid translation (different from PTE valid bit) can be invalid on initialization, eviction, or context switch.</html:li>
+    <html:li>Protection bit: whether the requested access can be performed.</html:li></html:ul></html:ol></html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>
+  Each process has different address translations corresponding to the same VPN.
+</fr:mainmatter></fr:tree>
+
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>
+  Keep additional <html:em>address space identifier</html:em> (ASID) in TLB entry. We also need an ASID register that we set at every process switch to identify the current running process.
+</fr:mainmatter></fr:tree>
+ 
+
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:uri>https://kellenkanarios.com/P9UM/</fr:uri><fr:display-uri>P9UM</fr:display-uri><fr:route>/P9UM/</fr:route><fr:title text="Culler's Law">Culler's Law</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p><html:em>"Ram is not always ram"</html:em>. Referring to the fact that a physical memory access takes a substantial different amount of time depending on whether it hit in the TLB.</html:p></fr:mainmatter></fr:tree>
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+In a real software managed TLB, the TLB consisted of the following components:
+<html:ol><html:li>Global bits for globally shared pages,</html:li>
+  <html:li>8 bit ASID,</html:li>
+  <html:li>Coherence bits for cache-coherence,</html:li>
+  <html:li>32-64 TLB entries,</html:li>
+  <html:li>A wired register to indicate how many slots to reserve in the TLB for things like TLB miss handler.</html:li></html:ol>
+</fr:mainmatter></fr:tree>
+ 
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Another important tidbit: when using very fast caches, even an access to the TLB is a CPU bottleneck (accessing TLB is longer than accessing cache). To get around this, there are <html:em>virtually indexed caches</html:em> that circumvent the need for performing an address translation.
+</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:title text="Smaller Tables">Smaller Tables</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>As previously discussed, as it currently stands, the page table takes up too much memory.</html:p>
+<html:p><html:strong>Solution 1:</html:strong> Just use bigger pages! Unfortunately, this will suffer from severe internal fragmentation (processes not using their allocated memory) and so we would prefer to avoid this solution.</html:p>
+<html:p><html:strong>Solution 2:</html:strong> Paging + segmentation. Instead of a page table for all of memory, keep 3 page tables: one for code, stack, and heap. This only partially resolves the problem.
+<html:ol><html:li>Same problems as segmentation. Variable sized page tables will cause external fragmentation</html:li>
+  <html:li>We can do better. Within each heap, there is still a (smaller) version of the same problem: a bunch of unused allocated PTEs.</html:li></html:ol></html:p>
+<html:p><html:strong>Multi-level page tables:</html:strong> Finally, we have arrived to the idea of a multi-level page table. The idea can be summarized as</html:p>
+<html:ol><html:li>Chop page table up into pages.</html:li>
+  <html:li>Do not allocated pages with no valid references (i.e. none of the corresponding are being used).</html:li></html:ol>
+<html:figure><html:img width="80%" src="/bafkrmihf7gcws2u2ay4ecuwqwpgnziozltgjbsn7zo6x5bs6ismwq76jby.png" /></html:figure>
+<html:p>This has a few advantages:</html:p>
+<html:ol><html:li>Fits easily in memory. Allocate one page when an entry is used.</html:li> 
+ <html:li>Proportional to the amount of address space actually in use.</html:li></html:ol>
+<html:p>The obvious downside is the added complexity. Namely, on every TLB miss we must make two loads of memory (1) the page directory entry and (2) the page table entry.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:title text="What happens when memory is full?">What happens when memory is full?</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>We reserve space on disk for pages that cannot fit in physical memory. This is referred to as <html:em>swap space</html:em>.</html:p>
+<html:p>We need to add an additional <html:em>present bit</html:em> to the PTE. On a TLB miss, the hardware (or software) will check the page table and see the present bit to indicate whether the page is in physical memory. If not, we must trap to the OS and this is known as a <html:em>page fault</html:em>.</html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+The hardware <html:strong>never</html:strong> handles page faults because this would require understanding swap space + knowing how to perform I/O with disk.
+</fr:mainmatter></fr:tree>
+
+<html:p>Three important cases to consider:</html:p>
+<html:ol><html:li>Page is <html:strong>present</html:strong> and <html:strong>valid</html:strong>.</html:li>
+  <html:ul><html:li>Hardware can just grab physical address from PTE.</html:li></html:ul>
+  <html:li>Page is not <html:strong>present</html:strong> but <html:strong>valid</html:strong>.</html:li>
+  <html:ul><html:li>Hardware must call page fault handler to retrieve page.</html:li></html:ul>
+  <html:li>Page is not <html:strong>valid</html:strong>.</html:li>
+  <html:ul><html:li>Throw exception and likely terminate process as it is accessing invalid memory.</html:li></html:ul></html:ol>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>
