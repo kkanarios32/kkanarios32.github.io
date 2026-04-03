@@ -1,0 +1,605 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors />
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>4</fr:month>
+      <fr:day>3</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/3LIK/</fr:uri>
+    <fr:display-uri>3LIK</fr:display-uri>
+    <fr:route>/3LIK/</fr:route>
+    <fr:title text="Chapter 6">Chapter 6</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter><html:p>We now explore a RISC architecture in the line of PowerPC.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="PowerPC 601">PowerPC 601</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p><html:strong>Frontend:</html:strong></html:p>
+  <html:p>Standard 4-stage pipeline.</html:p>
+  <html:p>Instruction queue dispatching 3 instructions per cycle.</html:p>
+  <html:ul><html:li>Used primarily for branch detection.</html:li>
+  <html:ul><html:li>Identifies unconditional branches or resolves conditional branches whose condition output is already available.</html:li>
+    <html:li>If taken, deletes branch instruction and loads instructions starting from branch location.</html:li>
+    <html:li>This is called <html:em>branch folding</html:em>.</html:li>
+    <html:li>Untaken branches "fall out" of the instruction queue, which is known as <html:em>fall through</html:em>.</html:li></html:ul>
+  <html:li>No ROB equivalent. Static scheduling.</html:li></html:ul>
+  <html:p><html:strong>Backend:</html:strong></html:p>
+  <html:ul><html:li>One integer ALU. Handles address calculations and regular arithmetic ops.</html:li>
+    <html:li>One floating point ALU.</html:li>
+    <html:ul><html:li>For floating point dominant applications, integer ALU acts as address computer, accelerating pipeline.</html:li>
+      <html:li>Single cycle fused multiply-add.</html:li></html:ul></html:ul>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+  Able to compete with two integer ALU architectures because simpler logic allowed 4x L1 cache (32kb vs. 8kb).
+  </fr:mainmatter></fr:tree>
+
+  </fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="PowerPC 603 and 603e">PowerPC 603 and 603e</fr:title></fr:frontmatter><fr:mainmatter>
+ <html:p><html:strong>Frontend:</html:strong></html:p> 
+ <html:ul><html:li>Has <html:em>dispatch bus</html:em> only connect to BU, so that branch instructions do not take up dispatch bandwidth.</html:li>
+   <html:li>Can dispatch up to 2 non-branch instructions per cycle.</html:li>
+   <html:li>Adds <html:em>commit unit</html:em> and <html:em>completion queue</html:em> analogous to the commit buffer and ROB we have seen previously.</html:li>
+   <html:ul><html:li>Dynamic scheduling + instruction window.</html:li></html:ul></html:ul>
+ <html:p><html:strong>Backend:</html:strong></html:p>
+ <html:ul><html:li>Added two execution units.</html:li>
+   <html:ol><html:li>System unit. For misc integer operations.</html:li>
+     <html:li>Load/store unit. For address calcluations.</html:li>
+     <html:li>Improved integer workload performance by decreasing the responsibility of integer ALU.</html:li></html:ol>
+   <html:li>FPU took significant hits.</html:li>
+   <html:ol><html:li>Can only execute three instructions every four cycles (mandatory bubble).</html:li> 
+    <html:li>Double precision operations (including <html:code>fmadd</html:code>) take two cycles in execute stage -&gt; one double precision multiply every two cycles.</html:li></html:ol></html:ul>
+  </fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="PowerPC 604">PowerPC 604</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p><html:strong>Frontend:</html:strong></html:p>
+  <html:ul><html:li>Splits decode / dispatch + writeback into two stages</html:li> 
+   <html:ul><html:li>Enables shorter clock cycles.</html:li></html:ul>
+   <html:li>Can dispatch up to 6 instructions per cycle.</html:li>
+   <html:li>Dynamic branch prediction.</html:li>
+   <html:ul><html:li>512 entry BHT with two bits per entry.</html:li>
+     <html:li>64 entry <html:em>branch address cache</html:em> equivalent to BTB.</html:li></html:ul>
+    <html:li>Add Condition register unit.</html:li>
+    <html:ul><html:li>Shares dispatch bus and other(?) resources with BU.</html:li></html:ul></html:ul>
+  <html:p><html:strong>Backend:</html:strong></html:p>
+  <html:ul><html:li>Two simple integer units and one complex integer unit.</html:li>
+    <html:li>Fully pipeline floating point unit.</html:li></html:ul>
+  <html:p>Frontend Pipeline:</html:p>
+  <html:ul><html:li>Instructions fetched from L1 instruction cache into instruction queue.</html:li>
+    <html:li>Folds branches that can be folded.</html:li>
+    <html:li>Dispatch up to 4 instructions from bottom of instruction queu.</html:li>
+    <html:li>During dispatch, rename registers and a ROB entry are assigned to each dispatched instruction.</html:li>
+    <html:li>An instruction <html:strong>cannot</html:strong> be dispatched if it needs an occupied execution unit.</html:li></html:ul>
+  <html:p>Issue phase:</html:p>
+  <html:ul><html:li>Each execution unit has own reservation station.</html:li>
+    <html:li>Within each reservation station, instructions are issued in order FIFO. But there is <html:strong>no guarantee</html:strong> across reservation stations.</html:li>
+    <html:ul><html:li>Reservation stations are used so that instructions waiting on operands do not block following instructions that may be ready.</html:li></html:ul>
+    <html:li>Four rules of dispatching:</html:li>
+    <html:ol><html:li>in-order rule: instructions are dispatched in order and are not executed out of order until they executed on their respective units.</html:li>
+      <html:li>execution unit availability: the execution unit's reservation station must have room. if it does not need to go to reservation station then the execution unit must be available.</html:li>
+      <html:li>completion buffer availability rule: must be room to add entry to ROB (completion buffer) so that we can ensure program order on commit.</html:li>
+      <html:li>register renaming rule: must be enough rename registers to temporarily restore results before committing..</html:li></html:ol></html:ul>
+  <html:p>Completion phase: put instructions back in program order according to ROB entries.</html:p>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+  604 has small ROB and fewer reservation stations because it has a shallow pipeline, meaning that it can afford to stall. Tradeoff is lower clock speed.
+  <html:ul><html:li>ROB tracks all issued instructions.</html:li>
+    <html:li>Reservation stations hold all instructions waiting on operands.</html:li>
+    <html:li>Size must cover number of instructions simultaneously "in flight".</html:li>
+    <html:li>In flight instructions <fr:tex display="inline"><![CDATA[\approx ]]></fr:tex> depth <fr:tex display="inline"><![CDATA[\times ]]></fr:tex> width.</html:li></html:ul>
+  </fr:mainmatter></fr:tree>
+
+  </fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+  <html:strong>The 604e.</html:strong> In the 604e, they doubled the L1 cache size to 64kb and added a <html:em>condition register unit</html:em>. Freed up integer unit and branch unit from computing these conditional operations.
+  </fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="PowerPC 750">PowerPC 750</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p>Same four stage pipeline as the 603/603e. Main differences:</html:p>
+  <html:ol><html:li>Two integer units vs. one.</html:li>
+    <html:li>Three cycle single precision floating point.</html:li>
+    <html:li>Six entry instruction queue, fetching up to 4 instructions per cycle.</html:li></html:ol>
+  <html:p>The smaller instruction window of 750 vs. 604 is not a problem because the pipeline is shorter as discussed previously.</html:p>
+  <html:p>The 750 has most of its performance gain from a clever trick in branch prediction. Namely, in traditional branch prediction, there is a branch history table (BHT) and branch target buffer (BTB). The branch target buffer just stores the address of the instruction to jump to if the branch is taken. However, it must still <html:strong>re-fetch</html:strong> this instruction to execute. The 750 uses a <html:em>branch target instruction cache</html:em>(BTIC) that stores the actual instruction to be executed on branch, avoiding re-fetching.</html:p>
+  </fr:mainmatter></fr:tree>
+<html:p>The main drawback of the 750 is that it did not support a SIMD instruction set.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="PowerPC 7400">PowerPC 7400</fr:title></fr:frontmatter><fr:mainmatter>
+    <html:p>The 7400 added a <html:em>vector permute unit</html:em>(VPU) and <html:em>vector ALU</html:em>(VALU) to support a SIMD instruction set. Also added</html:p>
+    <html:ul><html:li>Full double precision floating point unit.</html:li>
+      <html:li>8 entry instruction queue.</html:li></html:ul>
+  </fr:mainmatter></fr:tree>
+</fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>3</fr:month>
+              <fr:day>15</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/P3GB/</fr:uri>
+            <fr:display-uri>P3GB</fr:display-uri>
+            <fr:route>/P3GB/</fr:route>
+            <fr:title text="Notebook: Inside the Machine">Notebook: Inside the Machine</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>Notes on the book <html:em>Inside the Machine</html:em> by Jon Stokes.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>15</fr:day></fr:date><fr:title text="Chapter 1">Chapter 1</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>For speed, we introduce the first notion of NUMA i.e. registers. Here the registers or stored in the register file, which is located very close to the ALUs.</html:p>
+<html:p>Due to limited surface area of the CPU, we can only have so many registers. This necessitates the introduction of main memory or RAM. Data is transferred from main memory to the CPU via the <html:em>memory bus</html:em>.</html:p>
+<html:p>This leads to the logical classification of instructions into two categories: arithmetic operations and memory operations.</html:p>
+<html:p>To ease programmability, there are <html:em>general purpose registers</html:em> that function as both integer values and correspond to memory addresses. This is useful for <html:em>register-relative addressing</html:em>, where we can offset all memory accesses by some register value.</html:p>
+<html:p>To support both values and registers, we need to distinguish as ''immediate types'' vs. ''register types''. We will see why when we actually make a instruction set that must correspond to binary.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>15</fr:day></fr:date><fr:title text="Chapter 2">Chapter 2</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p><html:strong>The Fetch-Execute Loop:</html:strong></html:p>
+<html:ol><html:li><html:em>Fetch</html:em> instruction from memory</html:li>
+  <html:ul><html:li>This entails reading the instruction and loading it into the <html:em>instruction register</html:em>.</html:li>
+    <html:li>Also we increment the program counter.</html:li></html:ul>
+  <html:li><html:em>Decode</html:em> instruction</html:li>
+  <html:ul><html:li>This entails extracting the <html:em>opcode</html:em> from the instruction register.</html:li>
+    <html:li>We also extract the <html:em>operands</html:em> from the instruction register.</html:li>
+    <html:li>We also extract the <html:em>destination</html:em> from the instruction register.</html:li></html:ul>
+  <html:li><html:em>Execute</html:em> instruction</html:li>
+  <html:ul><html:li>If the instruction is an arithmetic operation, we use the ALU.</html:li>
+    <html:li>If the instruction is a memory operation, we use the load/store unit.</html:li></html:ul></html:ol>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>15</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+These instructions do not take arbirary amounts of time to execute. They depend on the <html:em>clock cycle</html:em>. This is inputted via the motherboard and determines when to read the values stored in the current state.
+</fr:mainmatter></fr:tree>
+
+<html:p><html:strong>Branch Instructions:</html:strong> There are two types conditional and unconditional.</html:p>
+<html:ol><html:li>Unconditional: The program counter is set to the destination address.</html:li>
+  <html:li>Conditional: The program counter is set to the destination address if the condition is true.</html:li>
+  <html:ul><html:li>To support conditional branching, normally need to have some other sort of hardware. In the example given in this chapter, they keep a <html:em>processor status word</html:em> register that stores the output of the previous arithmetic instruction.</html:li>
+    <html:li>Many different types of conditional branching instructions based on the value in the PSW.</html:li></html:ul></html:ol>
+<html:p>Branch instructions are added as a third case in the execute phase i.e.</html:p>
+<html:ul><html:li>If the instruction is a branch instruction, check the condition and branch.</html:li></html:ul>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>15</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+If the program uses relative addressing, then the OS must load the base register of the code block to add to the branch destination register.
+</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>15</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter><html:strong>How does a computer boot:</html:strong> If a computer must fetch instructions, then what does it do at the beginning when there is no program running?</fr:mainmatter></fr:tree>
+
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>15</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>
+  When you power on a computer, it is hard-wired to fetch an initial instruction from a pre-determined address. This memory address is also hardcoded and unchanged and contains the code for the BIOS. The BIOS is then responsible for making sure everything is working correctly before <html:code>jump</html:code> to the bootloader, which then loads the OS.
+</fr:mainmatter></fr:tree>
+ 
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>15</fr:day></fr:date><fr:title text="Chapter 3: Pipelined Execution">Chapter 3: Pipelined Execution</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Previously, we discussed the fetch-execute loop. However, it is actually the case that the store / write part of execute is treated as a different stage, yielding</html:p>
+<html:ol><html:li><html:em>Fetch</html:em> instruction from memory</html:li>
+  <html:li><html:em>Decode</html:em> instruction</html:li>
+  <html:li><html:em>Execute</html:em> instruction</html:li>
+  <html:ul><html:li>Now a read / add</html:li></html:ul>
+  <html:li><html:em>Write</html:em> result to memory</html:li></html:ol>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>15</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Each of these represents one <html:em>phase</html:em> in the pipeline. However, these by no means take the same amount of time.
+</fr:mainmatter></fr:tree>
+
+<html:p>We have previously been determining the clock cycle as the time to complete an entire instruction i.e. to complete the whole pipeline. However, with overlapping instructions we now can shrink the clock cycle to the time it takes to complete the slowest phase of the pipeline. Dividing the pipeline into roughly equal stages is important to ensure that no one stage is idle during the majority of the cycle.</html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>15</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Pipelining does not increase the speed of execution of a single instruction. However, it does increase the program execution time. Taking this to the limit, we would want an extremely fine pipeline i.e. large depth, so that no stage is ever idle. Explicitly, for <fr:tex display="inline"><![CDATA[n]]></fr:tex> stages a full pipeline will complete <fr:tex display="inline"><![CDATA[n]]></fr:tex> instructions every cycle. However, there is a tradeoff due to the clock cycle constraints as deepening your pipeline can cause longer per-instruction execution time.
+</fr:mainmatter></fr:tree>
+
+<html:p><html:strong>Metrics:</html:strong></html:p>
+<html:ol><html:li>Completion rate: number of instructions completed per nanosecond.</html:li>
+  <html:ul><html:li>Program execution time is <fr:tex display="inline"><![CDATA[\frac {\text {number of instructions per program}}{\text {avg completion rate per instruction}} ]]></fr:tex></html:li></html:ul>
+  <html:li>Instruction throughput: number of instructions processor finishes executing per clock cycle.</html:li></html:ol>
+<html:p>Each metric also has the maximum theoretically achieved and the average.</html:p>
+<html:p>The main thing preventing us from achieving our maximum theoretical throughput is <html:em>pipeline stalls</html:em>. Namely, for some reason we cannot execute a certain stage of the pipeline at a certain time i.e. we are waiting for a value to be loaded in from memory.</html:p>
+<html:p>The <html:em>instruction latency</html:em> is the number of cycles it takes to complete an instruction. In a single cycle processor, this is 1. Or the minimal latency is the sum of the cycles for each stage of the pipeline. Though, this is hardly the true latency in practice.</html:p>
+</fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/6JU6/</fr:uri><fr:display-uri>6JU6</fr:display-uri><fr:route>/6JU6/</fr:route><fr:title text="Chapter 4: Superscalar Architecture">Chapter 4: Superscalar Architecture</fr:title></fr:frontmatter><fr:mainmatter><html:p>With Moore's law and the unlocked capability of more transistors, each processor could have multiple ALUs on chip performing more than a single scalar operation. Hence the name <html:em>superscalar</html:em>.</html:p><html:p>To extend the fetch-execute loop, the decode stage becomes a <html:em>decode / dispatch</html:em> stage, where the processor must decide which instructions can be run in parallel.</html:p><html:p>An <html:em>execution unit</html:em> is any circuitry responsible for executing a single instruction. This could be a single ALU, a single load/store unit, or a combination of both.</html:p><html:p>Arithmetic operations are things like addition, subtraction, multiplication, and division. Namely, operations that can be performed on any type of number</html:p><html:p>Logical operations are things like AND, OR, and NOT. Namely, operations that can be performed on integer values, or the contents of special registers like PSW.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+From now on, we will be using the term <html:em>ALU</html:em> to refer to exeucution unit for either arithmetic or logical operations i.e. <html:em>float point units</html:em>(FPU) OR <html:em>integer logic units</html:em>(ILU). 
+</fr:mainmatter></fr:tree>
+<html:p>The <html:em>load store unit</html:em> is responsible for loading and storing data from memory. It is also responsible for performing the memory address calculations with a lightweight addition unit.</html:p><html:p>The <html:em>branch execution unit</html:em> is responsible for performing the branch instructions. In the simple case currently considered, it reads the PSW and decides whether to take the branch.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="History of Superscalar Architecture">History of Superscalar Architecture</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Superscalar processor still responsible for implementing the ISA. How the hardware implements an ISA is referred to as the <html:em>microarchitecture</html:em>.</html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+To actually perform this mapping, processor have a <html:em>microcode engine</html:em> that is a mini-CPU inside the CPU. It has small memory to hold the microcode programs and an execution unit to execute them. Its task is to translate the ISA instructions into machine code to run on the actual hardware. Intuitively, it is like an emulator.
+</fr:mainmatter></fr:tree>
+
+<html:p>Microcode engines take up space in the processor. Especially for CISC instruction sets which require larger microcode programs. Therefore, in RISC they got rid of the microcode engine and instead rely on compilers.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Challenges to Pipelining and Superscalar Architecture">Challenges to Pipelining and Superscalar Architecture</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p><html:strong>Data hazard:</html:strong> Operation depends on the result of a previous operation.</html:p>
+  <html:ul><html:li>One trick to avoid this is using <html:em>forwarding</html:em>, where the result of a previous operation is used as the input to the next operation rather than waiting for it to complete storing the result.</html:li>
+    <html:li>Another trick is to use <html:em>register renaming</html:em>. The programming model often specifies fewer registers than available in hardware. Therefore, we can use the extra registers as temps to store intermediate computation
+    
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+      Say we have the following code:
+      <html:pre><![CDATA[      add r1, r2, r3
+      add r4, r5, r2]]></html:pre>
+      We can use the extra registers to store the intermediate result of the second addition and then write back to r2 after the first one completes.
+    </fr:mainmatter></fr:tree></html:li></html:ul>
+  <html:p><html:strong>Structural hazard:</html:strong> when the processor does not have enough resources to execute an instruction.</html:p>
+  <html:ul><html:li>In the superscalar architecture, we need our register file to allow for simultaneous writes. Otherwise, we will not be able to execute simultaneous write instructions.</html:li></html:ul>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+  To connect each register to each ALU, would require a riduculous amount of wiring. Therefore, we need to use a <html:em>register file</html:em> to connect the registers to the ALUs. The register file allows reading a single specified register for each read port and write to a specific register for each write port. So for an <fr:tex display="inline"><![CDATA[n]]></fr:tex> ALU chip, you would need <fr:tex display="inline"><![CDATA[2n]]></fr:tex> read ports and <fr:tex display="inline"><![CDATA[n]]></fr:tex> write ports. 
+  </fr:mainmatter></fr:tree>
+
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>The die space of a register file scales quadratically with number of ports.</fr:mainmatter></fr:tree>
+
+  
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>
+    They often use different register files for different execution units, so each register file only needs ports for its execution units. This also decreases access time due to decreasing the size.
+  </fr:mainmatter></fr:tree>
+ 
+
+  <html:p><html:strong>Control hazard:</html:strong> when the processor has to decide what instruction to fetch next at a branch instruction.</html:p>
+  <html:ul><html:li>To avoid stall, modern processor use <html:em>branch prediction</html:em>.</html:li> 
+   <html:li>Another cause of slowdown is actually the <html:em>instruction load latency</html:em>. To avoid this, we can use <html:em>instruction caching</html:em> (TBD).</html:li></html:ul>
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/7XOX/</fr:uri><fr:display-uri>7XOX</fr:display-uri><fr:route>/7XOX/</fr:route><fr:title text="Chapter 5: The Intel Pentium and Pentium Pro">Chapter 5: The Intel Pentium and Pentium Pro</fr:title></fr:frontmatter><fr:mainmatter>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The Original Pentium">The Original Pentium</fr:title></fr:frontmatter><fr:mainmatter>
+    <html:p><html:strong>Caches:</html:strong> To alleviate the latency of accessing main memory, processors have smaller (faster) memory located closer to the chip known as a <html:em>cache</html:em>. </html:p>
+    <html:ul><html:li>Caches are organized in a <html:em>cache hierarchy</html:em>. The first level is the <html:em>L1 cache</html:em>, which is the fastest cache. The second level is the <html:em>L2 cache</html:em>, which is slower than the L1 cache. The third level is the <html:em>L3 cache</html:em>, which is even slower than the L2 cache.</html:li>
+      <html:li>Furthermore, the L1 cache is normally split in half for data and instructions.</html:li></html:ul>
+    <html:p><html:strong>Branch Unit:</html:strong> The branch unit contains a <html:em>branch execution unit</html:em> and a <html:em>branch prediction unit</html:em>.</html:p>
+    <html:ul><html:li>To reduce stalling, we can perform <html:em>speculative execution</html:em>, where based on the prediction of the BPU, we execute the subsequent instructions. Then we only write back once we have confirmed the correct prediction of the branch.</html:li></html:ul>
+    <html:p>There is <html:em>static</html:em> and <html:em>dynamic</html:em> branch prediction, where the former is program-agnostic i.e. always predict the branch is taken. This is fine for certain loop-heavy programs but in general pretty bad.</html:p>
+    <html:p>The <html:em>dynamic</html:em> branch prediction makes use of the <html:em>branch history table</html:em> and the <html:em>branch target buffer</html:em>. The BHT stores how often previous branches are taken and then the BTB tells you which address those branches actually jump to in order to speculatively execute. Apparently, BTB misses are very costly.</html:p>
+    <html:p>The Pentium combines these by using static prediction if no entry is found and dynamic otherwise.</html:p>
+    <html:p>The modified pipeline for the Pentium is as follows:</html:p>
+    <html:ol><html:li><html:em>Fetch / Prefetch:</html:em> fetch instruction from instruction cache.</html:li>
+      <html:li><html:em>Decode 1:</html:em>.</html:li>
+      <html:ul><html:li>decode instruction to Pentium's internal format</html:li>
+        <html:li>branch prediction also happens here.</html:li></html:ul>
+      <html:li><html:em>Decode 2:</html:em></html:li>
+      <html:ul><html:li>If instruction is not a simple instruction, then it is converted via the microcode ROM into microops to be performed by CPU.</html:li></html:ul>
+      <html:li><html:em>Execute:</html:em> execute instruction.</html:li>
+      <html:li><html:em>Write:</html:em> write result to memory.</html:li></html:ol>
+    <html:p><html:strong>The Pentium Backend:</html:strong></html:p>
+    <html:ul><html:li>Two integer ALUs. Responsible for the address calculations.</html:li>
+      <html:li>One floating point ALU.</html:li>
+      <html:ul><html:li>Register file is arranged in a <html:em>stack</html:em>.</html:li>
+        <html:li>Can arbitrarily access elements on the stack, but for floating point operations one register must be at top of stack.</html:li>
+        <html:li>Had instruction to swap with top of stack. On all modern x86 can be executed in 0 cycles. But still need to decode.</html:li></html:ul></html:ul>
+    
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+    An estimated 30% of the Pentium's transistors are used for legacy support, mainly going towards the microcode ROM.
+    </fr:mainmatter></fr:tree>
+
+  </fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The Pentium Pro">The Pentium Pro</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p>To support out of order execution while preserving the illusion of sequential execution, we must add a <html:em>issue buffer</html:em> and a <html:em>completion buffer</html:em>. The reorder buffer is where we store a larger set of instructions than just two, reordering them so that we can execute multiple conflict-free instructions in parallel. When an instruction is selected we say it is <html:em>issued</html:em>.</html:p>
+  <html:p>However, to ensure that we match the intent of the programmer, we must store the intermediate results of these instructions internally in registers not visible to the programmer. We then write these to the correct registers once all results are available. When the results of an instruction are written back we say it is <html:em>committed</html:em>.</html:p>
+  </fr:mainmatter></fr:tree>
+<html:figure><html:img width="70%" src="/bafkrmihuv5vybyb5cvylg24dd5ujybaegxaunut6xxm5a7tducja3ljudm.png" />
+  <html:figcaption /></html:figure><html:p>The Pentium Pro has the <html:em>reservation station</html:em> to issue instructions. Three instructions can dispatch into the reservations station at any given cycle and up to five instructions can be issued to be executed by the reservation station</html:p><html:p>To commit instructions, the Pentium Pro has the <html:em>reorder buffer</html:em>. The reorder buffer must ensure that instructions are commited in program order. Hence why it is at both the front and back of the pipeline. The reorder buffer keeps track of all relevant information i.e. instruction status, operands, register needs, position in program, etc.</html:p><html:ul><html:li>Also assists in register renaming.</html:li>
+    <html:li>Each of the 40 ROB entries has a data field that can be used as rename registers.</html:li>
+    <html:li>Speculated instructions are also added to the ROB but contain an additional indication that they are speculated. If the BPU mispredicts, they are cleared from the ROB.</html:li></html:ul><html:p><html:strong>CISC vs. RISC:</html:strong> x86 is a CISC instruction set, meaning it contains more complex instructions. Namely, arithmetic instructions can be overloaded with memory locations directly instead of having to manually perform the loads and stores beforehand. Additionally, they allow support for complex types like strings. </html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>The drawback is that this introduces a large processor burden i.e. we have to implement this functionality directly into the processor. </fr:mainmatter></fr:tree>
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>
+    Once it became apparent that RISC was the future, Intel and AMD shifted to <html:em>instruction translation</html:em>. This means that they supported x86 by translating the CISC instructions to a more RISC-like instruction set internally supported by the processor. These are called <html:em>micro-operations</html:em>
+  </fr:mainmatter></fr:tree>
+ 
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+  Many CISC instructions translate to only one or two micro-ops. Therefore, they separate their decoders into simple and complex decoders, where the simple decoders are specific to just these operations.
+  </fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+  All of this decoding / translation resulted in 40% of the Pentium pro's transistors being used for supporting backward compatibility......
+  </fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/3LIK/</fr:uri><fr:display-uri>3LIK</fr:display-uri><fr:route>/3LIK/</fr:route><fr:title text="Chapter 6">Chapter 6</fr:title></fr:frontmatter><fr:mainmatter><html:p>We now explore a RISC architecture in the line of PowerPC.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="PowerPC 601">PowerPC 601</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p><html:strong>Frontend:</html:strong></html:p>
+  <html:p>Standard 4-stage pipeline.</html:p>
+  <html:p>Instruction queue dispatching 3 instructions per cycle.</html:p>
+  <html:ul><html:li>Used primarily for branch detection.</html:li>
+  <html:ul><html:li>Identifies unconditional branches or resolves conditional branches whose condition output is already available.</html:li>
+    <html:li>If taken, deletes branch instruction and loads instructions starting from branch location.</html:li>
+    <html:li>This is called <html:em>branch folding</html:em>.</html:li>
+    <html:li>Untaken branches "fall out" of the instruction queue, which is known as <html:em>fall through</html:em>.</html:li></html:ul>
+  <html:li>No ROB equivalent. Static scheduling.</html:li></html:ul>
+  <html:p><html:strong>Backend:</html:strong></html:p>
+  <html:ul><html:li>One integer ALU. Handles address calculations and regular arithmetic ops.</html:li>
+    <html:li>One floating point ALU.</html:li>
+    <html:ul><html:li>For floating point dominant applications, integer ALU acts as address computer, accelerating pipeline.</html:li>
+      <html:li>Single cycle fused multiply-add.</html:li></html:ul></html:ul>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+  Able to compete with two integer ALU architectures because simpler logic allowed 4x L1 cache (32kb vs. 8kb).
+  </fr:mainmatter></fr:tree>
+
+  </fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="PowerPC 603 and 603e">PowerPC 603 and 603e</fr:title></fr:frontmatter><fr:mainmatter>
+ <html:p><html:strong>Frontend:</html:strong></html:p> 
+ <html:ul><html:li>Has <html:em>dispatch bus</html:em> only connect to BU, so that branch instructions do not take up dispatch bandwidth.</html:li>
+   <html:li>Can dispatch up to 2 non-branch instructions per cycle.</html:li>
+   <html:li>Adds <html:em>commit unit</html:em> and <html:em>completion queue</html:em> analogous to the commit buffer and ROB we have seen previously.</html:li>
+   <html:ul><html:li>Dynamic scheduling + instruction window.</html:li></html:ul></html:ul>
+ <html:p><html:strong>Backend:</html:strong></html:p>
+ <html:ul><html:li>Added two execution units.</html:li>
+   <html:ol><html:li>System unit. For misc integer operations.</html:li>
+     <html:li>Load/store unit. For address calcluations.</html:li>
+     <html:li>Improved integer workload performance by decreasing the responsibility of integer ALU.</html:li></html:ol>
+   <html:li>FPU took significant hits.</html:li>
+   <html:ol><html:li>Can only execute three instructions every four cycles (mandatory bubble).</html:li> 
+    <html:li>Double precision operations (including <html:code>fmadd</html:code>) take two cycles in execute stage -&gt; one double precision multiply every two cycles.</html:li></html:ol></html:ul>
+  </fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="PowerPC 604">PowerPC 604</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p><html:strong>Frontend:</html:strong></html:p>
+  <html:ul><html:li>Splits decode / dispatch + writeback into two stages</html:li> 
+   <html:ul><html:li>Enables shorter clock cycles.</html:li></html:ul>
+   <html:li>Can dispatch up to 6 instructions per cycle.</html:li>
+   <html:li>Dynamic branch prediction.</html:li>
+   <html:ul><html:li>512 entry BHT with two bits per entry.</html:li>
+     <html:li>64 entry <html:em>branch address cache</html:em> equivalent to BTB.</html:li></html:ul>
+    <html:li>Add Condition register unit.</html:li>
+    <html:ul><html:li>Shares dispatch bus and other(?) resources with BU.</html:li></html:ul></html:ul>
+  <html:p><html:strong>Backend:</html:strong></html:p>
+  <html:ul><html:li>Two simple integer units and one complex integer unit.</html:li>
+    <html:li>Fully pipeline floating point unit.</html:li></html:ul>
+  <html:p>Frontend Pipeline:</html:p>
+  <html:ul><html:li>Instructions fetched from L1 instruction cache into instruction queue.</html:li>
+    <html:li>Folds branches that can be folded.</html:li>
+    <html:li>Dispatch up to 4 instructions from bottom of instruction queu.</html:li>
+    <html:li>During dispatch, rename registers and a ROB entry are assigned to each dispatched instruction.</html:li>
+    <html:li>An instruction <html:strong>cannot</html:strong> be dispatched if it needs an occupied execution unit.</html:li></html:ul>
+  <html:p>Issue phase:</html:p>
+  <html:ul><html:li>Each execution unit has own reservation station.</html:li>
+    <html:li>Within each reservation station, instructions are issued in order FIFO. But there is <html:strong>no guarantee</html:strong> across reservation stations.</html:li>
+    <html:ul><html:li>Reservation stations are used so that instructions waiting on operands do not block following instructions that may be ready.</html:li></html:ul>
+    <html:li>Four rules of dispatching:</html:li>
+    <html:ol><html:li>in-order rule: instructions are dispatched in order and are not executed out of order until they executed on their respective units.</html:li>
+      <html:li>execution unit availability: the execution unit's reservation station must have room. if it does not need to go to reservation station then the execution unit must be available.</html:li>
+      <html:li>completion buffer availability rule: must be room to add entry to ROB (completion buffer) so that we can ensure program order on commit.</html:li>
+      <html:li>register renaming rule: must be enough rename registers to temporarily restore results before committing..</html:li></html:ol></html:ul>
+  <html:p>Completion phase: put instructions back in program order according to ROB entries.</html:p>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+  604 has small ROB and fewer reservation stations because it has a shallow pipeline, meaning that it can afford to stall. Tradeoff is lower clock speed.
+  <html:ul><html:li>ROB tracks all issued instructions.</html:li>
+    <html:li>Reservation stations hold all instructions waiting on operands.</html:li>
+    <html:li>Size must cover number of instructions simultaneously "in flight".</html:li>
+    <html:li>In flight instructions <fr:tex display="inline"><![CDATA[\approx ]]></fr:tex> depth <fr:tex display="inline"><![CDATA[\times ]]></fr:tex> width.</html:li></html:ul>
+  </fr:mainmatter></fr:tree>
+
+  </fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+  <html:strong>The 604e.</html:strong> In the 604e, they doubled the L1 cache size to 64kb and added a <html:em>condition register unit</html:em>. Freed up integer unit and branch unit from computing these conditional operations.
+  </fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="PowerPC 750">PowerPC 750</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p>Same four stage pipeline as the 603/603e. Main differences:</html:p>
+  <html:ol><html:li>Two integer units vs. one.</html:li>
+    <html:li>Three cycle single precision floating point.</html:li>
+    <html:li>Six entry instruction queue, fetching up to 4 instructions per cycle.</html:li></html:ol>
+  <html:p>The smaller instruction window of 750 vs. 604 is not a problem because the pipeline is shorter as discussed previously.</html:p>
+  <html:p>The 750 has most of its performance gain from a clever trick in branch prediction. Namely, in traditional branch prediction, there is a branch history table (BHT) and branch target buffer (BTB). The branch target buffer just stores the address of the instruction to jump to if the branch is taken. However, it must still <html:strong>re-fetch</html:strong> this instruction to execute. The 750 uses a <html:em>branch target instruction cache</html:em>(BTIC) that stores the actual instruction to be executed on branch, avoiding re-fetching.</html:p>
+  </fr:mainmatter></fr:tree>
+<html:p>The main drawback of the 750 is that it did not support a SIMD instruction set.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="PowerPC 7400">PowerPC 7400</fr:title></fr:frontmatter><fr:mainmatter>
+    <html:p>The 7400 added a <html:em>vector permute unit</html:em>(VPU) and <html:em>vector ALU</html:em>(VALU) to support a SIMD instruction set. Also added</html:p>
+    <html:ul><html:li>Full double precision floating point unit.</html:li>
+      <html:li>8 entry instruction queue.</html:li></html:ul>
+  </fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/037I/</fr:uri><fr:display-uri>037I</fr:display-uri><fr:route>/037I/</fr:route><fr:title text="Chapter 7: Pentium 4 vs. Motorola G4e Approaches and Considerations">Chapter 7: Pentium 4 vs. Motorola G4e Approaches and Considerations</fr:title></fr:frontmatter><fr:mainmatter><html:p>In this chapter, they compare two designs: the Pentium 4 vs. the G4e.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The G4e">The G4e</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p><html:strong>The approach:</html:strong> <html:em>wide and shallow</html:em>. Optimizing for instruction level parallelism.</html:p>
+  <html:p>Seven stage pipeline.</html:p>
+  <html:ol><html:li>Additional second fetching stage.</html:li>
+    <html:li>Issue stage.</html:li>
+    <html:ul><html:li>Recall that instructions are issued in order. This can lead to stalls if none of the reservation stations / execution units are available.</html:li>
+      <html:li>To fix, they add <html:em>general issue queue</html:em>, <html:em>vector issue queue</html:em> and <html:em>float issue queue</html:em>, which can accept and issue 3,2, and 1 instructions per cycle respectively.</html:li>
+      <html:li>Issue queue differ from reservation station because it issues to a coarser group of execution units rather than per ALU i.e. GIQ issues to any of integer ALUs or SLU.</html:li></html:ul>
+    <html:li>Complete stage.</html:li></html:ol>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The Pentium 4">The Pentium 4</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p><html:strong>The approach:</html:strong> <html:em>narrow and deep</html:em>. Optimizing for clock speed.</html:p>
+  <html:p>The calling card of the Pentium 4 is the <html:strong>incredibly deep</html:strong> pipeline. They have 20 stages, allowing incredibly fast clock speed (for marketing purposes).</html:p>
+  <html:p><html:strong>Tradeoffs and considerations:</html:strong></html:p>
+  <html:ul><html:li>In order to keep fast backend fed, need very deep buffers (126 instructions) i.e. large instruction window.</html:li></html:ul>
+  <html:p><html:strong>Trace cache:</html:strong></html:p>
+  <html:ul><html:li>Could not keep deep pipeline full because decoding was taking too long.</html:li>
+    <html:li>Decoding x86 requires breaking into micro-ops. Few cycles each time.</html:li>
+    <html:li>Instruction cache is now in L2 cache.</html:li>
+    <html:li>The <html:em>trace cache</html:em> is in L1 cache, and it stores already decoded micro-ops traces that are ready to be executed.</html:li>
+    <html:li>Trace cache fetch is after decode but is indexed directly during branch prediction.</html:li>
+    <html:li>The trace cache operates in two modes: execution mode and build mode. When there is a trace hit it feeds the trace directly to the execution logic. When there is a miss, it must fetch the instruction from the L2 cache and build the trace after decoding.</html:li>
+    <html:li>Trace cache allows storing speculative branches.</html:li>
+    <html:ul><html:li>Normal instruction fetching stops fetching cache when a branch is detected.</html:li>
+      <html:li>Trace cache allows storing speculative micro-ops after branch to fully utilize 6 micro-op cache line.</html:li></html:ul></html:ul>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Long (100s) of micro-ops instructions can pollute the trace cache.</fr:mainmatter></fr:tree>
+
+  
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>
+    Tag these long instructions. When we encounter a tag, the trace cache instead stores a pointer to the microcode ROM which then retrieves and dispatches the corresponding micro-ops without needing to store them in the cache.
+  </fr:mainmatter></fr:tree>
+ 
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>15</fr:day></fr:date><fr:title text="Chapter 9: 64bit Computing">Chapter 9: 64bit Computing</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p><html:em>What is 64 bit computing?</html:em> <fr:tex display="inline"><![CDATA[n]]></fr:tex>-bit computing refers to how many bits a register can hold.</html:p>
+<html:ul><html:li>64 bit means they hold 64 bits.</html:li>
+  <html:li>64 bit instructions means the operands are 64 bits.</html:li></html:ul>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>15</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+This means that the instruction size has not actually changed in size. The PC does change because the virtual address space has increased (we will see later).
+</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>15</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Only affects integer and addressing units. Floating point and vector units retain same width <fr:tex display="inline"><![CDATA[> 64]]></fr:tex>.
+</fr:mainmatter></fr:tree>
+
+<html:p><html:strong>Benefits:</html:strong></html:p>
+<html:ul><html:li>Increased <html:em>dynamic range</html:em> i.e. representation went from <fr:tex display="inline"><![CDATA[2^32]]></fr:tex> to <fr:tex display="inline"><![CDATA[2^64]]></fr:tex>.</html:li>
+  <html:ul><html:li><html:em>Overflow</html:em> or <html:em>underflow</html:em> is when the largest positive or negative number exceed the dynamic range.</html:li></html:ul>
+  <html:li>64-bit address space.</html:li>
+  <html:ul><html:li>x86-64 has 40-bit virtual address space, but idea is it allows efficient usage of much more physical ram.</html:li>
+    <html:li>One drawback of this is that pointers now take up twice as much cache space.</html:li></html:ul></html:ul>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>15</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+It is not always beneficial to have 64-bit integers. If you do not need the extra range, then this is wasted cache space. Due to this, the default size of integers is typically 32 bits. To extend, you need to add a prefix (1 byte), which adds &lt; 10% code size.
+</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/M91V/</fr:uri><fr:display-uri>M91V</fr:display-uri><fr:route>/M91V/</fr:route><fr:title text="Chapter 11: Caches">Chapter 11: Caches</fr:title></fr:frontmatter><fr:mainmatter>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>CPU clock cycle is decreasing much more rapidly than the clock cycle of the memory.</fr:mainmatter></fr:tree>
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+If you are a really fast factory, regardless of how big the truck is that is carrying your materials you must still wait the entire duration of the first delivery.
+</fr:mainmatter></fr:tree>
+ 
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+A <html:em>cache</html:em> is like having a nearby warehouse that you can quickly get more materials if you run out. Obviously, the bigger the better.
+</fr:mainmatter></fr:tree>
+<html:p><html:strong>Cache hierarchy:</html:strong></html:p><html:ul><html:li>Main memory</html:li>
+  <html:ul><html:li>Access time: 10-60 ns.</html:li>
+    <html:li>Size: 64mb - 1gb.</html:li></html:ul>
+  <html:li><html:em>Level 1 cache</html:em>: smallest cache. Holds the most frequently used data.</html:li>
+  <html:ul><html:li>Fast access time is due to being <html:em>static ram</html:em>.</html:li>
+    <html:li>Each cell has 4-6 transistors vs. 1 transistor for DRAM.</html:li>
+    <html:li>Access time: 2-8 ns.</html:li>
+    <html:li>Size: 8-128 kb.</html:li></html:ul>
+  <html:li><html:em>Level 2 cache</html:em>: drop off from L1 cache to main memory can be 50 stalled cycles, so we add a larger slower second level cache.</html:li>
+  <html:ul><html:li>Access time: 5-12 ns.</html:li>
+    <html:li>Size: 0.5-8 mb.</html:li></html:ul></html:ul>
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+<html:strong>A Bytes Journey Through Memory.</html:strong> First, we check the L1 cache if the corresponding cache line is not there it is a <html:em>cache miss</html:em>. Then, we check the L2 cache once again if the cache line is not there we have another <html:em>cache miss</html:em>. We then check main memory to see if the <html:em>page</html:em> is there. If the page is not there, then we have a page fault and must go to disk.
+</fr:mainmatter></fr:tree>
+ 
+<html:p><html:strong>Cache misses:</html:strong> There are four types of cache misses.</html:p><html:ol><html:li><html:em>Compulsory miss:</html:em> miss because data was never in the cache.</html:li>
+  <html:li><html:em>Conflict miss:</html:em> miss because the data was evicted from the cache due to a conflict.</html:li>
+  <html:li><html:em>Coherence miss:</html:em> miss because the data was invalidated due to a write to the cache from another core.</html:li>
+  <html:li><html:em>Capacity miss:</html:em> miss because the cache was full and the data was evicted according to the eviction policy.</html:li></html:ol><html:p><html:strong>Spatial locality.</html:strong> <html:em>if the CPU needs this data, then it will probably need nearby data in the future</html:em>.</html:p><html:ul><html:li>We make use of spatial locality by using a <html:em>cache line</html:em> i.e. when some data is accessed, we load some fixed size surrounding data as well.</html:li>
+  <html:li>The sole data that we wanted is called the <html:em>critical word</html:em>.</html:li>
+  <html:li>RAM and caches are organized by these cache lines.</html:li></html:ul><html:p><html:strong>Temporal locality.</html:strong> <html:em>if the CPU needs this data, then it will probably use it again in the future</html:em>.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Temporal locality implies spatial locality but not vice versa. Namely, if nearby data is reused often, then it will still be kept by temporal locality.
+</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+The locality for code and data can be very different i.e. re-running same code with different data will have high temporal locality for code but not data. This is why we split the L1 cache into the instruction and data components.
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Checking for data">Checking for data</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The <html:em>cache tag</html:em> is a bit vector that is used to identify the cache line that the data is stored in.</html:p>
+<html:p><html:strong>Tag RAM:</html:strong> In the cache, there is a separate <html:em>tag array</html:em> that stores all of the tags of the resident data in the cache along with metadata regarding dirty, valid, coherent, etc. We separate into Tag RAM to make the check as fast as possible. Tag entries are small allowing a lot of reads in parallel.</html:p>
+<html:p><html:strong>Associativity:</html:strong> Once we know that a tag is present and valid, we need to find the corresponding data in the cache.</html:p>
+<html:ul><html:li><html:em>Fully associative:</html:em> any tag can go anywhere in the cache.</html:li>
+  <html:li><html:em>Direct mapped:</html:em> every tag can only go to one specific location in the cache.</html:li>
+  <html:li><html:em><fr:tex display="inline"><![CDATA[n]]></fr:tex>-way set associative:</html:em> divide cache into sets of size <fr:tex display="inline"><![CDATA[n]]></fr:tex>. Each tag goes to one set <fr:tex display="inline"><![CDATA[n]]></fr:tex> entries.</html:li></html:ul>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Other Considerations">Other Considerations</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p><html:strong>Replacement policy:</html:strong> most common is <html:em>least recently used</html:em>. However, this takes too much time to compute in practice, so they often do <html:em>pseudo-LRU</html:em> (something like clock algorithm).</html:p>
+  <html:p><html:strong>Block sizes:</html:strong> for best spatial locality, you want the largest block size possible. However, this has a few drawbacks</html:p>
+  <html:ul><html:li>Cache size: bringing large block requires evicting resident blocks, losing temporal locality.</html:li>
+    <html:li>More prone to cache pollution: most of the data you bring in will not be used.</html:li>
+    <html:li>Memory bandwidth: larger block size requires more bandwidth.</html:li></html:ul>
+  <html:p><html:strong>Write-through vs. Write-back:</html:strong> on a store, we have modified the data at a specific address. However, if we only update the cache, when it is evicted and we later try to load we will have the wrong value. Need to ensure main memory is coherent.</html:p>
+  <html:ul><html:li><html:em>Write-through:</html:em> on every store, we write back to main memory.</html:li>
+    <html:li><html:em>Write-back:</html:em> we only write back to main memory on eviction.</html:li>
+    <html:ul><html:li>Need dirty bit to know if we need to write back.</html:li></html:ul>
+    <html:li>Tradeoff: complextiy vs. less memory traffic.</html:li></html:ul>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/DKZ3/</fr:uri><fr:display-uri>DKZ3</fr:display-uri><fr:route>/DKZ3/</fr:route><fr:title text="Intel's Pentium M, Core Duo, and Core 2 Duo">Intel's Pentium M, Core Duo, and Core 2 Duo</fr:title></fr:frontmatter><fr:mainmatter>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+A processor often is asscoiated with three names. The <html:em>brand name</html:em>, the <html:em>microarchitecture brand name</html:em>, and the <html:em>microarchitecture code name</html:em>.
+</fr:mainmatter></fr:tree>
+<html:p>Clock speed scaling hit a <html:em>power wall</html:em></html:p><html:ul><html:li>The <html:em>power density</html:em> is the number of watts disipated per unit area.</html:li>
+  <html:li>The <html:em>dynamic power density</html:em> is the amount of power dissipated per unit area due to switching of a chip's transistor</html:li>
+  <html:ul><html:li>High clock speeds means more rapidly switching transistors.</html:li>
+    <html:li>You can also increase via cramming more transistors into same area.</html:li></html:ul>
+  <html:li>The <html:em>static power density</html:em> is the amount of power dissipated per unit area due to leakage current.</html:li>
+  <html:ul><html:li>Transistors leak more when they are smaller -&gt; more transistors more leakage.</html:li></html:ul></html:ul><html:p>Power wall necessitated <html:strong>low power design</html:strong>.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The Pentium M">The Pentium M</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p><html:strong>Fetch:</html:strong> Widened fetch buffer to 64 bytes to now decode up to 4 16-byte instructions at a time.</html:p>
+<html:p><html:strong>Decoding:</html:strong> Utilize <html:em>micro-op fusion</html:em>, where an x86 instruction that takes 2 micro-ops can be translated into a fused micro-op and sent to instruction queue. In the instruction queue, they can be serialized or executed in parallel.</html:p>
+<html:ul><html:li>A store on x86 is two micro-ops: a store-address micro-op and store-data micro-op. Address micro-op can be sent to <html:em>store-address execution unit</html:em>, where as the store-data micro-op is sent to the <html:em>store-data execution unit</html:em>. Both located in the LSU. The Pentium M fuses these into a shared entry in the micro-op queue until they are issued.</html:li>
+  <html:li>A <html:em>read-modify</html:em> instruction the load micro-op and second micro-op are fused and tracked together. These must be executed serially.</html:li></html:ul>
+<html:p><html:strong>Branch Prediction:</html:strong> They add a <html:em>loop detector</html:em> to identify loop exit conditions.</html:p>
+<html:ul><html:li>Keep special counters to see how many times a loop iterates.</html:li>
+  <html:li>If loops iterate same number of times, can predict with 100% accuracy.</html:li></html:ul>
+<html:p>Also have an <html:em>indirect predictor</html:em>.</html:p>
+<html:ul><html:li>Works like branch history table but instead stores each branch's favorite target address.</html:li></html:ul>
+<html:p><html:strong>Stack Execution Unit:</html:strong> x86 ISA has stack instructions like <html:code>push</html:code> and <html:code>pop</html:code>. They update dedicate <html:em>stack pointer register</html:em> <html:code>ESP</html:code>, traditionally carried out by dedicated micro-op.</html:p>
+<html:ul><html:li>No longer use integer execution unit.</html:li>
+  <html:li>Dedicated stack execution unit with own adder to avoid using the integer ALU.</html:li>
+  <html:li>Never issue <html:code>ESP</html:code> related instructions to back-end.</html:li></html:ul>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree></fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

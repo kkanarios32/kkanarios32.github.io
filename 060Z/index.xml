@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors />
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>3</fr:month>
+      <fr:day>23</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/060Z/</fr:uri>
+    <fr:display-uri>060Z</fr:display-uri>
+    <fr:route>/060Z/</fr:route>
+    <fr:title text="Pallas">Pallas</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>23</fr:day></fr:date><fr:title text="Why Custom Kernels?">Why Custom Kernels?</fr:title></fr:frontmatter><fr:mainmatter>
+  
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>23</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+  In attention kernel, we perform <fr:tex display="inline"><![CDATA[QK^T]]></fr:tex> in VMEM then copy back to HBM, then copy back to VMEM and do the softmax. Instead we want to <html:em>fuse</html:em> this into one kernel.
+  </fr:mainmatter></fr:tree>
+ 
+
+  <html:figure><html:img width="100%" src="/bafkrmifn52vzltvmavkzqh7sj2oluirqgq2hpkxzldgkwhp2j2mbahh5ei.png" />
+  <html:figcaption>Summary of XLA fusions for attention kernel.</html:figcaption></html:figure>
+  <html:ul><html:li>Logit &amp; Max fusion:</html:li> 
+    <html:ul><html:li>34.45% flop utilization</html:li> 
+      <html:ul><html:li>Use MXU to get over 350TFLOP/s.</html:li></html:ul>
+      <html:li>18.74% HBM bandwidth utilization.</html:li>  
+      <html:li>3.55% On-chip read utilization</html:li></html:ul>
+    <html:li>Softmax denom:</html:li>
+    <html:ul><html:li>0.32% flop utilization.</html:li>
+      <html:li>0.0% HBM bandwidth utilization.</html:li>
+      <html:ul><html:li>Keeps 1024x1024 logit matrix resident in VMEM.</html:li></html:ul>
+      <html:li>22.61% On-chip read utilization</html:li>
+      <html:ul><html:li>Uses VPU to compute softmax which consumes data from VMEM at 6.6 TB/s.</html:li></html:ul></html:ul>
+    <html:li>Attention output:</html:li>
+    <html:ul><html:li>35.82% flop utilization.</html:li>
+      <html:li>19.49% HBM bandwidth utilization.</html:li>
+      <html:li>7.39% On-chip read utilization.</html:li></html:ul></html:ul>
+  <html:p><html:strong>HBM Bottleneck:</html:strong> The default XLA attention does not fuse the softmax with the logit computation, requiring the entire logit matrix to be written back to HBM.</html:p>
+  <html:p><html:strong>Vector Unit Limitations:</html:strong> MXU can be left idle while VPU is performing copmlex exponential and sum operations.</html:p>
+  <html:p><html:strong>VMEM Residency and Loop Control:</html:strong> Pallas allows you to control data movement, so that we can explicitly enforce <html:em>online softmax</html:em> rather than writing back to HBM.</html:p>
+  <html:p><html:strong>Temporal Control via LLO:</html:strong> Pallas also allows control over the <html:em>temporal flow</html:em>, preventing the compiler from reordering your manual optimizations.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>23</fr:day></fr:date><fr:title text="Pallas Fundamentals">Pallas Fundamentals</fr:title></fr:frontmatter><fr:mainmatter>
+<html:em>Ignore the HLO pass.</html:em>
+<html:p><html:strong>Writing a kernel:</html:strong></html:p>
+<html:ul><html:li>Inside the kernel, data has already been moved from HBM to VMEM.
+<html:figure><html:img width="100%" src="/bafkrmiha7cfu4qisvm3es3cn2gvqjz7u3l5o6piqj3lehpbl34j5bf42ma.png" /></html:figure></html:li>
+  <html:li>If data exceeds VMEM, we need to <html:em>tile</html:em> with <html:code>BlockSpec</html:code>.</html:li>
+  <html:li>Also need to <html:em>pipeline</html:em> i.e. while doing computation on a given block, we need to be moving the next block from HBM to VMEM.
+  <html:figure><html:img width="100%" src="/bafkrmickz6lveguktbndsvjizvsm6h6cbezis3bext7ownzoczk5sqosei.png" /></html:figure></html:li>
+  <html:li>By default, pipelining is done for you, but there are other APIs to control this(?)</html:li>
+  <html:ul><html:li>For-Loop scheduler.</html:li>
+    <html:li>Asynchronous overlap.</html:li>
+    <html:li>Buffer reuse. Uses same VMEM buffer across iterations.</html:li></html:ul></html:ul>
+  <html:figure><html:img width="100%" src="/bafkrmieaepdhrv4tueesd6qhpu2sfijzhjoeyqs2i7xtryiimjhaqvgdeu.png" /></html:figure>
+  <html:p><html:strong>Two-level Tiling:</html:strong></html:p>
+  <html:ul><html:li>Macro-tiling: this is done by Pallas / user. You define the larger software blocks i.e. 1024x1024 to hide latency DMA transfers. Pallas manages pipeling.</html:li>
+    <html:li>Micro-tiling: this is done by compiler / hardware. Translates larger block into hardware native VREG 8x128.
+    </html:li></html:ul>
+  <html:p><html:strong>VPU Pipelining:</html:strong></html:p>
+  <html:ul><html:li>VLOAD: fetching inputs for <html:strong>chunk (8x128)(N + 1)th</html:strong> from VMEM and move to VRegs</html:li>
+    <html:li>VALU: Perform elementwise operations for <html:strong>current (Nth)</html:strong> chunk </html:li>
+    <html:li>VSTORE: write completed result for <html:strong>previous (N - 1)th</html:strong> chunk from VRegs back to VMEM.</html:li></html:ul>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>23</fr:day></fr:date><fr:title text="Flash Attention">Flash Attention</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p><html:strong>Online softmax:</html:strong></html:p>
+<html:ul><html:li>Each block does a local softmax calculation.</html:li>
+  <html:li>Tracks a shared maximum and adjusts results.</html:li></html:ul>
+<html:p>Can Now fuse score calculation, softmax, and value aggregation into single pass.</html:p>
+<html:p>No longer need to store NxN attention matrix in HBM.</html:p>
+<html:p>Can break <fr:tex display="inline"><![CDATA[Q, K, V]]></fr:tex> into small blocks that fit in VMEM.</html:p>
+<html:p>Kernel available <fr:link href="https://github.com/jax-ml/jax/blob/main/jax/experimental/pallas/ops/tpu/flash_attention.py" type="external">here</fr:link>.</html:p>
+<html:ul><html:li>Dynamic scaling <fr:tex display="inline"><![CDATA[(\alpha )]]></fr:tex>: Computes <fr:tex display="inline"><![CDATA[e^{m_{prev} - m_{next}}]]></fr:tex> to track change in maximum logit across blocks for numerical stability.</html:li>
+  <html:li>Re-scale accumulation: Multiplies by <fr:tex display="inline"><![CDATA[\alpha ]]></fr:tex> to the previously accumulated sums before adding current block output to accurately rescale all past results.</html:li>
+  <html:li>Additive updates: partial results (current softmax and outputs) are added to running totals via fast multiply and addition ops.</html:li>
+  <html:li>Delayed normalization: only divide by normalization once at the very end of the loop because division is slow.</html:li></html:ul>
+<html:p><html:strong>Block-size tuning:</html:strong> to maximize compute-to-load ratio need biggest block sizes that fit into VMEM.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>23</fr:day></fr:date><fr:title text="Splash Attention">Splash Attention</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>With certain masks (i.e. causal) can skip alot of computation for parts of the attention matrix that are being masked out.</html:p>
+<html:ul><html:li>Finer blocks -&gt; can skip more but then have poorer utilization.</html:li></html:ul>
+<html:p><html:strong>Pre-processing Mask Info:</html:strong></html:p>
+<html:ul><html:li>Sparsity pruning: Divide mask into blocks and discard all inactive blocks (all zeros).</html:li>
+  <html:li>Data compression: see how many unique mask patterns are needed to describe the remaining active blocks.</html:li>
+  <html:li>Execution map and pre-fetching: (active_rows, mask_next) generated to map the computation order and tell the MXU which mask pattern to prefetch for zero-latency application.</html:li></html:ul>
+<html:p><html:strong>Metadata structures:</html:strong></html:p>
+<html:ul><html:li>Block filtering (block_mask): categorizes QK blocks as zero, non-zero, partial.</html:li>
+  <html:li>Coordinate mapping (active_ros/cols): provides the hardware with (Q, KV) grid indices, ensuring efficient loading of active blocks from HBM.</html:li>
+  <html:li>Mask pipelining (mask_next): tells the hardware which mask pattern to prefetch.</html:li>
+  <html:li>SMEM-resident metadata: computed once per mask and stored in SMEM. Enable high-speed access to sparse execution map without need to re-transfer from HBM.</html:li></html:ul>
+<html:p><html:strong>Pallas Call</html:strong></html:p>
+<html:ul><html:li>Grid definition: defined by (num_q_heads, grid_size). Grid size is set dynamically using the sparese meta data <html:code>fwd_mask_info.num_active_blocks[0]</html:code>.</html:li>
+  <html:li>SMEM Inputs: <html:code>num_scalar_prefetch</html:code> instructs hardware to prefetch critical scalar/metadata inputs into SMEM before thread begins computing.</html:li>
+  <html:li>VMEM Inputs: (Q, K, V) that must be moved from HBM to VMEM for kernel to execute.</html:li></html:ul>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

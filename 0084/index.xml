@@ -1211,16 +1211,104 @@ This is a <html:em>race condition</html:em> and code that is accessed by multipl
           <fr:frontmatter>
             <fr:authors />
             <fr:date>
-              <fr:year>2025</fr:year>
-              <fr:month>8</fr:month>
-              <fr:day>16</fr:day>
+              <fr:year>2026</fr:year>
+              <fr:month>3</fr:month>
+              <fr:day>9</fr:day>
             </fr:date>
-            <fr:uri>https://kellenkanarios.com/W8SQ/</fr:uri>
-            <fr:display-uri>W8SQ</fr:display-uri>
-            <fr:route>/W8SQ/</fr:route>
+            <fr:uri>https://kellenkanarios.com/Q2DT/</fr:uri>
+            <fr:display-uri>Q2DT</fr:display-uri>
+            <fr:route>/Q2DT/</fr:route>
             <fr:title text="Locks">Locks</fr:title>
           </fr:frontmatter>
-          <fr:mainmatter />
+          <fr:mainmatter><html:p><html:strong>Naive lock:</html:strong></html:p><html:ul><html:li>Test and set
+    <html:pre><![CDATA[acquire(lock_ptr):
+  while (true):
+  // Perform “test-and-set”
+  // UNLOCKED = 0, LOCKED = 1
+  test_and_set(old, lock_ptr)
+  if (old == UNLOCKED):
+    break // lock acquired!
+    // keep spinning, back to top of while loop
+release(lock_ptr):
+  store[lock_ptr] <- UNLOCKED]]></html:pre>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>9</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Major coherence traffic! Every core must acquire write permissions and invalidate everyone else on each <html:code>test_and_set</html:code></fr:mainmatter></fr:tree></html:li>
+  <html:li>Test and test and set
+    <html:pre><![CDATA[acquire(lock_ptr):
+  while (true):
+  // Perform “test”
+  load [lock_ptr] -> original_value
+  if (original_value == UNLOCKED):
+    // Perform “test-and-set”
+    test_and_set(old, lock_ptr)
+    if (old == UNLOCKED):
+      break // lock acquired!
+      // keep spinning, back to top of while loop
+release(lock_ptr):
+  store[lock_ptr] <- UNLOCKED]]></html:pre>
+    
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>9</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+    Spinning is a read only operation now.
+    </fr:mainmatter></fr:tree>
+
+    
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>9</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Every time lock is released must invalidate and every core will read and try to write.</fr:mainmatter></fr:tree></html:li></html:ul><html:p><html:strong>Ticket Lock:</html:strong></html:p><html:pre><![CDATA[acquire(lock_ptr):
+  my_ticket = fetch_and_increment(lock_ptr->next_ticket)
+  while(lock_ptr->now_serving != my_ticket); // spin   
+
+release(lock_ptr):
+  lock_ptr->now_serving = lock_ptr->now_serving + 1]]></html:pre><html:ul><html:li>Still have <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> coherence traffic on release.</html:li></html:ul><html:p><html:strong>Array-based lock</html:strong></html:p><html:ul><html:li>Give each waiter its own "slot" to wait on.</html:li>
+    <html:li>Only need to set next slot to "go-ahead"</html:li>
+    <html:li>Constant coherence traffic.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>9</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter><fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> memory for the locks. Padding to <fr:tex display="inline"><![CDATA[64]]></fr:tex>b can get expensive.</fr:mainmatter></fr:tree>
+<html:p><html:strong>MCS Lock:</html:strong></html:p><html:ul><html:li>Lock is a pointer to a node</html:li>
+    <html:li>Each thread has own node</html:li>
+    <html:pre><![CDATA[acquire(lock):
+  I->next = null;
+  predecessor = fetch_and_store(lock,I)
+  if predecessor != nil //some node holds lock
+    I->must_wait = true
+    predecessor->next = I //predecessor must wake us
+    repeat while I->must_wait //spin till lock is free
+release(lock):
+  if (I->next == null) //no known successor
+    if compare_and_swap(lock,I,nil) //make sure…
+      return //CAS succeeded; lock freed
+    repeat while I->next = nil //spin to learn successor
+  I->next->must_wait = false //wake successor]]></html:pre></html:ul>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>9</fr:day></fr:date><fr:title text="Barriers">Barriers</fr:title></fr:frontmatter><fr:mainmatter>
+ <html:strong>Naive barrier implementation</html:strong> 
+  <html:pre><![CDATA[  global (shared) count : integer := P
+
+  procedure central_barrier
+    if fetch_and_decrement(&count) == 1
+      count := P
+    else
+      repeat until count == P]]></html:pre>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>9</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>When <html:code>count == p</html:code> one thread can reach the next barrier and decrement count again. Then all other threads will be stuck.</fr:mainmatter></fr:tree>
+
+  
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>9</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>
+    Each thread gets local "sense" variable.
+  <html:pre><![CDATA[  global (shared) count : integer := P
+  global (shared) sense : bool := true
+  global (private) local_sense : bool = false
+
+  procedure central_barrier
+    local_sense = !local_sense
+    if fetch_and_decrement(&count) == 1
+      count := P
+      sense = local_sense
+    else
+      repeat until sense == local_sense]]></html:pre>
+</fr:mainmatter></fr:tree>
+ 
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>
     </fr:tree>
@@ -1267,6 +1355,31 @@ This is a <html:em>race condition</html:em> and code that is accessed by multipl
       <fr:mainmatter>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>3</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/O75S/</fr:uri>
+            <fr:display-uri>O75S</fr:display-uri>
+            <fr:route>/O75S/</fr:route>
+            <fr:title text="Putting the engineer in my engineering degree">Putting the engineer in my engineering degree</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>Here I will be learning not only how a computer actually works, but how to actually leverage this knowledge to write more performant code. Along the way, I also intend to learn good coding practice and become all around a more capable engineer to differentiate myself from the hardware unaware.</html:p>
+            <html:figure><html:img width="100%" src="/bafkrmifplcyj4o76ds2hjx6hecchz3ombp4u4fbhmimqcbhtgrmovgwl74.png" />
+<html:figcaption>Reading map for background.</html:figcaption></html:figure>
+            <html:p>I will also be keeping track of miscellaneous notes here that I deem relevant and things I want to look at in the future.</html:p>
+            <html:p>
+              <html:strong>Completed / In Progress</html:strong>
+            </html:p>
+            <html:ol><html:li><fr:link href="/P3GB/" title="Notebook: Inside the Machine" uri="https://kellenkanarios.com/P3GB/" display-uri="P3GB" type="local">Inside the Machine</fr:link></html:li> 
+ <html:li><fr:link href="/0084/" title="Notebook: Three Easy Pieces" uri="https://kellenkanarios.com/0084/" display-uri="0084" type="local">Three Easy Pieces</fr:link></html:li></html:ol>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
             <fr:authors>
               <fr:author>
                 <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
@@ -1280,7 +1393,7 @@ This is a <html:em>race condition</html:em> and code that is accessed by multipl
           <fr:mainmatter>
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:title text="The Quantified Me">The Quantified Me</fr:title></fr:frontmatter><fr:mainmatter>
   <html:p>This section is in large part to gaslight myself on the internet into being more productive but with the information provided let us introspect on what happened this week. </html:p>
-  <html:p><html:strong>Coding:</html:strong> I will now proceed to justify and provide excuses on what went wrong this week. On Monday, we see that I spent a large part of my time on this forest. However, this was actually writing up my notes on <fr:link href="/ESQ3/" title="CS336 Lecture 3" uri="https://kellenkanarios.com/ESQ3/" display-uri="ESQ3" type="local">lecture 3</fr:link> of <fr:link href="/0085/" title="Notebook: Stanford CS336" uri="https://kellenkanarios.com/0085/" display-uri="0085" type="local">CS336</fr:link>. My goal of roughly 1ish hour of miscellaneous learning a day snowballed into what was seemingly <fr:tex display="inline"><![CDATA[4]]></fr:tex> hours of random activity, where I spiraled into <fr:link href="/W4YP/" title="Multi Query Attention" uri="https://kellenkanarios.com/W4YP/" display-uri="W4YP" type="local">MQA</fr:link>. I am thinking of putting this self-study on the backburner in favor of focusing on <fr:link href="/0084/" title="Notebook: Three Easy Pieces" uri="https://kellenkanarios.com/0084/" display-uri="0084" type="local">three easy pieces</fr:link> until the semester starts. I intend to take two courses on what is essentially LLMs systems this fall (very excited), so I might as well not double dip now. I am thinking about using projects 1 and 2 of this course to develop my own working LLM implementation. I can then use it as reference to try out and learn any new optimization tricks like <fr:link href="/W4YP/" title="Multi Query Attention" uri="https://kellenkanarios.com/W4YP/" display-uri="W4YP" type="local">MQA</fr:link> or <fr:link href="https://kellenkanarios.com/TJLA/" type="external">TJLA</fr:link>, etc. 
+  <html:p><html:strong>Coding:</html:strong> I will now proceed to justify and provide excuses on what went wrong this week. On Monday, we see that I spent a large part of my time on this forest. However, this was actually writing up my notes on <fr:link href="/ESQ3/" title="CS336 Lecture 3" uri="https://kellenkanarios.com/ESQ3/" display-uri="ESQ3" type="local">lecture 3</fr:link> of <fr:link href="/0085/" title="Notebook: Stanford CS336" uri="https://kellenkanarios.com/0085/" display-uri="0085" type="local">CS336</fr:link>. My goal of roughly 1ish hour of miscellaneous learning a day snowballed into what was seemingly <fr:tex display="inline"><![CDATA[4]]></fr:tex> hours of random activity, where I spiraled into <fr:link href="/W4YP/" title="Multi Query Attention" uri="https://kellenkanarios.com/W4YP/" display-uri="W4YP" type="local">MQA</fr:link>. I am thinking of putting this self-study on the backburner in favor of focusing on <fr:link href="/0084/" title="Notebook: Three Easy Pieces" uri="https://kellenkanarios.com/0084/" display-uri="0084" type="local">three easy pieces</fr:link> until the semester starts. I intend to take two courses on what is essentially LLMs systems this fall (very excited), so I might as well not double dip now. I am thinking about using projects 1 and 2 of this course to develop my own working LLM implementation. I can then use it as reference to try out and learn any new optimization tricks like <fr:link href="/W4YP/" title="Multi Query Attention" uri="https://kellenkanarios.com/W4YP/" display-uri="W4YP" type="local">MQA</fr:link> or <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanarios.com/TJLA/" display-uri="TJLA" type="local">KV-cache</fr:link>, etc. 
   <html:p>These plots also finally confirm what I noticed as a general trend in my working life. Namely, I spend a lot of time working Monday-Thu because of my weekly meetings with my advisor on Thursday. However, I do not properly make use of the rest of the week. This is a trend I hope to improve upon in future entries.</html:p></html:p>
 <html:figure><html:img width="100%" src="/bafkrmibvtysmzc5gyedcfaj2sxjpviob6lxrcdiontte4cg4zu3cueiv7u.png" />
   <html:figcaption>Wakatime stats for week 2025-W29.</html:figcaption></html:figure>

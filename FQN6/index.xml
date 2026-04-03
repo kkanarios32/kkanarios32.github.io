@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors>
+      <fr:author>
+        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+      </fr:author>
+    </fr:authors>
+    <fr:date>
+      <fr:year>2025</fr:year>
+      <fr:month>9</fr:month>
+      <fr:day>10</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/FQN6/</fr:uri>
+    <fr:display-uri>FQN6</fr:display-uri>
+    <fr:route>/FQN6/</fr:route>
+    <fr:title text="The Automated Interpretability Agent">The Automated Interpretability Agent</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter><html:p>Presentation given by Tamar Rott Shaham.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>10</fr:day></fr:date><fr:title text="Interpreting the role of a single neuron">Interpreting the role of a single neuron</fr:title></fr:frontmatter><fr:mainmatter>
+    <html:p>This is done in <fr:link href="https://arxiv.org/abs/1704.05796" type="external">Network dissection</fr:link></html:p>
+    <html:p><html:strong>Idea 1:</html:strong> find neuron with maximum activation for subsets of image. Need subset dataset.         
+    </html:p>
+    <html:p><html:strong>Problem:</html:strong> How do you do this for all of the neurons in your network? This is not scalable!</html:p>
+    <html:p>Approach 1: use segmentation network to segment images and use these as subsets. This requires the concepts to be detectabl by a segmentation model.</html:p>
+
+    <html:p>This is done in <fr:link href="https://arxiv.org/abs/2201.11114" type="external">MILAN</fr:link></html:p>
+    <html:p>Approach 2: train a "captioner" model i.e. an LSTM to generate captions for parts of images. Can also get labels using clips as done in <fr:link href="https://arxiv.org/abs/2204.10965" type="external">CLIP-dissect</fr:link></html:p>
+    <html:p>Problem with these approaches is they are one-shot i.e. we train the model to produce labels and use those in one-shot. We instead want a "loop" that allows us to refine labeler. Namely</html:p>
+    <html:ol><html:li>Train model to label something like "human faces"</html:li>
+      <html:li>Find sensitive neuron to images labeled "human faces" by the labeler.</html:li>
+      <html:li>Remove the neuron and see if the model becomes unable to detect human faces.</html:li>
+      <html:li>If this isn't the case then we need to refine the labeler.</html:li></html:ol>
+    <html:p>How can we automate this process?</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>10</fr:day></fr:date><fr:title text="Automating scientific explorations of neural networks">Automating scientific explorations of neural networks</fr:title></fr:frontmatter><fr:mainmatter>
+    <html:p> We want to be able to </html:p>
+    <html:ol><html:li>Analyze any model.</html:li>
+        <html:li>Answer any interpretability question.</html:li></html:ol>
+    <html:p>Observation: LLMs can draw via code see <html:em>Sparks of AGI</html:em>.</html:p>
+    <html:p><fr:link href="https://arxiv.org/abs/2303.08128" type="external">ViperGPT</fr:link>: Given an image reasoning task, an LLM can write code to solve the image reasoning task</html:p>
+    
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>10</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+        <html:p>
+        Given a picture of kids with some amount of muffins, answer the question
+            </html:p>
+        <html:p>
+    How many muffins can each kid have for it to be fair?
+        </html:p>
+        <html:p>The LLM writes code to identify children / muffins in the image, counting them, and dividing number of muffins by number of kids.</html:p>
+    </fr:mainmatter></fr:tree>
+ 
+
+    <html:p><fr:link href="https://arxiv.org/abs/2404.14394" type="external">MAIA</fr:link> API:
+    </html:p>
+    <html:ul><html:li>takes image, language description along with model and specific neuron i.e. "neuron 0 layer 4" and it will get the activation for the subset of the image focusing on the language description. </html:li>
+        <html:li>Can also take a dataset, or generate new images to test hypothesis.</html:li>
+        <html:li>Can go image to text</html:li></html:ul>
+    <html:p>End to end user can ask "what function does neuron 122 perform" and <fr:link href="https://arxiv.org/abs/2404.14394" type="external">MAIA</fr:link> will be able to answer.</html:p>
+    <html:p>How do we know the description is correct? One approach is "synthetic neurons". Provide the value of the neuron as the confidence score from SAM for a given language concept description.</html:p>
+    <html:p>Another approach: take the description given by MAIA, then generate images from the prompts along with "negatives" that have nothing to do with the label of MAIA. Then look at the activation value for each of the examples.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>10</fr:day></fr:date><fr:title text="Auditing and editing neural networks based on interpretations">Auditing and editing neural networks based on interpretations</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>For classifiers, can check the bias in the logit neurons. For one example, found beer detection class had a bias toward the gender of the person in the image i.e. low probability for females with beer glass.</html:p>
+<html:p>Can identify and remove biased neurons. Re-train only selective neurons on biased dataset and can match performance of classifier trained on unbiased dataset.</html:p>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>
