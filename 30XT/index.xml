@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors />
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>5</fr:month>
+      <fr:day>12</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/30XT/</fr:uri>
+    <fr:display-uri>30XT</fr:display-uri>
+    <fr:route>/30XT/</fr:route>
+    <fr:title text="MESI protocol">MESI protocol</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter>
+    <html:p><fr:link href="/EYXU/" title="MSI protocol" uri="https://kellenkanarios.com/EYXU/" display-uri="EYXU" type="local">MSI protocol</fr:link> augmented with an <html:em>Exclusive</html:em> state. The four states:</html:p>
+    <html:ol><html:li><html:strong>Modified (M)</html:strong> — only copy, dirty, writable.</html:li>
+  <html:li><html:strong>Exclusive (E)</html:strong> — only copy, clean, writable.</html:li>
+  <html:li><html:strong>Shared (S)</html:strong> — clean, possibly held by other caches, read-only.</html:li>
+  <html:li><html:strong>Invalid (I)</html:strong> — no valid copy.</html:li></html:ol>
+    <html:p>The crucial addition is that a line transitioning S → M needs a bus transaction (other sharers must invalidate), but a line transitioning E → M is <html:em>silent</html:em>: nobody else has a copy, so nobody needs to be told. Eviction from E also skips the writeback (E is clean), saving memory traffic.</html:p>
+    <html:p>MESI is dramatically better than MSI for thread-private data: a thread that reads then writes its private variable goes I → E → M with only one bus transaction, instead of I → S → M with two.</html:p>
+    <html:figure><html:img width="100%" src="/bafkrmide7oflk7mbmslmrpoigr2jirpy2hu36ct2sixptvpbb2foxvmdte.png" />
+<html:figcaption>MESI state machine.</html:figcaption></html:figure>
+    <html:p>The next refinement is <fr:link href="/AI2B/" title="MOESI protocol" uri="https://kellenkanarios.com/AI2B/" display-uri="AI2B" type="local">MOESI protocol</fr:link>, which adds an <html:em>Owned</html:em> state for shared-but-dirty lines.</html:p>
+  </fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/AI2B/</fr:uri>
+            <fr:display-uri>AI2B</fr:display-uri>
+            <fr:route>/AI2B/</fr:route>
+            <fr:title text="MOESI protocol">MOESI protocol</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p><fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link> extended with an <html:em>Owned</html:em> state — shared but dirty. The owning cache holds a writable-by-only-it copy, while other caches may hold clean read-only copies. The owner is responsible for writing back on eviction.</html:p><html:p>The point: if a dataset is heavily shared but rarely changes, MESI would require write-back to memory each time it transitions out of M to S. MOESI lets a dirty line stay dirty in the cache while other caches read clean copies of it, deferring the writeback until the owner actually evicts.</html:p><html:p>This is most useful when you have producer-consumer or migratory sharing patterns where one core repeatedly writes and others repeatedly read.</html:p><html:figure><html:img width="100%" src="/bafkrmifclvn2y2qimjwqk4f3bfwm6cxsxyaiqt4csfc33y2apyabag6joe.png" />
+<html:figcaption>MOESI venn diagram.</html:figcaption></html:figure>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter><html:em>DEC Firefly</html:em> is a contemporary alternative that uses write-update for the Shared state — every write broadcasts to all sharers via wired-OR signaling — and write-back for Exclusive and Dirty. Good for small bus systems with high update frequency; bad for large systems where the broadcast cost dominates.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/EYXU/</fr:uri>
+            <fr:display-uri>EYXU</fr:display-uri>
+            <fr:route>/EYXU/</fr:route>
+            <fr:title text="MSI protocol">MSI protocol</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The minimal <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> state machine that supports write-back caches. Each cache line is in one of three states:</html:p><html:ol><html:li><html:strong>Invalid (I)</html:strong> — this cache does not hold a valid copy.</html:li>
+  <html:li><html:strong>Shared (S)</html:strong> — clean copy, read permission, possibly held by other caches.</html:li>
+  <html:li><html:strong>Modified (M)</html:strong> — only copy, exclusive read+write permission, dirty (must be written back on eviction).</html:li></html:ol><html:p>Bus messages used:</html:p><html:ul><html:li><html:code>BusRd</html:code> — request a shared copy.</html:li>
+  <html:li><html:code>BusRdX</html:code> — request exclusive ownership for a write.</html:li>
+  <html:li><html:code>BusInv</html:code> — invalidate other caches on a write hit.</html:li>
+  <html:li><html:code>BusWB</html:code> — write back a dirty block on eviction.</html:li>
+  <html:li><html:code>BusReply</html:code> — supply the value to a requester instead of memory.</html:li></html:ul><html:figure><html:img width="100%" src="/bafkrmigc2gdtboawfzoyn4u3awltyw2q2prcicyedrd6hykv3ualularea.png" />
+<html:figcaption>MSI state machine.</html:figcaption></html:figure>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>S → M requires either a <html:code>BusInv</html:code> or <html:code>BusRdX</html:code> so that other sharers invalidate. The <html:em>move from S to M is not silent</html:em>.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter><fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link> adds a fourth state (Exclusive) to optimize the common case of thread-private data — a line read by exactly one core can be upgraded to writable without a bus transaction.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/GA7N/</fr:uri>
+            <fr:display-uri>GA7N</fr:display-uri>
+            <fr:route>/GA7N/</fr:route>
+            <fr:title text="Cache coherence">Cache coherence</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>In a <fr:link href="/JRP0/" title="Multicore" uri="https://kellenkanarios.com/JRP0/" display-uri="JRP0" type="local">Multicore</fr:link> system where every core has its own <fr:link href="/KBYI/" title="Cache hierarchy" uri="https://kellenkanarios.com/KBYI/" display-uri="KBYI" type="local">Cache hierarchy</fr:link>, the same memory address can live in multiple caches simultaneously. A <html:em>cache coherence</html:em> protocol is the mechanism that keeps those copies consistent — propagating writes, invalidating stale copies, and preserving two invariants:</html:p>
+            <html:ol><html:li><html:strong>Single-writer invariant</html:strong>: at any moment, at most one core has permission to write a given line. No other core can read or write it concurrently.</html:li>
+  <html:li><html:strong>Data-value invariant</html:strong>: all cores see the same order of updates to a given line.</html:li></html:ol>
+            <html:p>Two organizational families:</html:p>
+            <html:ul><html:li><fr:link href="/8C2H/" title="Snoop-based coherence" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">Snoop-based coherence</fr:link> — every cache watches a shared bus and reacts to other cores' traffic. Scales to ~8 cores.</html:li>
+  <html:li><fr:link href="/KIT8/" title="Directory-based coherence" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">Directory-based coherence</fr:link> — a structure tracks who has a copy of each line; coherence messages are point-to-point. Scales to hundreds of cores at the cost of an extra hop.</html:li></html:ul>
+            <html:p>The concrete state machines are protocols like <fr:link href="/EYXU/" title="MSI protocol" uri="https://kellenkanarios.com/EYXU/" display-uri="EYXU" type="local">MSI protocol</fr:link>, <fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link>, <fr:link href="/AI2B/" title="MOESI protocol" uri="https://kellenkanarios.com/AI2B/" display-uri="AI2B" type="local">MOESI protocol</fr:link>, and DEC Firefly, each adding states to handle more cases or to optimize specific sharing patterns. A worked implementation of directory-based MESI in Murphi lives in <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link>.</html:p>
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/AI2B/</fr:uri>
+            <fr:display-uri>AI2B</fr:display-uri>
+            <fr:route>/AI2B/</fr:route>
+            <fr:title text="MOESI protocol">MOESI protocol</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p><fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link> extended with an <html:em>Owned</html:em> state — shared but dirty. The owning cache holds a writable-by-only-it copy, while other caches may hold clean read-only copies. The owner is responsible for writing back on eviction.</html:p><html:p>The point: if a dataset is heavily shared but rarely changes, MESI would require write-back to memory each time it transitions out of M to S. MOESI lets a dirty line stay dirty in the cache while other caches read clean copies of it, deferring the writeback until the owner actually evicts.</html:p><html:p>This is most useful when you have producer-consumer or migratory sharing patterns where one core repeatedly writes and others repeatedly read.</html:p><html:figure><html:img width="100%" src="/bafkrmifclvn2y2qimjwqk4f3bfwm6cxsxyaiqt4csfc33y2apyabag6joe.png" />
+<html:figcaption>MOESI venn diagram.</html:figcaption></html:figure>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter><html:em>DEC Firefly</html:em> is a contemporary alternative that uses write-update for the Shared state — every write broadcasts to all sharers via wired-OR signaling — and write-back for Exclusive and Dirty. Good for small bus systems with high update frequency; bad for large systems where the broadcast cost dominates.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/EYXU/</fr:uri>
+            <fr:display-uri>EYXU</fr:display-uri>
+            <fr:route>/EYXU/</fr:route>
+            <fr:title text="MSI protocol">MSI protocol</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The minimal <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> state machine that supports write-back caches. Each cache line is in one of three states:</html:p><html:ol><html:li><html:strong>Invalid (I)</html:strong> — this cache does not hold a valid copy.</html:li>
+  <html:li><html:strong>Shared (S)</html:strong> — clean copy, read permission, possibly held by other caches.</html:li>
+  <html:li><html:strong>Modified (M)</html:strong> — only copy, exclusive read+write permission, dirty (must be written back on eviction).</html:li></html:ol><html:p>Bus messages used:</html:p><html:ul><html:li><html:code>BusRd</html:code> — request a shared copy.</html:li>
+  <html:li><html:code>BusRdX</html:code> — request exclusive ownership for a write.</html:li>
+  <html:li><html:code>BusInv</html:code> — invalidate other caches on a write hit.</html:li>
+  <html:li><html:code>BusWB</html:code> — write back a dirty block on eviction.</html:li>
+  <html:li><html:code>BusReply</html:code> — supply the value to a requester instead of memory.</html:li></html:ul><html:figure><html:img width="100%" src="/bafkrmigc2gdtboawfzoyn4u3awltyw2q2prcicyedrd6hykv3ualularea.png" />
+<html:figcaption>MSI state machine.</html:figcaption></html:figure>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>S → M requires either a <html:code>BusInv</html:code> or <html:code>BusRdX</html:code> so that other sharers invalidate. The <html:em>move from S to M is not silent</html:em>.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter><fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link> adds a fourth state (Exclusive) to optimize the common case of thread-private data — a line read by exactly one core can be upgraded to writable without a bus transaction.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

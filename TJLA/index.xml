@@ -44,6 +44,54 @@
       <fr:mainmatter>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>4</fr:month>
+              <fr:day>6</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/2BGU/</fr:uri>
+            <fr:display-uri>2BGU</fr:display-uri>
+            <fr:route>/2BGU/</fr:route>
+            <fr:title text="Processing in Memory for ML">Processing in Memory for ML</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>Notes on guest lecture by Yufeng Gu titled <html:em>Architecture and System Co-Design for Scalable Large Language Model Inference</html:em></html:p><html:p>TFLOPs increasing much faster than DRAM bandwidth -&gt; Hardware scaling is hitting the <html:em>memory wall</html:em>.</html:p><html:p>Data center power consumption also increasing <fr:tex display="inline"><![CDATA[\approx ]]></fr:tex> 10% a year.</html:p><html:p><html:strong>GPUs are under low utilization for LLM inference</html:strong></html:p><html:ul><html:li>Prefix stage: parallel</html:li>
+  <html:li>Decoding stage: sequential -&gt; bottleneck!</html:li></html:ul><html:p>As batch size increases, the <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanarios.com/TJLA/" display-uri="TJLA" type="local">KV-cache</fr:link> dominates memory usage.</html:p><html:ul><html:li>KV cache size grows with context length.</html:li>
+  <html:li>Tradeoff between context length and batch size.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>6</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Unlike fully-connected cannot batch self-attention because it depends on the individual prompts.
+</fr:mainmatter></fr:tree>
+<html:p><html:strong>Recall:</html:strong> operational intensity is <fr:tex display="block"><![CDATA[\frac {\text {compute throughput}}{\text {memory bandwidth}}]]></fr:tex></html:p><html:p><html:strong>Inference much lower operational intensity than GEMM!</html:strong></html:p><html:ul><html:li>Inference only doing matrix <fr:tex display="inline"><![CDATA[\times ]]></fr:tex> row</html:li>
+  <html:li>If embedding dim is <fr:tex display="inline"><![CDATA[D]]></fr:tex>, then this is only <fr:tex display="inline"><![CDATA[D]]></fr:tex> ops / byte.</html:li></html:ul><html:p>Processing in memory (PIM) enables faster memory bandwidth.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>6</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Has lower memory capacity (fewer GB) due to added processing units (PU).
+</fr:mainmatter></fr:tree>
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>6</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Use Compute eXpress Link (CXL) to do memory expansion to get high memory bandwidth + expend memory capacity.</fr:mainmatter></fr:tree>
+ 
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>6</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Put high use operations i.e. vector multiplication, element-wise multiplication in PIM module (99% usage). Put more complicated operations on PNM accelerator. TODO: ISAs for each specified on slides (not available yet).
+</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>6</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+CENT supports inter and intra-device communication via connecting communication controller to shared buffer and CXL port.
+</fr:mainmatter></fr:tree>
+<html:p><html:strong>Communcation primitives:</html:strong> multicast and gather</html:p><html:ul><html:li>Multicast: send to all CXL devices.</html:li>
+  <html:li>Gather: receive data sequentially from all CXL devices.</html:li>
+  <html:li>Multicsat-gather -&gt; tensor parallel.</html:li></html:ul><html:p><html:em>Peer-to-peer:</html:em> can also support pipeline parallelism.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>6</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+For fast communication, use tensor parallelism i.e. if connected via NVLink. If slower communication use pipeline parallelism. Can mix.
+</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>6</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not scale. Cannot arbitrarily add PIM.
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
             <fr:authors>
               <fr:author>
                 <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
@@ -83,51 +131,6 @@ Similar to the <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanari
 <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XUVV/</fr:uri><fr:display-uri>XUVV</fr:display-uri><fr:route>/XUVV/</fr:route><fr:title text="Group Query Attention">Group Query Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:em>Group query attention</html:em> is the same idea as <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">MQA</fr:link> but instead of using one <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> for every head, they use a <html:em>group</html:em> of them. Where obviously the number of groups needs to be less than the number of heads.</html:p><html:figure><html:img width="80%" src="/bafkrmicmjlgi2o3oetsssjdwk6y2pqce4vrdwiw2ah4wwe3ulnt74upkiu.png" />
 <html:figcaption>Grouped query uses subset of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrices.</html:figcaption></html:figure></fr:mainmatter></fr:tree><html:p>Also inspired by this idea of reducing the dependence of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> on the sequence length is sliding window attention.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/WM3M/</fr:uri><fr:display-uri>WM3M</fr:display-uri><fr:route>/WM3M/</fr:route><fr:title text="Sliding Window Attention">Sliding Window Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p>The idea behind <html:em>sliding window attention</html:em> is to ensure the number of weight matrices needed for the keys <fr:tex display="inline"><![CDATA[K]]></fr:tex> and values <fr:tex display="inline"><![CDATA[V]]></fr:tex> does not scale with the sequence length. Intuitively, this means allowing each word to "attend" to only some fixed number of previous words rather than the whole sequence</html:p><html:figure><html:img width="80%" src="/bafkrmidqeoo6wx6s4ry6u74fcelfzxvwreyf7d44whnql4ffnnyd2dwcha.png" />
 <html:figcaption>"the" only sees "on" and "sat" rather than the full sentence.</html:figcaption></html:figure></fr:mainmatter></fr:tree></fr:mainmatter>
-        </fr:tree>
-        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
-          <fr:frontmatter>
-            <fr:authors>
-              <fr:author>
-                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
-              </fr:author>
-            </fr:authors>
-            <fr:uri>https://kellenkanarios.com/2025-W29/</fr:uri>
-            <fr:display-uri>2025-W29</fr:display-uri>
-            <fr:route>/2025-W29/</fr:route>
-            <fr:title text="Weekly Review 2025-W29">Weekly Review 2025-W29</fr:title>
-          </fr:frontmatter>
-          <fr:mainmatter>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:title text="The Quantified Me">The Quantified Me</fr:title></fr:frontmatter><fr:mainmatter>
-  <html:p>This section is in large part to gaslight myself on the internet into being more productive but with the information provided let us introspect on what happened this week. </html:p>
-  <html:p><html:strong>Coding:</html:strong> I will now proceed to justify and provide excuses on what went wrong this week. On Monday, we see that I spent a large part of my time on this forest. However, this was actually writing up my notes on <fr:link href="/ESQ3/" title="CS336 Lecture 3" uri="https://kellenkanarios.com/ESQ3/" display-uri="ESQ3" type="local">lecture 3</fr:link> of <fr:link href="/0085/" title="Notebook: Stanford CS336" uri="https://kellenkanarios.com/0085/" display-uri="0085" type="local">CS336</fr:link>. My goal of roughly 1ish hour of miscellaneous learning a day snowballed into what was seemingly <fr:tex display="inline"><![CDATA[4]]></fr:tex> hours of random activity, where I spiraled into <fr:link href="/W4YP/" title="Multi Query Attention" uri="https://kellenkanarios.com/W4YP/" display-uri="W4YP" type="local">MQA</fr:link>. I am thinking of putting this self-study on the backburner in favor of focusing on <fr:link href="/0084/" title="Notebook: Three Easy Pieces" uri="https://kellenkanarios.com/0084/" display-uri="0084" type="local">three easy pieces</fr:link> until the semester starts. I intend to take two courses on what is essentially LLMs systems this fall (very excited), so I might as well not double dip now. I am thinking about using projects 1 and 2 of this course to develop my own working LLM implementation. I can then use it as reference to try out and learn any new optimization tricks like <fr:link href="/W4YP/" title="Multi Query Attention" uri="https://kellenkanarios.com/W4YP/" display-uri="W4YP" type="local">MQA</fr:link> or <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanarios.com/TJLA/" display-uri="TJLA" type="local">KV-cache</fr:link>, etc. 
-  <html:p>These plots also finally confirm what I noticed as a general trend in my working life. Namely, I spend a lot of time working Monday-Thu because of my weekly meetings with my advisor on Thursday. However, I do not properly make use of the rest of the week. This is a trend I hope to improve upon in future entries.</html:p></html:p>
-<html:figure><html:img width="100%" src="/bafkrmibvtysmzc5gyedcfaj2sxjpviob6lxrcdiontte4cg4zu3cueiv7u.png" />
-  <html:figcaption>Wakatime stats for week 2025-W29.</html:figcaption></html:figure>
-  <html:p><html:strong>Rest of (computer) life:</html:strong> This week I did a pretty good job staying on task (at least on my computer). Very little brainrot was consumed and a decent amount of work was accomplished. Tune in next week to see if we can keep that up!
-  </html:p>
-<html:figure><html:img width="100%" src="/bafkrmie3tohm4dhy7zqt47zdirbm4xxk432rr4n3yncjdggmq4zetriwku.png" />
-  <html:figcaption>Arbtt-stats for week 2025-W29.</html:figcaption></html:figure>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:title text="VO2 Max(ing)">VO2 Max(ing)</fr:title></fr:frontmatter><fr:mainmatter>
-  <html:ul><html:li><html:strong>Current VO2 Max</html:strong>: 53</html:li>
-    <html:li><html:strong>Weekly Mileage</html:strong>: 17.2</html:li></html:ul>
-  <html:p>Unfortunately, I missed one run this week. The same one I miss every week: Sunday. I will still blame the shin splints, but this may be the last week I can do so (finally!). I am still maintaining a pretty good SPM, but I need to get some more lower HR runs in. From here on out, we should not dip below 20 miles a week. I have some travel coming up at <fr:link href="/rlc/" title="Reinforcement Learning Conference" uri="https://kellenkanarios.com/rlc/" display-uri="rlc" type="local">RLC</fr:link>, but I should be able to still run while I am there.</html:p>
-<html:figure><html:img width="100%" src="/bafkrmicxnrelkrspghbameeb74obgst3bk2dj5vlirqeq73qymd7jsjuny.png" />
-  <html:figcaption>Running stats for this week.</html:figcaption></html:figure>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:title text="Goals for next week">Goals for next week</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>This is another section, where I gaslight myself into some accountability on the internet.</html:p>
-<html:p>For my imaginary audience, you should have a lot to look forward to in the next week. Namely, 
-<html:ol><html:li>Look forward to an in-depth blog on <fr:link href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling" uri="https://kellenkanarios.com/lipmanFlowMatchingGenerative2023/" display-uri="lipmanFlowMatchingGenerative2023" type="local">flow matching</fr:link> to accompany my <fr:link href="/FMTD/" title="Flow Matching and TD Flows" uri="https://kellenkanarios.com/FMTD/" display-uri="FMTD" type="local">slides</fr:link>.</html:li>
-<html:li>I also should have two new <fr:link href="/005G/" title="Research Bible" uri="https://kellenkanarios.com/005G/" display-uri="005G" type="local">research bible</fr:link> entries one on the <fr:link href="/touatiLearningOneRepresentation2021/" title="Learning One Representation to Optimize All Rewards" uri="https://kellenkanarios.com/touatiLearningOneRepresentation2021/" display-uri="touatiLearningOneRepresentation2021" type="local">forward backward representation</fr:link> and the other on <fr:link href="/nachumNearOptimalRepresentationLearning2019/" title="Near-Optimal Representation Learning for Hierarchical Reinforcement Learning" uri="https://kellenkanarios.com/nachumNearOptimalRepresentationLearning2019/" display-uri="nachumNearOptimalRepresentationLearning2019" type="local">hierarchical rl</fr:link>.</html:li>
-<html:li>For my <fr:link href="/0084/" title="Notebook: Three Easy Pieces" uri="https://kellenkanarios.com/0084/" display-uri="0084" type="local">OS adventure</fr:link>, you should see me (hopefully) get through memory virtualization.
-However, I should definitely get to at least the TLB. Unlikely, I will continue to do all the exercises (because I spend more time writing them down than doing them). I might do one or two of the projects, but they are quite intimidating TBD.</html:li></html:ol>
-Check back in next week to see if I am productive! Also TBD if in the future I will put research-related stuff in this review.
-</html:p>
-</fr:mainmatter></fr:tree>
-</fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>
     </fr:tree>

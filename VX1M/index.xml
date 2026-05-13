@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors />
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>5</fr:month>
+      <fr:day>12</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/VX1M/</fr:uri>
+    <fr:display-uri>VX1M</fr:display-uri>
+    <fr:route>/VX1M/</fr:route>
+    <fr:title text="Multi-level page table">Multi-level page table</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter><html:p>A page table that is itself paged: instead of one linear array of PTEs, the table is split into page-sized chunks indexed by a top-level <html:em>page directory</html:em>. Subtrees of the address space that are entirely unused get a single null entry at the top level — no second-level page is allocated for them.</html:p><html:figure><html:img width="80%" src="/bafkrmihf7gcws2u2ay4ecuwqwpgnziozltgjbsn7zo6x5bs6ismwq76jby.png" /></html:figure><html:p>Advantages over a linear <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>:</html:p><html:ol><html:li>Fits easily in memory — only allocate a second-level page when an entry in it is used.</html:li>
+  <html:li>Memory cost is proportional to the amount of address space actually in use.</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>On a <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link> miss, the walk now costs <html:em>two</html:em> memory loads — page directory entry first, then the PTE.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Real architectures push this further (x86-64 uses 4 or 5 levels) and lean on the TLB to absorb the walk cost.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>31</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/SB61/</fr:uri>
+            <fr:display-uri>SB61</fr:display-uri>
+            <fr:route>/SB61/</fr:route>
+            <fr:title text="Paging">Paging</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>Instead of allocating memory in variable-sized chunks (which fragments badly), paging divides virtual and physical memory into fixed-size <html:em>pages</html:em> and maps virtual pages to physical pages independently. This is the address-translation scheme that won.</html:p>
+            <html:p>The mechanism rests on three concepts:</html:p>
+            <html:ol><html:li>The <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> — per-process map from virtual page number to physical page number.</html:li>
+  <html:li>The <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link> — small hardware cache that absorbs the cost of consulting the page table on every access.</html:li>
+  <html:li>The <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link> — the page table is itself paged, so processes only pay for the parts of the address space they use.</html:li></html:ol>
+            <html:p>When a process touches a virtual address whose page isn't in physical memory, the page table's <html:em>present bit</html:em> is unset; the hardware traps to the OS as a <html:em>page fault</html:em>, and the OS retrieves the page from swap. The eviction policies that decide what to swap out are covered by <fr:link href="/HK73/" title="Page replacement" uri="https://kellenkanarios.com/HK73/" display-uri="HK73" type="local">Page replacement</fr:link>.</html:p>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/WALE/</fr:uri>
+                <fr:display-uri>WALE</fr:display-uri>
+                <fr:route>/WALE/</fr:route>
+                <fr:title text="Page table">Page table</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>The per-process data structure that maps each <html:em>virtual page number</html:em> (VPN) to a <html:em>physical page number</html:em> (PPN). A virtual address is split into a VPN and an offset within the page; the page table translates the VPN, the offset is appended unchanged.</html:p><fr:tex display="block"><![CDATA[\underbrace {01}_{\text {VPN}}\underbrace {110\cdots  01}_{\text {offset}}]]></fr:tex><html:p>Each page-table entry (PTE) carries more than just a PPN:</html:p><html:ol><html:li><html:strong>Valid bit</html:strong>: whether this VPN has memory allocated. Gaps between stack and heap need not be allocated.</html:li>
+  <html:li><html:strong>Protection bits</html:strong>: read/write/execute permissions.</html:li>
+  <html:li><html:strong>Present bit</html:strong>: whether the page currently resides in physical memory (vs. swap).</html:li>
+  <html:li><html:strong>Dirty bit</html:strong>: has the page been modified since being paged in.</html:li>
+  <html:li><html:strong>Reference bit</html:strong>: has the page been accessed (used by eviction policy).</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>The table gets very large. For a 32-bit address space with 4KB pages and 4-byte PTEs, a linear page table costs <fr:tex display="inline"><![CDATA[2^{32}/2^{12} \cdot  4 = 2^{22}]]></fr:tex> bytes — 4MB <html:em>per process</html:em>.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Translation requires accessing the table in memory, which is slow on every memory reference. Mitigated by the <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link>.</fr:mainmatter></fr:tree>
+<html:p>The size problem is mitigated by <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link>, which only allocates the parts of the table that are actually used.</html:p></fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/FGOK/</fr:uri>
+                <fr:display-uri>FGOK</fr:display-uri>
+                <fr:route>/FGOK/</fr:route>
+                <fr:title text="Translation lookaside buffer">Translation lookaside buffer</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>A small hardware cache of recent virtual-to-physical translations. Without it, every memory reference would incur the cost of walking the <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> in memory.</html:p><html:p>An access proceeds as:</html:p><html:ol><html:li>Extract VPN from the virtual address.</html:li>
+  <html:li>Check whether the VPN is in the TLB.</html:li>
+  <html:li>TLB hit: read PPN from the entry, append offset, access memory.</html:li>
+  <html:li>TLB miss: walk the page table (in hardware on <fr:link href="/L896/" title="CISC vs RISC" uri="https://kellenkanarios.com/L896/" display-uri="L896" type="local">CISC</fr:link>, by trapping to OS on <fr:link href="/L896/" title="CISC vs RISC" uri="https://kellenkanarios.com/L896/" display-uri="L896" type="local">RISC</fr:link>), insert the translation into the TLB, retry.</html:li></html:ol><html:p>A TLB entry holds the VPN, the PPN, a valid bit (separate from the PTE valid bit — invalid on init, eviction, <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>), and protection bits.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Each process has different translations for the same VPN, so a naive TLB must be flushed on every <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>.</fr:mainmatter></fr:tree>
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Add an <html:em>address space identifier</html:em> (ASID) to each TLB entry and an ASID register set on context switch. Now entries from different processes coexist.</fr:mainmatter></fr:tree>
+ 
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:uri>https://kellenkanarios.com/P9UM/</fr:uri><fr:display-uri>P9UM</fr:display-uri><fr:route>/P9UM/</fr:route><fr:title text="Culler's Law">Culler's Law</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p><html:em>"Ram is not always ram"</html:em>. Referring to the fact that a physical memory access takes a substantial different amount of time depending on whether it hit in the TLB.</html:p></fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>In real software-managed TLBs, an entry has global bits for shared pages, an 8-bit ASID, coherence bits, and a <html:em>wired</html:em> register reserving slots for code that cannot afford a TLB miss (e.g. the TLB-miss handler itself).</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>For very fast caches, even a TLB access is a bottleneck. <html:em>Virtually indexed caches</html:em> sidestep the TLB on the index path.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/VX1M/</fr:uri>
+                <fr:display-uri>VX1M</fr:display-uri>
+                <fr:route>/VX1M/</fr:route>
+                <fr:title text="Multi-level page table">Multi-level page table</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>A page table that is itself paged: instead of one linear array of PTEs, the table is split into page-sized chunks indexed by a top-level <html:em>page directory</html:em>. Subtrees of the address space that are entirely unused get a single null entry at the top level — no second-level page is allocated for them.</html:p><html:figure><html:img width="80%" src="/bafkrmihf7gcws2u2ay4ecuwqwpgnziozltgjbsn7zo6x5bs6ismwq76jby.png" /></html:figure><html:p>Advantages over a linear <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>:</html:p><html:ol><html:li>Fits easily in memory — only allocate a second-level page when an entry in it is used.</html:li>
+  <html:li>Memory cost is proportional to the amount of address space actually in use.</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>On a <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link> miss, the walk now costs <html:em>two</html:em> memory loads — page directory entry first, then the PTE.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Real architectures push this further (x86-64 uses 4 or 5 levels) and lean on the TLB to absorb the walk cost.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/WALE/</fr:uri>
+            <fr:display-uri>WALE</fr:display-uri>
+            <fr:route>/WALE/</fr:route>
+            <fr:title text="Page table">Page table</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The per-process data structure that maps each <html:em>virtual page number</html:em> (VPN) to a <html:em>physical page number</html:em> (PPN). A virtual address is split into a VPN and an offset within the page; the page table translates the VPN, the offset is appended unchanged.</html:p><fr:tex display="block"><![CDATA[\underbrace {01}_{\text {VPN}}\underbrace {110\cdots  01}_{\text {offset}}]]></fr:tex><html:p>Each page-table entry (PTE) carries more than just a PPN:</html:p><html:ol><html:li><html:strong>Valid bit</html:strong>: whether this VPN has memory allocated. Gaps between stack and heap need not be allocated.</html:li>
+  <html:li><html:strong>Protection bits</html:strong>: read/write/execute permissions.</html:li>
+  <html:li><html:strong>Present bit</html:strong>: whether the page currently resides in physical memory (vs. swap).</html:li>
+  <html:li><html:strong>Dirty bit</html:strong>: has the page been modified since being paged in.</html:li>
+  <html:li><html:strong>Reference bit</html:strong>: has the page been accessed (used by eviction policy).</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>The table gets very large. For a 32-bit address space with 4KB pages and 4-byte PTEs, a linear page table costs <fr:tex display="inline"><![CDATA[2^{32}/2^{12} \cdot  4 = 2^{22}]]></fr:tex> bytes — 4MB <html:em>per process</html:em>.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Translation requires accessing the table in memory, which is slow on every memory reference. Mitigated by the <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link>.</fr:mainmatter></fr:tree>
+<html:p>The size problem is mitigated by <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link>, which only allocates the parts of the table that are actually used.</html:p></fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>31</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/SB61/</fr:uri>
+            <fr:display-uri>SB61</fr:display-uri>
+            <fr:route>/SB61/</fr:route>
+            <fr:title text="Paging">Paging</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>Instead of allocating memory in variable-sized chunks (which fragments badly), paging divides virtual and physical memory into fixed-size <html:em>pages</html:em> and maps virtual pages to physical pages independently. This is the address-translation scheme that won.</html:p>
+            <html:p>The mechanism rests on three concepts:</html:p>
+            <html:ol><html:li>The <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> — per-process map from virtual page number to physical page number.</html:li>
+  <html:li>The <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link> — small hardware cache that absorbs the cost of consulting the page table on every access.</html:li>
+  <html:li>The <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link> — the page table is itself paged, so processes only pay for the parts of the address space they use.</html:li></html:ol>
+            <html:p>When a process touches a virtual address whose page isn't in physical memory, the page table's <html:em>present bit</html:em> is unset; the hardware traps to the OS as a <html:em>page fault</html:em>, and the OS retrieves the page from swap. The eviction policies that decide what to swap out are covered by <fr:link href="/HK73/" title="Page replacement" uri="https://kellenkanarios.com/HK73/" display-uri="HK73" type="local">Page replacement</fr:link>.</html:p>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/WALE/</fr:uri>
+                <fr:display-uri>WALE</fr:display-uri>
+                <fr:route>/WALE/</fr:route>
+                <fr:title text="Page table">Page table</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>The per-process data structure that maps each <html:em>virtual page number</html:em> (VPN) to a <html:em>physical page number</html:em> (PPN). A virtual address is split into a VPN and an offset within the page; the page table translates the VPN, the offset is appended unchanged.</html:p><fr:tex display="block"><![CDATA[\underbrace {01}_{\text {VPN}}\underbrace {110\cdots  01}_{\text {offset}}]]></fr:tex><html:p>Each page-table entry (PTE) carries more than just a PPN:</html:p><html:ol><html:li><html:strong>Valid bit</html:strong>: whether this VPN has memory allocated. Gaps between stack and heap need not be allocated.</html:li>
+  <html:li><html:strong>Protection bits</html:strong>: read/write/execute permissions.</html:li>
+  <html:li><html:strong>Present bit</html:strong>: whether the page currently resides in physical memory (vs. swap).</html:li>
+  <html:li><html:strong>Dirty bit</html:strong>: has the page been modified since being paged in.</html:li>
+  <html:li><html:strong>Reference bit</html:strong>: has the page been accessed (used by eviction policy).</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>The table gets very large. For a 32-bit address space with 4KB pages and 4-byte PTEs, a linear page table costs <fr:tex display="inline"><![CDATA[2^{32}/2^{12} \cdot  4 = 2^{22}]]></fr:tex> bytes — 4MB <html:em>per process</html:em>.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Translation requires accessing the table in memory, which is slow on every memory reference. Mitigated by the <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link>.</fr:mainmatter></fr:tree>
+<html:p>The size problem is mitigated by <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link>, which only allocates the parts of the table that are actually used.</html:p></fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/FGOK/</fr:uri>
+                <fr:display-uri>FGOK</fr:display-uri>
+                <fr:route>/FGOK/</fr:route>
+                <fr:title text="Translation lookaside buffer">Translation lookaside buffer</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>A small hardware cache of recent virtual-to-physical translations. Without it, every memory reference would incur the cost of walking the <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> in memory.</html:p><html:p>An access proceeds as:</html:p><html:ol><html:li>Extract VPN from the virtual address.</html:li>
+  <html:li>Check whether the VPN is in the TLB.</html:li>
+  <html:li>TLB hit: read PPN from the entry, append offset, access memory.</html:li>
+  <html:li>TLB miss: walk the page table (in hardware on <fr:link href="/L896/" title="CISC vs RISC" uri="https://kellenkanarios.com/L896/" display-uri="L896" type="local">CISC</fr:link>, by trapping to OS on <fr:link href="/L896/" title="CISC vs RISC" uri="https://kellenkanarios.com/L896/" display-uri="L896" type="local">RISC</fr:link>), insert the translation into the TLB, retry.</html:li></html:ol><html:p>A TLB entry holds the VPN, the PPN, a valid bit (separate from the PTE valid bit — invalid on init, eviction, <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>), and protection bits.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Each process has different translations for the same VPN, so a naive TLB must be flushed on every <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>.</fr:mainmatter></fr:tree>
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Add an <html:em>address space identifier</html:em> (ASID) to each TLB entry and an ASID register set on context switch. Now entries from different processes coexist.</fr:mainmatter></fr:tree>
+ 
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:uri>https://kellenkanarios.com/P9UM/</fr:uri><fr:display-uri>P9UM</fr:display-uri><fr:route>/P9UM/</fr:route><fr:title text="Culler's Law">Culler's Law</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p><html:em>"Ram is not always ram"</html:em>. Referring to the fact that a physical memory access takes a substantial different amount of time depending on whether it hit in the TLB.</html:p></fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>In real software-managed TLBs, an entry has global bits for shared pages, an 8-bit ASID, coherence bits, and a <html:em>wired</html:em> register reserving slots for code that cannot afford a TLB miss (e.g. the TLB-miss handler itself).</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>For very fast caches, even a TLB access is a bottleneck. <html:em>Virtually indexed caches</html:em> sidestep the TLB on the index path.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/VX1M/</fr:uri>
+                <fr:display-uri>VX1M</fr:display-uri>
+                <fr:route>/VX1M/</fr:route>
+                <fr:title text="Multi-level page table">Multi-level page table</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>A page table that is itself paged: instead of one linear array of PTEs, the table is split into page-sized chunks indexed by a top-level <html:em>page directory</html:em>. Subtrees of the address space that are entirely unused get a single null entry at the top level — no second-level page is allocated for them.</html:p><html:figure><html:img width="80%" src="/bafkrmihf7gcws2u2ay4ecuwqwpgnziozltgjbsn7zo6x5bs6ismwq76jby.png" /></html:figure><html:p>Advantages over a linear <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>:</html:p><html:ol><html:li>Fits easily in memory — only allocate a second-level page when an entry in it is used.</html:li>
+  <html:li>Memory cost is proportional to the amount of address space actually in use.</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>On a <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link> miss, the walk now costs <html:em>two</html:em> memory loads — page directory entry first, then the PTE.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Real architectures push this further (x86-64 uses 4 or 5 levels) and lean on the TLB to absorb the walk cost.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/WALE/</fr:uri>
+            <fr:display-uri>WALE</fr:display-uri>
+            <fr:route>/WALE/</fr:route>
+            <fr:title text="Page table">Page table</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The per-process data structure that maps each <html:em>virtual page number</html:em> (VPN) to a <html:em>physical page number</html:em> (PPN). A virtual address is split into a VPN and an offset within the page; the page table translates the VPN, the offset is appended unchanged.</html:p><fr:tex display="block"><![CDATA[\underbrace {01}_{\text {VPN}}\underbrace {110\cdots  01}_{\text {offset}}]]></fr:tex><html:p>Each page-table entry (PTE) carries more than just a PPN:</html:p><html:ol><html:li><html:strong>Valid bit</html:strong>: whether this VPN has memory allocated. Gaps between stack and heap need not be allocated.</html:li>
+  <html:li><html:strong>Protection bits</html:strong>: read/write/execute permissions.</html:li>
+  <html:li><html:strong>Present bit</html:strong>: whether the page currently resides in physical memory (vs. swap).</html:li>
+  <html:li><html:strong>Dirty bit</html:strong>: has the page been modified since being paged in.</html:li>
+  <html:li><html:strong>Reference bit</html:strong>: has the page been accessed (used by eviction policy).</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>The table gets very large. For a 32-bit address space with 4KB pages and 4-byte PTEs, a linear page table costs <fr:tex display="inline"><![CDATA[2^{32}/2^{12} \cdot  4 = 2^{22}]]></fr:tex> bytes — 4MB <html:em>per process</html:em>.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Translation requires accessing the table in memory, which is slow on every memory reference. Mitigated by the <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link>.</fr:mainmatter></fr:tree>
+<html:p>The size problem is mitigated by <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link>, which only allocates the parts of the table that are actually used.</html:p></fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/FGOK/</fr:uri>
+            <fr:display-uri>FGOK</fr:display-uri>
+            <fr:route>/FGOK/</fr:route>
+            <fr:title text="Translation lookaside buffer">Translation lookaside buffer</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>A small hardware cache of recent virtual-to-physical translations. Without it, every memory reference would incur the cost of walking the <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> in memory.</html:p><html:p>An access proceeds as:</html:p><html:ol><html:li>Extract VPN from the virtual address.</html:li>
+  <html:li>Check whether the VPN is in the TLB.</html:li>
+  <html:li>TLB hit: read PPN from the entry, append offset, access memory.</html:li>
+  <html:li>TLB miss: walk the page table (in hardware on <fr:link href="/L896/" title="CISC vs RISC" uri="https://kellenkanarios.com/L896/" display-uri="L896" type="local">CISC</fr:link>, by trapping to OS on <fr:link href="/L896/" title="CISC vs RISC" uri="https://kellenkanarios.com/L896/" display-uri="L896" type="local">RISC</fr:link>), insert the translation into the TLB, retry.</html:li></html:ol><html:p>A TLB entry holds the VPN, the PPN, a valid bit (separate from the PTE valid bit — invalid on init, eviction, <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>), and protection bits.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Each process has different translations for the same VPN, so a naive TLB must be flushed on every <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>.</fr:mainmatter></fr:tree>
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Add an <html:em>address space identifier</html:em> (ASID) to each TLB entry and an ASID register set on context switch. Now entries from different processes coexist.</fr:mainmatter></fr:tree>
+ 
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:uri>https://kellenkanarios.com/P9UM/</fr:uri><fr:display-uri>P9UM</fr:display-uri><fr:route>/P9UM/</fr:route><fr:title text="Culler's Law">Culler's Law</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p><html:em>"Ram is not always ram"</html:em>. Referring to the fact that a physical memory access takes a substantial different amount of time depending on whether it hit in the TLB.</html:p></fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>In real software-managed TLBs, an entry has global bits for shared pages, an 8-bit ASID, coherence bits, and a <html:em>wired</html:em> register reserving slots for code that cannot afford a TLB miss (e.g. the TLB-miss handler itself).</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>For very fast caches, even a TLB access is a bottleneck. <html:em>Virtually indexed caches</html:em> sidestep the TLB on the index path.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

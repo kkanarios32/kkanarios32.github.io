@@ -11,48 +11,73 @@
     <fr:uri>https://kellenkanarios.com/67X5/</fr:uri>
     <fr:display-uri>67X5</fr:display-uri>
     <fr:route>/67X5/</fr:route>
-    <fr:title text="Free-Space Management">Free-Space Management</fr:title>
+    <fr:title text="Free-space management">Free-space management</fr:title>
   </fr:frontmatter>
-  <fr:mainmatter><html:p>We have been talking a lot about how to abstract physical address to provide ease of use for the programmer. However, we have yet to discuss how to actually allocate these physical addresses in the first place. When allocating memory, there are a few issues we need to be careful about
-<html:ol><html:li><html:em>External fragmentation</html:em>: lots of small unallocated non-contiguous chunks of memory.</html:li>
-  <html:li><html:em>Internal fragmentation</html:em>: allocated memory that is unused in the process it is allocated for.</html:li></html:ol>
-To start, we make a few simplifying assumptions:
-<html:ol><html:li>After memory has been allocated, it cannot be moved.</html:li>
-  <html:li>The size of memory is fixed.</html:li>
-  <html:li>The user does not specify the size in <html:code>free</html:code>.</html:li></html:ol>
-First, we can quickly deal with the last problem by introducing a <html:em>header</html:em>. The OS stores additional metadata, such as the size of the allocated memory in a header directly preceding the returned pointer in memory.
-<html:ul><html:li>If <html:code>int* x = malloc(sizeof(int))</html:code> then <html:code>header = (header_t)* x - 1</html:code>.</html:li>
-  <html:li>OS needs to find memory for the requested memory + size of the header.</html:li></html:ul></html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>29</fr:day></fr:date><fr:title text="Malloc Policies">Malloc Policies</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>The general allocation algorithm consists of maintaining some <html:em>free-list</html:em> that contains the address and length of free memory. An allocation is done by some policy over this list. When memory is re-claimed, the list is searched for adjacent memory and if it is found then it is <html:em>coalesced</html:em> into a larger chunk of free memory.</html:p>
-<html:ol><html:li><html:em>Best fit</html:em>: find smallest chunk that is big enough</html:li>
-  <html:ul><html:li>leaves lots of small chunks</html:li></html:ul>
-  <html:li><html:em>Worst fit</html:em>: find largest chunk</html:li></html:ol>
-Both of these require searching the entire list, so instead we can introduce some heuristics.
-<html:ol><html:li><html:em>First fit</html:em>: find first block that can service.</html:li>
-  <html:li><html:em>Next fit</html:em>: find first block that can service starting from the previous allocation.</html:li></html:ol>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>29</fr:day></fr:date><fr:title text="Segregated Lists">Segregated Lists</fr:title></fr:frontmatter><fr:mainmatter>
-  <html:p>Outside of the allocation policy, we can make data-structure level optimization. One such optimization is segmentation lists. The idea is to maintain different lists that correspond to different commonly allocated object types.</html:p>
-  <html:ul><html:li>Grow list by requesting segments as multiple size of the objects.</html:li>
-    <html:li>Can return to main list when no references.</html:li>
-    <html:li>Can also leave objects pre-iitialized on list to eliminate calls to constructor / destructor.</html:li></html:ul>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>29</fr:day></fr:date><fr:title text="Buddy Allocation">Buddy Allocation</fr:title></fr:frontmatter><fr:mainmatter>
-  <html:p>Assume memory is size <fr:tex display="inline"><![CDATA[2^n]]></fr:tex>. Search through memory to find smallest block that can service request.</html:p>
-<html:figure><html:img width="50%" src="/bafkrmigwzou6llta75hya6llhd6ixa6gjzeoyjqecitht2op5xxutkjgnu.png" />
-<html:figcaption>Memory <fr:tex display="inline"><![CDATA[2^n]]></fr:tex>.</html:figcaption></html:figure>
-<html:p>When block is freed,
-<html:ol><html:li>Check if the buddy is free.</html:li>
-  <html:li>If the buddy is free.</html:li>
-  <html:ul><html:li>Coalesce into larger block</html:li>
-    <html:li>Repeat.</html:li></html:ul></html:ol>
-Can easily check buddy because address differ by one bit at each level. Just modify the corresponding bit and check the free data structure (bitmap?) if the address is free. If it is then move up and check the next bit.
-</html:p>
-</fr:mainmatter></fr:tree>
+  <fr:mainmatter>
+    <html:p>Once we have an <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">Address space</fr:link>, we still have to actually allocate physical bytes within it. Free-space management is the discipline of tracking which bytes are free, picking which free chunk to satisfy a request, and merging adjacent freed chunks back together. Two fragmentation hazards to watch:</html:p>
+    <html:ol><html:li><html:em>External fragmentation</html:em>: many small unallocated non-contiguous chunks.</html:li>
+  <html:li><html:em>Internal fragmentation</html:em>: allocated chunks larger than what the requester uses.</html:li></html:ol>
+    <html:p>Simplifying assumptions for the algorithms below: allocations are immovable once placed, total memory is fixed, and the user does not specify a size in <html:code>free</html:code>. The last assumption is handled by storing the size in a header preceding the returned pointer.</html:p>
+    <fr:tree show-metadata="false">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:date>
+          <fr:year>2026</fr:year>
+          <fr:month>5</fr:month>
+          <fr:day>12</fr:day>
+        </fr:date>
+        <fr:uri>https://kellenkanarios.com/1ABF/</fr:uri>
+        <fr:display-uri>1ABF</fr:display-uri>
+        <fr:route>/1ABF/</fr:route>
+        <fr:title text="Malloc placement policies">Malloc placement policies</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <html:p>Given a <html:em>free list</html:em> of unallocated memory chunks and a request of size <fr:tex display="inline"><![CDATA[n]]></fr:tex>, which chunk do you carve the allocation out of? Different answers trade off fragmentation against search time.</html:p>
+        <html:ol><html:li><html:em>Best fit</html:em>: find the smallest chunk <fr:tex display="inline"><![CDATA[\geq  n]]></fr:tex>. Minimizes wasted space per allocation but tends to leave many small unusable fragments behind, and requires scanning the whole list.</html:li>
+  <html:li><html:em>Worst fit</html:em>: find the largest chunk. Aims to leave usefully-sized leftovers but also requires a full scan.</html:li>
+  <html:li><html:em>First fit</html:em>: take the first chunk that fits. Fast (early exit) but biases small fragments toward the start of the list.</html:li>
+  <html:li><html:em>Next fit</html:em>: like first fit, but resume the search from where the previous allocation ended. Spreads small fragments more evenly.</html:li></html:ol>
+        <html:p>On free, the allocator searches the list for adjacent free chunks and <html:em>coalesces</html:em> them into a larger chunk. The size of each allocation is stored in a <html:em>header</html:em> immediately preceding the returned pointer so <html:code>free</html:code> doesn't need a size argument.</html:p>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:date>
+          <fr:year>2026</fr:year>
+          <fr:month>5</fr:month>
+          <fr:day>12</fr:day>
+        </fr:date>
+        <fr:uri>https://kellenkanarios.com/FB66/</fr:uri>
+        <fr:display-uri>FB66</fr:display-uri>
+        <fr:route>/FB66/</fr:route>
+        <fr:title text="Segregated lists">Segregated lists</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter><html:p>A data-structure-level optimization for allocators that maintains separate free lists per common object size. Instead of one global free list scanned by <fr:link href="/1ABF/" title="Malloc placement policies" uri="https://kellenkanarios.com/1ABF/" display-uri="1ABF" type="local">Malloc placement policies</fr:link>, you keep a list per size class. Allocations of that size pop straight off the matching list — no search.</html:p><html:ul><html:li>Grow a per-size list by requesting larger segments from the main allocator and chopping them up.</html:li>
+  <html:li>Drain back to the main list when no references remain.</html:li>
+  <html:li>Optionally leave objects pre-initialized on the list to skip constructor/destructor calls.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>This is the structure behind kernel slab allocators and many object-pool patterns. It works when the workload allocates many objects of a few common sizes.</fr:mainmatter></fr:tree>
 </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:date>
+          <fr:year>2026</fr:year>
+          <fr:month>5</fr:month>
+          <fr:day>12</fr:day>
+        </fr:date>
+        <fr:uri>https://kellenkanarios.com/8M72/</fr:uri>
+        <fr:display-uri>8M72</fr:display-uri>
+        <fr:route>/8M72/</fr:route>
+        <fr:title text="Buddy allocation">Buddy allocation</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter><html:p>An allocator for memory of total size <fr:tex display="inline"><![CDATA[2^n]]></fr:tex> that maintains a binary-tree of free blocks at every power-of-two size. To service a request, walk down to the smallest block <fr:tex display="inline"><![CDATA[\geq ]]></fr:tex> requested size; if no block of that size exists, split a larger one (and its "buddy" becomes free). On free, check whether the freed block's buddy is also free, and if so, coalesce upward — recursively.</html:p><html:figure><html:img width="50%" src="/bafkrmigwzou6llta75hya6llhd6ixa6gjzeoyjqecitht2op5xxutkjgnu.png" />
+  <html:figcaption>Memory of size <fr:tex display="inline"><![CDATA[2^n]]></fr:tex> organized as a buddy system.</html:figcaption></html:figure><html:p>The key trick is that buddies differ by exactly one bit in their address at each level. To check whether a block's buddy is free, flip that bit and consult a bitmap. To coalesce upward, mask off the bit and recurse.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Internal fragmentation is bounded by 2× the request size (you may have to round up to the next power of two), but external fragmentation is essentially eliminated within the buddy region.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+    </fr:tree>
+  </fr:mainmatter>
   <fr:backmatter>
     <fr:tree show-metadata="false" hidden-when-empty="true">
       <fr:frontmatter>
@@ -78,9 +103,76 @@ Can easily check buddy because address differ by one bit at each level. Just mod
             <fr:uri>https://kellenkanarios.com/TQSZ/</fr:uri>
             <fr:display-uri>TQSZ</fr:display-uri>
             <fr:route>/TQSZ/</fr:route>
-            <fr:title text="TEP Memory"><fr:link href="/arpaci2018operating/" title="Operating Systems: Three Easy Pieces" uri="https://kellenkanarios.com/arpaci2018operating/" display-uri="arpaci2018operating" type="local">TEP</fr:link> Memory</fr:title>
+            <fr:title text="Memory">Memory</fr:title>
           </fr:frontmatter>
           <fr:mainmatter>
+            <html:p>The address-space abstraction, the translation schemes that implement it, the algorithms that manage free space within a process, and what happens when physical memory is not enough.</html:p>
+            <html:p>We are now moving on from <fr:link href="/B8GC/" title="Scheduling" uri="https://kellenkanarios.com/B8GC/" display-uri="B8GC" type="local">scheduling</fr:link> into the wonderful world of all things memory. The starting point is the <html:em>address space</html:em> abstraction — each process is handed its own private virtual memory and the OS, with hardware help, manages the mapping from virtual to physical addresses.</html:p>
+            <html:p>The progression of translation schemes covered in TPE:</html:p>
+            <html:ol><html:li><fr:link href="/9MPY/" title="Base and bounds" uri="https://kellenkanarios.com/9MPY/" display-uri="9MPY" type="local">Base and bounds</fr:link> — one base+bound pair per process. Simple but wasteful.</html:li>
+  <html:li><fr:link href="/REKW/" title="Segmentation" uri="https://kellenkanarios.com/REKW/" display-uri="REKW" type="local">Segmentation</fr:link> — per-region base+bound. Removes internal fragmentation, introduces external fragmentation.</html:li>
+  <html:li><fr:link href="/SB61/" title="Paging" uri="https://kellenkanarios.com/SB61/" display-uri="SB61" type="local">Paging</fr:link> — fixed-size translation units. Eliminates external fragmentation at the cost of a translation table.</html:li></html:ol>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/7MH4/</fr:uri>
+                <fr:display-uri>7MH4</fr:display-uri>
+                <fr:route>/7MH4/</fr:route>
+                <fr:title text="Address space">Address space</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>The chunk of memory the OS gives a process to use at its own discretion. Each process has its own address space, so that one process cannot read or overwrite another's program state. An address space typically contains three regions:</html:p><html:ol><html:li><html:strong>Code</html:strong>: the program text.</html:li>
+  <html:li><html:strong>Stack</html:strong>: local variables, function arguments, return values.</html:li>
+  <html:li><html:strong>Heap</html:strong>: dynamically allocated memory.</html:li></html:ol><html:p>Every address a process sees is <html:em>virtual</html:em> — not the location in physical memory. The hardware translates virtual addresses to physical ones at access time. Approaches to that translation include <fr:link href="/9MPY/" title="Base and bounds" uri="https://kellenkanarios.com/9MPY/" display-uri="9MPY" type="local">Base and bounds</fr:link>, <fr:link href="/REKW/" title="Segmentation" uri="https://kellenkanarios.com/REKW/" display-uri="REKW" type="local">Segmentation</fr:link>, and <fr:link href="/SB61/" title="Paging" uri="https://kellenkanarios.com/SB61/" display-uri="SB61" type="local">Paging</fr:link>.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The <html:em>API</html:em> the user sees is tiny: a way to get memory and a way to release it, exposed as <html:code>malloc</html:code> and <html:code>free</html:code>. The common bugs are forgetting to initialize, forgetting to free, freeing too early (dangling pointer), freeing twice (double free), and freeing memory not from <html:code>malloc</html:code> (invalid free).</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter><html:code>malloc</html:code> and <html:code>free</html:code> are library calls, not <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">syscalls</fr:link>. The heap is pre-allocated; <html:code>malloc</html:code> extends it by invoking <html:code>brk</html:code>/<html:code>sbrk</html:code> when it runs out.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>When a process dies, the OS reclaims its memory, so a bounded leak is not catastrophic — just bad practice.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>You can also acquire an anonymous heap-like region directly via <html:code>mmap</html:code>.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/9MPY/</fr:uri>
+                <fr:display-uri>9MPY</fr:display-uri>
+                <fr:route>/9MPY/</fr:route>
+                <fr:title text="Base and bounds">Base and bounds</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>The simplest hardware mechanism for <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">Address space</fr:link> translation. The CPU has two dedicated registers per process — a <html:em>base</html:em> pointing to the start of the process's region in physical memory and a <html:em>bound</html:em> marking the end. Translation is just <html:code>phys = base + virt</html:code>, with a check that the result stays below <html:code>bound</html:code>. The unit performing this translation in hardware is the <html:em>memory management unit</html:em> (MMU).</html:p><html:p>The hardware must expose privileged instructions for the OS to set base and bound on a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>, and trap on out-of-bound accesses.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>To support a large address space, base-and-bounds suffers significant <html:em>internal fragmentation</html:em> — the unused gap between the stack and heap is allocated but wasted. With 16KB total memory and 4KB-but-mostly-empty processes, you can run 4 processes when you'd really have room for 8.</fr:mainmatter></fr:tree>
+<html:p><fr:link href="/REKW/" title="Segmentation" uri="https://kellenkanarios.com/REKW/" display-uri="REKW" type="local">Segmentation</fr:link> is the natural next step — give each region (code, stack, heap) its own base and bound so the gaps don't have to be allocated.</html:p></fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/REKW/</fr:uri>
+                <fr:display-uri>REKW</fr:display-uri>
+                <fr:route>/REKW/</fr:route>
+                <fr:title text="Segmentation">Segmentation</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>An <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">Address space</fr:link>-translation scheme that gives each logical region of a process (code, heap, stack, ...) its own base and bound. Instead of allocating a single contiguous chunk with empty space between regions, the OS allocates each segment separately and on demand. A virtual address is split into a segment number and an offset within that segment:</html:p><fr:tex display="block"><![CDATA[\underbrace {0 1}_{\text {segment}}\underbrace {0 1 \cdots  11}_{\text {offset}}]]></fr:tex><html:p>The hardware uses the segment number to index a segment table, retrieves that segment's base and bound, and adds the offset. Per-segment protection bits make read-only code and no-execute data straightforward.</html:p><html:p>Segmentation also enables <html:em>memory sharing</html:em> — two processes can map the same physical segment (e.g. shared code) into both their address spaces.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The stack grows downward, so the bounds check has to be direction-aware based on the segment number.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Segmentation does not solve fragmentation; it pushes it from internal (per-process) to external (per-system). Variable-sized segments leave variably-sized holes in physical memory. The fix that eventually won is <fr:link href="/SB61/" title="Paging" uri="https://kellenkanarios.com/SB61/" display-uri="SB61" type="local">Paging</fr:link>.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
             <fr:tree show-metadata="false">
               <fr:frontmatter>
                 <fr:authors />
@@ -94,138 +186,74 @@ Can easily check buddy because address differ by one bit at each level. Just mod
                 <fr:route>/SAYD/</fr:route>
                 <fr:title text="Memory Intro">Memory Intro</fr:title>
               </fr:frontmatter>
-              <fr:mainmatter><html:p>
-We are now moving on from scheduling into the wonderful world of all things memory.
-  </html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>29</fr:day></fr:date><fr:title text="Address Spaces">Address Spaces</fr:title></fr:frontmatter><fr:mainmatter>
-If we think about what we have done so far, we have an assortment of processes that are constantly being switched between. However, each of these process has their own assortment of register states, but more importantly they each have their own state in <html:em>memory</html:em>.
-<html:ol><html:li>For register states, the OS has its own reserved memory, where it can easily store and switch between register states.</html:li>
-  <html:li>For memory, when we switch processes, are we expected to clear out memory for the next process by storing to disk? <html:strong>NO!</html:strong></html:li></html:ol>
-This motivates the idea behind <html:em>address spaces</html:em>. Namely, each process is given its own address space (chunk in memory) to use at its own discretion. This will then ensure that other processes do not overwrite the program state of one another. The address space of a process typically consists of three components
-<html:ol><html:li>Code of the program</html:li>
-  <html:li>Stack: local var, arguments, return values</html:li>
-  <html:li>Heap: dynamically allocated memory</html:li></html:ol>
+              <fr:mainmatter>
+                <html:p>We are now moving on from <fr:link href="/B8GC/" title="Scheduling" uri="https://kellenkanarios.com/B8GC/" display-uri="B8GC" type="local">scheduling</fr:link> into the wonderful world of all things memory. The starting point is the <html:em>address space</html:em> abstraction — each process is handed its own private virtual memory and the OS, with hardware help, manages the mapping from virtual to physical addresses.</html:p>
+                <html:p>The progression of translation schemes covered in TPE:</html:p>
+                <html:ol><html:li><fr:link href="/9MPY/" title="Base and bounds" uri="https://kellenkanarios.com/9MPY/" display-uri="9MPY" type="local">Base and bounds</fr:link> — one base+bound pair per process. Simple but wasteful.</html:li>
+  <html:li><fr:link href="/REKW/" title="Segmentation" uri="https://kellenkanarios.com/REKW/" display-uri="REKW" type="local">Segmentation</fr:link> — per-region base+bound. Removes internal fragmentation, introduces external fragmentation.</html:li>
+  <html:li><fr:link href="/SB61/" title="Paging" uri="https://kellenkanarios.com/SB61/" display-uri="SB61" type="local">Paging</fr:link> — fixed-size translation units. Eliminates external fragmentation at the cost of a translation table.</html:li></html:ol>
+                <fr:tree show-metadata="false">
+                  <fr:frontmatter>
+                    <fr:authors />
+                    <fr:date>
+                      <fr:year>2026</fr:year>
+                      <fr:month>5</fr:month>
+                      <fr:day>12</fr:day>
+                    </fr:date>
+                    <fr:uri>https://kellenkanarios.com/7MH4/</fr:uri>
+                    <fr:display-uri>7MH4</fr:display-uri>
+                    <fr:route>/7MH4/</fr:route>
+                    <fr:title text="Address space">Address space</fr:title>
+                  </fr:frontmatter>
+                  <fr:mainmatter><html:p>The chunk of memory the OS gives a process to use at its own discretion. Each process has its own address space, so that one process cannot read or overwrite another's program state. An address space typically contains three regions:</html:p><html:ol><html:li><html:strong>Code</html:strong>: the program text.</html:li>
+  <html:li><html:strong>Stack</html:strong>: local variables, function arguments, return values.</html:li>
+  <html:li><html:strong>Heap</html:strong>: dynamically allocated memory.</html:li></html:ol><html:p>Every address a process sees is <html:em>virtual</html:em> — not the location in physical memory. The hardware translates virtual addresses to physical ones at access time. Approaches to that translation include <fr:link href="/9MPY/" title="Base and bounds" uri="https://kellenkanarios.com/9MPY/" display-uri="9MPY" type="local">Base and bounds</fr:link>, <fr:link href="/REKW/" title="Segmentation" uri="https://kellenkanarios.com/REKW/" display-uri="REKW" type="local">Segmentation</fr:link>, and <fr:link href="/SB61/" title="Paging" uri="https://kellenkanarios.com/SB61/" display-uri="SB61" type="local">Paging</fr:link>.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The <html:em>API</html:em> the user sees is tiny: a way to get memory and a way to release it, exposed as <html:code>malloc</html:code> and <html:code>free</html:code>. The common bugs are forgetting to initialize, forgetting to free, freeing too early (dangling pointer), freeing twice (double free), and freeing memory not from <html:code>malloc</html:code> (invalid free).</fr:mainmatter></fr:tree>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>29</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-As we will see later, every address we see is actually <html:em>virtual</html:em>, meaning it is not the location in physical memory.
-</fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter><html:code>malloc</html:code> and <html:code>free</html:code> are library calls, not <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">syscalls</fr:link>. The heap is pre-allocated; <html:code>malloc</html:code> extends it by invoking <html:code>brk</html:code>/<html:code>sbrk</html:code> when it runs out.</fr:mainmatter></fr:tree>
 
-<html:p><html:strong>API:</html:strong> We only really need two methods, a way to get memory and a way to release memory. These are implemented via <html:code>malloc</html:code> and <html:code>free</html:code>. However, the use of these is usually accompanied with a handful of common errors:</html:p>
-<html:ol><html:li>Forget to initialize mem.</html:li>
-  <html:li>Forget to free mem.</html:li>
-  <html:li>Freeing memory early: <html:em>dangling pointer</html:em>.</html:li>
-  <html:li>Freeing the same memory twice: <html:em>double free</html:em>.</html:li>
-  <html:li>Passing something not allocated earlier: <html:em>invalid free</html:em>.</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>When a process dies, the OS reclaims its memory, so a bounded leak is not catastrophic — just bad practice.</fr:mainmatter></fr:tree>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>29</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-When a process dies, the OS reclaims all of that process memory. This means that as long as your program memory is bounded, leakage will not do any sort of catastrophic damage. However, it is still not good practice.
-</fr:mainmatter></fr:tree>
-
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>29</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-<html:code>malloc</html:code> and <html:code>free</html:code> are not syscalls. The heap is pre-allocated with some allotment of memory. If the program exceeds this memory then <html:code>malloc</html:code> will call a syscall <html:code>brk</html:code> / <html:code>sbrk</html:code> to increment / decrement heap mem pointer.
-</fr:mainmatter></fr:tree>
-
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>29</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-You can actually initialize and use your own heap-like memory through <html:code>mmap</html:code>. This memory is not associated with any particular file and is an <html:em>anonymous</html:em> memory region within your program.
-</fr:mainmatter></fr:tree>
-
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>29</fr:day></fr:date><fr:title text="Address Translation">Address Translation</fr:title></fr:frontmatter><fr:mainmatter>
-  <html:p>The next question is once each program has their own address space, how do we unify the experience for the user.</html:p>
-  <html:ol><html:li>We want every process to have the <html:em>illusion</html:em> that is starts at address <fr:tex display="inline"><![CDATA[0]]></fr:tex></html:li>
-    <html:li>We want every process to have the <html:em>illusion</html:em> of a large address space.</html:li></html:ol>
-  <html:p>However, we also do not want to give up the protection / speed of the address space abstraction. The overarching idea is <html:em>virualizing</html:em> the address space. This means that the address the user sees is not the true address in physical memory. How we achieve this will be a longstanding topic for the next few entries of these notes.</html:p>
-  <html:p><html:strong>Base and Bounds:</html:strong> The first approach is <html:em>base and bounds</html:em>. For this approach, the hardware has a dedicated base and bound register to indicate where the address space for a given process begins and ends. It is the OSes job to ensure that these registers are filled with the correct values for the current process.
-  <html:ul><html:li>The hardware must provide protected instructions to allow the OS to modify the base and bound registers.</html:li></html:ul></html:p>
-  <html:p>An <html:em>address translation</html:em> is then performed by the hardware by adding the base to the virtual address and checking it remains within the bounds. This is done by the <html:em>memory management unit</html:em> (MMU). A common theme we will see is that hardware support is crucial to achieve good virtualization.</html:p>
-  
- <html:div class="jms-indent-block" style="
-  margin-left: 1em;
-  margin-bottom: 1em;
-  border-left: 4px solid black;
-  padding-left: 12px;
-  background-color: whitesmoke;
-  ">
-    <html:strong>Problem:</html:strong> <html:em>to support a large addres space with base and bounds we suffer significant <html:em>internal fragmentation</html:em> i.e. in between the base and bound there is a lot of unused memory.</html:em>
-  </html:div>
-
-  <html:p>To better understand why fragmentation is such an issue: if we have 16kb total memory and each process requests 4kb but only uses 2kb, then we can only maintain 4 processes despite having the memory to service 8! To attempt to remedy this, we will introduce the idea of <html:em>segmentation</html:em>.</html:p> 
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>29</fr:day></fr:date><fr:title text="Segmentation">Segmentation</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Instead of pre-allocating the memory between the heap and stack, why don't we <html:em>allocate on demand</html:em>. To do so, we can treat the code, heap, and stack as their own <html:em>segments</html:em> with their own base and bound registers. An address could then be decomposed as 
-<fr:tex display="block"><![CDATA[\underbrace {0 1}_{\text {segment}}\underbrace {0 1 \cdots  11}_{\text {offset}}]]></fr:tex>
-This also enables an idea of <html:em>memory sharing</html:em>, where process can share a portion of memory (such as the code) to save memory on the system.
-<html:ul><html:li>Need to add a protection bit to indicate whether a process can modify certain addrs.</html:li></html:ul></html:p>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>29</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-This limits flexibility in the sense that we have no control over where the middle region was allocated and therefore we cannot grow beyond the initial bound.
-</fr:mainmatter></fr:tree>
-
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>29</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-The hardware also has to support the stack growing backwards when it checks the bounds. To do so, it has to perform an additional check based on the segment number.
-</fr:mainmatter></fr:tree>
-
-</fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>You can also acquire an anonymous heap-like region directly via <html:code>mmap</html:code>.</fr:mainmatter></fr:tree>
 </fr:mainmatter>
-            </fr:tree>
-            <fr:tree show-metadata="false">
-              <fr:frontmatter>
-                <fr:authors />
-                <fr:date>
-                  <fr:year>2025</fr:year>
-                  <fr:month>7</fr:month>
-                  <fr:day>29</fr:day>
-                </fr:date>
-                <fr:uri>https://kellenkanarios.com/67X5/</fr:uri>
-                <fr:display-uri>67X5</fr:display-uri>
-                <fr:route>/67X5/</fr:route>
-                <fr:title text="Free-Space Management">Free-Space Management</fr:title>
-              </fr:frontmatter>
-              <fr:mainmatter><html:p>We have been talking a lot about how to abstract physical address to provide ease of use for the programmer. However, we have yet to discuss how to actually allocate these physical addresses in the first place. When allocating memory, there are a few issues we need to be careful about
-<html:ol><html:li><html:em>External fragmentation</html:em>: lots of small unallocated non-contiguous chunks of memory.</html:li>
-  <html:li><html:em>Internal fragmentation</html:em>: allocated memory that is unused in the process it is allocated for.</html:li></html:ol>
-To start, we make a few simplifying assumptions:
-<html:ol><html:li>After memory has been allocated, it cannot be moved.</html:li>
-  <html:li>The size of memory is fixed.</html:li>
-  <html:li>The user does not specify the size in <html:code>free</html:code>.</html:li></html:ol>
-First, we can quickly deal with the last problem by introducing a <html:em>header</html:em>. The OS stores additional metadata, such as the size of the allocated memory in a header directly preceding the returned pointer in memory.
-<html:ul><html:li>If <html:code>int* x = malloc(sizeof(int))</html:code> then <html:code>header = (header_t)* x - 1</html:code>.</html:li>
-  <html:li>OS needs to find memory for the requested memory + size of the header.</html:li></html:ul></html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>29</fr:day></fr:date><fr:title text="Malloc Policies">Malloc Policies</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>The general allocation algorithm consists of maintaining some <html:em>free-list</html:em> that contains the address and length of free memory. An allocation is done by some policy over this list. When memory is re-claimed, the list is searched for adjacent memory and if it is found then it is <html:em>coalesced</html:em> into a larger chunk of free memory.</html:p>
-<html:ol><html:li><html:em>Best fit</html:em>: find smallest chunk that is big enough</html:li>
-  <html:ul><html:li>leaves lots of small chunks</html:li></html:ul>
-  <html:li><html:em>Worst fit</html:em>: find largest chunk</html:li></html:ol>
-Both of these require searching the entire list, so instead we can introduce some heuristics.
-<html:ol><html:li><html:em>First fit</html:em>: find first block that can service.</html:li>
-  <html:li><html:em>Next fit</html:em>: find first block that can service starting from the previous allocation.</html:li></html:ol>
-</fr:mainmatter></fr:tree>
+                </fr:tree>
+                <fr:tree show-metadata="false">
+                  <fr:frontmatter>
+                    <fr:authors />
+                    <fr:date>
+                      <fr:year>2026</fr:year>
+                      <fr:month>5</fr:month>
+                      <fr:day>12</fr:day>
+                    </fr:date>
+                    <fr:uri>https://kellenkanarios.com/9MPY/</fr:uri>
+                    <fr:display-uri>9MPY</fr:display-uri>
+                    <fr:route>/9MPY/</fr:route>
+                    <fr:title text="Base and bounds">Base and bounds</fr:title>
+                  </fr:frontmatter>
+                  <fr:mainmatter><html:p>The simplest hardware mechanism for <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">Address space</fr:link> translation. The CPU has two dedicated registers per process — a <html:em>base</html:em> pointing to the start of the process's region in physical memory and a <html:em>bound</html:em> marking the end. Translation is just <html:code>phys = base + virt</html:code>, with a check that the result stays below <html:code>bound</html:code>. The unit performing this translation in hardware is the <html:em>memory management unit</html:em> (MMU).</html:p><html:p>The hardware must expose privileged instructions for the OS to set base and bound on a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>, and trap on out-of-bound accesses.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>To support a large address space, base-and-bounds suffers significant <html:em>internal fragmentation</html:em> — the unused gap between the stack and heap is allocated but wasted. With 16KB total memory and 4KB-but-mostly-empty processes, you can run 4 processes when you'd really have room for 8.</fr:mainmatter></fr:tree>
+<html:p><fr:link href="/REKW/" title="Segmentation" uri="https://kellenkanarios.com/REKW/" display-uri="REKW" type="local">Segmentation</fr:link> is the natural next step — give each region (code, stack, heap) its own base and bound so the gaps don't have to be allocated.</html:p></fr:mainmatter>
+                </fr:tree>
+                <fr:tree show-metadata="false">
+                  <fr:frontmatter>
+                    <fr:authors />
+                    <fr:date>
+                      <fr:year>2026</fr:year>
+                      <fr:month>5</fr:month>
+                      <fr:day>12</fr:day>
+                    </fr:date>
+                    <fr:uri>https://kellenkanarios.com/REKW/</fr:uri>
+                    <fr:display-uri>REKW</fr:display-uri>
+                    <fr:route>/REKW/</fr:route>
+                    <fr:title text="Segmentation">Segmentation</fr:title>
+                  </fr:frontmatter>
+                  <fr:mainmatter><html:p>An <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">Address space</fr:link>-translation scheme that gives each logical region of a process (code, heap, stack, ...) its own base and bound. Instead of allocating a single contiguous chunk with empty space between regions, the OS allocates each segment separately and on demand. A virtual address is split into a segment number and an offset within that segment:</html:p><fr:tex display="block"><![CDATA[\underbrace {0 1}_{\text {segment}}\underbrace {0 1 \cdots  11}_{\text {offset}}]]></fr:tex><html:p>The hardware uses the segment number to index a segment table, retrieves that segment's base and bound, and adds the offset. Per-segment protection bits make read-only code and no-execute data straightforward.</html:p><html:p>Segmentation also enables <html:em>memory sharing</html:em> — two processes can map the same physical segment (e.g. shared code) into both their address spaces.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The stack grows downward, so the bounds check has to be direction-aware based on the segment number.</fr:mainmatter></fr:tree>
 
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>29</fr:day></fr:date><fr:title text="Segregated Lists">Segregated Lists</fr:title></fr:frontmatter><fr:mainmatter>
-  <html:p>Outside of the allocation policy, we can make data-structure level optimization. One such optimization is segmentation lists. The idea is to maintain different lists that correspond to different commonly allocated object types.</html:p>
-  <html:ul><html:li>Grow list by requesting segments as multiple size of the objects.</html:li>
-    <html:li>Can return to main list when no references.</html:li>
-    <html:li>Can also leave objects pre-iitialized on list to eliminate calls to constructor / destructor.</html:li></html:ul>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>29</fr:day></fr:date><fr:title text="Buddy Allocation">Buddy Allocation</fr:title></fr:frontmatter><fr:mainmatter>
-  <html:p>Assume memory is size <fr:tex display="inline"><![CDATA[2^n]]></fr:tex>. Search through memory to find smallest block that can service request.</html:p>
-<html:figure><html:img width="50%" src="/bafkrmigwzou6llta75hya6llhd6ixa6gjzeoyjqecitht2op5xxutkjgnu.png" />
-<html:figcaption>Memory <fr:tex display="inline"><![CDATA[2^n]]></fr:tex>.</html:figcaption></html:figure>
-<html:p>When block is freed,
-<html:ol><html:li>Check if the buddy is free.</html:li>
-  <html:li>If the buddy is free.</html:li>
-  <html:ul><html:li>Coalesce into larger block</html:li>
-    <html:li>Repeat.</html:li></html:ul></html:ol>
-Can easily check buddy because address differ by one bit at each level. Just modify the corresponding bit and check the free data structure (bitmap?) if the address is free. If it is then move up and check the next bit.
-</html:p>
-</fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Segmentation does not solve fragmentation; it pushes it from internal (per-process) to external (per-system). Variable-sized segments leave variably-sized holes in physical memory. The fix that eventually won is <fr:link href="/SB61/" title="Paging" uri="https://kellenkanarios.com/SB61/" display-uri="SB61" type="local">Paging</fr:link>.</fr:mainmatter></fr:tree>
 </fr:mainmatter>
+                </fr:tree>
+              </fr:mainmatter>
             </fr:tree>
             <fr:tree show-metadata="false">
               <fr:frontmatter>
@@ -240,131 +268,86 @@ Can easily check buddy because address differ by one bit at each level. Just mod
                 <fr:route>/SB61/</fr:route>
                 <fr:title text="Paging">Paging</fr:title>
               </fr:frontmatter>
-              <fr:mainmatter><html:p>Previously, we have only dealt with memory allocations as variable sized chunks i.e. the amount of memory allocated can be anything. A simple idea to avoid the drastic fragmentation this can induce is to instead divide memory into fixed size chunks. This idea is called <html:em>paging</html:em>, where each chunk is a <html:em>page</html:em>.</html:p>
- <html:div class="jms-indent-block" style="
-  margin-left: 1em;
-  margin-bottom: 1em;
-  border-left: 4px solid black;
-  padding-left: 12px;
-  background-color: whitesmoke;
-  ">
-  <html:strong>Main question:</html:strong> <html:em>how do we virtualize memory with pages?</html:em>
-</html:div>
-<html:p><html:strong>Idea:</html:strong> we decompose the address into a <html:em>virtual page number</html:em> (VPN) and offset i.e. 
-<fr:tex display="block"><![CDATA[\underbrace {01}_{\text {VPN}}\underbrace {110\cdots  01}_{\text {offset}}]]></fr:tex>
-we then maintain a datastructure to map <fr:tex display="inline"><![CDATA[\text {VPN} \mapsto  \text {PPN}]]></fr:tex>, where the PPN is the <html:em>physical page number</html:em> (we divide both virtual and physical memory into pages). We call this data structure a <html:em>page table</html:em>.
-</html:p><html:p><html:strong>Problem 1:</html:strong> The page table can get ridiculously large.</html:p>
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
-For now, we consider a linear page table (an array with entry for each VPN). If we support a 32 bit address space with 4kb pages and each entry in the page table is 4 bytes then this is <fr:tex display="inline"><![CDATA[2^{32} / 2^{12} * 4 = 2^{22}]]></fr:tex> bytes of memory for the page table!
-</fr:mainmatter></fr:tree>
- 
-<html:p>Before, we relied on the MMU to translate between physical and virtual addresses via simple operations like base and bound. However, there is no way the MMU could support this many arbitrary translations. Therefore, the page table itself must be stored in physical memory.</html:p><html:p>In addition to the address translation, the page table also keeps track of the following bits:
-<html:ol><html:li>
-Valid bit: whether this particular VPN has memory allocated to it i.e. mem between stack / heap does not need to be allocated.
-  </html:li>
-  <html:li>
-Protection bit: determines whether the calling program can read / write / execute.
-  </html:li>
-  <html:li>
-Present bit: whether the page currently resides in physical memory.
-  </html:li>
-  <html:li>
-Dirty bit: has the page been modified since being paged in.
-  </html:li>
-  <html:li>
-Reference bit: has the page been accessed (used for eviction policy).
-    </html:li></html:ol></html:p><html:p><html:strong>Problem 2:</html:strong> Every time we want to perform an address translation (very often) we must
-<html:ol><html:li>Compute VPN from address</html:li>
-  <html:li>Access page table entry in physical memory (slow)</html:li>
-  <html:li>Compute address with offset + PPN.</html:li>
-  <html:li>Access corresponding physical page in physical memory.</html:li></html:ol>
-This is very slow!
-</html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:title text="TLB">TLB</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Due to the previously discussed issues, we need a faster way of performing address translation to make paging a feasible option. A common theme: we will throw hardware at it</html:p>
-<html:p>Specifically, we will add an additional cache known as the <html:em>translation lookaside buffer</html:em> that caches address translations. Generally, an address translation proceeds as:
-<html:ol><html:li>Extract VPN</html:li>
-  <html:li>Check if VPN in TLB</html:li>
-  <html:li>If in TLB: get translation</html:li>
-  <html:li>Otherwise: TLB miss -&gt; trap to OS (RISC)</html:li></html:ol></html:p>
+              <fr:mainmatter>
+                <html:p>Instead of allocating memory in variable-sized chunks (which fragments badly), paging divides virtual and physical memory into fixed-size <html:em>pages</html:em> and maps virtual pages to physical pages independently. This is the address-translation scheme that won.</html:p>
+                <html:p>The mechanism rests on three concepts:</html:p>
+                <html:ol><html:li>The <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> — per-process map from virtual page number to physical page number.</html:li>
+  <html:li>The <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link> — small hardware cache that absorbs the cost of consulting the page table on every access.</html:li>
+  <html:li>The <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link> — the page table is itself paged, so processes only pay for the parts of the address space they use.</html:li></html:ol>
+                <html:p>When a process touches a virtual address whose page isn't in physical memory, the page table's <html:em>present bit</html:em> is unset; the hardware traps to the OS as a <html:em>page fault</html:em>, and the OS retrieves the page from swap. The eviction policies that decide what to swap out are covered by <fr:link href="/HK73/" title="Page replacement" uri="https://kellenkanarios.com/HK73/" display-uri="HK73" type="local">Page replacement</fr:link>.</html:p>
+                <fr:tree show-metadata="false">
+                  <fr:frontmatter>
+                    <fr:authors />
+                    <fr:date>
+                      <fr:year>2026</fr:year>
+                      <fr:month>5</fr:month>
+                      <fr:day>12</fr:day>
+                    </fr:date>
+                    <fr:uri>https://kellenkanarios.com/WALE/</fr:uri>
+                    <fr:display-uri>WALE</fr:display-uri>
+                    <fr:route>/WALE/</fr:route>
+                    <fr:title text="Page table">Page table</fr:title>
+                  </fr:frontmatter>
+                  <fr:mainmatter><html:p>The per-process data structure that maps each <html:em>virtual page number</html:em> (VPN) to a <html:em>physical page number</html:em> (PPN). A virtual address is split into a VPN and an offset within the page; the page table translates the VPN, the offset is appended unchanged.</html:p><fr:tex display="block"><![CDATA[\underbrace {01}_{\text {VPN}}\underbrace {110\cdots  01}_{\text {offset}}]]></fr:tex><html:p>Each page-table entry (PTE) carries more than just a PPN:</html:p><html:ol><html:li><html:strong>Valid bit</html:strong>: whether this VPN has memory allocated. Gaps between stack and heap need not be allocated.</html:li>
+  <html:li><html:strong>Protection bits</html:strong>: read/write/execute permissions.</html:li>
+  <html:li><html:strong>Present bit</html:strong>: whether the page currently resides in physical memory (vs. swap).</html:li>
+  <html:li><html:strong>Dirty bit</html:strong>: has the page been modified since being paged in.</html:li>
+  <html:li><html:strong>Reference bit</html:strong>: has the page been accessed (used by eviction policy).</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>The table gets very large. For a 32-bit address space with 4KB pages and 4-byte PTEs, a linear page table costs <fr:tex display="inline"><![CDATA[2^{32}/2^{12} \cdot  4 = 2^{22}]]></fr:tex> bytes — 4MB <html:em>per process</html:em>.</fr:mainmatter></fr:tree>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-We have to be a little careful. The OS code itself is located in memory and is therefore subject to our paging system. We can imagine that on TLB miss the hardware tries to load the TLB miss handler code by checking the TLB, getting the translation, and loading the code. But what if the translation for the TLB miss handler is not in the TLB?!?! To not worry about these things the TLB miss handler gets a permanent spot in physical memory.
-</fr:mainmatter></fr:tree>
-
-<html:p>Formally, an entry in the TLB consists of 
-<html:ol><html:li>VPN</html:li>
-  <html:li>PPN</html:li>
-  <html:li>Other bits</html:li>
-  <html:ul><html:li>Valid bit: has valid translation (different from PTE valid bit) can be invalid on initialization, eviction, or context switch.</html:li>
-    <html:li>Protection bit: whether the requested access can be performed.</html:li></html:ul></html:ol></html:p>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>
-  Each process has different address translations corresponding to the same VPN.
-</fr:mainmatter></fr:tree>
-
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Translation requires accessing the table in memory, which is slow on every memory reference. Mitigated by the <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link>.</fr:mainmatter></fr:tree>
+<html:p>The size problem is mitigated by <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link>, which only allocates the parts of the table that are actually used.</html:p></fr:mainmatter>
+                </fr:tree>
+                <fr:tree show-metadata="false">
+                  <fr:frontmatter>
+                    <fr:authors />
+                    <fr:date>
+                      <fr:year>2026</fr:year>
+                      <fr:month>5</fr:month>
+                      <fr:day>12</fr:day>
+                    </fr:date>
+                    <fr:uri>https://kellenkanarios.com/FGOK/</fr:uri>
+                    <fr:display-uri>FGOK</fr:display-uri>
+                    <fr:route>/FGOK/</fr:route>
+                    <fr:title text="Translation lookaside buffer">Translation lookaside buffer</fr:title>
+                  </fr:frontmatter>
+                  <fr:mainmatter><html:p>A small hardware cache of recent virtual-to-physical translations. Without it, every memory reference would incur the cost of walking the <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> in memory.</html:p><html:p>An access proceeds as:</html:p><html:ol><html:li>Extract VPN from the virtual address.</html:li>
+  <html:li>Check whether the VPN is in the TLB.</html:li>
+  <html:li>TLB hit: read PPN from the entry, append offset, access memory.</html:li>
+  <html:li>TLB miss: walk the page table (in hardware on <fr:link href="/L896/" title="CISC vs RISC" uri="https://kellenkanarios.com/L896/" display-uri="L896" type="local">CISC</fr:link>, by trapping to OS on <fr:link href="/L896/" title="CISC vs RISC" uri="https://kellenkanarios.com/L896/" display-uri="L896" type="local">RISC</fr:link>), insert the translation into the TLB, retry.</html:li></html:ol><html:p>A TLB entry holds the VPN, the PPN, a valid bit (separate from the PTE valid bit — invalid on init, eviction, <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>), and protection bits.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Each process has different translations for the same VPN, so a naive TLB must be flushed on every <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>.</fr:mainmatter></fr:tree>
 
  
    
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>
-  Keep additional <html:em>address space identifier</html:em> (ASID) in TLB entry. We also need an ASID register that we set at every process switch to identify the current running process.
-</fr:mainmatter></fr:tree>
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Add an <html:em>address space identifier</html:em> (ASID) to each TLB entry and an ASID register set on context switch. Now entries from different processes coexist.</fr:mainmatter></fr:tree>
  
-
 <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:uri>https://kellenkanarios.com/P9UM/</fr:uri><fr:display-uri>P9UM</fr:display-uri><fr:route>/P9UM/</fr:route><fr:title text="Culler's Law">Culler's Law</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p><html:em>"Ram is not always ram"</html:em>. Referring to the fact that a physical memory access takes a substantial different amount of time depending on whether it hit in the TLB.</html:p></fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>In real software-managed TLBs, an entry has global bits for shared pages, an 8-bit ASID, coherence bits, and a <html:em>wired</html:em> register reserving slots for code that cannot afford a TLB miss (e.g. the TLB-miss handler itself).</fr:mainmatter></fr:tree>
 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
-In a real software managed TLB, the TLB consisted of the following components:
-<html:ol><html:li>Global bits for globally shared pages,</html:li>
-  <html:li>8 bit ASID,</html:li>
-  <html:li>Coherence bits for cache-coherence,</html:li>
-  <html:li>32-64 TLB entries,</html:li>
-  <html:li>A wired register to indicate how many slots to reserve in the TLB for things like TLB miss handler.</html:li></html:ol>
-</fr:mainmatter></fr:tree>
- 
-
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-Another important tidbit: when using very fast caches, even an access to the TLB is a CPU bottleneck (accessing TLB is longer than accessing cache). To get around this, there are <html:em>virtually indexed caches</html:em> that circumvent the need for performing an address translation.
-</fr:mainmatter></fr:tree>
-
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:title text="Smaller Tables">Smaller Tables</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>As previously discussed, as it currently stands, the page table takes up too much memory.</html:p>
-<html:p><html:strong>Solution 1:</html:strong> Just use bigger pages! Unfortunately, this will suffer from severe internal fragmentation (processes not using their allocated memory) and so we would prefer to avoid this solution.</html:p>
-<html:p><html:strong>Solution 2:</html:strong> Paging + segmentation. Instead of a page table for all of memory, keep 3 page tables: one for code, stack, and heap. This only partially resolves the problem.
-<html:ol><html:li>Same problems as segmentation. Variable sized page tables will cause external fragmentation</html:li>
-  <html:li>We can do better. Within each heap, there is still a (smaller) version of the same problem: a bunch of unused allocated PTEs.</html:li></html:ol></html:p>
-<html:p><html:strong>Multi-level page tables:</html:strong> Finally, we have arrived to the idea of a multi-level page table. The idea can be summarized as</html:p>
-<html:ol><html:li>Chop page table up into pages.</html:li>
-  <html:li>Do not allocated pages with no valid references (i.e. none of the corresponding are being used).</html:li></html:ol>
-<html:figure><html:img width="80%" src="/bafkrmihf7gcws2u2ay4ecuwqwpgnziozltgjbsn7zo6x5bs6ismwq76jby.png" /></html:figure>
-<html:p>This has a few advantages:</html:p>
-<html:ol><html:li>Fits easily in memory. Allocate one page when an entry is used.</html:li> 
- <html:li>Proportional to the amount of address space actually in use.</html:li></html:ol>
-<html:p>The obvious downside is the added complexity. Namely, on every TLB miss we must make two loads of memory (1) the page directory entry and (2) the page table entry.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:title text="What happens when memory is full?">What happens when memory is full?</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>We reserve space on disk for pages that cannot fit in physical memory. This is referred to as <html:em>swap space</html:em>.</html:p>
-<html:p>We need to add an additional <html:em>present bit</html:em> to the PTE. On a TLB miss, the hardware (or software) will check the page table and see the present bit to indicate whether the page is in physical memory. If not, we must trap to the OS and this is known as a <html:em>page fault</html:em>.</html:p>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-The hardware <html:strong>never</html:strong> handles page faults because this would require understanding swap space + knowing how to perform I/O with disk.
-</fr:mainmatter></fr:tree>
-
-<html:p>Three important cases to consider:</html:p>
-<html:ol><html:li>Page is <html:strong>present</html:strong> and <html:strong>valid</html:strong>.</html:li>
-  <html:ul><html:li>Hardware can just grab physical address from PTE.</html:li></html:ul>
-  <html:li>Page is not <html:strong>present</html:strong> but <html:strong>valid</html:strong>.</html:li>
-  <html:ul><html:li>Hardware must call page fault handler to retrieve page.</html:li></html:ul>
-  <html:li>Page is not <html:strong>valid</html:strong>.</html:li>
-  <html:ul><html:li>Throw exception and likely terminate process as it is accessing invalid memory.</html:li></html:ul></html:ol>
-</fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>For very fast caches, even a TLB access is a bottleneck. <html:em>Virtually indexed caches</html:em> sidestep the TLB on the index path.</fr:mainmatter></fr:tree>
 </fr:mainmatter>
+                </fr:tree>
+                <fr:tree show-metadata="false">
+                  <fr:frontmatter>
+                    <fr:authors />
+                    <fr:date>
+                      <fr:year>2026</fr:year>
+                      <fr:month>5</fr:month>
+                      <fr:day>12</fr:day>
+                    </fr:date>
+                    <fr:uri>https://kellenkanarios.com/VX1M/</fr:uri>
+                    <fr:display-uri>VX1M</fr:display-uri>
+                    <fr:route>/VX1M/</fr:route>
+                    <fr:title text="Multi-level page table">Multi-level page table</fr:title>
+                  </fr:frontmatter>
+                  <fr:mainmatter><html:p>A page table that is itself paged: instead of one linear array of PTEs, the table is split into page-sized chunks indexed by a top-level <html:em>page directory</html:em>. Subtrees of the address space that are entirely unused get a single null entry at the top level — no second-level page is allocated for them.</html:p><html:figure><html:img width="80%" src="/bafkrmihf7gcws2u2ay4ecuwqwpgnziozltgjbsn7zo6x5bs6ismwq76jby.png" /></html:figure><html:p>Advantages over a linear <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>:</html:p><html:ol><html:li>Fits easily in memory — only allocate a second-level page when an entry in it is used.</html:li>
+  <html:li>Memory cost is proportional to the amount of address space actually in use.</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>On a <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link> miss, the walk now costs <html:em>two</html:em> memory loads — page directory entry first, then the PTE.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Real architectures push this further (x86-64 uses 4 or 5 levels) and lean on the TLB to absorb the walk cost.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+                </fr:tree>
+              </fr:mainmatter>
             </fr:tree>
             <fr:tree show-metadata="false">
               <fr:frontmatter>
@@ -377,92 +360,116 @@ The hardware <html:strong>never</html:strong> handles page faults because this w
                 <fr:uri>https://kellenkanarios.com/HK73/</fr:uri>
                 <fr:display-uri>HK73</fr:display-uri>
                 <fr:route>/HK73/</fr:route>
-                <fr:title text="Beyond Physical Memory">Beyond Physical Memory</fr:title>
+                <fr:title text="Page replacement">Page replacement</fr:title>
               </fr:frontmatter>
-              <fr:mainmatter><html:p>
-Up to this point, we have reduced our focus to assuming physical memory was sufficiently large memory. In practice, this is rarely the case. To complete our discussion on memory, we must lift this assumption.
-  </html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>8</fr:day></fr:date><fr:title text="Mechanisms">Mechanisms</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>In order to handle overflowing memory, we must reserve some space on physical disk to store the additional pages. This space is referred to as <html:em>swap space</html:em>.
-</html:p>
-<html:p>
-To keep track of such memory, the page table entry instead contains a <html:em>disk address</html:em>. The OS knows what to do because of the additional present bit indicating whether the page is in physical memory. If not, we must trap to the OS and this is known as a <html:em>page fault</html:em>.</html:p>
-</fr:mainmatter></fr:tree>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>8</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-The hardware <html:strong>never</html:strong> handles page faults because this would require understanding swap space + knowing how to perform I/O with disk.
-</fr:mainmatter></fr:tree>
-<html:p>Three important cases to consider:</html:p><html:ol><html:li>Page is <html:strong>present</html:strong> and <html:strong>valid</html:strong>.</html:li>
-  <html:ul><html:li>Hardware can just grab physical address from PTE.</html:li></html:ul>
-  <html:li>Page is not <html:strong>present</html:strong> but <html:strong>valid</html:strong>.</html:li>
-  <html:ul><html:li>Hardware must call page fault handler to retrieve page.</html:li></html:ul>
-  <html:li>Page is not <html:strong>valid</html:strong>.</html:li>
-  <html:ul><html:li>Throw exception and likely terminate process as it is accessing invalid memory.</html:li></html:ul></html:ol>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>8</fr:day></fr:date><fr:title text="Policies">Policies</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Now that we know we must occasionally <html:em>page out</html:em> some pages from physical memory to swap spaces. The large question remains:</html:p>
-
- <html:div class="jms-indent-block" style="
-  margin-left: 1em;
-  margin-bottom: 1em;
-  border-left: 4px solid black;
-  padding-left: 12px;
-  background-color: whitesmoke;
-  ">
-  <html:em>What page do you evict at any given time?</html:em>
-</html:div>
-
-<html:p>Such a decision is a <html:em>policy</html:em>, and the quality of a policy is often weighed by the <html:em>average mean access time</html:em> (AMAT) given by 
-<fr:tex display="block"><![CDATA[AMAT = (1 - P_{miss})T_P + P_{miss} T_D ]]></fr:tex>
-where <fr:tex display="inline"><![CDATA[T_P]]></fr:tex> is the time to access physical memory and <fr:tex display="inline"><![CDATA[T_D]]></fr:tex> is time to access disk. For large discrepancies in <fr:tex display="inline"><![CDATA[T_M]]></fr:tex> and <fr:tex display="inline"><![CDATA[T_D]]></fr:tex>, we can have a substantial difference in AMAT for even very low <fr:tex display="inline"><![CDATA[P_{miss}]]></fr:tex>.
-</html:p>
-<html:p>The "optimal" policy is one that evicts the page whose next use is farthest away. Unfortunately, this is not feasible to implement as we do not know the future.</html:p>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>8</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-A desirable and surprisingly not guaranteed property we want in our policy is the <html:em>stack property</html:em>, which guarantess that if the cache size increases our miss rate gets no worse. This is not the case with FIFO and is known as <html:em>Belady's anomaly</html:em>.
-</fr:mainmatter></fr:tree>
-
-<html:p>We instead consider the <html:em>least recently used</html:em> (LRU) heuristic. The effectiveness of such a policy can be attributed to the <html:em>principle of locality</html:em>. Namely, in this case, we enforce temporal locality, where resident pages are close in terms of time accessed. </html:p>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>8</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-In practice, we do not implement pure LRU either. This would require maintaining a separate data structure and modifying at every memory access. Instead, we utilize the <html:em>clock algorithm</html:em>, where a reference bit is set to <fr:tex display="inline"><![CDATA[1]]></fr:tex> each time an access occurs. The algorithm then proceeds by looping through all pages 
-<html:ol><html:li>If reference bit is <fr:tex display="inline"><![CDATA[1]]></fr:tex>, set to <fr:tex display="inline"><![CDATA[0]]></fr:tex> and proceed to next page.</html:li>
-  <html:li>If reference bit is <fr:tex display="inline"><![CDATA[0]]></fr:tex> evict the current page.</html:li></html:ol>
-</fr:mainmatter></fr:tree>
-
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>8</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-LRU is by no means optimal and in the looping workload (where we loop access one more page than the page table size) we miss 100 percent of the time.
-</fr:mainmatter></fr:tree>
-
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>8</fr:day></fr:date><fr:title text="Case studies: Useful Tricks">Case studies: Useful Tricks</fr:title></fr:frontmatter><fr:mainmatter>
-
+              <fr:mainmatter><html:p>Once swap space is in play, the OS must decide <html:em>which</html:em> pages to evict from physical memory. The mechanism is the <fr:link href="/CXFM/" title="Page fault and swap space" uri="https://kellenkanarios.com/CXFM/" display-uri="CXFM" type="local">Page fault and swap space</fr:link> machinery; the question of policy is what this hub covers.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/CXFM/</fr:uri><fr:display-uri>CXFM</fr:display-uri><fr:route>/CXFM/</fr:route><fr:title text="Page fault and swap space">Page fault and swap space</fr:title></fr:frontmatter><fr:mainmatter><html:p>Physical memory is finite, so the OS reserves a region of disk — <html:em>swap space</html:em> — to hold pages that don't fit. Pages currently on disk have their <html:em>present bit</html:em> cleared in the <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> entry; the PTE instead holds a disk address.</html:p><html:p>When a process touches a virtual address whose page is not present, the hardware traps to the OS. This is a <html:em>page fault</html:em>. The handler:</html:p><html:ol><html:li>Looks at the PTE: if invalid, the access is illegal — terminate the process.</html:li>
+  <html:li>If valid but not present: read the page in from swap, update the PTE, retry the access.</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The hardware never handles page faults itself — that would require it to understand disk I/O and the OS's swap layout. Page-fault handling is always in software.</fr:mainmatter></fr:tree>
+<html:p>The three cases on every memory access:</html:p><html:ol><html:li><html:strong>Present + valid</html:strong>: hardware reads the PPN from the PTE and proceeds.</html:li>
+  <html:li><html:strong>Not present + valid</html:strong>: hardware invokes the page-fault handler to retrieve from swap.</html:li>
+  <html:li><html:strong>Not valid</html:strong>: hardware raises an exception; the OS typically kills the process.</html:li></html:ol>
    
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>8</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
-<html:strong>What happens when you dereference a nullptr?</html:strong> First, we check the TLB for the VPN 0. We miss and then check the page table. The page will be marked invalid, and we will trap to the OS.
-</fr:mainmatter></fr:tree>
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter><html:strong>What happens when you dereference a nullptr?</html:strong> The TLB misses on VPN 0, the page-table walk finds the PTE marked invalid, and the hardware traps to the OS — which delivers SIGSEGV.</fr:mainmatter></fr:tree>
  
-
-<html:p>LRU is a <html:em>global policy</html:em>, meaning that it does not distinguish the memory use by process. Therefore, memory hog processes can hog memory. To deal with this, one approach is <html:em>segmented FIFO</html:em>, where they maintain a FIFO queue for each process. If the queue exceeds the <html:em>resident set size</html:em> then the first-in page is evicted. They maintain two lists: <html:em>clean page free list</html:em> and <html:em>dirty page list</html:em>. 
-<html:ol><html:li>If a page is evicted but free it is put on the clean page free list.</html:li>
-  <html:li>Otherwise, it is put on the dirty page list.</html:li></html:ol>
-If the original process faults on a page still on the dirty page list it reclaims that page and avoids the I/O.
-</html:p>
-<html:p><html:em>on-demand zeroing</html:em>
-<html:ul><html:li>When heap memory is allocated a lot of it goes unused.</html:li>
-  <html:li>Do not need to zero allocated memory until it is used</html:li></html:ul>
-<html:em>copy on write</html:em>
-<html:ul><html:li>We do not need to copy pages across address spaces unless they are modified.</html:li>
-  <html:li>i.e. <html:code>fork()</html:code>, shared libraries, etc.</html:li>
-  <html:li>Both VPNs map to same PPN.</html:li>
-  <html:li>PTE has additional bits to trap to OS on write.</html:li></html:ul>
-<html:em>Page clustering</html:em>
-<html:ul><html:li>Cluster small page I/O together and perform one write all at once.</html:li>
-  <html:li>Collect large batch from global dirty list.</html:li></html:ul></html:p>
-<html:p>A common convention for ease of implementation is also to include the kernel in each process address space. This can be made even more efficiently via <html:em>copy on write</html:em>, where each process will just refer to the same kernel code in physical memory.</html:p>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/7WG2/</fr:uri><fr:display-uri>7WG2</fr:display-uri><fr:route>/7WG2/</fr:route><fr:title text="LRU and the clock algorithm">LRU and the clock algorithm</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:em>Least recently used</html:em> is the standard heuristic for picking a page to evict: throw out the one that has been untouched the longest. It works because of the <html:em>principle of locality</html:em> — recently-used pages are likely to be used again soon (<fr:link href="/9RWN/" title="Temporal locality" uri="https://kellenkanarios.com/9RWN/" display-uri="9RWN" type="local">temporal locality</fr:link>).</html:p><html:p>Pure LRU requires updating a data structure on every memory access, which is too expensive. The <html:em>clock algorithm</html:em> approximates it cheaply:</html:p><html:ol><html:li>Maintain a <html:em>reference bit</html:em> per page, set by hardware on access.</html:li>
+  <html:li>Loop a pointer around the pages. If the reference bit is 1, clear it and advance.</html:li>
+  <html:li>If the reference bit is 0, evict that page.</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>LRU is not optimal. The pathological case is the looping workload: if the working set is one page larger than the cache, LRU misses 100% of the time.</fr:mainmatter></fr:tree>
+<html:p>The quality of any replacement policy is measured by its <html:em>average memory access time</html:em>:</html:p><fr:tex display="block"><![CDATA[AMAT = (1 - P_{miss}) T_P + P_{miss} T_D]]></fr:tex><html:p>where <fr:tex display="inline"><![CDATA[T_P]]></fr:tex> is physical-memory access time and <fr:tex display="inline"><![CDATA[T_D]]></fr:tex> is disk access time. The disk gap is so large that even tiny miss rates dominate AMAT.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/LQV3/</fr:uri><fr:display-uri>LQV3</fr:display-uri><fr:route>/LQV3/</fr:route><fr:title text="Belady's anomaly">Belady's anomaly</fr:title></fr:frontmatter><fr:mainmatter><html:p>A desirable property of a page-replacement policy is the <html:em>stack property</html:em>: increasing the cache size never makes the miss rate worse. Surprisingly, not every reasonable-looking policy has it.</html:p><html:p>FIFO eviction violates the stack property — on certain access sequences, growing the cache strictly <html:em>increases</html:em> the number of misses. This is <html:em>Belady's anomaly</html:em>. It is what motivates <fr:link href="/7WG2/" title="LRU and the clock algorithm" uri="https://kellenkanarios.com/7WG2/" display-uri="7WG2" type="local">LRU and the clock algorithm</fr:link>-style policies, which do have the stack property because they only depend on relative access recency.</html:p><html:p>The optimal eviction policy (offline) is to evict the page whose next use is farthest in the future. Unimplementable in practice (you don't know the future), but useful as a theoretical upper bound to compare against.</html:p></fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>8</fr:day></fr:date><fr:title text="Process-aware policy: segmented FIFO">Process-aware policy: segmented FIFO</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Pure <fr:link href="/7WG2/" title="LRU and the clock algorithm" uri="https://kellenkanarios.com/7WG2/" display-uri="7WG2" type="local">LRU and the clock algorithm</fr:link> is a <html:em>global</html:em> policy — it does not distinguish memory by owner, so a single greedy process can hog memory. <html:em>Segmented FIFO</html:em> maintains a per-process FIFO queue capped at the process's <html:em>resident set size</html:em>; evicted pages go to one of two secondary lists:</html:p>
+<html:ol><html:li><html:em>Clean page free list</html:em> — evicted pages that haven't been modified.</html:li>
+  <html:li><html:em>Dirty page list</html:em> — evicted pages that need to be written back.</html:li></html:ol>
+<html:p>If the original process faults on a page still on the dirty list, it can be reclaimed without I/O.</html:p>
 </fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/DEJB/</fr:uri><fr:display-uri>DEJB</fr:display-uri><fr:route>/DEJB/</fr:route><fr:title text="Copy-on-write">Copy-on-write</fr:title></fr:frontmatter><fr:mainmatter><html:p>An optimization where two address spaces share the same physical page until one writes to it. Both processes have PTEs pointing at the same PPN, but with the write bit cleared. The first write traps to the OS, which allocates a fresh page, copies the contents, points the writing process's PTE at the new page (with writes re-enabled), and resumes.</html:p><html:p>Used pervasively:</html:p><html:ul><html:li><fr:link href="/O1S9/" title="fork()" uri="https://kellenkanarios.com/O1S9/" display-uri="O1S9" type="local">fork()</fr:link> — the child shares the parent's pages until either modifies one. Avoids the cost of copying an entire address space the child often immediately overwrites with <fr:link href="/YHJR/" title="exec()" uri="https://kellenkanarios.com/YHJR/" display-uri="YHJR" type="local">exec()</fr:link>.</html:li>
+  <html:li>Shared libraries — many processes map the same library text pages.</html:li>
+  <html:li>Kernel mapped into every process — same physical kernel code seen from every address space.</html:li></html:ul></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/PW7Q/</fr:uri><fr:display-uri>PW7Q</fr:display-uri><fr:route>/PW7Q/</fr:route><fr:title text="On-demand zeroing">On-demand zeroing</fr:title></fr:frontmatter><fr:mainmatter><html:p>When a process asks for new heap memory, the OS must guarantee the returned pages contain zeros (to avoid leaking other processes' data). The naive implementation zeroes the page at allocation time. <html:em>On-demand zeroing</html:em> defers that work to first touch: until the process actually accesses a freshly-allocated page, no zero-fill happens.</html:p><html:p>The OS marks the page as not-present in the <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>. The first access traps as a <fr:link href="/CXFM/" title="Page fault and swap space" uri="https://kellenkanarios.com/CXFM/" display-uri="CXFM" type="local">Page fault and swap space</fr:link>, the handler zeroes a physical page, installs it in the PTE, and resumes. Heap memory that is allocated but never used costs nothing.</html:p></fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>8</fr:day></fr:date><fr:title text="Page clustering">Page clustering</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p>Small page-out I/Os are amortized by batching: instead of writing one dirty page at a time, the OS collects a batch from the global dirty list and writes them together.</html:p>
+</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>8</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>A common convention is to map the kernel into every process's address space (via <fr:link href="/DEJB/" title="Copy-on-write" uri="https://kellenkanarios.com/DEJB/" display-uri="DEJB" type="local">Copy-on-write</fr:link>) so kernel code and structures appear at the same virtual addresses everywhere.</fr:mainmatter></fr:tree>
 </fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2025</fr:year>
+                  <fr:month>7</fr:month>
+                  <fr:day>29</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/67X5/</fr:uri>
+                <fr:display-uri>67X5</fr:display-uri>
+                <fr:route>/67X5/</fr:route>
+                <fr:title text="Free-space management">Free-space management</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter>
+                <html:p>Once we have an <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">Address space</fr:link>, we still have to actually allocate physical bytes within it. Free-space management is the discipline of tracking which bytes are free, picking which free chunk to satisfy a request, and merging adjacent freed chunks back together. Two fragmentation hazards to watch:</html:p>
+                <html:ol><html:li><html:em>External fragmentation</html:em>: many small unallocated non-contiguous chunks.</html:li>
+  <html:li><html:em>Internal fragmentation</html:em>: allocated chunks larger than what the requester uses.</html:li></html:ol>
+                <html:p>Simplifying assumptions for the algorithms below: allocations are immovable once placed, total memory is fixed, and the user does not specify a size in <html:code>free</html:code>. The last assumption is handled by storing the size in a header preceding the returned pointer.</html:p>
+                <fr:tree show-metadata="false">
+                  <fr:frontmatter>
+                    <fr:authors />
+                    <fr:date>
+                      <fr:year>2026</fr:year>
+                      <fr:month>5</fr:month>
+                      <fr:day>12</fr:day>
+                    </fr:date>
+                    <fr:uri>https://kellenkanarios.com/1ABF/</fr:uri>
+                    <fr:display-uri>1ABF</fr:display-uri>
+                    <fr:route>/1ABF/</fr:route>
+                    <fr:title text="Malloc placement policies">Malloc placement policies</fr:title>
+                  </fr:frontmatter>
+                  <fr:mainmatter>
+                    <html:p>Given a <html:em>free list</html:em> of unallocated memory chunks and a request of size <fr:tex display="inline"><![CDATA[n]]></fr:tex>, which chunk do you carve the allocation out of? Different answers trade off fragmentation against search time.</html:p>
+                    <html:ol><html:li><html:em>Best fit</html:em>: find the smallest chunk <fr:tex display="inline"><![CDATA[\geq  n]]></fr:tex>. Minimizes wasted space per allocation but tends to leave many small unusable fragments behind, and requires scanning the whole list.</html:li>
+  <html:li><html:em>Worst fit</html:em>: find the largest chunk. Aims to leave usefully-sized leftovers but also requires a full scan.</html:li>
+  <html:li><html:em>First fit</html:em>: take the first chunk that fits. Fast (early exit) but biases small fragments toward the start of the list.</html:li>
+  <html:li><html:em>Next fit</html:em>: like first fit, but resume the search from where the previous allocation ended. Spreads small fragments more evenly.</html:li></html:ol>
+                    <html:p>On free, the allocator searches the list for adjacent free chunks and <html:em>coalesces</html:em> them into a larger chunk. The size of each allocation is stored in a <html:em>header</html:em> immediately preceding the returned pointer so <html:code>free</html:code> doesn't need a size argument.</html:p>
+                  </fr:mainmatter>
+                </fr:tree>
+                <fr:tree show-metadata="false">
+                  <fr:frontmatter>
+                    <fr:authors />
+                    <fr:date>
+                      <fr:year>2026</fr:year>
+                      <fr:month>5</fr:month>
+                      <fr:day>12</fr:day>
+                    </fr:date>
+                    <fr:uri>https://kellenkanarios.com/FB66/</fr:uri>
+                    <fr:display-uri>FB66</fr:display-uri>
+                    <fr:route>/FB66/</fr:route>
+                    <fr:title text="Segregated lists">Segregated lists</fr:title>
+                  </fr:frontmatter>
+                  <fr:mainmatter><html:p>A data-structure-level optimization for allocators that maintains separate free lists per common object size. Instead of one global free list scanned by <fr:link href="/1ABF/" title="Malloc placement policies" uri="https://kellenkanarios.com/1ABF/" display-uri="1ABF" type="local">Malloc placement policies</fr:link>, you keep a list per size class. Allocations of that size pop straight off the matching list — no search.</html:p><html:ul><html:li>Grow a per-size list by requesting larger segments from the main allocator and chopping them up.</html:li>
+  <html:li>Drain back to the main list when no references remain.</html:li>
+  <html:li>Optionally leave objects pre-initialized on the list to skip constructor/destructor calls.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>This is the structure behind kernel slab allocators and many object-pool patterns. It works when the workload allocates many objects of a few common sizes.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+                </fr:tree>
+                <fr:tree show-metadata="false">
+                  <fr:frontmatter>
+                    <fr:authors />
+                    <fr:date>
+                      <fr:year>2026</fr:year>
+                      <fr:month>5</fr:month>
+                      <fr:day>12</fr:day>
+                    </fr:date>
+                    <fr:uri>https://kellenkanarios.com/8M72/</fr:uri>
+                    <fr:display-uri>8M72</fr:display-uri>
+                    <fr:route>/8M72/</fr:route>
+                    <fr:title text="Buddy allocation">Buddy allocation</fr:title>
+                  </fr:frontmatter>
+                  <fr:mainmatter><html:p>An allocator for memory of total size <fr:tex display="inline"><![CDATA[2^n]]></fr:tex> that maintains a binary-tree of free blocks at every power-of-two size. To service a request, walk down to the smallest block <fr:tex display="inline"><![CDATA[\geq ]]></fr:tex> requested size; if no block of that size exists, split a larger one (and its "buddy" becomes free). On free, check whether the freed block's buddy is also free, and if so, coalesce upward — recursively.</html:p><html:figure><html:img width="50%" src="/bafkrmigwzou6llta75hya6llhd6ixa6gjzeoyjqecitht2op5xxutkjgnu.png" />
+  <html:figcaption>Memory of size <fr:tex display="inline"><![CDATA[2^n]]></fr:tex> organized as a buddy system.</html:figcaption></html:figure><html:p>The key trick is that buddies differ by exactly one bit in their address at each level. To check whether a block's buddy is free, flip that bit and consult a bitmap. To coalesce upward, mask off the bit and recurse.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Internal fragmentation is bounded by 2× the request size (you may have to round up to the next power of two), but external fragmentation is essentially eliminated within the buddy region.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+                </fr:tree>
+              </fr:mainmatter>
             </fr:tree>
           </fr:mainmatter>
         </fr:tree>
@@ -480,7 +487,33 @@ If the original process faults on a page still on the dirty page list it reclaim
         <fr:authors />
         <fr:title text="Related">Related</fr:title>
       </fr:frontmatter>
-      <fr:mainmatter />
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/7MH4/</fr:uri>
+            <fr:display-uri>7MH4</fr:display-uri>
+            <fr:route>/7MH4/</fr:route>
+            <fr:title text="Address space">Address space</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The chunk of memory the OS gives a process to use at its own discretion. Each process has its own address space, so that one process cannot read or overwrite another's program state. An address space typically contains three regions:</html:p><html:ol><html:li><html:strong>Code</html:strong>: the program text.</html:li>
+  <html:li><html:strong>Stack</html:strong>: local variables, function arguments, return values.</html:li>
+  <html:li><html:strong>Heap</html:strong>: dynamically allocated memory.</html:li></html:ol><html:p>Every address a process sees is <html:em>virtual</html:em> — not the location in physical memory. The hardware translates virtual addresses to physical ones at access time. Approaches to that translation include <fr:link href="/9MPY/" title="Base and bounds" uri="https://kellenkanarios.com/9MPY/" display-uri="9MPY" type="local">Base and bounds</fr:link>, <fr:link href="/REKW/" title="Segmentation" uri="https://kellenkanarios.com/REKW/" display-uri="REKW" type="local">Segmentation</fr:link>, and <fr:link href="/SB61/" title="Paging" uri="https://kellenkanarios.com/SB61/" display-uri="SB61" type="local">Paging</fr:link>.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The <html:em>API</html:em> the user sees is tiny: a way to get memory and a way to release it, exposed as <html:code>malloc</html:code> and <html:code>free</html:code>. The common bugs are forgetting to initialize, forgetting to free, freeing too early (dangling pointer), freeing twice (double free), and freeing memory not from <html:code>malloc</html:code> (invalid free).</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter><html:code>malloc</html:code> and <html:code>free</html:code> are library calls, not <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">syscalls</fr:link>. The heap is pre-allocated; <html:code>malloc</html:code> extends it by invoking <html:code>brk</html:code>/<html:code>sbrk</html:code> when it runs out.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>When a process dies, the OS reclaims its memory, so a bounded leak is not catastrophic — just bad practice.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>You can also acquire an anonymous heap-like region directly via <html:code>mmap</html:code>.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
     </fr:tree>
     <fr:tree show-metadata="false" hidden-when-empty="true">
       <fr:frontmatter>

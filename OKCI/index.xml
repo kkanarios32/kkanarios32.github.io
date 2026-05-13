@@ -1,0 +1,683 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors />
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>5</fr:month>
+      <fr:day>12</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/OKCI/</fr:uri>
+    <fr:display-uri>OKCI</fr:display-uri>
+    <fr:route>/OKCI/</fr:route>
+    <fr:title text="Context switch">Context switch</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter>
+    <html:p>The operation of saving the full execution state of one process (or <fr:link href="/63U3/" title="Thread" uri="https://kellenkanarios.com/63U3/" display-uri="63U3" type="local">thread</fr:link>) and restoring another's so the CPU can resume it as if it had never been interrupted. On a trap into the kernel, the hardware stashes the user-visible state (PC, condition codes, stack pointer) into a known location, and the OS saves the remaining general-purpose registers as part of the switching code.</html:p>
+    <html:p>Two flavors of state are involved:</html:p>
+    <html:ol><html:li><html:strong>User registers</html:strong>: the current program's context (general-purpose registers, stack vars).</html:li>
+  <html:li><html:strong>Kernel registers</html:strong>: meta-information used to resume the trap correctly (PC at trap, syscall number, etc.).</html:li></html:ol>
+    <html:p>Context switches are not free — they incur the cost of cache and <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">TLB</fr:link> pollution in addition to the direct cost of saving/restoring state. This is the cost amortized by larger <fr:link href="/B8GC/" title="Scheduling" uri="https://kellenkanarios.com/B8GC/" display-uri="B8GC" type="local">scheduling</fr:link> quanta and a recurring concern for any <fr:link href="/5P43/" title="Concurrency" uri="https://kellenkanarios.com/5P43/" display-uri="5P43" type="local">Concurrency</fr:link> system.</html:p>
+  </fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>19</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/VE8C/</fr:uri>
+            <fr:display-uri>VE8C</fr:display-uri>
+            <fr:route>/VE8C/</fr:route>
+            <fr:title text="Limited Direct Execution">Limited Direct Execution</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The OS lets user code run directly on the CPU for speed, but with hardware-enforced limits that prevent a buggy or malicious program from compromising the rest of the system. Two questions motivate the mechanism:</html:p>
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  ">
+  <html:ol><html:li><html:em>How do we make sure a program doesn't do what we don't want it to do?</html:em></html:li>
+    <html:li><html:em>How do we enable time-sharing?</html:em></html:li></html:ol>
+</html:div>
+<html:p>The first question is answered by hardware <fr:link href="/QUQC/" title="User mode vs kernel mode" uri="https://kellenkanarios.com/QUQC/" display-uri="QUQC" type="local">User mode vs kernel mode</fr:link> enforced via the <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link>, with a controlled <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">Syscall mechanism</fr:link> as the only path from one to the other. The second is answered by periodic timer interrupts that trap to the OS, which performs a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">Context switch</fr:link> and runs the <fr:link href="/B8GC/" title="Scheduling" uri="https://kellenkanarios.com/B8GC/" display-uri="B8GC" type="local">scheduler</fr:link>.</html:p><html:p>The whole stack is bootstrapped during the <fr:link href="/XSFO/" title="Boot sequence" uri="https://kellenkanarios.com/XSFO/" display-uri="XSFO" type="local">Boot sequence</fr:link>, when the kernel installs the trap table and starts the timer before handing control to user space.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/QUQC/</fr:uri><fr:display-uri>QUQC</fr:display-uri><fr:route>/QUQC/</fr:route><fr:title text="User mode vs kernel mode">User mode vs kernel mode</fr:title></fr:frontmatter><fr:mainmatter><html:p>Two privilege levels supported by the CPU. <html:em>User mode</html:em> restricts the running process to a limited set of instructions and a limited view of memory — usually just its own <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">address space</fr:link>. <html:em>Kernel mode</html:em> runs the OS with full access to all instructions and all of physical memory.</html:p><html:p>Switching between modes is mediated by hardware via a <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link> populated at boot. The OS sets up the table; the CPU enforces it. A process cannot promote itself to kernel mode arbitrarily — it must invoke a <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">Syscall mechanism</fr:link>, which traps to a fixed entry point in the OS.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Kernel mode is dangerous because the address space is effectively the entire machine. The mode bit + the trap table together are what makes it safe to time-share a CPU between mutually distrusting programs.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/0NVY/</fr:uri><fr:display-uri>0NVY</fr:display-uri><fr:route>/0NVY/</fr:route><fr:title text="Trap table">Trap table</fr:title></fr:frontmatter><fr:mainmatter><html:p>A hardware-readable table installed by the OS at boot that maps each kind of exceptional control-flow event (<fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">syscall</fr:link>, interrupt, <fr:link href="/CXFM/" title="Page fault and swap space" uri="https://kellenkanarios.com/CXFM/" display-uri="CXFM" type="local">page fault</fr:link>, illegal instruction, ...) to the address of an OS handler. When the CPU takes a trap, it consults this table to decide where to jump, switches into kernel mode, and runs the handler.</html:p><html:p>The table is what makes it safe to expose privileged operations to user mode: user code never gets to pick the destination of a mode-switch, only the trap number. The OS controls every entry point, the CPU enforces the indirection.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Installing the trap table is itself a privileged operation. It happens once, early in boot, before any user process exists.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/A5S6/</fr:uri><fr:display-uri>A5S6</fr:display-uri><fr:route>/A5S6/</fr:route><fr:title text="Syscall mechanism">Syscall mechanism</fr:title></fr:frontmatter><fr:mainmatter><html:p>A syscall is a user-mode-initiated request for a privileged service from the kernel. Because user code cannot jump into kernel code directly, the mechanism is built around a single trap instruction plus a pre-agreed register convention identifying which service to perform.</html:p><html:p>The end-to-end sequence:</html:p><html:ol><html:li>User code places the syscall number in a pre-defined register and invokes the trap instruction.</html:li>
+  <html:li>Hardware saves enough state to resume the process and switches to kernel mode.</html:li>
+  <html:li>Hardware jumps to the OS-installed handler via the <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link>.</html:li>
+  <html:li>The handler reads the syscall number from the agreed register and dispatches to the corresponding OS routine.</html:li>
+  <html:li>The OS validates the request, performs the work, and arranges return values per the calling convention.</html:li>
+  <html:li>The OS restores user state and returns the process to user mode.</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Because the register convention is fixed by ABI, the user-mode side of a syscall is typically hand-written in assembly within libc.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Interrupts work via a similar trap-handler mechanism, but are initiated by hardware (timer, device) rather than user code.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The kernel must validate any pointers or arguments the user supplies — user code cannot be trusted not to ask the kernel to read kernel memory on its behalf.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/OKCI/</fr:uri><fr:display-uri>OKCI</fr:display-uri><fr:route>/OKCI/</fr:route><fr:title text="Context switch">Context switch</fr:title></fr:frontmatter><fr:mainmatter><html:p>The operation of saving the full execution state of one process (or <fr:link href="/63U3/" title="Thread" uri="https://kellenkanarios.com/63U3/" display-uri="63U3" type="local">thread</fr:link>) and restoring another's so the CPU can resume it as if it had never been interrupted. On a trap into the kernel, the hardware stashes the user-visible state (PC, condition codes, stack pointer) into a known location, and the OS saves the remaining general-purpose registers as part of the switching code.</html:p><html:p>Two flavors of state are involved:</html:p><html:ol><html:li><html:strong>User registers</html:strong>: the current program's context (general-purpose registers, stack vars).</html:li>
+  <html:li><html:strong>Kernel registers</html:strong>: meta-information used to resume the trap correctly (PC at trap, syscall number, etc.).</html:li></html:ol><html:p>Context switches are not free — they incur the cost of cache and <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">TLB</fr:link> pollution in addition to the direct cost of saving/restoring state. This is the cost amortized by larger <fr:link href="/B8GC/" title="Scheduling" uri="https://kellenkanarios.com/B8GC/" display-uri="B8GC" type="local">scheduling</fr:link> quanta and a recurring concern for any <fr:link href="/5P43/" title="Concurrency" uri="https://kellenkanarios.com/5P43/" display-uri="5P43" type="local">Concurrency</fr:link> system.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XSFO/</fr:uri><fr:display-uri>XSFO</fr:display-uri><fr:route>/XSFO/</fr:route><fr:title text="Boot sequence">Boot sequence</fr:title></fr:frontmatter><fr:mainmatter><html:p>The fixed series of steps a machine performs from power-on until a usable operating system is running. Each stage runs from a known location and hands off control to the next.</html:p><html:ol><html:li>Power signal resets the CPU to a known state.</html:li>
+  <html:li>The CPU fetches from a hard-wired address — the BIOS (or UEFI firmware). The BIOS runs basic hardware checks (POST).</html:li>
+  <html:li>The BIOS loads and jumps to the bootloader (e.g. GRUB) from a known location on disk.</html:li>
+  <html:li>The bootloader places the kernel image at the correct address and jumps to its entry point.</html:li>
+  <html:li>The kernel performs early setup: installs the <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link> (a special privileged instruction), starts the timer interrupt, sets up memory management, and finally enters user space.</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The hardware is hard-wired only to find the BIOS. Everything past that is software the user can replace, which is why dual-booting and custom bootloaders work.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree></fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/82U4/</fr:uri>
+            <fr:display-uri>82U4</fr:display-uri>
+            <fr:route>/82U4/</fr:route>
+            <fr:title text="GPU architecture and SIMT">GPU architecture and SIMT</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>A GPU sacrifices single-thread latency for aggregate throughput. The opposite design point from a CPU:</html:p>
+  <html:table>
+
+  <html:tr>
+  <html:td />
+
+  <html:td><html:strong>CPU</html:strong></html:td>
+
+  <html:td><html:strong>GPU</html:strong></html:td>
+</html:tr>
+
+
+  <html:tr>
+  <html:td>Caches</html:td>
+
+  <html:td>Large</html:td>
+
+  <html:td>Small (boost memory throughput)</html:td>
+</html:tr>
+
+
+  <html:tr>
+  <html:td>Control</html:td>
+
+  <html:td>Sophisticated (branch prediction, OoO)</html:td>
+
+  <html:td>Simple (no branch prediction, no forwarding)</html:td>
+</html:tr>
+
+
+  <html:tr>
+  <html:td>ALUs</html:td>
+
+  <html:td>Powerful</html:td>
+
+  <html:td>Energy-efficient, heavily pipelined</html:td>
+</html:tr>
+
+
+  <html:tr>
+  <html:td>Optimizes for</html:td>
+
+  <html:td>Single-thread latency</html:td>
+
+  <html:td>Aggregate throughput</html:td>
+</html:tr>
+
+</html:table>
+<html:p>The GPU equivalent of a core is a <html:em>streaming multiprocessor</html:em> (SM). Each SM executes the same instruction across many threads in lockstep — but with a key difference from <fr:link href="/Q7ZD/" title="Vector ISA / SIMD" uri="https://kellenkanarios.com/Q7ZD/" display-uri="Q7ZD" type="local">Vector ISA / SIMD</fr:link>:</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="SIMT vs SIMD">SIMT vs SIMD</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p><html:em>Single instruction, multiple threads</html:em>. The SM issues one instruction per cycle to a group of threads (a <fr:link href="/X9VZ/" title="Warp scheduling" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">Warp scheduling</fr:link>), but each thread keeps its own program counter and register state.</html:p>
+
+<html:p>Advantages over SIMD:</html:p>
+<html:ol><html:li><html:em>Control-flow divergence</html:em>. Threads on different branches of a conditional execute dummy instructions on the inactive path until reconvergence. The compiler / hardware mask the inactive lanes; the programmer doesn't have to vectorize manually.</html:li>
+  <html:li><html:em>Grouping flexibility</html:em>. Hardware (or the compiler) can re-group threads into warps based on actual control flow — see "warp specialization".</html:li></html:ol>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="Hiding stalls">Hiding stalls</fr:title></fr:frontmatter><fr:mainmatter>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>How do GPUs deal with cache misses given they don't have OoO machinery?</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>Fast context-switching between warps. When a warp stalls on memory, the SM switches to another runnable warp with already-resident state. Enough warps means the SM is always busy.</fr:mainmatter></fr:tree>
+
+
+<html:p>In a CPU, <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switching</fr:link> is expensive — registers must be saved to memory. On a GPU, each SM has an enormous register file that holds the registers of all resident warps simultaneously, so a context switch is just changing which warp the scheduler picks.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="CUDA hierarchy">CUDA hierarchy</fr:title></fr:frontmatter><fr:mainmatter>
+<html:ol><html:li><html:strong>Kernel</html:strong> — the launched function.</html:li>
+  <html:li><html:strong>Blocks</html:strong> — groups of threads sharing fast on-chip <html:em>shared memory</html:em> (<fr:link href="/8GZN/" title="Shared memory and bank conflicts" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">Shared memory and bank conflicts</fr:link>).</html:li>
+  <html:li><html:strong>Warps</html:strong> — 32 threads issued together in lockstep (<fr:link href="/X9VZ/" title="Warp scheduling" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">Warp scheduling</fr:link>).</html:li></html:ol>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The physical size of shared memory constrains the number of resident threads per SM.</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Use GPUs for parallel parts where throughput dominates. Use CPUs for sequential parts where latency dominates.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/63U3/</fr:uri>
+            <fr:display-uri>63U3</fr:display-uri>
+            <fr:route>/63U3/</fr:route>
+            <fr:title text="Thread">Thread</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>An independent unit of execution within a <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>. Each thread has its own program counter, register set, and stack — but shares the surrounding address space, file descriptors, and other process-level resources with its siblings.</html:p><html:p>To support a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link> between threads, the OS keeps a <html:em>thread control block</html:em> (TCB) per thread — the per-thread analog of <fr:link href="/JE53/" title="Process control block" uri="https://kellenkanarios.com/JE53/" display-uri="JE53" type="local">Process control block</fr:link>. Each thread also gets its own stack within the process's address space.</html:p><html:p>Why threads instead of processes:</html:p><html:ol><html:li><html:em>Intra-process parallelism</html:em>: parallelizable work within one program, without paying the <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link> cost of separate processes.</html:li>
+  <html:li><html:em>Avoiding blocking I/O</html:em>: one thread blocks waiting on I/O while others keep running.</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Sharing an <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">address space</fr:link> is exactly what makes threads cheap to communicate between and exactly what makes them dangerous — see <fr:link href="/VOQN/" title="Race condition" uri="https://kellenkanarios.com/VOQN/" display-uri="VOQN" type="local">Race condition</fr:link> and <fr:link href="/KG2K/" title="Critical section" uri="https://kellenkanarios.com/KG2K/" display-uri="KG2K" type="local">Critical section</fr:link>.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/NEL8/</fr:uri>
+            <fr:display-uri>NEL8</fr:display-uri>
+            <fr:route>/NEL8/</fr:route>
+            <fr:title text="Round-robin scheduling">Round-robin scheduling</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>Cycle through all runnable jobs, giving each a fixed time slice — the <html:em>stride</html:em>, <html:em>time slice</html:em>, or <html:em>quantum length</html:em> — before preempting and moving to the next. The best you can do at minimizing <html:em>response time</html:em>: every job sees the CPU within at most <fr:tex display="inline"><![CDATA[N]]></fr:tex> quanta where <fr:tex display="inline"><![CDATA[N]]></fr:tex> is the runnable-job count.</html:p><html:p>The quantum length is a tradeoff:</html:p><html:ul><html:li>Short quantum: better response time, more frequent <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switches</fr:link>, worse cache locality.</html:li>
+  <html:li>Long quantum: amortizes context-switch cost, worse response time.</html:li></html:ul><html:p>Worst-case response time for <fr:tex display="inline"><![CDATA[N]]></fr:tex> jobs at quantum <fr:tex display="inline"><![CDATA[S]]></fr:tex> is <fr:tex display="inline"><![CDATA[S(N-1)]]></fr:tex>.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Round-robin minimizes response time but is poor for turnaround time relative to <fr:link href="/7R07/" title="STCF scheduling" uri="https://kellenkanarios.com/7R07/" display-uri="7R07" type="local">STCF scheduling</fr:link>. A scheduler that wants both has to combine ideas — see <fr:link href="/4WG5/" title="Multi-level feedback queue" uri="https://kellenkanarios.com/4WG5/" display-uri="4WG5" type="local">Multi-level feedback queue</fr:link>.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/JE53/</fr:uri>
+            <fr:display-uri>JE53</fr:display-uri>
+            <fr:route>/JE53/</fr:route>
+            <fr:title text="Process control block">Process control block</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The kernel-side data structure holding all per-process state. There is one PCB per <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>, threaded together into the <html:em>process list</html:em>. The PCB is what the OS reads and writes during a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">Context switch</fr:link>: the saved register set lives here, as does the process state, the open files, the parent pointer, and so on.</html:p><html:p>An example from <html:code>xv6</html:code>:</html:p><html:pre><![CDATA[// the registers xv6 will save and restore
+// to stop and subsequently restart a process
+struct context {
+  int eip;
+  int esp;
+  int ebx;
+  int ecx;
+  int edx;
+  int esi;
+  int edi;
+  int ebp;
+};
+// the different states a process can be in
+enum proc_state { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+// the information xv6 tracks about each process
+// including its register context and state
+struct proc {
+  char *mem;                 // Start of process memory
+  uint sz;                   // Size of process memory
+  char *kstack;              // Bottom of kernel stack for this process
+  enum proc_state state;     // Process state
+  int pid;                   // Process ID
+  struct proc *parent;       // Parent process
+  void *chan;                // If non-zero, sleeping on chan
+  int killed;                // If non-zero, have been killed
+  struct file *ofile[NOFILE]; // Open files
+  struct inode *cwd;         // Current directory
+  struct context context;    // Switch here to run process
+  struct trapframe *tf;      // Trap frame for the current interrupt
+};]]></html:pre>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter><fr:link href="/63U3/" title="Thread" uri="https://kellenkanarios.com/63U3/" display-uri="63U3" type="local">Thread</fr:link>s need an analogous <html:em>thread control block</html:em>; see <fr:link href="/16TG/" title="Concurrency Intro" uri="https://kellenkanarios.com/16TG/" display-uri="16TG" type="local">Concurrency Intro</fr:link>.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/FGOK/</fr:uri>
+            <fr:display-uri>FGOK</fr:display-uri>
+            <fr:route>/FGOK/</fr:route>
+            <fr:title text="Translation lookaside buffer">Translation lookaside buffer</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>A small hardware cache of recent virtual-to-physical translations. Without it, every memory reference would incur the cost of walking the <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> in memory.</html:p><html:p>An access proceeds as:</html:p><html:ol><html:li>Extract VPN from the virtual address.</html:li>
+  <html:li>Check whether the VPN is in the TLB.</html:li>
+  <html:li>TLB hit: read PPN from the entry, append offset, access memory.</html:li>
+  <html:li>TLB miss: walk the page table (in hardware on <fr:link href="/L896/" title="CISC vs RISC" uri="https://kellenkanarios.com/L896/" display-uri="L896" type="local">CISC</fr:link>, by trapping to OS on <fr:link href="/L896/" title="CISC vs RISC" uri="https://kellenkanarios.com/L896/" display-uri="L896" type="local">RISC</fr:link>), insert the translation into the TLB, retry.</html:li></html:ol><html:p>A TLB entry holds the VPN, the PPN, a valid bit (separate from the PTE valid bit — invalid on init, eviction, <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>), and protection bits.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Each process has different translations for the same VPN, so a naive TLB must be flushed on every <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>.</fr:mainmatter></fr:tree>
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Add an <html:em>address space identifier</html:em> (ASID) to each TLB entry and an ASID register set on context switch. Now entries from different processes coexist.</fr:mainmatter></fr:tree>
+ 
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:uri>https://kellenkanarios.com/P9UM/</fr:uri><fr:display-uri>P9UM</fr:display-uri><fr:route>/P9UM/</fr:route><fr:title text="Culler's Law">Culler's Law</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p><html:em>"Ram is not always ram"</html:em>. Referring to the fact that a physical memory access takes a substantial different amount of time depending on whether it hit in the TLB.</html:p></fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>In real software-managed TLBs, an entry has global bits for shared pages, an 8-bit ASID, coherence bits, and a <html:em>wired</html:em> register reserving slots for code that cannot afford a TLB miss (e.g. the TLB-miss handler itself).</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>For very fast caches, even a TLB access is a bottleneck. <html:em>Virtually indexed caches</html:em> sidestep the TLB on the index path.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/9MPY/</fr:uri>
+            <fr:display-uri>9MPY</fr:display-uri>
+            <fr:route>/9MPY/</fr:route>
+            <fr:title text="Base and bounds">Base and bounds</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The simplest hardware mechanism for <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">Address space</fr:link> translation. The CPU has two dedicated registers per process — a <html:em>base</html:em> pointing to the start of the process's region in physical memory and a <html:em>bound</html:em> marking the end. Translation is just <html:code>phys = base + virt</html:code>, with a check that the result stays below <html:code>bound</html:code>. The unit performing this translation in hardware is the <html:em>memory management unit</html:em> (MMU).</html:p><html:p>The hardware must expose privileged instructions for the OS to set base and bound on a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>, and trap on out-of-bound accesses.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>To support a large address space, base-and-bounds suffers significant <html:em>internal fragmentation</html:em> — the unused gap between the stack and heap is allocated but wasted. With 16KB total memory and 4KB-but-mostly-empty processes, you can run 4 processes when you'd really have room for 8.</fr:mainmatter></fr:tree>
+<html:p><fr:link href="/REKW/" title="Segmentation" uri="https://kellenkanarios.com/REKW/" display-uri="REKW" type="local">Segmentation</fr:link> is the natural next step — give each region (code, stack, heap) its own base and bound so the gaps don't have to be allocated.</html:p></fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>26</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/B8GC/</fr:uri>
+            <fr:display-uri>B8GC</fr:display-uri>
+            <fr:route>/B8GC/</fr:route>
+            <fr:title text="Scheduling">Scheduling</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The scheduler decides which runnable <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link> to put on the CPU at each moment. There is no single right answer because the metrics conflict:</html:p><html:ol><html:li><html:strong>Turnaround time</html:strong>: time from arrival to completion, <fr:tex display="inline"><![CDATA[T_{\text {completion}} - T_{\text {arrival}}]]></fr:tex>. Minimized by running short jobs first.</html:li>
+  <html:li><html:strong>Response time</html:strong>: time from arrival to first scheduling. Minimized by frequent rotation.</html:li>
+  <html:li><html:strong>Fairness</html:strong>: every job makes progress; nobody starves.</html:li></html:ol><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/JA6Z/</fr:uri><fr:display-uri>JA6Z</fr:display-uri><fr:route>/JA6Z/</fr:route><fr:title text="FIFO scheduling">FIFO scheduling</fr:title></fr:frontmatter><fr:mainmatter><html:p>First-in, first-out. Jobs are run to completion in the order they arrive. Trivially fair under any reasonable notion of fairness, but suffers from the <html:em>convoy effect</html:em>: a single long-running job at the head delays every shorter job behind it, inflating average turnaround time.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>If the first arriving job is much longer than the rest, all subsequent jobs wait at least its full duration before getting any CPU.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/VJ4F/</fr:uri><fr:display-uri>VJ4F</fr:display-uri><fr:route>/VJ4F/</fr:route><fr:title text="SJF scheduling">SJF scheduling</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:em>Shortest job first</html:em>. Run the job with the smallest total work first, run-to-completion. If all jobs arrive at the same time, SJF provably minimizes average turnaround time.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Real workloads don't all arrive at <fr:tex display="inline"><![CDATA[t = 0]]></fr:tex>. A long job that arrives slightly before a short one still gets to monopolize the CPU until it finishes — SJF degenerates to <fr:link href="/JA6Z/" title="FIFO scheduling" uri="https://kellenkanarios.com/JA6Z/" display-uri="JA6Z" type="local">FIFO scheduling</fr:link> under sequential arrivals.</fr:mainmatter></fr:tree>
+<html:p>Removing the run-to-completion constraint and allowing preemption gives <fr:link href="/7R07/" title="STCF scheduling" uri="https://kellenkanarios.com/7R07/" display-uri="7R07" type="local">STCF scheduling</fr:link>.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/7R07/</fr:uri><fr:display-uri>7R07</fr:display-uri><fr:route>/7R07/</fr:route><fr:title text="STCF scheduling">STCF scheduling</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:em>Shortest time-to-completion first</html:em>. A preemptive refinement of <fr:link href="/VJ4F/" title="SJF scheduling" uri="https://kellenkanarios.com/VJ4F/" display-uri="VJ4F" type="local">SJF scheduling</fr:link>: whenever the scheduler is invoked, it picks the job with the least <html:em>remaining</html:em> work. A short job arriving mid-execution can preempt a long one.</html:p><html:p>STCF is provably optimal for minimizing average turnaround time over all preemptive schedulers.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Long jobs starve in response time. The lowest-priority work might not get a CPU slice for a very long time, which is unacceptable for interactive workloads.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/NEL8/</fr:uri><fr:display-uri>NEL8</fr:display-uri><fr:route>/NEL8/</fr:route><fr:title text="Round-robin scheduling">Round-robin scheduling</fr:title></fr:frontmatter><fr:mainmatter><html:p>Cycle through all runnable jobs, giving each a fixed time slice — the <html:em>stride</html:em>, <html:em>time slice</html:em>, or <html:em>quantum length</html:em> — before preempting and moving to the next. The best you can do at minimizing <html:em>response time</html:em>: every job sees the CPU within at most <fr:tex display="inline"><![CDATA[N]]></fr:tex> quanta where <fr:tex display="inline"><![CDATA[N]]></fr:tex> is the runnable-job count.</html:p><html:p>The quantum length is a tradeoff:</html:p><html:ul><html:li>Short quantum: better response time, more frequent <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switches</fr:link>, worse cache locality.</html:li>
+  <html:li>Long quantum: amortizes context-switch cost, worse response time.</html:li></html:ul><html:p>Worst-case response time for <fr:tex display="inline"><![CDATA[N]]></fr:tex> jobs at quantum <fr:tex display="inline"><![CDATA[S]]></fr:tex> is <fr:tex display="inline"><![CDATA[S(N-1)]]></fr:tex>.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Round-robin minimizes response time but is poor for turnaround time relative to <fr:link href="/7R07/" title="STCF scheduling" uri="https://kellenkanarios.com/7R07/" display-uri="7R07" type="local">STCF scheduling</fr:link>. A scheduler that wants both has to combine ideas — see <fr:link href="/4WG5/" title="Multi-level feedback queue" uri="https://kellenkanarios.com/4WG5/" display-uri="4WG5" type="local">Multi-level feedback queue</fr:link>.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/4WG5/</fr:uri><fr:display-uri>4WG5</fr:display-uri><fr:route>/4WG5/</fr:route><fr:title text="Multi-level feedback queue">Multi-level feedback queue</fr:title></fr:frontmatter><fr:mainmatter><html:p>A practical scheduler that approximates <fr:link href="/7R07/" title="STCF scheduling" uri="https://kellenkanarios.com/7R07/" display-uri="7R07" type="local">STCF scheduling</fr:link>'s turnaround properties and <fr:link href="/NEL8/" title="Round-robin scheduling" uri="https://kellenkanarios.com/NEL8/" display-uri="NEL8" type="local">Round-robin scheduling</fr:link>'s response properties without requiring foreknowledge of job lengths. Maintain multiple priority queues; within a queue, schedule round-robin. Never service a lower-priority queue while a higher-priority queue has a runnable job.</html:p><html:p>The priority of a job is not assigned by the user — it is <html:em>learned</html:em> from behavior:</html:p><html:ul><html:li>New jobs enter at the top priority.</html:li>
+  <html:li>Each priority level has an <html:em>allotment</html:em> — the total CPU time a job may consume before being demoted.</html:li>
+  <html:li>Once a job exhausts its allotment at a level, it drops to the next level.</html:li></html:ul><html:p>Short jobs that finish quickly never leave the top queue (good turnaround). Interactive jobs that yield often stay at the top (good response time). CPU-bound jobs sink to the bottom and get scheduled when nothing better is runnable.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Gaming the allotment: a job can issue I/O just before its allotment expires to avoid demotion, since I/O time doesn't count.</fr:mainmatter></fr:tree>
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Charge the job's allotment for total time at the priority level, including time spent blocked.</fr:mainmatter></fr:tree>
+ 
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Starvation of low-priority queues if higher queues never empty.</fr:mainmatter></fr:tree>
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Periodically reset all jobs to the top priority. Cheap and effective.</fr:mainmatter></fr:tree>
+ 
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/AM8U/</fr:uri><fr:display-uri>AM8U</fr:display-uri><fr:route>/AM8U/</fr:route><fr:title text="Lottery scheduling">Lottery scheduling</fr:title></fr:frontmatter><fr:mainmatter><html:p>A proportional-share scheduler. Each runnable job holds some number of <html:em>tickets</html:em>, drawn from a fixed total. On each scheduling decision, the scheduler picks a random ticket and runs the job that owns it. Over time, a job receives CPU time proportional to its share of the tickets.</html:p><html:p>The implementation is trivial: one random number per decision, plus a sum table. No global state about historical CPU usage is needed.</html:p><html:p>Mechanisms layered on top:</html:p><html:ul><html:li><html:em>Ticket currency</html:em> — give each user a fixed number of tickets to split among their processes however they like.</html:li>
+  <html:li><html:em>Ticket transfer</html:em> — a client process can hand tickets to a server to boost its priority while servicing the request.</html:li>
+  <html:li><html:em>Ticket inflation</html:em> — a process can grow its share temporarily, with bounds set by trust.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The unsolved problem is <html:em>how</html:em> to assign tickets in the first place. The mechanism is simple; the policy is not.</fr:mainmatter></fr:tree>
+<html:p>A deterministic version of the same idea is <fr:link href="/HCJ7/" title="Stride scheduling" uri="https://kellenkanarios.com/HCJ7/" display-uri="HCJ7" type="local">Stride scheduling</fr:link>, which avoids the variance of random sampling at the cost of needing global state.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/HCJ7/</fr:uri><fr:display-uri>HCJ7</fr:display-uri><fr:route>/HCJ7/</fr:route><fr:title text="Stride scheduling">Stride scheduling</fr:title></fr:frontmatter><fr:mainmatter><html:p>A deterministic proportional-share scheduler. Each job has a <html:em>stride</html:em> inversely proportional to its ticket count (the more tickets, the smaller the stride) and a running <html:em>pass</html:em> counter that accumulates its stride every time it's scheduled.</html:p><html:p>The decision is:</html:p><html:ol><html:li>Pick the job with the lowest <html:em>pass</html:em>.</html:li>
+  <html:li>Run it for one quantum.</html:li>
+  <html:li>Increment its pass by its stride.</html:li></html:ol><html:p>A job with twice as many tickets has half the stride, so its pass grows half as fast, so it gets scheduled twice as often. Same long-run behavior as <fr:link href="/AM8U/" title="Lottery scheduling" uri="https://kellenkanarios.com/AM8U/" display-uri="AM8U" type="local">Lottery scheduling</fr:link>, but with zero variance.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>New jobs need an initial pass value. Setting it to 0 lets them dominate; setting it to the global minimum lets them merge in cleanly but requires tracking that minimum.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>26</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Each <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link> is not free. Choosing a longer time slice amortizes that cost at the price of response time.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>26</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>I/O-bound jobs are commonly handled by splitting a job into its non-I/O segments and scheduling them individually — turning one long-but-mostly-blocked job into many short, runnable ones.</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>26</fr:day></fr:date><fr:title text="Partial homework solutions">Partial homework solutions</fr:title></fr:frontmatter><fr:mainmatter>
+<html:ol><html:li>For what types of workloads does <fr:link href="/VJ4F/" title="SJF scheduling" uri="https://kellenkanarios.com/VJ4F/" display-uri="VJ4F" type="local">SJF scheduling</fr:link> deliver the same turnaround as <fr:link href="/JA6Z/" title="FIFO scheduling" uri="https://kellenkanarios.com/JA6Z/" display-uri="JA6Z" type="local">FIFO scheduling</fr:link>?</html:li>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>26</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>For workloads that arrive in increasing order of total job time.</fr:mainmatter></fr:tree>
+
+  <html:li>For what types of workloads and quantum lengths does SJF deliver the same response times as <fr:link href="/NEL8/" title="Round-robin scheduling" uri="https://kellenkanarios.com/NEL8/" display-uri="NEL8" type="local">Round-robin scheduling</fr:link>?</html:li>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>26</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>For shorter jobs and longer quantum lengths, RR and SJF should deliver similar response times.</fr:mainmatter></fr:tree>
+
+  <html:li>What happens to response time with SJF as job lengths increase?</html:li>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>26</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>Response time degrades because the longest jobs have to wait for each of the shorter jobs to finish. If these shorter jobs become longer than the response time grows linearly.</fr:mainmatter></fr:tree>
+
+  <html:li>What happens to response time with RR as quantum lengths increase? Can you write an equation that gives the worst-case response time, given <fr:tex display="inline"><![CDATA[N]]></fr:tex> jobs?</html:li>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>26</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>The response time is the average over stride length number of preceding jobs. The formula can be written as
+    <fr:tex display="block"><![CDATA[\mathrm {RT} = \frac {1}{N} \sum _{i = 1}^{N} (i - 1)S = \frac {S(N - 1) N}{N} = S(N - 1)]]></fr:tex></fr:mainmatter></fr:tree></html:ol>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>19</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/VE8C/</fr:uri>
+            <fr:display-uri>VE8C</fr:display-uri>
+            <fr:route>/VE8C/</fr:route>
+            <fr:title text="Limited Direct Execution">Limited Direct Execution</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The OS lets user code run directly on the CPU for speed, but with hardware-enforced limits that prevent a buggy or malicious program from compromising the rest of the system. Two questions motivate the mechanism:</html:p>
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  ">
+  <html:ol><html:li><html:em>How do we make sure a program doesn't do what we don't want it to do?</html:em></html:li>
+    <html:li><html:em>How do we enable time-sharing?</html:em></html:li></html:ol>
+</html:div>
+<html:p>The first question is answered by hardware <fr:link href="/QUQC/" title="User mode vs kernel mode" uri="https://kellenkanarios.com/QUQC/" display-uri="QUQC" type="local">User mode vs kernel mode</fr:link> enforced via the <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link>, with a controlled <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">Syscall mechanism</fr:link> as the only path from one to the other. The second is answered by periodic timer interrupts that trap to the OS, which performs a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">Context switch</fr:link> and runs the <fr:link href="/B8GC/" title="Scheduling" uri="https://kellenkanarios.com/B8GC/" display-uri="B8GC" type="local">scheduler</fr:link>.</html:p><html:p>The whole stack is bootstrapped during the <fr:link href="/XSFO/" title="Boot sequence" uri="https://kellenkanarios.com/XSFO/" display-uri="XSFO" type="local">Boot sequence</fr:link>, when the kernel installs the trap table and starts the timer before handing control to user space.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/QUQC/</fr:uri><fr:display-uri>QUQC</fr:display-uri><fr:route>/QUQC/</fr:route><fr:title text="User mode vs kernel mode">User mode vs kernel mode</fr:title></fr:frontmatter><fr:mainmatter><html:p>Two privilege levels supported by the CPU. <html:em>User mode</html:em> restricts the running process to a limited set of instructions and a limited view of memory — usually just its own <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">address space</fr:link>. <html:em>Kernel mode</html:em> runs the OS with full access to all instructions and all of physical memory.</html:p><html:p>Switching between modes is mediated by hardware via a <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link> populated at boot. The OS sets up the table; the CPU enforces it. A process cannot promote itself to kernel mode arbitrarily — it must invoke a <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">Syscall mechanism</fr:link>, which traps to a fixed entry point in the OS.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Kernel mode is dangerous because the address space is effectively the entire machine. The mode bit + the trap table together are what makes it safe to time-share a CPU between mutually distrusting programs.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/0NVY/</fr:uri><fr:display-uri>0NVY</fr:display-uri><fr:route>/0NVY/</fr:route><fr:title text="Trap table">Trap table</fr:title></fr:frontmatter><fr:mainmatter><html:p>A hardware-readable table installed by the OS at boot that maps each kind of exceptional control-flow event (<fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">syscall</fr:link>, interrupt, <fr:link href="/CXFM/" title="Page fault and swap space" uri="https://kellenkanarios.com/CXFM/" display-uri="CXFM" type="local">page fault</fr:link>, illegal instruction, ...) to the address of an OS handler. When the CPU takes a trap, it consults this table to decide where to jump, switches into kernel mode, and runs the handler.</html:p><html:p>The table is what makes it safe to expose privileged operations to user mode: user code never gets to pick the destination of a mode-switch, only the trap number. The OS controls every entry point, the CPU enforces the indirection.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Installing the trap table is itself a privileged operation. It happens once, early in boot, before any user process exists.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/A5S6/</fr:uri><fr:display-uri>A5S6</fr:display-uri><fr:route>/A5S6/</fr:route><fr:title text="Syscall mechanism">Syscall mechanism</fr:title></fr:frontmatter><fr:mainmatter><html:p>A syscall is a user-mode-initiated request for a privileged service from the kernel. Because user code cannot jump into kernel code directly, the mechanism is built around a single trap instruction plus a pre-agreed register convention identifying which service to perform.</html:p><html:p>The end-to-end sequence:</html:p><html:ol><html:li>User code places the syscall number in a pre-defined register and invokes the trap instruction.</html:li>
+  <html:li>Hardware saves enough state to resume the process and switches to kernel mode.</html:li>
+  <html:li>Hardware jumps to the OS-installed handler via the <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link>.</html:li>
+  <html:li>The handler reads the syscall number from the agreed register and dispatches to the corresponding OS routine.</html:li>
+  <html:li>The OS validates the request, performs the work, and arranges return values per the calling convention.</html:li>
+  <html:li>The OS restores user state and returns the process to user mode.</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Because the register convention is fixed by ABI, the user-mode side of a syscall is typically hand-written in assembly within libc.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Interrupts work via a similar trap-handler mechanism, but are initiated by hardware (timer, device) rather than user code.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The kernel must validate any pointers or arguments the user supplies — user code cannot be trusted not to ask the kernel to read kernel memory on its behalf.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/OKCI/</fr:uri><fr:display-uri>OKCI</fr:display-uri><fr:route>/OKCI/</fr:route><fr:title text="Context switch">Context switch</fr:title></fr:frontmatter><fr:mainmatter><html:p>The operation of saving the full execution state of one process (or <fr:link href="/63U3/" title="Thread" uri="https://kellenkanarios.com/63U3/" display-uri="63U3" type="local">thread</fr:link>) and restoring another's so the CPU can resume it as if it had never been interrupted. On a trap into the kernel, the hardware stashes the user-visible state (PC, condition codes, stack pointer) into a known location, and the OS saves the remaining general-purpose registers as part of the switching code.</html:p><html:p>Two flavors of state are involved:</html:p><html:ol><html:li><html:strong>User registers</html:strong>: the current program's context (general-purpose registers, stack vars).</html:li>
+  <html:li><html:strong>Kernel registers</html:strong>: meta-information used to resume the trap correctly (PC at trap, syscall number, etc.).</html:li></html:ol><html:p>Context switches are not free — they incur the cost of cache and <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">TLB</fr:link> pollution in addition to the direct cost of saving/restoring state. This is the cost amortized by larger <fr:link href="/B8GC/" title="Scheduling" uri="https://kellenkanarios.com/B8GC/" display-uri="B8GC" type="local">scheduling</fr:link> quanta and a recurring concern for any <fr:link href="/5P43/" title="Concurrency" uri="https://kellenkanarios.com/5P43/" display-uri="5P43" type="local">Concurrency</fr:link> system.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XSFO/</fr:uri><fr:display-uri>XSFO</fr:display-uri><fr:route>/XSFO/</fr:route><fr:title text="Boot sequence">Boot sequence</fr:title></fr:frontmatter><fr:mainmatter><html:p>The fixed series of steps a machine performs from power-on until a usable operating system is running. Each stage runs from a known location and hands off control to the next.</html:p><html:ol><html:li>Power signal resets the CPU to a known state.</html:li>
+  <html:li>The CPU fetches from a hard-wired address — the BIOS (or UEFI firmware). The BIOS runs basic hardware checks (POST).</html:li>
+  <html:li>The BIOS loads and jumps to the bootloader (e.g. GRUB) from a known location on disk.</html:li>
+  <html:li>The bootloader places the kernel image at the correct address and jumps to its entry point.</html:li>
+  <html:li>The kernel performs early setup: installs the <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link> (a special privileged instruction), starts the timer interrupt, sets up memory management, and finally enters user space.</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The hardware is hard-wired only to find the BIOS. Everything past that is software the user can replace, which is why dual-booting and custom bootloaders work.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree></fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/63U3/</fr:uri>
+            <fr:display-uri>63U3</fr:display-uri>
+            <fr:route>/63U3/</fr:route>
+            <fr:title text="Thread">Thread</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>An independent unit of execution within a <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>. Each thread has its own program counter, register set, and stack — but shares the surrounding address space, file descriptors, and other process-level resources with its siblings.</html:p><html:p>To support a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link> between threads, the OS keeps a <html:em>thread control block</html:em> (TCB) per thread — the per-thread analog of <fr:link href="/JE53/" title="Process control block" uri="https://kellenkanarios.com/JE53/" display-uri="JE53" type="local">Process control block</fr:link>. Each thread also gets its own stack within the process's address space.</html:p><html:p>Why threads instead of processes:</html:p><html:ol><html:li><html:em>Intra-process parallelism</html:em>: parallelizable work within one program, without paying the <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link> cost of separate processes.</html:li>
+  <html:li><html:em>Avoiding blocking I/O</html:em>: one thread blocks waiting on I/O while others keep running.</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Sharing an <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">address space</fr:link> is exactly what makes threads cheap to communicate between and exactly what makes them dangerous — see <fr:link href="/VOQN/" title="Race condition" uri="https://kellenkanarios.com/VOQN/" display-uri="VOQN" type="local">Race condition</fr:link> and <fr:link href="/KG2K/" title="Critical section" uri="https://kellenkanarios.com/KG2K/" display-uri="KG2K" type="local">Critical section</fr:link>.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/FGOK/</fr:uri>
+            <fr:display-uri>FGOK</fr:display-uri>
+            <fr:route>/FGOK/</fr:route>
+            <fr:title text="Translation lookaside buffer">Translation lookaside buffer</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>A small hardware cache of recent virtual-to-physical translations. Without it, every memory reference would incur the cost of walking the <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> in memory.</html:p><html:p>An access proceeds as:</html:p><html:ol><html:li>Extract VPN from the virtual address.</html:li>
+  <html:li>Check whether the VPN is in the TLB.</html:li>
+  <html:li>TLB hit: read PPN from the entry, append offset, access memory.</html:li>
+  <html:li>TLB miss: walk the page table (in hardware on <fr:link href="/L896/" title="CISC vs RISC" uri="https://kellenkanarios.com/L896/" display-uri="L896" type="local">CISC</fr:link>, by trapping to OS on <fr:link href="/L896/" title="CISC vs RISC" uri="https://kellenkanarios.com/L896/" display-uri="L896" type="local">RISC</fr:link>), insert the translation into the TLB, retry.</html:li></html:ol><html:p>A TLB entry holds the VPN, the PPN, a valid bit (separate from the PTE valid bit — invalid on init, eviction, <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>), and protection bits.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Each process has different translations for the same VPN, so a naive TLB must be flushed on every <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>.</fr:mainmatter></fr:tree>
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Add an <html:em>address space identifier</html:em> (ASID) to each TLB entry and an ASID register set on context switch. Now entries from different processes coexist.</fr:mainmatter></fr:tree>
+ 
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>31</fr:day></fr:date><fr:uri>https://kellenkanarios.com/P9UM/</fr:uri><fr:display-uri>P9UM</fr:display-uri><fr:route>/P9UM/</fr:route><fr:title text="Culler's Law">Culler's Law</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p><html:em>"Ram is not always ram"</html:em>. Referring to the fact that a physical memory access takes a substantial different amount of time depending on whether it hit in the TLB.</html:p></fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>In real software-managed TLBs, an entry has global bits for shared pages, an 8-bit ASID, coherence bits, and a <html:em>wired</html:em> register reserving slots for code that cannot afford a TLB miss (e.g. the TLB-miss handler itself).</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>For very fast caches, even a TLB access is a bottleneck. <html:em>Virtually indexed caches</html:em> sidestep the TLB on the index path.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>16</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/5P43/</fr:uri>
+            <fr:display-uri>5P43</fr:display-uri>
+            <fr:route>/5P43/</fr:route>
+            <fr:title text="Concurrency">Concurrency</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>Threads, the hazards that come with sharing state between them, and the primitives that make sharing safe.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>16</fr:day></fr:date><fr:title text="Threads and shared state">Threads and shared state</fr:title></fr:frontmatter><fr:mainmatter>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>16</fr:day></fr:date><fr:uri>https://kellenkanarios.com/16TG/</fr:uri><fr:display-uri>16TG</fr:display-uri><fr:route>/16TG/</fr:route><fr:title text="Concurrency Intro">Concurrency Intro</fr:title></fr:frontmatter><fr:mainmatter><html:p>Concurrency comes from sharing: multiple <fr:link href="/63U3/" title="Thread" uri="https://kellenkanarios.com/63U3/" display-uri="63U3" type="local">Thread</fr:link>s within a single process share the address space, which is what makes them cheap to spawn and to communicate between, and is also what makes them dangerous. When threads interleave on a shared variable, you get a <fr:link href="/VOQN/" title="Race condition" uri="https://kellenkanarios.com/VOQN/" display-uri="VOQN" type="local">Race condition</fr:link>. The fragile region is the <fr:link href="/KG2K/" title="Critical section" uri="https://kellenkanarios.com/KG2K/" display-uri="KG2K" type="local">Critical section</fr:link>, protected by synchronization primitives like <fr:link href="/Q2DT/" title="Locks" uri="https://kellenkanarios.com/Q2DT/" display-uri="Q2DT" type="local">Locks</fr:link> and <fr:link href="/9QUX/" title="Barriers" uri="https://kellenkanarios.com/9QUX/" display-uri="9QUX" type="local">Barriers</fr:link>.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/63U3/</fr:uri><fr:display-uri>63U3</fr:display-uri><fr:route>/63U3/</fr:route><fr:title text="Thread">Thread</fr:title></fr:frontmatter><fr:mainmatter><html:p>An independent unit of execution within a <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>. Each thread has its own program counter, register set, and stack — but shares the surrounding address space, file descriptors, and other process-level resources with its siblings.</html:p><html:p>To support a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link> between threads, the OS keeps a <html:em>thread control block</html:em> (TCB) per thread — the per-thread analog of <fr:link href="/JE53/" title="Process control block" uri="https://kellenkanarios.com/JE53/" display-uri="JE53" type="local">Process control block</fr:link>. Each thread also gets its own stack within the process's address space.</html:p><html:p>Why threads instead of processes:</html:p><html:ol><html:li><html:em>Intra-process parallelism</html:em>: parallelizable work within one program, without paying the <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link> cost of separate processes.</html:li>
+  <html:li><html:em>Avoiding blocking I/O</html:em>: one thread blocks waiting on I/O while others keep running.</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Sharing an <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">address space</fr:link> is exactly what makes threads cheap to communicate between and exactly what makes them dangerous — see <fr:link href="/VOQN/" title="Race condition" uri="https://kellenkanarios.com/VOQN/" display-uri="VOQN" type="local">Race condition</fr:link> and <fr:link href="/KG2K/" title="Critical section" uri="https://kellenkanarios.com/KG2K/" display-uri="KG2K" type="local">Critical section</fr:link>.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/VOQN/</fr:uri><fr:display-uri>VOQN</fr:display-uri><fr:route>/VOQN/</fr:route><fr:title text="Race condition">Race condition</fr:title></fr:frontmatter><fr:mainmatter><html:p>When the correctness of a program depends on the order in which concurrent <fr:link href="/63U3/" title="Thread" uri="https://kellenkanarios.com/63U3/" display-uri="63U3" type="local">Thread</fr:link>s schedule, you have a race condition. The classic example: two threads each execute</html:p><html:pre><![CDATA[mov addr reg     // load
+add 1 reg        // increment
+mov reg addr     // store]]></html:pre><html:p>intending to increment a shared variable twice. If the OS interleaves the threads at the wrong instruction boundary:</html:p><html:ol><html:li>Thread 1 stores its incremented value.</html:li>
+  <html:li>Thread 2 stores its incremented value.</html:li>
+  <html:li>Thread 1 increments (in its register).</html:li>
+  <html:li>Thread 2 increments (in its register).</html:li></html:ol><html:p>The result is a single increment, not two — both threads loaded the same starting value and the second store clobbered the first.</html:p><html:p>The fix is to prevent interleaving inside the code region that touches shared state — the <fr:link href="/KG2K/" title="Critical section" uri="https://kellenkanarios.com/KG2K/" display-uri="KG2K" type="local">Critical section</fr:link> — using a synchronization primitive like <fr:link href="/Q2DT/" title="Locks" uri="https://kellenkanarios.com/Q2DT/" display-uri="Q2DT" type="local">Locks</fr:link>.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/KG2K/</fr:uri><fr:display-uri>KG2K</fr:display-uri><fr:route>/KG2K/</fr:route><fr:title text="Critical section">Critical section</fr:title></fr:frontmatter><fr:mainmatter><html:p>A region of code that accesses shared state in a way that is incorrect if more than one <fr:link href="/63U3/" title="Thread" uri="https://kellenkanarios.com/63U3/" display-uri="63U3" type="local">Thread</fr:link> executes it concurrently. Critical sections are exactly the regions that need protection by a synchronization primitive: a <fr:link href="/Q2DT/" title="Locks" uri="https://kellenkanarios.com/Q2DT/" display-uri="Q2DT" type="local">Locks</fr:link> excludes other threads while one is inside; a <fr:link href="/9QUX/" title="Barriers" uri="https://kellenkanarios.com/9QUX/" display-uri="9QUX" type="local">Barriers</fr:link> forces all threads to reach the same point before any may continue.</html:p><html:p>The art of writing correct concurrent code is to identify critical sections and protect them — without making them so large that you lose all parallelism.</html:p></fr:mainmatter></fr:tree></fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>16</fr:day></fr:date><fr:title text="Synchronization primitives">Synchronization primitives</fr:title></fr:frontmatter><fr:mainmatter>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>9</fr:day></fr:date><fr:uri>https://kellenkanarios.com/Q2DT/</fr:uri><fr:display-uri>Q2DT</fr:display-uri><fr:route>/Q2DT/</fr:route><fr:title text="Locks">Locks</fr:title></fr:frontmatter><fr:mainmatter><html:p>A lock is a synchronization primitive that grants mutually exclusive access to a critical section. The implementations below trade off coherence traffic, fairness, and memory in different ways. The naive locks (<fr:link href="/MJ5L/" title="Test-and-set lock" uri="https://kellenkanarios.com/MJ5L/" display-uri="MJ5L" type="local">Test-and-set lock</fr:link> and <fr:link href="/PXY9/" title="Test-and-test-and-set lock" uri="https://kellenkanarios.com/PXY9/" display-uri="PXY9" type="local">Test-and-test-and-set lock</fr:link>) are simple but generate <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> coherence traffic per release; queue-based locks (<fr:link href="/V7KP/" title="Ticket lock" uri="https://kellenkanarios.com/V7KP/" display-uri="V7KP" type="local">Ticket lock</fr:link>, <fr:link href="/BJ7N/" title="Array-based lock" uri="https://kellenkanarios.com/BJ7N/" display-uri="BJ7N" type="local">Array-based lock</fr:link>, <fr:link href="/IN64/" title="MCS lock" uri="https://kellenkanarios.com/IN64/" display-uri="IN64" type="local">MCS lock</fr:link>) scale better at the cost of extra state per waiter.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/MJ5L/</fr:uri><fr:display-uri>MJ5L</fr:display-uri><fr:route>/MJ5L/</fr:route><fr:title text="Test-and-set lock">Test-and-set lock</fr:title></fr:frontmatter><fr:mainmatter><html:p>The simplest spin lock. The acquire loop spins on an atomic <html:code>test_and_set</html:code>: it writes <html:code>LOCKED</html:code> and reads the previous value in one step. If the previous value was <html:code>UNLOCKED</html:code>, the caller has the lock; otherwise it tries again.</html:p><html:pre><![CDATA[acquire(lock_ptr):
+  while (true):
+    // Perform "test-and-set"
+    // UNLOCKED = 0, LOCKED = 1
+    test_and_set(old, lock_ptr)
+    if (old == UNLOCKED):
+      break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] <- UNLOCKED]]></html:pre>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <html:code>test_and_set</html:code>, so contention scales badly with the number of waiters.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/PXY9/</fr:uri><fr:display-uri>PXY9</fr:display-uri><fr:route>/PXY9/</fr:route><fr:title text="Test-and-test-and-set lock">Test-and-test-and-set lock</fr:title></fr:frontmatter><fr:mainmatter><html:p>A refinement of the <fr:link href="/MJ5L/" title="Test-and-set lock" uri="https://kellenkanarios.com/MJ5L/" display-uri="MJ5L" type="local">Test-and-set lock</fr:link> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <html:code>test_and_set</html:code> when it does. Spinning is then read-only, so cores can share the cache line.</html:p><html:pre><![CDATA[acquire(lock_ptr):
+  while (true):
+    // Perform "test"
+    load [lock_ptr] -> original_value
+    if (original_value == UNLOCKED):
+      // Perform "test-and-set"
+      test_and_set(old, lock_ptr)
+      if (old == UNLOCKED):
+        break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] <- UNLOCKED]]></html:pre>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Spinning is a read-only operation now.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>When the lock is released, the line must be invalidated on every waiter, and they all simultaneously read and try to write. The contention is shifted from steady state to release time but is still <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> in the number of waiters.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/V7KP/</fr:uri><fr:display-uri>V7KP</fr:display-uri><fr:route>/V7KP/</fr:route><fr:title text="Ticket lock">Ticket lock</fr:title></fr:frontmatter><fr:mainmatter><html:p>A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <html:code>next_ticket</html:code> and then spins until <html:code>now_serving</html:code> equals its ticket. Release simply increments <html:code>now_serving</html:code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</html:p><html:pre><![CDATA[acquire(lock_ptr):
+  my_ticket = fetch_and_increment(lock_ptr->next_ticket)
+  while (lock_ptr->now_serving != my_ticket); // spin
+
+release(lock_ptr):
+  lock_ptr->now_serving = lock_ptr->now_serving + 1]]></html:pre>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Still <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> coherence traffic on release: incrementing <html:code>now_serving</html:code> invalidates the line on every waiter, and they all reload it to recheck their ticket.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/BJ7N/</fr:uri><fr:display-uri>BJ7N</fr:display-uri><fr:route>/BJ7N/</fr:route><fr:title text="Array-based lock">Array-based lock</fr:title></fr:frontmatter><fr:mainmatter><html:p>Each waiter is assigned its own slot in an array and spins only on that slot. Release just flips the next slot to "go-ahead", so the cache line touched by release is the one read by exactly one other thread. Coherence traffic per release is constant rather than <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex>, at the cost of one slot per waiter.</html:p><html:ul><html:li>Give each waiter its own "slot" to wait on.</html:li>
+  <html:li>Only need to set the next slot to "go-ahead" on release.</html:li>
+  <html:li>Constant coherence traffic.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter><fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> memory for the lock array, and padding each slot to <fr:tex display="inline"><![CDATA[64]]></fr:tex>b (one cache line) to avoid false sharing makes that cost real.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/IN64/</fr:uri><fr:display-uri>IN64</fr:display-uri><fr:route>/IN64/</fr:route><fr:title text="MCS lock">MCS lock</fr:title></fr:frontmatter><fr:mainmatter><html:p>A scalable, list-based queue lock. The lock variable is a pointer to the tail of a linked list of per-thread nodes. Each thread enqueues its own node and spins on a flag in its own cache line. The releaser wakes only its direct successor, so coherence traffic per handoff is constant and memory cost is proportional only to threads currently waiting, not to the lock's fanout.</html:p><html:pre><![CDATA[acquire(lock):
+  I->next = null
+  predecessor = fetch_and_store(lock, I)
+  if predecessor != nil:                   // some node holds the lock
+    I->must_wait = true
+    predecessor->next = I                  // predecessor must wake us
+    repeat while I->must_wait              // spin till lock is free
+
+release(lock):
+  if (I->next == null):                    // no known successor
+    if compare_and_swap(lock, I, nil):     // make sure...
+      return                               // CAS succeeded; lock freed
+    repeat while I->next == nil            // spin to learn successor
+  I->next->must_wait = false               // wake successor]]></html:pre></fr:mainmatter></fr:tree></fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/9QUX/</fr:uri><fr:display-uri>9QUX</fr:display-uri><fr:route>/9QUX/</fr:route><fr:title text="Barriers">Barriers</fr:title></fr:frontmatter><fr:mainmatter><html:p>A barrier holds threads at a synchronization point until all <fr:tex display="inline"><![CDATA[P]]></fr:tex> participants have arrived, then releases them simultaneously. The naive implementation uses a shared counter that each arriving thread decrements; the last arrival resets the counter and the rest spin until it returns to <fr:tex display="inline"><![CDATA[P]]></fr:tex>.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="Naive central barrier">Naive central barrier</fr:title></fr:frontmatter><fr:mainmatter><html:pre><![CDATA[global (shared) count : integer := P
+
+procedure central_barrier
+  if fetch_and_decrement(&count) == 1
+    count := P
+  else
+    repeat until count == P]]></html:pre>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>When <html:code>count == P</html:code>, a fast thread can reach the next barrier and decrement <html:code>count</html:code> again before the slow threads observe the reset. The slow threads then spin forever waiting for a value that has already passed.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="Sense-reversing barrier">Sense-reversing barrier</fr:title></fr:frontmatter><fr:mainmatter><html:p>The fix is to give each thread a private <html:code>local_sense</html:code> that flips on each barrier. The global <html:code>sense</html:code> flag is flipped by the last arrival, and waiters spin on <html:code>sense == local_sense</html:code>, so a fresh barrier cannot be confused with a stale one.</html:p><html:pre><![CDATA[global (shared) count : integer := P
+global (shared) sense : bool := true
+global (private) local_sense : bool := false
+
+procedure central_barrier
+  local_sense = !local_sense
+  if fetch_and_decrement(&count) == 1
+    count := P
+    sense = local_sense
+  else
+    repeat until sense == local_sense]]></html:pre></fr:mainmatter></fr:tree></fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>26</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/B8GC/</fr:uri>
+            <fr:display-uri>B8GC</fr:display-uri>
+            <fr:route>/B8GC/</fr:route>
+            <fr:title text="Scheduling">Scheduling</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The scheduler decides which runnable <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link> to put on the CPU at each moment. There is no single right answer because the metrics conflict:</html:p><html:ol><html:li><html:strong>Turnaround time</html:strong>: time from arrival to completion, <fr:tex display="inline"><![CDATA[T_{\text {completion}} - T_{\text {arrival}}]]></fr:tex>. Minimized by running short jobs first.</html:li>
+  <html:li><html:strong>Response time</html:strong>: time from arrival to first scheduling. Minimized by frequent rotation.</html:li>
+  <html:li><html:strong>Fairness</html:strong>: every job makes progress; nobody starves.</html:li></html:ol><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/JA6Z/</fr:uri><fr:display-uri>JA6Z</fr:display-uri><fr:route>/JA6Z/</fr:route><fr:title text="FIFO scheduling">FIFO scheduling</fr:title></fr:frontmatter><fr:mainmatter><html:p>First-in, first-out. Jobs are run to completion in the order they arrive. Trivially fair under any reasonable notion of fairness, but suffers from the <html:em>convoy effect</html:em>: a single long-running job at the head delays every shorter job behind it, inflating average turnaround time.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>If the first arriving job is much longer than the rest, all subsequent jobs wait at least its full duration before getting any CPU.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/VJ4F/</fr:uri><fr:display-uri>VJ4F</fr:display-uri><fr:route>/VJ4F/</fr:route><fr:title text="SJF scheduling">SJF scheduling</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:em>Shortest job first</html:em>. Run the job with the smallest total work first, run-to-completion. If all jobs arrive at the same time, SJF provably minimizes average turnaround time.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Real workloads don't all arrive at <fr:tex display="inline"><![CDATA[t = 0]]></fr:tex>. A long job that arrives slightly before a short one still gets to monopolize the CPU until it finishes — SJF degenerates to <fr:link href="/JA6Z/" title="FIFO scheduling" uri="https://kellenkanarios.com/JA6Z/" display-uri="JA6Z" type="local">FIFO scheduling</fr:link> under sequential arrivals.</fr:mainmatter></fr:tree>
+<html:p>Removing the run-to-completion constraint and allowing preemption gives <fr:link href="/7R07/" title="STCF scheduling" uri="https://kellenkanarios.com/7R07/" display-uri="7R07" type="local">STCF scheduling</fr:link>.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/7R07/</fr:uri><fr:display-uri>7R07</fr:display-uri><fr:route>/7R07/</fr:route><fr:title text="STCF scheduling">STCF scheduling</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:em>Shortest time-to-completion first</html:em>. A preemptive refinement of <fr:link href="/VJ4F/" title="SJF scheduling" uri="https://kellenkanarios.com/VJ4F/" display-uri="VJ4F" type="local">SJF scheduling</fr:link>: whenever the scheduler is invoked, it picks the job with the least <html:em>remaining</html:em> work. A short job arriving mid-execution can preempt a long one.</html:p><html:p>STCF is provably optimal for minimizing average turnaround time over all preemptive schedulers.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Long jobs starve in response time. The lowest-priority work might not get a CPU slice for a very long time, which is unacceptable for interactive workloads.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/NEL8/</fr:uri><fr:display-uri>NEL8</fr:display-uri><fr:route>/NEL8/</fr:route><fr:title text="Round-robin scheduling">Round-robin scheduling</fr:title></fr:frontmatter><fr:mainmatter><html:p>Cycle through all runnable jobs, giving each a fixed time slice — the <html:em>stride</html:em>, <html:em>time slice</html:em>, or <html:em>quantum length</html:em> — before preempting and moving to the next. The best you can do at minimizing <html:em>response time</html:em>: every job sees the CPU within at most <fr:tex display="inline"><![CDATA[N]]></fr:tex> quanta where <fr:tex display="inline"><![CDATA[N]]></fr:tex> is the runnable-job count.</html:p><html:p>The quantum length is a tradeoff:</html:p><html:ul><html:li>Short quantum: better response time, more frequent <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switches</fr:link>, worse cache locality.</html:li>
+  <html:li>Long quantum: amortizes context-switch cost, worse response time.</html:li></html:ul><html:p>Worst-case response time for <fr:tex display="inline"><![CDATA[N]]></fr:tex> jobs at quantum <fr:tex display="inline"><![CDATA[S]]></fr:tex> is <fr:tex display="inline"><![CDATA[S(N-1)]]></fr:tex>.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Round-robin minimizes response time but is poor for turnaround time relative to <fr:link href="/7R07/" title="STCF scheduling" uri="https://kellenkanarios.com/7R07/" display-uri="7R07" type="local">STCF scheduling</fr:link>. A scheduler that wants both has to combine ideas — see <fr:link href="/4WG5/" title="Multi-level feedback queue" uri="https://kellenkanarios.com/4WG5/" display-uri="4WG5" type="local">Multi-level feedback queue</fr:link>.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/4WG5/</fr:uri><fr:display-uri>4WG5</fr:display-uri><fr:route>/4WG5/</fr:route><fr:title text="Multi-level feedback queue">Multi-level feedback queue</fr:title></fr:frontmatter><fr:mainmatter><html:p>A practical scheduler that approximates <fr:link href="/7R07/" title="STCF scheduling" uri="https://kellenkanarios.com/7R07/" display-uri="7R07" type="local">STCF scheduling</fr:link>'s turnaround properties and <fr:link href="/NEL8/" title="Round-robin scheduling" uri="https://kellenkanarios.com/NEL8/" display-uri="NEL8" type="local">Round-robin scheduling</fr:link>'s response properties without requiring foreknowledge of job lengths. Maintain multiple priority queues; within a queue, schedule round-robin. Never service a lower-priority queue while a higher-priority queue has a runnable job.</html:p><html:p>The priority of a job is not assigned by the user — it is <html:em>learned</html:em> from behavior:</html:p><html:ul><html:li>New jobs enter at the top priority.</html:li>
+  <html:li>Each priority level has an <html:em>allotment</html:em> — the total CPU time a job may consume before being demoted.</html:li>
+  <html:li>Once a job exhausts its allotment at a level, it drops to the next level.</html:li></html:ul><html:p>Short jobs that finish quickly never leave the top queue (good turnaround). Interactive jobs that yield often stay at the top (good response time). CPU-bound jobs sink to the bottom and get scheduled when nothing better is runnable.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Gaming the allotment: a job can issue I/O just before its allotment expires to avoid demotion, since I/O time doesn't count.</fr:mainmatter></fr:tree>
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Charge the job's allotment for total time at the priority level, including time spent blocked.</fr:mainmatter></fr:tree>
+ 
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Starvation of low-priority queues if higher queues never empty.</fr:mainmatter></fr:tree>
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Periodically reset all jobs to the top priority. Cheap and effective.</fr:mainmatter></fr:tree>
+ 
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/AM8U/</fr:uri><fr:display-uri>AM8U</fr:display-uri><fr:route>/AM8U/</fr:route><fr:title text="Lottery scheduling">Lottery scheduling</fr:title></fr:frontmatter><fr:mainmatter><html:p>A proportional-share scheduler. Each runnable job holds some number of <html:em>tickets</html:em>, drawn from a fixed total. On each scheduling decision, the scheduler picks a random ticket and runs the job that owns it. Over time, a job receives CPU time proportional to its share of the tickets.</html:p><html:p>The implementation is trivial: one random number per decision, plus a sum table. No global state about historical CPU usage is needed.</html:p><html:p>Mechanisms layered on top:</html:p><html:ul><html:li><html:em>Ticket currency</html:em> — give each user a fixed number of tickets to split among their processes however they like.</html:li>
+  <html:li><html:em>Ticket transfer</html:em> — a client process can hand tickets to a server to boost its priority while servicing the request.</html:li>
+  <html:li><html:em>Ticket inflation</html:em> — a process can grow its share temporarily, with bounds set by trust.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The unsolved problem is <html:em>how</html:em> to assign tickets in the first place. The mechanism is simple; the policy is not.</fr:mainmatter></fr:tree>
+<html:p>A deterministic version of the same idea is <fr:link href="/HCJ7/" title="Stride scheduling" uri="https://kellenkanarios.com/HCJ7/" display-uri="HCJ7" type="local">Stride scheduling</fr:link>, which avoids the variance of random sampling at the cost of needing global state.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/HCJ7/</fr:uri><fr:display-uri>HCJ7</fr:display-uri><fr:route>/HCJ7/</fr:route><fr:title text="Stride scheduling">Stride scheduling</fr:title></fr:frontmatter><fr:mainmatter><html:p>A deterministic proportional-share scheduler. Each job has a <html:em>stride</html:em> inversely proportional to its ticket count (the more tickets, the smaller the stride) and a running <html:em>pass</html:em> counter that accumulates its stride every time it's scheduled.</html:p><html:p>The decision is:</html:p><html:ol><html:li>Pick the job with the lowest <html:em>pass</html:em>.</html:li>
+  <html:li>Run it for one quantum.</html:li>
+  <html:li>Increment its pass by its stride.</html:li></html:ol><html:p>A job with twice as many tickets has half the stride, so its pass grows half as fast, so it gets scheduled twice as often. Same long-run behavior as <fr:link href="/AM8U/" title="Lottery scheduling" uri="https://kellenkanarios.com/AM8U/" display-uri="AM8U" type="local">Lottery scheduling</fr:link>, but with zero variance.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>New jobs need an initial pass value. Setting it to 0 lets them dominate; setting it to the global minimum lets them merge in cleanly but requires tracking that minimum.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>26</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Each <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link> is not free. Choosing a longer time slice amortizes that cost at the price of response time.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>26</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>I/O-bound jobs are commonly handled by splitting a job into its non-I/O segments and scheduling them individually — turning one long-but-mostly-blocked job into many short, runnable ones.</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>26</fr:day></fr:date><fr:title text="Partial homework solutions">Partial homework solutions</fr:title></fr:frontmatter><fr:mainmatter>
+<html:ol><html:li>For what types of workloads does <fr:link href="/VJ4F/" title="SJF scheduling" uri="https://kellenkanarios.com/VJ4F/" display-uri="VJ4F" type="local">SJF scheduling</fr:link> deliver the same turnaround as <fr:link href="/JA6Z/" title="FIFO scheduling" uri="https://kellenkanarios.com/JA6Z/" display-uri="JA6Z" type="local">FIFO scheduling</fr:link>?</html:li>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>26</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>For workloads that arrive in increasing order of total job time.</fr:mainmatter></fr:tree>
+
+  <html:li>For what types of workloads and quantum lengths does SJF deliver the same response times as <fr:link href="/NEL8/" title="Round-robin scheduling" uri="https://kellenkanarios.com/NEL8/" display-uri="NEL8" type="local">Round-robin scheduling</fr:link>?</html:li>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>26</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>For shorter jobs and longer quantum lengths, RR and SJF should deliver similar response times.</fr:mainmatter></fr:tree>
+
+  <html:li>What happens to response time with SJF as job lengths increase?</html:li>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>26</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>Response time degrades because the longest jobs have to wait for each of the shorter jobs to finish. If these shorter jobs become longer than the response time grows linearly.</fr:mainmatter></fr:tree>
+
+  <html:li>What happens to response time with RR as quantum lengths increase? Can you write an equation that gives the worst-case response time, given <fr:tex display="inline"><![CDATA[N]]></fr:tex> jobs?</html:li>
+  
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>26</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>The response time is the average over stride length number of preceding jobs. The formula can be written as
+    <fr:tex display="block"><![CDATA[\mathrm {RT} = \frac {1}{N} \sum _{i = 1}^{N} (i - 1)S = \frac {S(N - 1) N}{N} = S(N - 1)]]></fr:tex></fr:mainmatter></fr:tree></html:ol>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

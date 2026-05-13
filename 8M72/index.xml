@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors />
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>5</fr:month>
+      <fr:day>12</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/8M72/</fr:uri>
+    <fr:display-uri>8M72</fr:display-uri>
+    <fr:route>/8M72/</fr:route>
+    <fr:title text="Buddy allocation">Buddy allocation</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter><html:p>An allocator for memory of total size <fr:tex display="inline"><![CDATA[2^n]]></fr:tex> that maintains a binary-tree of free blocks at every power-of-two size. To service a request, walk down to the smallest block <fr:tex display="inline"><![CDATA[\geq ]]></fr:tex> requested size; if no block of that size exists, split a larger one (and its "buddy" becomes free). On free, check whether the freed block's buddy is also free, and if so, coalesce upward — recursively.</html:p><html:figure><html:img width="50%" src="/bafkrmigwzou6llta75hya6llhd6ixa6gjzeoyjqecitht2op5xxutkjgnu.png" />
+  <html:figcaption>Memory of size <fr:tex display="inline"><![CDATA[2^n]]></fr:tex> organized as a buddy system.</html:figcaption></html:figure><html:p>The key trick is that buddies differ by exactly one bit in their address at each level. To check whether a block's buddy is free, flip that bit and consult a bitmap. To coalesce upward, mask off the bit and recurse.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Internal fragmentation is bounded by 2× the request size (you may have to round up to the next power of two), but external fragmentation is essentially eliminated within the buddy region.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>29</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/67X5/</fr:uri>
+            <fr:display-uri>67X5</fr:display-uri>
+            <fr:route>/67X5/</fr:route>
+            <fr:title text="Free-space management">Free-space management</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>Once we have an <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">Address space</fr:link>, we still have to actually allocate physical bytes within it. Free-space management is the discipline of tracking which bytes are free, picking which free chunk to satisfy a request, and merging adjacent freed chunks back together. Two fragmentation hazards to watch:</html:p>
+            <html:ol><html:li><html:em>External fragmentation</html:em>: many small unallocated non-contiguous chunks.</html:li>
+  <html:li><html:em>Internal fragmentation</html:em>: allocated chunks larger than what the requester uses.</html:li></html:ol>
+            <html:p>Simplifying assumptions for the algorithms below: allocations are immovable once placed, total memory is fixed, and the user does not specify a size in <html:code>free</html:code>. The last assumption is handled by storing the size in a header preceding the returned pointer.</html:p>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/1ABF/</fr:uri>
+                <fr:display-uri>1ABF</fr:display-uri>
+                <fr:route>/1ABF/</fr:route>
+                <fr:title text="Malloc placement policies">Malloc placement policies</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter>
+                <html:p>Given a <html:em>free list</html:em> of unallocated memory chunks and a request of size <fr:tex display="inline"><![CDATA[n]]></fr:tex>, which chunk do you carve the allocation out of? Different answers trade off fragmentation against search time.</html:p>
+                <html:ol><html:li><html:em>Best fit</html:em>: find the smallest chunk <fr:tex display="inline"><![CDATA[\geq  n]]></fr:tex>. Minimizes wasted space per allocation but tends to leave many small unusable fragments behind, and requires scanning the whole list.</html:li>
+  <html:li><html:em>Worst fit</html:em>: find the largest chunk. Aims to leave usefully-sized leftovers but also requires a full scan.</html:li>
+  <html:li><html:em>First fit</html:em>: take the first chunk that fits. Fast (early exit) but biases small fragments toward the start of the list.</html:li>
+  <html:li><html:em>Next fit</html:em>: like first fit, but resume the search from where the previous allocation ended. Spreads small fragments more evenly.</html:li></html:ol>
+                <html:p>On free, the allocator searches the list for adjacent free chunks and <html:em>coalesces</html:em> them into a larger chunk. The size of each allocation is stored in a <html:em>header</html:em> immediately preceding the returned pointer so <html:code>free</html:code> doesn't need a size argument.</html:p>
+              </fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/FB66/</fr:uri>
+                <fr:display-uri>FB66</fr:display-uri>
+                <fr:route>/FB66/</fr:route>
+                <fr:title text="Segregated lists">Segregated lists</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>A data-structure-level optimization for allocators that maintains separate free lists per common object size. Instead of one global free list scanned by <fr:link href="/1ABF/" title="Malloc placement policies" uri="https://kellenkanarios.com/1ABF/" display-uri="1ABF" type="local">Malloc placement policies</fr:link>, you keep a list per size class. Allocations of that size pop straight off the matching list — no search.</html:p><html:ul><html:li>Grow a per-size list by requesting larger segments from the main allocator and chopping them up.</html:li>
+  <html:li>Drain back to the main list when no references remain.</html:li>
+  <html:li>Optionally leave objects pre-initialized on the list to skip constructor/destructor calls.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>This is the structure behind kernel slab allocators and many object-pool patterns. It works when the workload allocates many objects of a few common sizes.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/8M72/</fr:uri>
+                <fr:display-uri>8M72</fr:display-uri>
+                <fr:route>/8M72/</fr:route>
+                <fr:title text="Buddy allocation">Buddy allocation</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>An allocator for memory of total size <fr:tex display="inline"><![CDATA[2^n]]></fr:tex> that maintains a binary-tree of free blocks at every power-of-two size. To service a request, walk down to the smallest block <fr:tex display="inline"><![CDATA[\geq ]]></fr:tex> requested size; if no block of that size exists, split a larger one (and its "buddy" becomes free). On free, check whether the freed block's buddy is also free, and if so, coalesce upward — recursively.</html:p><html:figure><html:img width="50%" src="/bafkrmigwzou6llta75hya6llhd6ixa6gjzeoyjqecitht2op5xxutkjgnu.png" />
+  <html:figcaption>Memory of size <fr:tex display="inline"><![CDATA[2^n]]></fr:tex> organized as a buddy system.</html:figcaption></html:figure><html:p>The key trick is that buddies differ by exactly one bit in their address at each level. To check whether a block's buddy is free, flip that bit and consult a bitmap. To coalesce upward, mask off the bit and recurse.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Internal fragmentation is bounded by 2× the request size (you may have to round up to the next power of two), but external fragmentation is essentially eliminated within the buddy region.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors />
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>5</fr:month>
+      <fr:day>12</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/BJ7N/</fr:uri>
+    <fr:display-uri>BJ7N</fr:display-uri>
+    <fr:route>/BJ7N/</fr:route>
+    <fr:title text="Array-based lock">Array-based lock</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter><html:p>Each waiter is assigned its own slot in an array and spins only on that slot. Release just flips the next slot to "go-ahead", so the cache line touched by release is the one read by exactly one other thread. Coherence traffic per release is constant rather than <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex>, at the cost of one slot per waiter.</html:p><html:ul><html:li>Give each waiter its own "slot" to wait on.</html:li>
+  <html:li>Only need to set the next slot to "go-ahead" on release.</html:li>
+  <html:li>Constant coherence traffic.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter><fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> memory for the lock array, and padding each slot to <fr:tex display="inline"><![CDATA[64]]></fr:tex>b (one cache line) to avoid false sharing makes that cost real.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>3</fr:month>
+              <fr:day>9</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/Q2DT/</fr:uri>
+            <fr:display-uri>Q2DT</fr:display-uri>
+            <fr:route>/Q2DT/</fr:route>
+            <fr:title text="Locks">Locks</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>A lock is a synchronization primitive that grants mutually exclusive access to a critical section. The implementations below trade off coherence traffic, fairness, and memory in different ways. The naive locks (<fr:link href="/MJ5L/" title="Test-and-set lock" uri="https://kellenkanarios.com/MJ5L/" display-uri="MJ5L" type="local">Test-and-set lock</fr:link> and <fr:link href="/PXY9/" title="Test-and-test-and-set lock" uri="https://kellenkanarios.com/PXY9/" display-uri="PXY9" type="local">Test-and-test-and-set lock</fr:link>) are simple but generate <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> coherence traffic per release; queue-based locks (<fr:link href="/V7KP/" title="Ticket lock" uri="https://kellenkanarios.com/V7KP/" display-uri="V7KP" type="local">Ticket lock</fr:link>, <fr:link href="/BJ7N/" title="Array-based lock" uri="https://kellenkanarios.com/BJ7N/" display-uri="BJ7N" type="local">Array-based lock</fr:link>, <fr:link href="/IN64/" title="MCS lock" uri="https://kellenkanarios.com/IN64/" display-uri="IN64" type="local">MCS lock</fr:link>) scale better at the cost of extra state per waiter.</html:p>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/MJ5L/</fr:uri>
+                <fr:display-uri>MJ5L</fr:display-uri>
+                <fr:route>/MJ5L/</fr:route>
+                <fr:title text="Test-and-set lock">Test-and-set lock</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>The simplest spin lock. The acquire loop spins on an atomic <html:code>test_and_set</html:code>: it writes <html:code>LOCKED</html:code> and reads the previous value in one step. If the previous value was <html:code>UNLOCKED</html:code>, the caller has the lock; otherwise it tries again.</html:p><html:pre><![CDATA[acquire(lock_ptr):
+  while (true):
+    // Perform "test-and-set"
+    // UNLOCKED = 0, LOCKED = 1
+    test_and_set(old, lock_ptr)
+    if (old == UNLOCKED):
+      break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] <- UNLOCKED]]></html:pre>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <html:code>test_and_set</html:code>, so contention scales badly with the number of waiters.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/PXY9/</fr:uri>
+                <fr:display-uri>PXY9</fr:display-uri>
+                <fr:route>/PXY9/</fr:route>
+                <fr:title text="Test-and-test-and-set lock">Test-and-test-and-set lock</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>A refinement of the <fr:link href="/MJ5L/" title="Test-and-set lock" uri="https://kellenkanarios.com/MJ5L/" display-uri="MJ5L" type="local">Test-and-set lock</fr:link> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <html:code>test_and_set</html:code> when it does. Spinning is then read-only, so cores can share the cache line.</html:p><html:pre><![CDATA[acquire(lock_ptr):
+  while (true):
+    // Perform "test"
+    load [lock_ptr] -> original_value
+    if (original_value == UNLOCKED):
+      // Perform "test-and-set"
+      test_and_set(old, lock_ptr)
+      if (old == UNLOCKED):
+        break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] <- UNLOCKED]]></html:pre>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Spinning is a read-only operation now.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>When the lock is released, the line must be invalidated on every waiter, and they all simultaneously read and try to write. The contention is shifted from steady state to release time but is still <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> in the number of waiters.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/V7KP/</fr:uri>
+                <fr:display-uri>V7KP</fr:display-uri>
+                <fr:route>/V7KP/</fr:route>
+                <fr:title text="Ticket lock">Ticket lock</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <html:code>next_ticket</html:code> and then spins until <html:code>now_serving</html:code> equals its ticket. Release simply increments <html:code>now_serving</html:code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</html:p><html:pre><![CDATA[acquire(lock_ptr):
+  my_ticket = fetch_and_increment(lock_ptr->next_ticket)
+  while (lock_ptr->now_serving != my_ticket); // spin
+
+release(lock_ptr):
+  lock_ptr->now_serving = lock_ptr->now_serving + 1]]></html:pre>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Still <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> coherence traffic on release: incrementing <html:code>now_serving</html:code> invalidates the line on every waiter, and they all reload it to recheck their ticket.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/BJ7N/</fr:uri>
+                <fr:display-uri>BJ7N</fr:display-uri>
+                <fr:route>/BJ7N/</fr:route>
+                <fr:title text="Array-based lock">Array-based lock</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>Each waiter is assigned its own slot in an array and spins only on that slot. Release just flips the next slot to "go-ahead", so the cache line touched by release is the one read by exactly one other thread. Coherence traffic per release is constant rather than <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex>, at the cost of one slot per waiter.</html:p><html:ul><html:li>Give each waiter its own "slot" to wait on.</html:li>
+  <html:li>Only need to set the next slot to "go-ahead" on release.</html:li>
+  <html:li>Constant coherence traffic.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter><fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> memory for the lock array, and padding each slot to <fr:tex display="inline"><![CDATA[64]]></fr:tex>b (one cache line) to avoid false sharing makes that cost real.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/IN64/</fr:uri>
+                <fr:display-uri>IN64</fr:display-uri>
+                <fr:route>/IN64/</fr:route>
+                <fr:title text="MCS lock">MCS lock</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter>
+                <html:p>A scalable, list-based queue lock. The lock variable is a pointer to the tail of a linked list of per-thread nodes. Each thread enqueues its own node and spins on a flag in its own cache line. The releaser wakes only its direct successor, so coherence traffic per handoff is constant and memory cost is proportional only to threads currently waiting, not to the lock's fanout.</html:p>
+                <html:pre><![CDATA[acquire(lock):
+  I->next = null
+  predecessor = fetch_and_store(lock, I)
+  if predecessor != nil:                   // some node holds the lock
+    I->must_wait = true
+    predecessor->next = I                  // predecessor must wake us
+    repeat while I->must_wait              // spin till lock is free
+
+release(lock):
+  if (I->next == null):                    // no known successor
+    if compare_and_swap(lock, I, nil):     // make sure...
+      return                               // CAS succeeded; lock freed
+    repeat while I->next == nil            // spin to learn successor
+  I->next->must_wait = false               // wake successor]]></html:pre>
+              </fr:mainmatter>
+            </fr:tree>
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>3</fr:month>
+              <fr:day>9</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/Q2DT/</fr:uri>
+            <fr:display-uri>Q2DT</fr:display-uri>
+            <fr:route>/Q2DT/</fr:route>
+            <fr:title text="Locks">Locks</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>A lock is a synchronization primitive that grants mutually exclusive access to a critical section. The implementations below trade off coherence traffic, fairness, and memory in different ways. The naive locks (<fr:link href="/MJ5L/" title="Test-and-set lock" uri="https://kellenkanarios.com/MJ5L/" display-uri="MJ5L" type="local">Test-and-set lock</fr:link> and <fr:link href="/PXY9/" title="Test-and-test-and-set lock" uri="https://kellenkanarios.com/PXY9/" display-uri="PXY9" type="local">Test-and-test-and-set lock</fr:link>) are simple but generate <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> coherence traffic per release; queue-based locks (<fr:link href="/V7KP/" title="Ticket lock" uri="https://kellenkanarios.com/V7KP/" display-uri="V7KP" type="local">Ticket lock</fr:link>, <fr:link href="/BJ7N/" title="Array-based lock" uri="https://kellenkanarios.com/BJ7N/" display-uri="BJ7N" type="local">Array-based lock</fr:link>, <fr:link href="/IN64/" title="MCS lock" uri="https://kellenkanarios.com/IN64/" display-uri="IN64" type="local">MCS lock</fr:link>) scale better at the cost of extra state per waiter.</html:p>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/MJ5L/</fr:uri>
+                <fr:display-uri>MJ5L</fr:display-uri>
+                <fr:route>/MJ5L/</fr:route>
+                <fr:title text="Test-and-set lock">Test-and-set lock</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>The simplest spin lock. The acquire loop spins on an atomic <html:code>test_and_set</html:code>: it writes <html:code>LOCKED</html:code> and reads the previous value in one step. If the previous value was <html:code>UNLOCKED</html:code>, the caller has the lock; otherwise it tries again.</html:p><html:pre><![CDATA[acquire(lock_ptr):
+  while (true):
+    // Perform "test-and-set"
+    // UNLOCKED = 0, LOCKED = 1
+    test_and_set(old, lock_ptr)
+    if (old == UNLOCKED):
+      break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] <- UNLOCKED]]></html:pre>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <html:code>test_and_set</html:code>, so contention scales badly with the number of waiters.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/PXY9/</fr:uri>
+                <fr:display-uri>PXY9</fr:display-uri>
+                <fr:route>/PXY9/</fr:route>
+                <fr:title text="Test-and-test-and-set lock">Test-and-test-and-set lock</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>A refinement of the <fr:link href="/MJ5L/" title="Test-and-set lock" uri="https://kellenkanarios.com/MJ5L/" display-uri="MJ5L" type="local">Test-and-set lock</fr:link> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <html:code>test_and_set</html:code> when it does. Spinning is then read-only, so cores can share the cache line.</html:p><html:pre><![CDATA[acquire(lock_ptr):
+  while (true):
+    // Perform "test"
+    load [lock_ptr] -> original_value
+    if (original_value == UNLOCKED):
+      // Perform "test-and-set"
+      test_and_set(old, lock_ptr)
+      if (old == UNLOCKED):
+        break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] <- UNLOCKED]]></html:pre>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Spinning is a read-only operation now.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>When the lock is released, the line must be invalidated on every waiter, and they all simultaneously read and try to write. The contention is shifted from steady state to release time but is still <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> in the number of waiters.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/V7KP/</fr:uri>
+                <fr:display-uri>V7KP</fr:display-uri>
+                <fr:route>/V7KP/</fr:route>
+                <fr:title text="Ticket lock">Ticket lock</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <html:code>next_ticket</html:code> and then spins until <html:code>now_serving</html:code> equals its ticket. Release simply increments <html:code>now_serving</html:code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</html:p><html:pre><![CDATA[acquire(lock_ptr):
+  my_ticket = fetch_and_increment(lock_ptr->next_ticket)
+  while (lock_ptr->now_serving != my_ticket); // spin
+
+release(lock_ptr):
+  lock_ptr->now_serving = lock_ptr->now_serving + 1]]></html:pre>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Still <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> coherence traffic on release: incrementing <html:code>now_serving</html:code> invalidates the line on every waiter, and they all reload it to recheck their ticket.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/BJ7N/</fr:uri>
+                <fr:display-uri>BJ7N</fr:display-uri>
+                <fr:route>/BJ7N/</fr:route>
+                <fr:title text="Array-based lock">Array-based lock</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>Each waiter is assigned its own slot in an array and spins only on that slot. Release just flips the next slot to "go-ahead", so the cache line touched by release is the one read by exactly one other thread. Coherence traffic per release is constant rather than <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex>, at the cost of one slot per waiter.</html:p><html:ul><html:li>Give each waiter its own "slot" to wait on.</html:li>
+  <html:li>Only need to set the next slot to "go-ahead" on release.</html:li>
+  <html:li>Constant coherence traffic.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter><fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> memory for the lock array, and padding each slot to <fr:tex display="inline"><![CDATA[64]]></fr:tex>b (one cache line) to avoid false sharing makes that cost real.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors />
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/IN64/</fr:uri>
+                <fr:display-uri>IN64</fr:display-uri>
+                <fr:route>/IN64/</fr:route>
+                <fr:title text="MCS lock">MCS lock</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter>
+                <html:p>A scalable, list-based queue lock. The lock variable is a pointer to the tail of a linked list of per-thread nodes. Each thread enqueues its own node and spins on a flag in its own cache line. The releaser wakes only its direct successor, so coherence traffic per handoff is constant and memory cost is proportional only to threads currently waiting, not to the lock's fanout.</html:p>
+                <html:pre><![CDATA[acquire(lock):
+  I->next = null
+  predecessor = fetch_and_store(lock, I)
+  if predecessor != nil:                   // some node holds the lock
+    I->must_wait = true
+    predecessor->next = I                  // predecessor must wake us
+    repeat while I->must_wait              // spin till lock is free
+
+release(lock):
+  if (I->next == null):                    // no known successor
+    if compare_and_swap(lock, I, nil):     // make sure...
+      return                               // CAS succeeded; lock freed
+    repeat while I->next == nil            // spin to learn successor
+  I->next->must_wait = false               // wake successor]]></html:pre>
+              </fr:mainmatter>
+            </fr:tree>
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

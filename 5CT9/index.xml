@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors />
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>5</fr:month>
+      <fr:day>12</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/5CT9/</fr:uri>
+    <fr:display-uri>5CT9</fr:display-uri>
+    <fr:route>/5CT9/</fr:route>
+    <fr:title text="Register renaming">Register renaming</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter><html:p>A <fr:link href="/ITFA/" title="Data hazard" uri="https://kellenkanarios.com/ITFA/" display-uri="ITFA" type="local">Data hazard</fr:link> mitigation: dynamically remap architectural register names to a larger pool of physical registers. False data dependencies — where two instructions write to the same architectural register but use independent values — get broken because the hardware can map each write to a different physical register.</html:p>
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>Consider:
+<html:pre><![CDATA[add r1, r2, r3      // r2 := r1 + r3
+add r4, r5, r2      // r2 := r4 + r5   (reuses r2 for an independent value)]]></html:pre>
+The second <html:code>add</html:code> only depends on <html:code>r2</html:code> as a <html:em>destination</html:em>, not as a source. Without renaming, it would have to wait for the first instruction's writeback to avoid clobbering. With renaming, the second write goes to a fresh physical register, and the two instructions can proceed in parallel.</fr:mainmatter></fr:tree>
+ 
+<html:p>The programming model exposes only the architecturally-named registers; the <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">Register file</fr:link> hides a larger pool of rename registers underneath. This is one of the central tricks that makes out-of-order execution viable.</html:p></fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>4</fr:month>
+              <fr:day>3</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/6JU6/</fr:uri>
+            <fr:display-uri>6JU6</fr:display-uri>
+            <fr:route>/6JU6/</fr:route>
+            <fr:title text="Superscalar architecture">Superscalar architecture</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>Multiple <fr:link href="/DA6Q/" title="Execution units" uri="https://kellenkanarios.com/DA6Q/" display-uri="DA6Q" type="local">Execution units</fr:link>s on the same chip running in parallel during the same pipeline stage. Decode becomes <html:em>decode/dispatch</html:em>: the front-end must decide which instructions can issue in parallel and route them to the right units. Going superscalar amplifies the cost of every pipeline <fr:link href="/ITFA/" title="Data hazard" uri="https://kellenkanarios.com/ITFA/" display-uri="ITFA" type="local">Data hazard</fr:link> and <fr:link href="/I2B5/" title="Control hazard" uri="https://kellenkanarios.com/I2B5/" display-uri="I2B5" type="local">Control hazard</fr:link>, which is why the rest of this chapter's machinery — <fr:link href="/USSP/" title="Forwarding" uri="https://kellenkanarios.com/USSP/" display-uri="USSP" type="local">Forwarding</fr:link>, <fr:link href="/5CT9/" title="Register renaming" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">Register renaming</fr:link>, <fr:link href="/1LCS/" title="Branch prediction" uri="https://kellenkanarios.com/1LCS/" display-uri="1LCS" type="local">Branch prediction</fr:link> — exists.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/DA6Q/</fr:uri><fr:display-uri>DA6Q</fr:display-uri><fr:route>/DA6Q/</fr:route><fr:title text="Execution units">Execution units</fr:title></fr:frontmatter><fr:mainmatter><html:p>The functional circuitry that actually performs an instruction. A superscalar CPU contains several, dispatched to in parallel during the execute stage of the <fr:link href="/COV5/" title="Pipelined execution" uri="https://kellenkanarios.com/COV5/" display-uri="COV5" type="local">Pipelined execution</fr:link>. The common families:</html:p><html:ul><html:li><html:strong>ALU</html:strong> — <html:em>arithmetic logic unit</html:em>, performs arithmetic (add, sub, mul, div) and logical (AND, OR, NOT) operations on integers and on special registers like the PSW. Typically split into integer logic units (ILU) and floating-point units (FPU).</html:li>
+  <html:li><html:strong>Load-store unit</html:strong> — performs memory loads and stores. Carries a small address-calculation adder for address-mode resolution.</html:li>
+  <html:li><html:strong>Branch execution unit</html:strong> — evaluates branch conditions (often by reading the PSW) and signals whether the branch is taken.</html:li>
+  <html:li><html:strong>Vector / <fr:link href="/Q7ZD/" title="Vector ISA / SIMD" uri="https://kellenkanarios.com/Q7ZD/" display-uri="Q7ZD" type="local">SIMD</fr:link> units</html:strong> — operate on wide registers (SSE, AVX, AltiVec) for data-parallel work.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Per the convention in <html:em>Inside the Machine</html:em>, "ALU" often refers to any execution unit for arithmetic or logical operations — including integer logic units (ILU) and floating-point units (FPU).</fr:mainmatter></fr:tree>
+<html:p>Each unit's reads and writes flow through a <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">Register file</fr:link>. Splitting the register file per-unit reduces port count and access time.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/87GH/</fr:uri><fr:display-uri>87GH</fr:display-uri><fr:route>/87GH/</fr:route><fr:title text="Microarchitecture">Microarchitecture</fr:title></fr:frontmatter><fr:mainmatter><html:p>The internal organization of a CPU that implements a given <html:em>instruction set architecture</html:em> (ISA). Two chips can present identical ISAs to software while having radically different microarchitectures — e.g. Intel and AMD both implement x86, but their pipelines, branch predictors, and execution units differ.</html:p><html:p>The bridge between the two is the <html:em>microcode engine</html:em>: a mini-CPU inside the CPU. It holds small programs in a microcode ROM and runs them when a complex instruction needs to be translated into the simpler primitives the hardware actually executes. Conceptually, it's an emulator.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter><fr:link href="/L896/" title="CISC vs RISC" uri="https://kellenkanarios.com/L896/" display-uri="L896" type="local">CISC vs RISC</fr:link>-style ISAs need large microcode engines to implement their complex instructions. RISC designs minimize the microcode engine, pushing translation to the compiler instead.</fr:mainmatter></fr:tree>
+<html:p>The translated primitives are <html:em><fr:link href="/WEW2/" title="Micro-operations" uri="https://kellenkanarios.com/WEW2/" display-uri="WEW2" type="local">Micro-operations</fr:link></html:em> — a finer-grained, more uniform instruction stream that the actual hardware schedules. The translation step is the main reason an x86 chip's pipeline starts with such complex decode logic.</html:p></fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Hazards in a superscalar machine">Hazards in a superscalar machine</fr:title></fr:frontmatter><fr:mainmatter>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/ITFA/</fr:uri><fr:display-uri>ITFA</fr:display-uri><fr:route>/ITFA/</fr:route><fr:title text="Data hazard">Data hazard</fr:title></fr:frontmatter><fr:mainmatter><html:p>When one instruction's result is the next instruction's input, a naive <fr:link href="/COV5/" title="Pipelined execution" uri="https://kellenkanarios.com/COV5/" display-uri="COV5" type="local">Pipelined execution</fr:link> would have to stall: the second instruction can't execute until the first has written back. Data hazards are the most pervasive source of stalls in a CPU.</html:p><html:p>Two standard mitigations:</html:p><html:ul><html:li><fr:link href="/USSP/" title="Forwarding" uri="https://kellenkanarios.com/USSP/" display-uri="USSP" type="local">Forwarding</fr:link> — route the producer's output directly into the consumer's input, before the writeback stage commits it. The consumer sees the result one cycle earlier.</html:li>
+  <html:li><fr:link href="/5CT9/" title="Register renaming" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">Register renaming</fr:link> — false dependencies, where two instructions write to the same architectural register but operate on independent values, can be broken by mapping the architectural register to two different physical registers.</html:li></html:ul></fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/USSP/</fr:uri><fr:display-uri>USSP</fr:display-uri><fr:route>/USSP/</fr:route><fr:title text="Forwarding">Forwarding</fr:title></fr:frontmatter><fr:mainmatter><html:p>A <fr:link href="/ITFA/" title="Data hazard" uri="https://kellenkanarios.com/ITFA/" display-uri="ITFA" type="local">Data hazard</fr:link> mitigation: the producing instruction's result is routed from the output of the execute stage directly to the input of the next instruction's execute stage, bypassing the register-file write and read. The dependent consumer can execute one cycle later instead of waiting for writeback.</html:p><html:p>Conceptually, the pipeline grows wiring rather than stages. The result is "forwarded" from where it appears to where it's needed.</html:p></fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/5CT9/</fr:uri><fr:display-uri>5CT9</fr:display-uri><fr:route>/5CT9/</fr:route><fr:title text="Register renaming">Register renaming</fr:title></fr:frontmatter><fr:mainmatter><html:p>A <fr:link href="/ITFA/" title="Data hazard" uri="https://kellenkanarios.com/ITFA/" display-uri="ITFA" type="local">Data hazard</fr:link> mitigation: dynamically remap architectural register names to a larger pool of physical registers. False data dependencies — where two instructions write to the same architectural register but use independent values — get broken because the hardware can map each write to a different physical register.</html:p>
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>Consider:
+<html:pre><![CDATA[add r1, r2, r3      // r2 := r1 + r3
+add r4, r5, r2      // r2 := r4 + r5   (reuses r2 for an independent value)]]></html:pre>
+The second <html:code>add</html:code> only depends on <html:code>r2</html:code> as a <html:em>destination</html:em>, not as a source. Without renaming, it would have to wait for the first instruction's writeback to avoid clobbering. With renaming, the second write goes to a fresh physical register, and the two instructions can proceed in parallel.</fr:mainmatter></fr:tree>
+ 
+<html:p>The programming model exposes only the architecturally-named registers; the <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">Register file</fr:link> hides a larger pool of rename registers underneath. This is one of the central tricks that makes out-of-order execution viable.</html:p></fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/7WV1/</fr:uri><fr:display-uri>7WV1</fr:display-uri><fr:route>/7WV1/</fr:route><fr:title text="Structural hazard">Structural hazard</fr:title></fr:frontmatter><fr:mainmatter><html:p>Two simultaneous instructions need the same hardware resource, and there's only one of it. The classic example is a single-port <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">Register file</fr:link> facing two writes in one cycle, or two memory-accessing instructions facing a single load-store unit.</html:p><html:p>Mitigations cost area:</html:p><html:ul><html:li>Duplicate the resource (extra ALU, more register-file write ports).</html:li>
+  <html:li>Pipeline the resource (multi-cycle dividers that accept a new input each cycle).</html:li>
+  <html:li>Stall — accept the cost in throughput.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Register file area scales <html:em>quadratically</html:em> in port count, so duplicating ports for many ALUs gets expensive quickly.</fr:mainmatter></fr:tree>
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Per-unit register files (one for integer, one for FP, one for vector) with fewer ports each. Discussed under <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">Register file</fr:link>.</fr:mainmatter></fr:tree>
+ 
+</fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/I2B5/</fr:uri><fr:display-uri>I2B5</fr:display-uri><fr:route>/I2B5/</fr:route><fr:title text="Control hazard">Control hazard</fr:title></fr:frontmatter><fr:mainmatter><html:p>When the CPU reaches a <fr:link href="/IJ7Q/" title="Branch instruction" uri="https://kellenkanarios.com/IJ7Q/" display-uri="IJ7Q" type="local">Branch instruction</fr:link> in the <fr:link href="/COV5/" title="Pipelined execution" uri="https://kellenkanarios.com/COV5/" display-uri="COV5" type="local">Pipelined execution</fr:link>, it doesn't yet know what to fetch next. Until the branch's condition resolves and its target is computed — several stages later — fetch is stuck.</html:p><html:p>Mitigations:</html:p><html:ul><html:li><fr:link href="/1LCS/" title="Branch prediction" uri="https://kellenkanarios.com/1LCS/" display-uri="1LCS" type="local">Branch prediction</fr:link> — guess where control flow is going.</html:li>
+  <html:li><fr:link href="/IIF9/" title="Speculative execution" uri="https://kellenkanarios.com/IIF9/" display-uri="IIF9" type="local">Speculative execution</fr:link> — actually run instructions down the predicted path, ready to throw the work away if the guess was wrong.</html:li>
+  <html:li><html:em>Instruction caching</html:em> — keep recently-fetched instructions handy so the cost of restarting fetch on a mispredict is at least bounded by cache latency, not DRAM latency.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The cost of a mispredicted branch is roughly the pipeline depth — every speculatively-issued instruction has to be squashed and the pipeline refilled. Deeper pipelines amplify this cost, which is one reason <fr:link href="/037I/" title="Pentium 4 vs G4e: design philosophies" uri="https://kellenkanarios.com/037I/" display-uri="037I" type="local">Pentium 4 vs G4e: design philosophies</fr:link> (deep pipeline, narrow &amp; deep) and <fr:link href="/6JU6/" title="Superscalar architecture" uri="https://kellenkanarios.com/6JU6/" display-uri="6JU6" type="local">Superscalar architecture</fr:link>-style designs (wider, shallower) make different tradeoffs.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/U0NY/</fr:uri>
+            <fr:display-uri>U0NY</fr:display-uri>
+            <fr:route>/U0NY/</fr:route>
+            <fr:title text="Out-of-order execution">Out-of-order execution</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>Execute instructions in whatever order their operands become available, then commit them back in program order. The programmer's model still sees sequential execution; the hardware reorders aggressively underneath to keep <fr:link href="/DA6Q/" title="Execution units" uri="https://kellenkanarios.com/DA6Q/" display-uri="DA6Q" type="local">Execution units</fr:link> busy across <fr:link href="/ITFA/" title="Data hazard" uri="https://kellenkanarios.com/ITFA/" display-uri="ITFA" type="local">Data hazard</fr:link>s and memory latency.</html:p><html:p>Two structures make this work:</html:p><html:ul><html:li><fr:link href="/FQ9N/" title="Reservation station" uri="https://kellenkanarios.com/FQ9N/" display-uri="FQ9N" type="local">Reservation station</fr:link>s — hold instructions waiting on operands, so a stalled instruction doesn't block independent ones behind it.</html:li>
+  <html:li><fr:link href="/BI4H/" title="Reorder buffer" uri="https://kellenkanarios.com/BI4H/" display-uri="BI4H" type="local">Reorder buffer</fr:link> — preserves program order so commits look sequential and mispredicted <fr:link href="/IIF9/" title="Speculative execution" uri="https://kellenkanarios.com/IIF9/" display-uri="IIF9" type="local">Speculative execution</fr:link> paths can be unwound.</html:li></html:ul><html:p>Combined with <fr:link href="/5CT9/" title="Register renaming" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">Register renaming</fr:link> to break false dependencies, the back-end of a modern CPU is essentially a dynamic scheduler that uses the program order only as a hint about what to retire next.</html:p>
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>An out-of-order pipeline can issue a load early (because its address operands are ready), execute several unrelated ALU ops while waiting for the memory, then have all four instructions ready to commit in program order. The illusion of sequential execution is preserved; the parallelism is real.</fr:mainmatter></fr:tree>
+ 
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/BI4H/</fr:uri>
+            <fr:display-uri>BI4H</fr:display-uri>
+            <fr:route>/BI4H/</fr:route>
+            <fr:title text="Reorder buffer">Reorder buffer</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The structure that lets an <fr:link href="/U0NY/" title="Out-of-order execution" uri="https://kellenkanarios.com/U0NY/" display-uri="U0NY" type="local">Out-of-order execution</fr:link> CPU look in-order to the programmer. The ROB holds every in-flight instruction in original program order, regardless of the order they actually executed. When the oldest entry has its result ready and all earlier entries have already committed, the ROB <html:em>commits</html:em> it — writing its result to architectural state and freeing the slot.</html:p><html:p>Each ROB entry typically tracks:</html:p><html:ul><html:li>Instruction identity and program order position.</html:li>
+  <html:li>Operand register names (and renamed sources).</html:li>
+  <html:li>Status — pending, executing, complete, speculated.</html:li>
+  <html:li>The instruction's result, held in a data field that doubles as a <fr:link href="/5CT9/" title="Register renaming" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">Register renaming</fr:link> register.</html:li></html:ul><html:p>Speculatively-issued instructions also enter the ROB but are tagged. On a branch misprediction, all speculative entries past the mispredicted branch are squashed.</html:p><html:p>The Pentium Pro introduced this design with a 40-entry ROB. The ROB sits at both ends of the pipeline — dispatch enters it, retirement leaves it — which is what makes the rest of the back-end free to issue and execute out of order.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>ROB size, <fr:link href="/FQ9N/" title="Reservation station" uri="https://kellenkanarios.com/FQ9N/" display-uri="FQ9N" type="local">Reservation station</fr:link> count, and pipeline depth set each other's bounds. A shallow pipeline can afford a small ROB; a deep one (Pentium 4 had 126) needs a large one to keep the back-end fed.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/IIF9/</fr:uri>
+            <fr:display-uri>IIF9</fr:display-uri>
+            <fr:route>/IIF9/</fr:route>
+            <fr:title text="Speculative execution">Speculative execution</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>Run instructions before knowing whether they should actually be run, on the assumption that you'll usually be right. Used after <fr:link href="/1LCS/" title="Branch prediction" uri="https://kellenkanarios.com/1LCS/" display-uri="1LCS" type="local">Branch prediction</fr:link> to keep the pipeline busy past a <fr:link href="/IJ7Q/" title="Branch instruction" uri="https://kellenkanarios.com/IJ7Q/" display-uri="IJ7Q" type="local">Branch instruction</fr:link>: instructions on the predicted path enter the pipeline, execute, and stash their results in non-architectural state. Only when the branch resolves are speculated results "committed" to architectural state — or, if the prediction was wrong, discarded.</html:p><html:p>Speculative state lives in the <fr:link href="/BI4H/" title="Reorder buffer" uri="https://kellenkanarios.com/BI4H/" display-uri="BI4H" type="local">Reorder buffer</fr:link> (and the <fr:link href="/5CT9/" title="Register renaming" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">Register renaming</fr:link> rename registers). Entries are tagged as speculative; on misprediction the speculative entries are flushed.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Modern speculative execution drives a lot of CPU complexity — and a lot of CPU security work. Spectre-class side channels exploit the fact that speculative execution can leave traces in caches even after the speculative results are discarded.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/ITFA/</fr:uri>
+            <fr:display-uri>ITFA</fr:display-uri>
+            <fr:route>/ITFA/</fr:route>
+            <fr:title text="Data hazard">Data hazard</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>When one instruction's result is the next instruction's input, a naive <fr:link href="/COV5/" title="Pipelined execution" uri="https://kellenkanarios.com/COV5/" display-uri="COV5" type="local">Pipelined execution</fr:link> would have to stall: the second instruction can't execute until the first has written back. Data hazards are the most pervasive source of stalls in a CPU.</html:p>
+            <html:p>Two standard mitigations:</html:p>
+            <html:ul><html:li><fr:link href="/USSP/" title="Forwarding" uri="https://kellenkanarios.com/USSP/" display-uri="USSP" type="local">Forwarding</fr:link> — route the producer's output directly into the consumer's input, before the writeback stage commits it. The consumer sees the result one cycle earlier.</html:li>
+  <html:li><fr:link href="/5CT9/" title="Register renaming" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">Register renaming</fr:link> — false dependencies, where two instructions write to the same architectural register but operate on independent values, can be broken by mapping the architectural register to two different physical registers.</html:li></html:ul>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/ETWN/</fr:uri>
+            <fr:display-uri>ETWN</fr:display-uri>
+            <fr:route>/ETWN/</fr:route>
+            <fr:title text="Register file">Register file</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The CPU's nearest tier of storage — the first NUMA level. Registers sit physically next to the ALUs and are addressed by name in the instruction encoding rather than by memory address. Their count is limited by the chip's surface area, which is why main memory exists at all.</html:p><html:p>The register file is the structure that holds the architecturally-visible registers. To support a superscalar machine, the file needs enough read and write ports to feed every ALU simultaneously: for an <fr:tex display="inline"><![CDATA[n]]></fr:tex>-ALU chip with two operands per op, that's <fr:tex display="inline"><![CDATA[2n]]></fr:tex> read ports and <fr:tex display="inline"><![CDATA[n]]></fr:tex> write ports.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Die area for a register file scales <html:em>quadratically</html:em> in the number of ports.</fr:mainmatter></fr:tree>
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Split it. Different execution units (integer, floating-point, vector) get their own smaller register files. Fewer ports per file, faster access, less area.</fr:mainmatter></fr:tree>
+ 
+<html:p>Beyond the architecturally-named registers, modern chips keep many extra <html:em>rename</html:em> registers used by <fr:link href="/5CT9/" title="Register renaming" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">Register renaming</fr:link> to break false data dependencies.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Instructions distinguish "immediate types" from "register types" so the decoder knows whether a field encodes a register name or a literal value.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>4</fr:month>
+              <fr:day>3</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/7XOX/</fr:uri>
+            <fr:display-uri>7XOX</fr:display-uri>
+            <fr:route>/7XOX/</fr:route>
+            <fr:title text="Pentium and Pentium Pro">Pentium and Pentium Pro</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>Machine-instance notes — concepts these chips introduced live in their own atomic notes; this tree records what was novel about each implementation.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The original Pentium">The original Pentium</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Concepts in play:</html:p>
+<html:ul><html:li><fr:link href="/KBYI/" title="Cache hierarchy" uri="https://kellenkanarios.com/KBYI/" display-uri="KBYI" type="local">Cache hierarchy</fr:link> — Pentium adopted L1/L2 caching and split the L1 into separate instruction and data caches.</html:li>
+  <html:li><fr:link href="/1LCS/" title="Branch prediction" uri="https://kellenkanarios.com/1LCS/" display-uri="1LCS" type="local">Branch prediction</fr:link> — branch history table (BHT) and branch target buffer (BTB) combined with static prediction as a fallback on BHT miss.</html:li>
+  <html:li><fr:link href="/IIF9/" title="Speculative execution" uri="https://kellenkanarios.com/IIF9/" display-uri="IIF9" type="local">Speculative execution</fr:link> — execute past a predicted branch, write back only after the prediction is confirmed.</html:li></html:ul>
+<html:p><html:strong>Pipeline:</html:strong></html:p>
+<html:ol><html:li><html:em>Fetch / Prefetch</html:em>: read from instruction cache.</html:li>
+  <html:li><html:em>Decode 1</html:em>: decode to internal format; branch prediction.</html:li>
+  <html:li><html:em>Decode 2</html:em>: convert complex instructions via <fr:link href="/87GH/" title="Microarchitecture" uri="https://kellenkanarios.com/87GH/" display-uri="87GH" type="local">Microarchitecture</fr:link> to <fr:link href="/WEW2/" title="Micro-operations" uri="https://kellenkanarios.com/WEW2/" display-uri="WEW2" type="local">Micro-operations</fr:link>.</html:li>
+  <html:li><html:em>Execute</html:em>.</html:li>
+  <html:li><html:em>Write</html:em>.</html:li></html:ol>
+<html:p><html:strong>Back-end</html:strong>: two integer ALUs (also doing address calculations) and one floating-point ALU. The FP register file was arranged as a <html:em>stack</html:em>, with most FP ops operating on the top — zero-cycle stack swaps existed but still occupied a decode slot.</html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Estimated 30% of Pentium transistors went to legacy support, mostly the microcode ROM.</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The Pentium Pro">The Pentium Pro</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Concepts introduced:</html:p>
+<html:ul><html:li><fr:link href="/U0NY/" title="Out-of-order execution" uri="https://kellenkanarios.com/U0NY/" display-uri="U0NY" type="local">Out-of-order execution</fr:link> — instructions execute in dataflow order, commit in program order.</html:li>
+  <html:li><fr:link href="/BI4H/" title="Reorder buffer" uri="https://kellenkanarios.com/BI4H/" display-uri="BI4H" type="local">Reorder buffer</fr:link> — 40-entry ROB tracks all in-flight instructions and assists <fr:link href="/5CT9/" title="Register renaming" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">Register renaming</fr:link>.</html:li>
+  <html:li><fr:link href="/FQ9N/" title="Reservation station" uri="https://kellenkanarios.com/FQ9N/" display-uri="FQ9N" type="local">Reservation station</fr:link> — three-instruction dispatch, up to five-issue per cycle.</html:li>
+  <html:li><fr:link href="/L896/" title="CISC vs RISC" uri="https://kellenkanarios.com/L896/" display-uri="L896" type="local">CISC vs RISC</fr:link> decoupling — x86 in front, <fr:link href="/WEW2/" title="Micro-operations" uri="https://kellenkanarios.com/WEW2/" display-uri="WEW2" type="local">Micro-operations</fr:link> internally.</html:li></html:ul>
+<html:figure><html:img width="70%" src="/bafkrmihuv5vybyb5cvylg24dd5ujybaegxaunut6xxm5a7tducja3ljudm.png" /></html:figure>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Simple and complex decoders are split because many CISC instructions translate to one or two micro-ops — the simple decoders handle those in parallel with the slow complex decoder.</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>40% of Pentium Pro transistors went to backward-compatibility support.</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>4</fr:month>
+              <fr:day>3</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/6JU6/</fr:uri>
+            <fr:display-uri>6JU6</fr:display-uri>
+            <fr:route>/6JU6/</fr:route>
+            <fr:title text="Superscalar architecture">Superscalar architecture</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>Multiple <fr:link href="/DA6Q/" title="Execution units" uri="https://kellenkanarios.com/DA6Q/" display-uri="DA6Q" type="local">Execution units</fr:link>s on the same chip running in parallel during the same pipeline stage. Decode becomes <html:em>decode/dispatch</html:em>: the front-end must decide which instructions can issue in parallel and route them to the right units. Going superscalar amplifies the cost of every pipeline <fr:link href="/ITFA/" title="Data hazard" uri="https://kellenkanarios.com/ITFA/" display-uri="ITFA" type="local">Data hazard</fr:link> and <fr:link href="/I2B5/" title="Control hazard" uri="https://kellenkanarios.com/I2B5/" display-uri="I2B5" type="local">Control hazard</fr:link>, which is why the rest of this chapter's machinery — <fr:link href="/USSP/" title="Forwarding" uri="https://kellenkanarios.com/USSP/" display-uri="USSP" type="local">Forwarding</fr:link>, <fr:link href="/5CT9/" title="Register renaming" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">Register renaming</fr:link>, <fr:link href="/1LCS/" title="Branch prediction" uri="https://kellenkanarios.com/1LCS/" display-uri="1LCS" type="local">Branch prediction</fr:link> — exists.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/DA6Q/</fr:uri><fr:display-uri>DA6Q</fr:display-uri><fr:route>/DA6Q/</fr:route><fr:title text="Execution units">Execution units</fr:title></fr:frontmatter><fr:mainmatter><html:p>The functional circuitry that actually performs an instruction. A superscalar CPU contains several, dispatched to in parallel during the execute stage of the <fr:link href="/COV5/" title="Pipelined execution" uri="https://kellenkanarios.com/COV5/" display-uri="COV5" type="local">Pipelined execution</fr:link>. The common families:</html:p><html:ul><html:li><html:strong>ALU</html:strong> — <html:em>arithmetic logic unit</html:em>, performs arithmetic (add, sub, mul, div) and logical (AND, OR, NOT) operations on integers and on special registers like the PSW. Typically split into integer logic units (ILU) and floating-point units (FPU).</html:li>
+  <html:li><html:strong>Load-store unit</html:strong> — performs memory loads and stores. Carries a small address-calculation adder for address-mode resolution.</html:li>
+  <html:li><html:strong>Branch execution unit</html:strong> — evaluates branch conditions (often by reading the PSW) and signals whether the branch is taken.</html:li>
+  <html:li><html:strong>Vector / <fr:link href="/Q7ZD/" title="Vector ISA / SIMD" uri="https://kellenkanarios.com/Q7ZD/" display-uri="Q7ZD" type="local">SIMD</fr:link> units</html:strong> — operate on wide registers (SSE, AVX, AltiVec) for data-parallel work.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Per the convention in <html:em>Inside the Machine</html:em>, "ALU" often refers to any execution unit for arithmetic or logical operations — including integer logic units (ILU) and floating-point units (FPU).</fr:mainmatter></fr:tree>
+<html:p>Each unit's reads and writes flow through a <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">Register file</fr:link>. Splitting the register file per-unit reduces port count and access time.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/87GH/</fr:uri><fr:display-uri>87GH</fr:display-uri><fr:route>/87GH/</fr:route><fr:title text="Microarchitecture">Microarchitecture</fr:title></fr:frontmatter><fr:mainmatter><html:p>The internal organization of a CPU that implements a given <html:em>instruction set architecture</html:em> (ISA). Two chips can present identical ISAs to software while having radically different microarchitectures — e.g. Intel and AMD both implement x86, but their pipelines, branch predictors, and execution units differ.</html:p><html:p>The bridge between the two is the <html:em>microcode engine</html:em>: a mini-CPU inside the CPU. It holds small programs in a microcode ROM and runs them when a complex instruction needs to be translated into the simpler primitives the hardware actually executes. Conceptually, it's an emulator.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter><fr:link href="/L896/" title="CISC vs RISC" uri="https://kellenkanarios.com/L896/" display-uri="L896" type="local">CISC vs RISC</fr:link>-style ISAs need large microcode engines to implement their complex instructions. RISC designs minimize the microcode engine, pushing translation to the compiler instead.</fr:mainmatter></fr:tree>
+<html:p>The translated primitives are <html:em><fr:link href="/WEW2/" title="Micro-operations" uri="https://kellenkanarios.com/WEW2/" display-uri="WEW2" type="local">Micro-operations</fr:link></html:em> — a finer-grained, more uniform instruction stream that the actual hardware schedules. The translation step is the main reason an x86 chip's pipeline starts with such complex decode logic.</html:p></fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>4</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Hazards in a superscalar machine">Hazards in a superscalar machine</fr:title></fr:frontmatter><fr:mainmatter>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/ITFA/</fr:uri><fr:display-uri>ITFA</fr:display-uri><fr:route>/ITFA/</fr:route><fr:title text="Data hazard">Data hazard</fr:title></fr:frontmatter><fr:mainmatter><html:p>When one instruction's result is the next instruction's input, a naive <fr:link href="/COV5/" title="Pipelined execution" uri="https://kellenkanarios.com/COV5/" display-uri="COV5" type="local">Pipelined execution</fr:link> would have to stall: the second instruction can't execute until the first has written back. Data hazards are the most pervasive source of stalls in a CPU.</html:p><html:p>Two standard mitigations:</html:p><html:ul><html:li><fr:link href="/USSP/" title="Forwarding" uri="https://kellenkanarios.com/USSP/" display-uri="USSP" type="local">Forwarding</fr:link> — route the producer's output directly into the consumer's input, before the writeback stage commits it. The consumer sees the result one cycle earlier.</html:li>
+  <html:li><fr:link href="/5CT9/" title="Register renaming" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">Register renaming</fr:link> — false dependencies, where two instructions write to the same architectural register but operate on independent values, can be broken by mapping the architectural register to two different physical registers.</html:li></html:ul></fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/USSP/</fr:uri><fr:display-uri>USSP</fr:display-uri><fr:route>/USSP/</fr:route><fr:title text="Forwarding">Forwarding</fr:title></fr:frontmatter><fr:mainmatter><html:p>A <fr:link href="/ITFA/" title="Data hazard" uri="https://kellenkanarios.com/ITFA/" display-uri="ITFA" type="local">Data hazard</fr:link> mitigation: the producing instruction's result is routed from the output of the execute stage directly to the input of the next instruction's execute stage, bypassing the register-file write and read. The dependent consumer can execute one cycle later instead of waiting for writeback.</html:p><html:p>Conceptually, the pipeline grows wiring rather than stages. The result is "forwarded" from where it appears to where it's needed.</html:p></fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/5CT9/</fr:uri><fr:display-uri>5CT9</fr:display-uri><fr:route>/5CT9/</fr:route><fr:title text="Register renaming">Register renaming</fr:title></fr:frontmatter><fr:mainmatter><html:p>A <fr:link href="/ITFA/" title="Data hazard" uri="https://kellenkanarios.com/ITFA/" display-uri="ITFA" type="local">Data hazard</fr:link> mitigation: dynamically remap architectural register names to a larger pool of physical registers. False data dependencies — where two instructions write to the same architectural register but use independent values — get broken because the hardware can map each write to a different physical register.</html:p>
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>Consider:
+<html:pre><![CDATA[add r1, r2, r3      // r2 := r1 + r3
+add r4, r5, r2      // r2 := r4 + r5   (reuses r2 for an independent value)]]></html:pre>
+The second <html:code>add</html:code> only depends on <html:code>r2</html:code> as a <html:em>destination</html:em>, not as a source. Without renaming, it would have to wait for the first instruction's writeback to avoid clobbering. With renaming, the second write goes to a fresh physical register, and the two instructions can proceed in parallel.</fr:mainmatter></fr:tree>
+ 
+<html:p>The programming model exposes only the architecturally-named registers; the <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">Register file</fr:link> hides a larger pool of rename registers underneath. This is one of the central tricks that makes out-of-order execution viable.</html:p></fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/7WV1/</fr:uri><fr:display-uri>7WV1</fr:display-uri><fr:route>/7WV1/</fr:route><fr:title text="Structural hazard">Structural hazard</fr:title></fr:frontmatter><fr:mainmatter><html:p>Two simultaneous instructions need the same hardware resource, and there's only one of it. The classic example is a single-port <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">Register file</fr:link> facing two writes in one cycle, or two memory-accessing instructions facing a single load-store unit.</html:p><html:p>Mitigations cost area:</html:p><html:ul><html:li>Duplicate the resource (extra ALU, more register-file write ports).</html:li>
+  <html:li>Pipeline the resource (multi-cycle dividers that accept a new input each cycle).</html:li>
+  <html:li>Stall — accept the cost in throughput.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Register file area scales <html:em>quadratically</html:em> in port count, so duplicating ports for many ALUs gets expensive quickly.</fr:mainmatter></fr:tree>
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Per-unit register files (one for integer, one for FP, one for vector) with fewer ports each. Discussed under <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">Register file</fr:link>.</fr:mainmatter></fr:tree>
+ 
+</fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/I2B5/</fr:uri><fr:display-uri>I2B5</fr:display-uri><fr:route>/I2B5/</fr:route><fr:title text="Control hazard">Control hazard</fr:title></fr:frontmatter><fr:mainmatter><html:p>When the CPU reaches a <fr:link href="/IJ7Q/" title="Branch instruction" uri="https://kellenkanarios.com/IJ7Q/" display-uri="IJ7Q" type="local">Branch instruction</fr:link> in the <fr:link href="/COV5/" title="Pipelined execution" uri="https://kellenkanarios.com/COV5/" display-uri="COV5" type="local">Pipelined execution</fr:link>, it doesn't yet know what to fetch next. Until the branch's condition resolves and its target is computed — several stages later — fetch is stuck.</html:p><html:p>Mitigations:</html:p><html:ul><html:li><fr:link href="/1LCS/" title="Branch prediction" uri="https://kellenkanarios.com/1LCS/" display-uri="1LCS" type="local">Branch prediction</fr:link> — guess where control flow is going.</html:li>
+  <html:li><fr:link href="/IIF9/" title="Speculative execution" uri="https://kellenkanarios.com/IIF9/" display-uri="IIF9" type="local">Speculative execution</fr:link> — actually run instructions down the predicted path, ready to throw the work away if the guess was wrong.</html:li>
+  <html:li><html:em>Instruction caching</html:em> — keep recently-fetched instructions handy so the cost of restarting fetch on a mispredict is at least bounded by cache latency, not DRAM latency.</html:li></html:ul>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The cost of a mispredicted branch is roughly the pipeline depth — every speculatively-issued instruction has to be squashed and the pipeline refilled. Deeper pipelines amplify this cost, which is one reason <fr:link href="/037I/" title="Pentium 4 vs G4e: design philosophies" uri="https://kellenkanarios.com/037I/" display-uri="037I" type="local">Pentium 4 vs G4e: design philosophies</fr:link> (deep pipeline, narrow &amp; deep) and <fr:link href="/6JU6/" title="Superscalar architecture" uri="https://kellenkanarios.com/6JU6/" display-uri="6JU6" type="local">Superscalar architecture</fr:link>-style designs (wider, shallower) make different tradeoffs.</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/ITFA/</fr:uri>
+            <fr:display-uri>ITFA</fr:display-uri>
+            <fr:route>/ITFA/</fr:route>
+            <fr:title text="Data hazard">Data hazard</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>When one instruction's result is the next instruction's input, a naive <fr:link href="/COV5/" title="Pipelined execution" uri="https://kellenkanarios.com/COV5/" display-uri="COV5" type="local">Pipelined execution</fr:link> would have to stall: the second instruction can't execute until the first has written back. Data hazards are the most pervasive source of stalls in a CPU.</html:p>
+            <html:p>Two standard mitigations:</html:p>
+            <html:ul><html:li><fr:link href="/USSP/" title="Forwarding" uri="https://kellenkanarios.com/USSP/" display-uri="USSP" type="local">Forwarding</fr:link> — route the producer's output directly into the consumer's input, before the writeback stage commits it. The consumer sees the result one cycle earlier.</html:li>
+  <html:li><fr:link href="/5CT9/" title="Register renaming" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">Register renaming</fr:link> — false dependencies, where two instructions write to the same architectural register but operate on independent values, can be broken by mapping the architectural register to two different physical registers.</html:li></html:ul>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/ETWN/</fr:uri>
+            <fr:display-uri>ETWN</fr:display-uri>
+            <fr:route>/ETWN/</fr:route>
+            <fr:title text="Register file">Register file</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The CPU's nearest tier of storage — the first NUMA level. Registers sit physically next to the ALUs and are addressed by name in the instruction encoding rather than by memory address. Their count is limited by the chip's surface area, which is why main memory exists at all.</html:p><html:p>The register file is the structure that holds the architecturally-visible registers. To support a superscalar machine, the file needs enough read and write ports to feed every ALU simultaneously: for an <fr:tex display="inline"><![CDATA[n]]></fr:tex>-ALU chip with two operands per op, that's <fr:tex display="inline"><![CDATA[2n]]></fr:tex> read ports and <fr:tex display="inline"><![CDATA[n]]></fr:tex> write ports.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Die area for a register file scales <html:em>quadratically</html:em> in the number of ports.</fr:mainmatter></fr:tree>
+
+ 
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Split it. Different execution units (integer, floating-point, vector) get their own smaller register files. Fewer ports per file, faster access, less area.</fr:mainmatter></fr:tree>
+ 
+<html:p>Beyond the architecturally-named registers, modern chips keep many extra <html:em>rename</html:em> registers used by <fr:link href="/5CT9/" title="Register renaming" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">Register renaming</fr:link> to break false data dependencies.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Instructions distinguish "immediate types" from "register types" so the decoder knows whether a field encodes a register name or a literal value.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>
