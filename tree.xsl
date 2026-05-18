@@ -20,6 +20,51 @@
           </xsl:if>
         </script>
         <script type="module" src="{/f:tree/@base-url}forester.js"></script>
+        <script>
+          <xsl:text disable-output-escaping="yes"><![CDATA[
+(function(){
+  var ws = new WebSocket("ws://" + location.host + "/livereload");
+  ws.onopen = function() {
+    ws.send(JSON.stringify({command:"hello", protocols:["http://livereload.com/protocols/official-7"], ver:"2.0.0"}));
+  };
+  ws.onmessage = function(e) {
+    var m = JSON.parse(e.data);
+    if (m.command == "hello") {
+      ws.send(JSON.stringify({command:"info", url:location.href, plugins:{}}));
+    } else if (m.command == "reload") {
+      fetch('http://localhost:1235/current-slug')
+        .then(function(r){ return r.text(); })
+        .then(function(slug){
+          var cur = location.pathname.split('/').filter(Boolean)[0] || '';
+          if (slug && slug !== cur) {
+            location.href = '/' + slug + '/';
+          } else {
+            location.reload();
+          }
+        })
+        .catch(function(){ location.reload(); });
+    }
+  };
+})();
+          ]]></xsl:text>
+        </script>
+        <script>
+          <xsl:text disable-output-escaping="yes"><![CDATA[
+console.log('[FOPEN] handler installed, sourcePath=', window.sourcePath);
+document.addEventListener('keydown', function(e) {
+  console.log('[FOPEN] keydown', e.key, 'ctrl=', e.ctrlKey, 'shift=', e.shiftKey, 'alt=', e.altKey);
+  if (e.ctrlKey && !e.shiftKey && !e.altKey && (e.key === 'e' || e.key === 'E')) {
+    console.log('[FOPEN] match, sourcePath=', window.sourcePath);
+    if (window.sourcePath) {
+      e.preventDefault();
+      fetch('http://localhost:1235/open?path=' + encodeURIComponent(window.sourcePath))
+        .then(function(r){console.log('[FOPEN] response', r.status);})
+        .catch(function(err){console.log('[FOPEN] error', err);});
+    }
+  }
+});
+          ]]></xsl:text>
+        </script>
         <title>
           <xsl:value-of select="/f:tree/f:frontmatter/f:title/@text" />
         </title>

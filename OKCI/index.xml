@@ -100,14 +100,14 @@
             <fr:date>
               <fr:year>2026</fr:year>
               <fr:month>5</fr:month>
-              <fr:day>12</fr:day>
+              <fr:day>13</fr:day>
             </fr:date>
             <fr:uri>https://kellenkanarios.com/82U4/</fr:uri>
             <fr:display-uri>82U4</fr:display-uri>
             <fr:route>/82U4/</fr:route>
-            <fr:title text="GPU architecture and SIMT">GPU architecture and SIMT</fr:title>
+            <fr:title text="GPU architecture">GPU architecture</fr:title>
           </fr:frontmatter>
-          <fr:mainmatter><html:p>A GPU sacrifices single-thread latency for aggregate throughput. The opposite design point from a CPU:</html:p>
+          <fr:mainmatter><html:p>A GPU sacrifices single-thread latency for aggregate throughput. The whole machine is built around the <fr:link href="/G4ML/" title="Thread-level parallelism" uri="https://kellenkanarios.com/G4ML/" display-uri="G4ML" type="local">Thread-level parallelism</fr:link> design point — keep many threads resident, switch on every stall, spend almost no silicon on per-instruction control. The opposite end of the axis from a CPU:</html:p>
   <html:table>
 
   <html:tr>
@@ -155,36 +155,28 @@
 </html:tr>
 
 </html:table>
-<html:p>The GPU equivalent of a core is a <html:em>streaming multiprocessor</html:em> (SM). Each SM executes the same instruction across many threads in lockstep — but with a key difference from <fr:link href="/Q7ZD/" title="Vector ISA / SIMD" uri="https://kellenkanarios.com/Q7ZD/" display-uri="Q7ZD" type="local">Vector ISA / SIMD</fr:link>:</html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="SIMT vs SIMD">SIMT vs SIMD</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p><html:em>Single instruction, multiple threads</html:em>. The SM issues one instruction per cycle to a group of threads (a <fr:link href="/X9VZ/" title="Warp scheduling" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">Warp scheduling</fr:link>), but each thread keeps its own program counter and register state.</html:p>
+<html:p>The GPU equivalent of a core is a <html:em>streaming multiprocessor</html:em> (SM). Each SM executes the same instruction across many threads in lockstep — the <fr:link href="/7F19/" title="SIMT" uri="https://kellenkanarios.com/7F19/" display-uri="7F19" type="local">SIMT</fr:link> programming model — and uses a per-register <fr:link href="/XPAA/" title="GPU register scoreboard" uri="https://kellenkanarios.com/XPAA/" display-uri="XPAA" type="local">GPU register scoreboard</fr:link> rather than CPU-style <fr:link href="/UJPD/" title="Issue queue wakeup-select" uri="https://kellenkanarios.com/UJPD/" display-uri="UJPD" type="local">wakeup-select</fr:link> to decide which warp can issue next.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>13</fr:day></fr:date><fr:title text="Hiding stalls">Hiding stalls</fr:title></fr:frontmatter><fr:mainmatter>
 
-<html:p>Advantages over SIMD:</html:p>
-<html:ol><html:li><html:em>Control-flow divergence</html:em>. Threads on different branches of a conditional execute dummy instructions on the inactive path until reconvergence. The compiler / hardware mask the inactive lanes; the programmer doesn't have to vectorize manually.</html:li>
-  <html:li><html:em>Grouping flexibility</html:em>. Hardware (or the compiler) can re-group threads into warps based on actual control flow — see "warp specialization".</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>13</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>How do GPUs deal with cache misses given they don't have OoO machinery?</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>13</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>Fast context-switching between warps. When a warp stalls on memory, the SM switches to another runnable warp with already-resident state. Enough warps means the SM is always busy.</fr:mainmatter></fr:tree>
+
+
+<html:p>In a CPU, <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switching</fr:link> is expensive — registers must be saved to memory. On a GPU, each SM has an enormous register file that holds the registers of all resident warps simultaneously, so a context switch is just changing which warp the scheduler picks. This is the concrete payoff of the <fr:link href="/G4ML/" title="Thread-level parallelism" uri="https://kellenkanarios.com/G4ML/" display-uri="G4ML" type="local">Thread-level parallelism</fr:link> design choice: latency hiding becomes a scheduling problem instead of a microarchitecture problem.</html:p>
 </fr:mainmatter></fr:tree>
 
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="Hiding stalls">Hiding stalls</fr:title></fr:frontmatter><fr:mainmatter>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>How do GPUs deal with cache misses given they don't have OoO machinery?</fr:mainmatter></fr:tree>
-
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>Fast context-switching between warps. When a warp stalls on memory, the SM switches to another runnable warp with already-resident state. Enough warps means the SM is always busy.</fr:mainmatter></fr:tree>
-
-
-<html:p>In a CPU, <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switching</fr:link> is expensive — registers must be saved to memory. On a GPU, each SM has an enormous register file that holds the registers of all resident warps simultaneously, so a context switch is just changing which warp the scheduler picks.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="CUDA hierarchy">CUDA hierarchy</fr:title></fr:frontmatter><fr:mainmatter>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>13</fr:day></fr:date><fr:title text="CUDA hierarchy">CUDA hierarchy</fr:title></fr:frontmatter><fr:mainmatter>
 <html:ol><html:li><html:strong>Kernel</html:strong> — the launched function.</html:li>
   <html:li><html:strong>Blocks</html:strong> — groups of threads sharing fast on-chip <html:em>shared memory</html:em> (<fr:link href="/8GZN/" title="Shared memory and bank conflicts" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">Shared memory and bank conflicts</fr:link>).</html:li>
   <html:li><html:strong>Warps</html:strong> — 32 threads issued together in lockstep (<fr:link href="/X9VZ/" title="Warp scheduling" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">Warp scheduling</fr:link>).</html:li></html:ol>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The physical size of shared memory constrains the number of resident threads per SM.</fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>13</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The physical size of shared memory constrains the number of resident threads per SM.</fr:mainmatter></fr:tree>
 
 </fr:mainmatter></fr:tree>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Use GPUs for parallel parts where throughput dominates. Use CPUs for sequential parts where latency dominates.</fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>13</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Use GPUs for parallel parts where throughput dominates. Use CPUs for sequential parts where latency dominates — the <fr:link href="/RJEB/" title="ILP vs TLP" uri="https://kellenkanarios.com/RJEB/" display-uri="RJEB" type="local">ILP vs TLP</fr:link> axis is the right frame for deciding which.</fr:mainmatter></fr:tree>
 </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">

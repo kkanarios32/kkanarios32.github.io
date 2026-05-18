@@ -44,7 +44,11 @@
       <fr:mainmatter>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
-            <fr:authors />
+            <fr:authors>
+              <fr:contributor>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:contributor>
+            </fr:authors>
             <fr:date>
               <fr:year>2025</fr:year>
               <fr:month>7</fr:month>
@@ -62,6 +66,7 @@
   <html:li>The <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link> — small hardware cache that absorbs the cost of consulting the page table on every access.</html:li>
   <html:li>The <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link> — the page table is itself paged, so processes only pay for the parts of the address space they use.</html:li></html:ol>
             <html:p>When a process touches a virtual address whose page isn't in physical memory, the page table's <html:em>present bit</html:em> is unset; the hardware traps to the OS as a <html:em>page fault</html:em>, and the OS retrieves the page from swap. The eviction policies that decide what to swap out are covered by <fr:link href="/HK73/" title="Page replacement" uri="https://kellenkanarios.com/HK73/" display-uri="HK73" type="local">Page replacement</fr:link>.</html:p>
+            <html:p>The two-level decomposition did not arrive fully formed. The <fr:link href="/HBFS/" title="Segmented page tables" uri="https://kellenkanarios.com/HBFS/" display-uri="HBFS" type="local">Segmented page tables</fr:link> design tried to give each named segment of the address space its own variable-sized page table; the fragmentation that produced is what motivated the move to fixed-size paged page tables.</html:p>
             <fr:tree show-metadata="false">
               <fr:frontmatter>
                 <fr:authors />
@@ -116,6 +121,33 @@
             </fr:tree>
             <fr:tree show-metadata="false">
               <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>13</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/HBFS/</fr:uri>
+                <fr:display-uri>HBFS</fr:display-uri>
+                <fr:route>/HBFS/</fr:route>
+                <fr:title text="Segmented page tables">Segmented page tables</fr:title>
+                <fr:taxon>Definition</fr:taxon>
+              </fr:frontmatter>
+              <fr:mainmatter>
+                <html:p>An early translation scheme that splits the virtual address space into a small number of named <html:em>segments</html:em> (code, data, stack, heap, ...) and gives each segment its own <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> sized only to the range of addresses that segment actually uses. The virtual address is interpreted as a triple: segment number, page number within the segment, and offset within the page.</html:p>
+                <html:p>Translation is a two-step walk. The segment number indexes a segment table, which yields the base and length of that segment's page table. The page number then indexes that page table to find the physical frame, and the offset is appended. Empty or unused segments need no page table at all, so a process pays for memory it actually uses — the same motivation that drives every non-flat translation scheme.</html:p>
+                <html:p>The mechanism has appealing side benefits. Each segment carries its own protection bits, so the architecture can enforce no-execute on the stack or read-only on the code segment at the segment-table level without per-page complexity. Translation overhead is bounded by the segment count, which is typically very small.</html:p>
+                <html:p>The problems are what killed it. Page tables are now variable-sized objects that still have to live in contiguous physical memory. The stack segment's page table might be small; the heap's might be large and grow over time. Allocating, growing, and freeing variably-sized tables in kernel memory produces external fragmentation — exactly the headache pure segmentation has at the user level, now pushed down a layer. If the heap outgrows its current page table, the kernel has to allocate a larger contiguous chunk and copy.</html:p>
+                <html:p>Secondary issues compound. Translation costs two memory references (segment table, then page table) before reaching data, which hurts without a <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link>. The segment count is fixed by the architecture, which is awkward for programs whose layout does not fit "code/data/stack/heap" — a sprawling memory-mapped region or a JIT wanting many small protection domains has nowhere to go. And segmentation tends to leak into the programming model: x86 carried segment registers around for decades after they had stopped being useful.</html:p>
+                <html:p>The fix that won is the <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link> — page the page table itself, in fixed-size chunks, and recover the "only pay for what you use" property without variable-sized contiguous allocations. Every modern architecture descends from that decision.</html:p>
+              </fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
                 <fr:authors />
                 <fr:date>
                   <fr:year>2026</fr:year>
@@ -127,7 +159,7 @@
                 <fr:route>/VX1M/</fr:route>
                 <fr:title text="Multi-level page table">Multi-level page table</fr:title>
               </fr:frontmatter>
-              <fr:mainmatter><html:p>A page table that is itself paged: instead of one linear array of PTEs, the table is split into page-sized chunks indexed by a top-level <html:em>page directory</html:em>. Subtrees of the address space that are entirely unused get a single null entry at the top level — no second-level page is allocated for them.</html:p><html:figure><html:img width="80%" src="/bafkrmihf7gcws2u2ay4ecuwqwpgnziozltgjbsn7zo6x5bs6ismwq76jby.png" /></html:figure><html:p>Advantages over a linear <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>:</html:p><html:ol><html:li>Fits easily in memory — only allocate a second-level page when an entry in it is used.</html:li>
+              <fr:mainmatter><html:p>A page table that is itself paged: instead of one linear array of PTEs, the table is split into page-sized chunks indexed by a top-level <html:em>page directory</html:em>. Subtrees of the address space that are entirely unused get a single null entry at the top level — no second-level page is allocated for them. This is the design that displaced <fr:link href="/HBFS/" title="Segmented page tables" uri="https://kellenkanarios.com/HBFS/" display-uri="HBFS" type="local">Segmented page tables</fr:link> — it preserves the "don't pay for empty regions" property while keeping every piece of the structure page-sized, eliminating the variable-allocation fragmentation that doomed the segmented version.</html:p><html:figure><html:img width="80%" src="/bafkrmihf7gcws2u2ay4ecuwqwpgnziozltgjbsn7zo6x5bs6ismwq76jby.png" /></html:figure><html:p>Advantages over a linear <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>:</html:p><html:ol><html:li>Fits easily in memory — only allocate a second-level page when an entry in it is used.</html:li>
   <html:li>Memory cost is proportional to the amount of address space actually in use.</html:li></html:ol>
     <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>On a <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link> miss, the walk now costs <html:em>two</html:em> memory loads — page directory entry first, then the PTE.</fr:mainmatter></fr:tree>
 
@@ -146,6 +178,33 @@
       <fr:mainmatter>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>13</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/HBFS/</fr:uri>
+            <fr:display-uri>HBFS</fr:display-uri>
+            <fr:route>/HBFS/</fr:route>
+            <fr:title text="Segmented page tables">Segmented page tables</fr:title>
+            <fr:taxon>Definition</fr:taxon>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>An early translation scheme that splits the virtual address space into a small number of named <html:em>segments</html:em> (code, data, stack, heap, ...) and gives each segment its own <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> sized only to the range of addresses that segment actually uses. The virtual address is interpreted as a triple: segment number, page number within the segment, and offset within the page.</html:p>
+            <html:p>Translation is a two-step walk. The segment number indexes a segment table, which yields the base and length of that segment's page table. The page number then indexes that page table to find the physical frame, and the offset is appended. Empty or unused segments need no page table at all, so a process pays for memory it actually uses — the same motivation that drives every non-flat translation scheme.</html:p>
+            <html:p>The mechanism has appealing side benefits. Each segment carries its own protection bits, so the architecture can enforce no-execute on the stack or read-only on the code segment at the segment-table level without per-page complexity. Translation overhead is bounded by the segment count, which is typically very small.</html:p>
+            <html:p>The problems are what killed it. Page tables are now variable-sized objects that still have to live in contiguous physical memory. The stack segment's page table might be small; the heap's might be large and grow over time. Allocating, growing, and freeing variably-sized tables in kernel memory produces external fragmentation — exactly the headache pure segmentation has at the user level, now pushed down a layer. If the heap outgrows its current page table, the kernel has to allocate a larger contiguous chunk and copy.</html:p>
+            <html:p>Secondary issues compound. Translation costs two memory references (segment table, then page table) before reaching data, which hurts without a <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link>. The segment count is fixed by the architecture, which is awkward for programs whose layout does not fit "code/data/stack/heap" — a sprawling memory-mapped region or a JIT wanting many small protection domains has nowhere to go. And segmentation tends to leak into the programming model: x86 carried segment registers around for decades after they had stopped being useful.</html:p>
+            <html:p>The fix that won is the <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link> — page the page table itself, in fixed-size chunks, and recover the "only pay for what you use" property without variable-sized contiguous allocations. Every modern architecture descends from that decision.</html:p>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
             <fr:authors />
             <fr:date>
               <fr:year>2026</fr:year>
@@ -157,7 +216,7 @@
             <fr:route>/VX1M/</fr:route>
             <fr:title text="Multi-level page table">Multi-level page table</fr:title>
           </fr:frontmatter>
-          <fr:mainmatter><html:p>A page table that is itself paged: instead of one linear array of PTEs, the table is split into page-sized chunks indexed by a top-level <html:em>page directory</html:em>. Subtrees of the address space that are entirely unused get a single null entry at the top level — no second-level page is allocated for them.</html:p><html:figure><html:img width="80%" src="/bafkrmihf7gcws2u2ay4ecuwqwpgnziozltgjbsn7zo6x5bs6ismwq76jby.png" /></html:figure><html:p>Advantages over a linear <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>:</html:p><html:ol><html:li>Fits easily in memory — only allocate a second-level page when an entry in it is used.</html:li>
+          <fr:mainmatter><html:p>A page table that is itself paged: instead of one linear array of PTEs, the table is split into page-sized chunks indexed by a top-level <html:em>page directory</html:em>. Subtrees of the address space that are entirely unused get a single null entry at the top level — no second-level page is allocated for them. This is the design that displaced <fr:link href="/HBFS/" title="Segmented page tables" uri="https://kellenkanarios.com/HBFS/" display-uri="HBFS" type="local">Segmented page tables</fr:link> — it preserves the "don't pay for empty regions" property while keeping every piece of the structure page-sized, eliminating the variable-allocation fragmentation that doomed the segmented version.</html:p><html:figure><html:img width="80%" src="/bafkrmihf7gcws2u2ay4ecuwqwpgnziozltgjbsn7zo6x5bs6ismwq76jby.png" /></html:figure><html:p>Advantages over a linear <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>:</html:p><html:ol><html:li>Fits easily in memory — only allocate a second-level page when an entry in it is used.</html:li>
   <html:li>Memory cost is proportional to the amount of address space actually in use.</html:li></html:ol>
     <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>On a <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link> miss, the walk now costs <html:em>two</html:em> memory loads — page directory entry first, then the PTE.</fr:mainmatter></fr:tree>
 
@@ -210,7 +269,11 @@
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
-            <fr:authors />
+            <fr:authors>
+              <fr:contributor>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:contributor>
+            </fr:authors>
             <fr:date>
               <fr:year>2025</fr:year>
               <fr:month>7</fr:month>
@@ -228,6 +291,7 @@
   <html:li>The <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link> — small hardware cache that absorbs the cost of consulting the page table on every access.</html:li>
   <html:li>The <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link> — the page table is itself paged, so processes only pay for the parts of the address space they use.</html:li></html:ol>
             <html:p>When a process touches a virtual address whose page isn't in physical memory, the page table's <html:em>present bit</html:em> is unset; the hardware traps to the OS as a <html:em>page fault</html:em>, and the OS retrieves the page from swap. The eviction policies that decide what to swap out are covered by <fr:link href="/HK73/" title="Page replacement" uri="https://kellenkanarios.com/HK73/" display-uri="HK73" type="local">Page replacement</fr:link>.</html:p>
+            <html:p>The two-level decomposition did not arrive fully formed. The <fr:link href="/HBFS/" title="Segmented page tables" uri="https://kellenkanarios.com/HBFS/" display-uri="HBFS" type="local">Segmented page tables</fr:link> design tried to give each named segment of the address space its own variable-sized page table; the fragmentation that produced is what motivated the move to fixed-size paged page tables.</html:p>
             <fr:tree show-metadata="false">
               <fr:frontmatter>
                 <fr:authors />
@@ -282,6 +346,33 @@
             </fr:tree>
             <fr:tree show-metadata="false">
               <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>13</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/HBFS/</fr:uri>
+                <fr:display-uri>HBFS</fr:display-uri>
+                <fr:route>/HBFS/</fr:route>
+                <fr:title text="Segmented page tables">Segmented page tables</fr:title>
+                <fr:taxon>Definition</fr:taxon>
+              </fr:frontmatter>
+              <fr:mainmatter>
+                <html:p>An early translation scheme that splits the virtual address space into a small number of named <html:em>segments</html:em> (code, data, stack, heap, ...) and gives each segment its own <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> sized only to the range of addresses that segment actually uses. The virtual address is interpreted as a triple: segment number, page number within the segment, and offset within the page.</html:p>
+                <html:p>Translation is a two-step walk. The segment number indexes a segment table, which yields the base and length of that segment's page table. The page number then indexes that page table to find the physical frame, and the offset is appended. Empty or unused segments need no page table at all, so a process pays for memory it actually uses — the same motivation that drives every non-flat translation scheme.</html:p>
+                <html:p>The mechanism has appealing side benefits. Each segment carries its own protection bits, so the architecture can enforce no-execute on the stack or read-only on the code segment at the segment-table level without per-page complexity. Translation overhead is bounded by the segment count, which is typically very small.</html:p>
+                <html:p>The problems are what killed it. Page tables are now variable-sized objects that still have to live in contiguous physical memory. The stack segment's page table might be small; the heap's might be large and grow over time. Allocating, growing, and freeing variably-sized tables in kernel memory produces external fragmentation — exactly the headache pure segmentation has at the user level, now pushed down a layer. If the heap outgrows its current page table, the kernel has to allocate a larger contiguous chunk and copy.</html:p>
+                <html:p>Secondary issues compound. Translation costs two memory references (segment table, then page table) before reaching data, which hurts without a <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link>. The segment count is fixed by the architecture, which is awkward for programs whose layout does not fit "code/data/stack/heap" — a sprawling memory-mapped region or a JIT wanting many small protection domains has nowhere to go. And segmentation tends to leak into the programming model: x86 carried segment registers around for decades after they had stopped being useful.</html:p>
+                <html:p>The fix that won is the <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link> — page the page table itself, in fixed-size chunks, and recover the "only pay for what you use" property without variable-sized contiguous allocations. Every modern architecture descends from that decision.</html:p>
+              </fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
                 <fr:authors />
                 <fr:date>
                   <fr:year>2026</fr:year>
@@ -293,7 +384,7 @@
                 <fr:route>/VX1M/</fr:route>
                 <fr:title text="Multi-level page table">Multi-level page table</fr:title>
               </fr:frontmatter>
-              <fr:mainmatter><html:p>A page table that is itself paged: instead of one linear array of PTEs, the table is split into page-sized chunks indexed by a top-level <html:em>page directory</html:em>. Subtrees of the address space that are entirely unused get a single null entry at the top level — no second-level page is allocated for them.</html:p><html:figure><html:img width="80%" src="/bafkrmihf7gcws2u2ay4ecuwqwpgnziozltgjbsn7zo6x5bs6ismwq76jby.png" /></html:figure><html:p>Advantages over a linear <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>:</html:p><html:ol><html:li>Fits easily in memory — only allocate a second-level page when an entry in it is used.</html:li>
+              <fr:mainmatter><html:p>A page table that is itself paged: instead of one linear array of PTEs, the table is split into page-sized chunks indexed by a top-level <html:em>page directory</html:em>. Subtrees of the address space that are entirely unused get a single null entry at the top level — no second-level page is allocated for them. This is the design that displaced <fr:link href="/HBFS/" title="Segmented page tables" uri="https://kellenkanarios.com/HBFS/" display-uri="HBFS" type="local">Segmented page tables</fr:link> — it preserves the "don't pay for empty regions" property while keeping every piece of the structure page-sized, eliminating the variable-allocation fragmentation that doomed the segmented version.</html:p><html:figure><html:img width="80%" src="/bafkrmihf7gcws2u2ay4ecuwqwpgnziozltgjbsn7zo6x5bs6ismwq76jby.png" /></html:figure><html:p>Advantages over a linear <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>:</html:p><html:ol><html:li>Fits easily in memory — only allocate a second-level page when an entry in it is used.</html:li>
   <html:li>Memory cost is proportional to the amount of address space actually in use.</html:li></html:ol>
     <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>On a <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link> miss, the walk now costs <html:em>two</html:em> memory loads — page directory entry first, then the PTE.</fr:mainmatter></fr:tree>
 

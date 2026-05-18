@@ -206,17 +206,20 @@ The second <html:code>add</html:code> only depends on <html:code>r2</html:code> 
    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>An out-of-order pipeline can issue a load early (because its address operands are ready), execute several unrelated ALU ops while waiting for the memory, then have all four instructions ready to commit in program order. The illusion of sequential execution is preserved; the parallelism is real.</fr:mainmatter></fr:tree>
  
 </fr:mainmatter></fr:tree>
-<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/BI4H/</fr:uri><fr:display-uri>BI4H</fr:display-uri><fr:route>/BI4H/</fr:route><fr:title text="Reorder buffer">Reorder buffer</fr:title></fr:frontmatter><fr:mainmatter><html:p>The structure that lets an <fr:link href="/U0NY/" title="Out-of-order execution" uri="https://kellenkanarios.com/U0NY/" display-uri="U0NY" type="local">Out-of-order execution</fr:link> CPU look in-order to the programmer. The ROB holds every in-flight instruction in original program order, regardless of the order they actually executed. When the oldest entry has its result ready and all earlier entries have already committed, the ROB <html:em>commits</html:em> it — writing its result to architectural state and freeing the slot.</html:p><html:p>Each ROB entry typically tracks:</html:p><html:ul><html:li>Instruction identity and program order position.</html:li>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>13</fr:day></fr:date><fr:uri>https://kellenkanarios.com/BI4H/</fr:uri><fr:display-uri>BI4H</fr:display-uri><fr:route>/BI4H/</fr:route><fr:title text="Reorder buffer">Reorder buffer</fr:title></fr:frontmatter><fr:mainmatter><html:p>The structure that lets an <fr:link href="/U0NY/" title="Out-of-order execution" uri="https://kellenkanarios.com/U0NY/" display-uri="U0NY" type="local">Out-of-order execution</fr:link> CPU look in-order to the programmer. The ROB holds every in-flight instruction in original program order, regardless of the order they actually executed. When the oldest entry has its result ready and all earlier entries have already committed, the ROB <html:em>commits</html:em> it — writing its result to architectural state and freeing the slot.</html:p><html:p>For stores, commit is only half the story. The ROB entry is freed and the instruction is architecturally real, but the value has not yet reached the cache — it is handed off to the <fr:link href="/UNB6/" title="Store buffer" uri="https://kellenkanarios.com/UNB6/" display-uri="UNB6" type="local">Store buffer</fr:link> for asynchronous drain. This is what keeps the ROB from stalling behind every cache miss: once a store is known to be non-speculative, the front-end can move on.</html:p><html:p>Each ROB entry typically tracks:</html:p><html:ul><html:li>Instruction identity and program order position.</html:li>
   <html:li>Operand register names (and renamed sources).</html:li>
   <html:li>Status — pending, executing, complete, speculated.</html:li>
   <html:li>The instruction's result, held in a data field that doubles as a <fr:link href="/5CT9/" title="Register renaming" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">Register renaming</fr:link> register.</html:li></html:ul><html:p>Speculatively-issued instructions also enter the ROB but are tagged. On a branch misprediction, all speculative entries past the mispredicted branch are squashed.</html:p><html:p>The Pentium Pro introduced this design with a 40-entry ROB. The ROB sits at both ends of the pipeline — dispatch enters it, retirement leaves it — which is what makes the rest of the back-end free to issue and execute out of order.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>ROB size, <fr:link href="/FQ9N/" title="Reservation station" uri="https://kellenkanarios.com/FQ9N/" display-uri="FQ9N" type="local">Reservation station</fr:link> count, and pipeline depth set each other's bounds. A shallow pipeline can afford a small ROB; a deep one (Pentium 4 had 126) needs a large one to keep the back-end fed.</fr:mainmatter></fr:tree>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>13</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>ROB size, <fr:link href="/FQ9N/" title="Reservation station" uri="https://kellenkanarios.com/FQ9N/" display-uri="FQ9N" type="local">Reservation station</fr:link> count, and pipeline depth set each other's bounds. A shallow pipeline can afford a small ROB; a deep one (Pentium 4 had 126) needs a large one to keep the back-end fed.</fr:mainmatter></fr:tree>
 </fr:mainmatter></fr:tree>
 <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/FQ9N/</fr:uri><fr:display-uri>FQ9N</fr:display-uri><fr:route>/FQ9N/</fr:route><fr:title text="Reservation station">Reservation station</fr:title></fr:frontmatter><fr:mainmatter><html:p>A buffer in front of an <fr:link href="/DA6Q/" title="Execution units" uri="https://kellenkanarios.com/DA6Q/" display-uri="DA6Q" type="local">Execution units</fr:link> (or group of them) that holds dispatched instructions waiting on their operands. Once all operands arrive — either by writeback or by <fr:link href="/USSP/" title="Forwarding" uri="https://kellenkanarios.com/USSP/" display-uri="USSP" type="local">Forwarding</fr:link> — the instruction is <html:em>issued</html:em> to its execution unit. Reservation stations exist so that an instruction waiting on a slow operand doesn't block dispatch of unrelated instructions behind it.</html:p><html:p>Two organizational choices:</html:p><html:ul><html:li>One reservation station per execution unit (Pentium Pro). Smaller, simpler.</html:li>
   <html:li>One shared station feeding multiple units (also seen on Pentium Pro, where it issues up to five micro-ops per cycle).</html:li></html:ul><html:p>Within a single station, instructions issue in FIFO order. Across stations, there is no guarantee — that's what <html:em>out-of-order</html:em> execution actually means.</html:p><html:p>Dispatching an instruction into a reservation station has four prerequisites:</html:p><html:ol><html:li>In-order rule: instructions dispatch in program order (they execute out of order, not dispatch).</html:li>
   <html:li>Execution unit availability: the matching reservation station has room.</html:li>
   <html:li>Completion buffer availability: the <fr:link href="/BI4H/" title="Reorder buffer" uri="https://kellenkanarios.com/BI4H/" display-uri="BI4H" type="local">Reorder buffer</fr:link> has room to track the new in-flight instruction.</html:li>
   <html:li>Register-rename availability: enough rename registers exist to hold the new instruction's destination.</html:li></html:ol></fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>13</fr:day></fr:date><fr:uri>https://kellenkanarios.com/UJPD/</fr:uri><fr:display-uri>UJPD</fr:display-uri><fr:route>/UJPD/</fr:route><fr:title text="Issue queue wakeup-select">Issue queue wakeup-select</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>The mechanism by which a modern out-of-order CPU notices that a previously-stalled instruction now has all its operands ready. The issue queue holds the N in-flight instructions whose operands are not yet available; each entry watches a small set of physical register tags (the operands it is waiting for). When a producer finishes, it broadcasts "tag T is ready" to every entry, and each entry compares that tag against its own waiting tags through a content-addressable memory (CAM). Entries whose last operand arrives become eligible to issue this cycle; a separate <html:em>select</html:em> stage picks which of the now-ready entries actually fires.</html:p><html:p>The cost is the reason CPU issue queues are small. Each entry runs a CAM lookup against each broadcast tag, so an N-entry queue with N producers per cycle scales as <fr:tex display="inline"><![CDATA[O(N^2)]]></fr:tex> in comparators, wires, and power. The select stage compounds this — priority encoders across N entries are themselves a quadratic-area structure on the critical timing path. The cumulative wakeup-select latency is what bounds clock frequency once N grows past a few tens.</html:p><html:p>This is the structural reason CPU out-of-order windows stay in the tens-to-low-hundreds of entries even as transistor budgets grow. Wider doesn't help: timing closure on the CAM degrades faster than the additional ILP repays. GPUs sidestep the whole problem by leaning on <fr:link href="/G4ML/" title="Thread-level parallelism" uri="https://kellenkanarios.com/G4ML/" display-uri="G4ML" type="local">Thread-level parallelism</fr:link> — a cheap per-register <fr:link href="/XPAA/" title="GPU register scoreboard" uri="https://kellenkanarios.com/XPAA/" display-uri="XPAA" type="local">scoreboard</fr:link> plus a warp scheduler covers stalls without any broadcast/compare structure.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>13</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Wakeup-select sits at the boundary between <fr:link href="/FQ9N/" title="Reservation station" uri="https://kellenkanarios.com/FQ9N/" display-uri="FQ9N" type="local">Reservation station</fr:link> (which holds the instruction) and <fr:link href="/5CT9/" title="Register renaming" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">Register renaming</fr:link> (which named the tags being broadcast). All three structures together are what people mean by "the out-of-order back-end."</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
 </fr:mainmatter></fr:tree>
 
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>15</fr:day></fr:date><fr:title text="Instruction set architecture">Instruction set architecture</fr:title></fr:frontmatter><fr:mainmatter>
@@ -910,7 +913,11 @@ pens when you use <html:code>-S SWITCH ON IO</html:code> vs. <html:code>-S SWITC
             </fr:tree>
             <fr:tree show-metadata="false">
               <fr:frontmatter>
-                <fr:authors />
+                <fr:authors>
+                  <fr:contributor>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:contributor>
+                </fr:authors>
                 <fr:date>
                   <fr:year>2025</fr:year>
                   <fr:month>8</fr:month>
@@ -991,89 +998,11 @@ pens when you use <html:code>-S SWITCH ON IO</html:code> vs. <html:code>-S SWITC
                 </fr:tree>
                 <fr:tree show-metadata="false">
                   <fr:frontmatter>
-                    <fr:authors />
-                    <fr:date>
-                      <fr:year>2025</fr:year>
-                      <fr:month>7</fr:month>
-                      <fr:day>29</fr:day>
-                    </fr:date>
-                    <fr:uri>https://kellenkanarios.com/SAYD/</fr:uri>
-                    <fr:display-uri>SAYD</fr:display-uri>
-                    <fr:route>/SAYD/</fr:route>
-                    <fr:title text="Memory Intro">Memory Intro</fr:title>
-                  </fr:frontmatter>
-                  <fr:mainmatter>
-                    <html:p>We are now moving on from <fr:link href="/B8GC/" title="Scheduling" uri="https://kellenkanarios.com/B8GC/" display-uri="B8GC" type="local">scheduling</fr:link> into the wonderful world of all things memory. The starting point is the <html:em>address space</html:em> abstraction — each process is handed its own private virtual memory and the OS, with hardware help, manages the mapping from virtual to physical addresses.</html:p>
-                    <html:p>The progression of translation schemes covered in TPE:</html:p>
-                    <html:ol><html:li><fr:link href="/9MPY/" title="Base and bounds" uri="https://kellenkanarios.com/9MPY/" display-uri="9MPY" type="local">Base and bounds</fr:link> — one base+bound pair per process. Simple but wasteful.</html:li>
-  <html:li><fr:link href="/REKW/" title="Segmentation" uri="https://kellenkanarios.com/REKW/" display-uri="REKW" type="local">Segmentation</fr:link> — per-region base+bound. Removes internal fragmentation, introduces external fragmentation.</html:li>
-  <html:li><fr:link href="/SB61/" title="Paging" uri="https://kellenkanarios.com/SB61/" display-uri="SB61" type="local">Paging</fr:link> — fixed-size translation units. Eliminates external fragmentation at the cost of a translation table.</html:li></html:ol>
-                    <fr:tree show-metadata="false">
-                      <fr:frontmatter>
-                        <fr:authors />
-                        <fr:date>
-                          <fr:year>2026</fr:year>
-                          <fr:month>5</fr:month>
-                          <fr:day>12</fr:day>
-                        </fr:date>
-                        <fr:uri>https://kellenkanarios.com/7MH4/</fr:uri>
-                        <fr:display-uri>7MH4</fr:display-uri>
-                        <fr:route>/7MH4/</fr:route>
-                        <fr:title text="Address space">Address space</fr:title>
-                      </fr:frontmatter>
-                      <fr:mainmatter><html:p>The chunk of memory the OS gives a process to use at its own discretion. Each process has its own address space, so that one process cannot read or overwrite another's program state. An address space typically contains three regions:</html:p><html:ol><html:li><html:strong>Code</html:strong>: the program text.</html:li>
-  <html:li><html:strong>Stack</html:strong>: local variables, function arguments, return values.</html:li>
-  <html:li><html:strong>Heap</html:strong>: dynamically allocated memory.</html:li></html:ol><html:p>Every address a process sees is <html:em>virtual</html:em> — not the location in physical memory. The hardware translates virtual addresses to physical ones at access time. Approaches to that translation include <fr:link href="/9MPY/" title="Base and bounds" uri="https://kellenkanarios.com/9MPY/" display-uri="9MPY" type="local">Base and bounds</fr:link>, <fr:link href="/REKW/" title="Segmentation" uri="https://kellenkanarios.com/REKW/" display-uri="REKW" type="local">Segmentation</fr:link>, and <fr:link href="/SB61/" title="Paging" uri="https://kellenkanarios.com/SB61/" display-uri="SB61" type="local">Paging</fr:link>.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The <html:em>API</html:em> the user sees is tiny: a way to get memory and a way to release it, exposed as <html:code>malloc</html:code> and <html:code>free</html:code>. The common bugs are forgetting to initialize, forgetting to free, freeing too early (dangling pointer), freeing twice (double free), and freeing memory not from <html:code>malloc</html:code> (invalid free).</fr:mainmatter></fr:tree>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter><html:code>malloc</html:code> and <html:code>free</html:code> are library calls, not <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">syscalls</fr:link>. The heap is pre-allocated; <html:code>malloc</html:code> extends it by invoking <html:code>brk</html:code>/<html:code>sbrk</html:code> when it runs out.</fr:mainmatter></fr:tree>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>When a process dies, the OS reclaims its memory, so a bounded leak is not catastrophic — just bad practice.</fr:mainmatter></fr:tree>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>You can also acquire an anonymous heap-like region directly via <html:code>mmap</html:code>.</fr:mainmatter></fr:tree>
-</fr:mainmatter>
-                    </fr:tree>
-                    <fr:tree show-metadata="false">
-                      <fr:frontmatter>
-                        <fr:authors />
-                        <fr:date>
-                          <fr:year>2026</fr:year>
-                          <fr:month>5</fr:month>
-                          <fr:day>12</fr:day>
-                        </fr:date>
-                        <fr:uri>https://kellenkanarios.com/9MPY/</fr:uri>
-                        <fr:display-uri>9MPY</fr:display-uri>
-                        <fr:route>/9MPY/</fr:route>
-                        <fr:title text="Base and bounds">Base and bounds</fr:title>
-                      </fr:frontmatter>
-                      <fr:mainmatter><html:p>The simplest hardware mechanism for <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">Address space</fr:link> translation. The CPU has two dedicated registers per process — a <html:em>base</html:em> pointing to the start of the process's region in physical memory and a <html:em>bound</html:em> marking the end. Translation is just <html:code>phys = base + virt</html:code>, with a check that the result stays below <html:code>bound</html:code>. The unit performing this translation in hardware is the <html:em>memory management unit</html:em> (MMU).</html:p><html:p>The hardware must expose privileged instructions for the OS to set base and bound on a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link>, and trap on out-of-bound accesses.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>To support a large address space, base-and-bounds suffers significant <html:em>internal fragmentation</html:em> — the unused gap between the stack and heap is allocated but wasted. With 16KB total memory and 4KB-but-mostly-empty processes, you can run 4 processes when you'd really have room for 8.</fr:mainmatter></fr:tree>
-<html:p><fr:link href="/REKW/" title="Segmentation" uri="https://kellenkanarios.com/REKW/" display-uri="REKW" type="local">Segmentation</fr:link> is the natural next step — give each region (code, stack, heap) its own base and bound so the gaps don't have to be allocated.</html:p></fr:mainmatter>
-                    </fr:tree>
-                    <fr:tree show-metadata="false">
-                      <fr:frontmatter>
-                        <fr:authors />
-                        <fr:date>
-                          <fr:year>2026</fr:year>
-                          <fr:month>5</fr:month>
-                          <fr:day>12</fr:day>
-                        </fr:date>
-                        <fr:uri>https://kellenkanarios.com/REKW/</fr:uri>
-                        <fr:display-uri>REKW</fr:display-uri>
-                        <fr:route>/REKW/</fr:route>
-                        <fr:title text="Segmentation">Segmentation</fr:title>
-                      </fr:frontmatter>
-                      <fr:mainmatter><html:p>An <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">Address space</fr:link>-translation scheme that gives each logical region of a process (code, heap, stack, ...) its own base and bound. Instead of allocating a single contiguous chunk with empty space between regions, the OS allocates each segment separately and on demand. A virtual address is split into a segment number and an offset within that segment:</html:p><fr:tex display="block"><![CDATA[\underbrace {0 1}_{\text {segment}}\underbrace {0 1 \cdots  11}_{\text {offset}}]]></fr:tex><html:p>The hardware uses the segment number to index a segment table, retrieves that segment's base and bound, and adds the offset. Per-segment protection bits make read-only code and no-execute data straightforward.</html:p><html:p>Segmentation also enables <html:em>memory sharing</html:em> — two processes can map the same physical segment (e.g. shared code) into both their address spaces.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The stack grows downward, so the bounds check has to be direction-aware based on the segment number.</fr:mainmatter></fr:tree>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Segmentation does not solve fragmentation; it pushes it from internal (per-process) to external (per-system). Variable-sized segments leave variably-sized holes in physical memory. The fix that eventually won is <fr:link href="/SB61/" title="Paging" uri="https://kellenkanarios.com/SB61/" display-uri="SB61" type="local">Paging</fr:link>.</fr:mainmatter></fr:tree>
-</fr:mainmatter>
-                    </fr:tree>
-                  </fr:mainmatter>
-                </fr:tree>
-                <fr:tree show-metadata="false">
-                  <fr:frontmatter>
-                    <fr:authors />
+                    <fr:authors>
+                      <fr:contributor>
+                        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                      </fr:contributor>
+                    </fr:authors>
                     <fr:date>
                       <fr:year>2025</fr:year>
                       <fr:month>7</fr:month>
@@ -1091,6 +1020,7 @@ pens when you use <html:code>-S SWITCH ON IO</html:code> vs. <html:code>-S SWITC
   <html:li>The <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link> — small hardware cache that absorbs the cost of consulting the page table on every access.</html:li>
   <html:li>The <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link> — the page table is itself paged, so processes only pay for the parts of the address space they use.</html:li></html:ol>
                     <html:p>When a process touches a virtual address whose page isn't in physical memory, the page table's <html:em>present bit</html:em> is unset; the hardware traps to the OS as a <html:em>page fault</html:em>, and the OS retrieves the page from swap. The eviction policies that decide what to swap out are covered by <fr:link href="/HK73/" title="Page replacement" uri="https://kellenkanarios.com/HK73/" display-uri="HK73" type="local">Page replacement</fr:link>.</html:p>
+                    <html:p>The two-level decomposition did not arrive fully formed. The <fr:link href="/HBFS/" title="Segmented page tables" uri="https://kellenkanarios.com/HBFS/" display-uri="HBFS" type="local">Segmented page tables</fr:link> design tried to give each named segment of the address space its own variable-sized page table; the fragmentation that produced is what motivated the move to fixed-size paged page tables.</html:p>
                     <fr:tree show-metadata="false">
                       <fr:frontmatter>
                         <fr:authors />
@@ -1145,6 +1075,33 @@ pens when you use <html:code>-S SWITCH ON IO</html:code> vs. <html:code>-S SWITC
                     </fr:tree>
                     <fr:tree show-metadata="false">
                       <fr:frontmatter>
+                        <fr:authors>
+                          <fr:author>
+                            <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                          </fr:author>
+                        </fr:authors>
+                        <fr:date>
+                          <fr:year>2026</fr:year>
+                          <fr:month>5</fr:month>
+                          <fr:day>13</fr:day>
+                        </fr:date>
+                        <fr:uri>https://kellenkanarios.com/HBFS/</fr:uri>
+                        <fr:display-uri>HBFS</fr:display-uri>
+                        <fr:route>/HBFS/</fr:route>
+                        <fr:title text="Segmented page tables">Segmented page tables</fr:title>
+                        <fr:taxon>Definition</fr:taxon>
+                      </fr:frontmatter>
+                      <fr:mainmatter>
+                        <html:p>An early translation scheme that splits the virtual address space into a small number of named <html:em>segments</html:em> (code, data, stack, heap, ...) and gives each segment its own <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> sized only to the range of addresses that segment actually uses. The virtual address is interpreted as a triple: segment number, page number within the segment, and offset within the page.</html:p>
+                        <html:p>Translation is a two-step walk. The segment number indexes a segment table, which yields the base and length of that segment's page table. The page number then indexes that page table to find the physical frame, and the offset is appended. Empty or unused segments need no page table at all, so a process pays for memory it actually uses — the same motivation that drives every non-flat translation scheme.</html:p>
+                        <html:p>The mechanism has appealing side benefits. Each segment carries its own protection bits, so the architecture can enforce no-execute on the stack or read-only on the code segment at the segment-table level without per-page complexity. Translation overhead is bounded by the segment count, which is typically very small.</html:p>
+                        <html:p>The problems are what killed it. Page tables are now variable-sized objects that still have to live in contiguous physical memory. The stack segment's page table might be small; the heap's might be large and grow over time. Allocating, growing, and freeing variably-sized tables in kernel memory produces external fragmentation — exactly the headache pure segmentation has at the user level, now pushed down a layer. If the heap outgrows its current page table, the kernel has to allocate a larger contiguous chunk and copy.</html:p>
+                        <html:p>Secondary issues compound. Translation costs two memory references (segment table, then page table) before reaching data, which hurts without a <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link>. The segment count is fixed by the architecture, which is awkward for programs whose layout does not fit "code/data/stack/heap" — a sprawling memory-mapped region or a JIT wanting many small protection domains has nowhere to go. And segmentation tends to leak into the programming model: x86 carried segment registers around for decades after they had stopped being useful.</html:p>
+                        <html:p>The fix that won is the <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link> — page the page table itself, in fixed-size chunks, and recover the "only pay for what you use" property without variable-sized contiguous allocations. Every modern architecture descends from that decision.</html:p>
+                      </fr:mainmatter>
+                    </fr:tree>
+                    <fr:tree show-metadata="false">
+                      <fr:frontmatter>
                         <fr:authors />
                         <fr:date>
                           <fr:year>2026</fr:year>
@@ -1156,7 +1113,7 @@ pens when you use <html:code>-S SWITCH ON IO</html:code> vs. <html:code>-S SWITC
                         <fr:route>/VX1M/</fr:route>
                         <fr:title text="Multi-level page table">Multi-level page table</fr:title>
                       </fr:frontmatter>
-                      <fr:mainmatter><html:p>A page table that is itself paged: instead of one linear array of PTEs, the table is split into page-sized chunks indexed by a top-level <html:em>page directory</html:em>. Subtrees of the address space that are entirely unused get a single null entry at the top level — no second-level page is allocated for them.</html:p><html:figure><html:img width="80%" src="/bafkrmihf7gcws2u2ay4ecuwqwpgnziozltgjbsn7zo6x5bs6ismwq76jby.png" /></html:figure><html:p>Advantages over a linear <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>:</html:p><html:ol><html:li>Fits easily in memory — only allocate a second-level page when an entry in it is used.</html:li>
+                      <fr:mainmatter><html:p>A page table that is itself paged: instead of one linear array of PTEs, the table is split into page-sized chunks indexed by a top-level <html:em>page directory</html:em>. Subtrees of the address space that are entirely unused get a single null entry at the top level — no second-level page is allocated for them. This is the design that displaced <fr:link href="/HBFS/" title="Segmented page tables" uri="https://kellenkanarios.com/HBFS/" display-uri="HBFS" type="local">Segmented page tables</fr:link> — it preserves the "don't pay for empty regions" property while keeping every piece of the structure page-sized, eliminating the variable-allocation fragmentation that doomed the segmented version.</html:p><html:figure><html:img width="80%" src="/bafkrmihf7gcws2u2ay4ecuwqwpgnziozltgjbsn7zo6x5bs6ismwq76jby.png" /></html:figure><html:p>Advantages over a linear <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>:</html:p><html:ol><html:li>Fits easily in memory — only allocate a second-level page when an entry in it is used.</html:li>
   <html:li>Memory cost is proportional to the amount of address space actually in use.</html:li></html:ol>
     <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>On a <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link> miss, the walk now costs <html:em>two</html:em> memory loads — page directory entry first, then the PTE.</fr:mainmatter></fr:tree>
 
