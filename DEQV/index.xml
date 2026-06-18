@@ -96,6 +96,92 @@ Requires modern Hopper Architecture i.e. H100 to perform operations. Also suppor
       <fr:mainmatter>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>20</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/PI7N/</fr:uri>
+            <fr:display-uri>PI7N</fr:display-uri>
+            <fr:route>/PI7N/</fr:route>
+            <fr:title text="Online Softmax">Online Softmax</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>This covers the math behind the online softmax algorithm required by <fr:link href="/R0PM/" title="Flash Attention (v1)" uri="https://kellenkanarios.com/R0PM/" display-uri="R0PM" type="local">Flash Attention (v1)</fr:link>.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:title text="Safe softmax">Safe softmax</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The first thing we must consider is numerical precision. Namely, the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">original softmax</fr:link> operation is given by</html:p>
+<fr:tex display="block"><![CDATA[\mathrm {softmax}(\mathbf {x}) = \frac {\exp (\mathbf {x})}{\sum _{i=1}^n \exp (\mathbf {x}_i)}]]></fr:tex>
+<html:p>However, when operating with <fr:link href="/DEQV/" title="Low Precision Data Types" uri="https://kellenkanarios.com/DEQV/" display-uri="DEQV" type="local">low precision data types</fr:link> (i.e. float16) the maximum value is <fr:tex display="inline"><![CDATA[65536]]></fr:tex>. Therefore, with <fr:tex display="inline"><![CDATA[\exp ]]></fr:tex> we can easily get numerically overflow.</html:p>
+<html:p>To get around this, the online softmax algorithm adheres to the <html:em>safe softmax</html:em>. For safe softmax, we simply multiply the numerator and denominator by <fr:tex display="inline"><![CDATA[\exp (-m)]]></fr:tex>, where <fr:tex display="inline"><![CDATA[m = \max  \{x_{1}, \ldots , x_n\}]]></fr:tex>. This gives</html:p>
+<fr:tex display="block"><![CDATA[\mathrm {softmax}(\mathbf {x}) = \frac {\exp (\mathbf {x} - m)}{\sum _{i=1}^n \exp (\mathbf {x}_i - m)}]]></fr:tex>
+<html:p>Since <fr:tex display="inline"><![CDATA[x_i - m \leq  0]]></fr:tex>, this ensures that each <fr:tex display="inline"><![CDATA[\exp (x_i - m)]]></fr:tex> is bounded in a safe range.</html:p>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Note that computing the <fr:tex display="inline"><![CDATA[\max ]]></fr:tex> over <fr:tex display="inline"><![CDATA[\mathbf {x}]]></fr:tex> means that we must have all of the logits in a row of <fr:tex display="inline"><![CDATA[QK^T]]></fr:tex> materialized in <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">SMEM</fr:link>, or first loop over all of them to compute the max before computing the normalization constant.</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:title text="Fusing the max and normalization">Fusing the max and normalization</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The online softmax algorithm fuses the max reduction into the normalization pass, so a single sweep over the row suffices to compute the normalization with the max. The key difficulty is that the denominator depends on <fr:tex display="inline"><![CDATA[n]]></fr:tex> <html:strong>for each</html:strong> <fr:tex display="inline"><![CDATA[i]]></fr:tex> i.e.</html:p>
+<fr:tex display="block"><![CDATA[d = \sum _{i=1}^{n} \exp (x_i - m_n)]]></fr:tex>
+<html:p>
+Therefore, we must find a recursive relationship such that <fr:tex display="inline"><![CDATA[d_{i+1} = f(d_i, m_i, x_{i+1})]]></fr:tex> for some function <fr:tex display="inline"><![CDATA[f]]></fr:tex>. This would then allow us to locally compute <fr:tex display="inline"><![CDATA[d_{i+1}]]></fr:tex> with only the local information of current <fr:tex display="inline"><![CDATA[x_{i+1}]]></fr:tex> and the two running statistics <fr:tex display="inline"><![CDATA[d_i]]></fr:tex> and <fr:tex display="inline"><![CDATA[m_i]]></fr:tex>. This is exactly the kind of algorithm that is conducive to <fr:link href="https://kellenkanarios.com/OGCRV/" type="external">memory tiling</fr:link>.
+</html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>What is <fr:tex display="inline"><![CDATA[f(d_i, m_i, x_{i+1})]]></fr:tex>?</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>Consider <fr:tex display="inline"><![CDATA[d_{i+1} = d_i \cdot  \exp (m_{i} - m_{i + 1}) + \exp (x_{i + 1} - m_{i + 1})]]></fr:tex>.</fr:mainmatter></fr:tree>
+
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>
+  This can be seen by directly rewriting <fr:tex display="inline"><![CDATA[d_{i + 1}]]></fr:tex>. 
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+      d_{i + 1} &= \sum _{j = 1}^{i+1} \exp (x_j - m_{i + 1}) \\
+      &= \left (\sum _{j = 1}^{i} \exp (x_j - m_{i+1})\right ) + \exp (x_{i+1} - m_{i+1}) \\
+      &= \left (\sum _{j = 1}^{i} \exp (x_j - m_{i})\right )\exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1}) \\
+      &= d_{i} \exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1})
+    \end {align*}
+  ]]></fr:tex>
+</fr:mainmatter></fr:tree>
+ 
+
+
+<html:p>
+The running denominator <fr:tex display="inline"><![CDATA[d]]></fr:tex> is rescaled by <fr:tex display="inline"><![CDATA[e^{m - m_{\text {new}}}]]></fr:tex> each time a new maximum is found, keeping it consistent with the safe-softmax shift.</html:p>
+<html:p><fr:resource hash="4a2d5b3202e83ff6780ef6fedca07f67"><fr:resource-content><html:img src="https://kellenkanarios.com/4a2d5b3202e83ff6780ef6fedca07f67.svg" /></fr:resource-content><fr:resource-source type="latex" part="preamble"><![CDATA[
+  \usepackage{tikz, tikz-cd, mathtools, amssymb, amsmath, stmaryrd, algpseudocodex}
+ \newenvironment{algo}{\begin{varwidth}{20cm}\begin{algorithmic}}{\end{algorithmic}\end{varwidth}}
+ \ExplSyntaxOff
+]]></fr:resource-source><fr:resource-source type="latex" part="body"><![CDATA[
+\begin {algo}
+\State  $m \gets  -\infty ;\quad  d \gets  0$
+\For {$i = 1$ \textbf {to} $n$}
+  \State  $m_{i+1} \gets  \max (m_i, x_i)$
+  \State  $d_{i + 1} \gets  d_i \cdot  e^{\,m_i - m_{i+1}} + e^{\,x_i - m_{i}}$
+\EndFor 
+\For {$i = 1$ \textbf {to} $n$}
+    \State  $\mathbf {p}_{i} \gets  e^{\,x_i - m_n} / d \;$
+\EndFor 
+\Return  $\mathbf {p}$
+\end {algo}
+]]></fr:resource-source></fr:resource></html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Unfortunately, we cannot get around the second pass to compute the normalized output for <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex>. However, this is not the case in <fr:link href="/R0PM/" title="Flash Attention (v1)" uri="https://kellenkanarios.com/R0PM/" display-uri="R0PM" type="local">Flash Attention (v1)</fr:link>.
+</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
             <fr:authors />
             <fr:date>
               <fr:year>2025</fr:year>

@@ -385,6 +385,79 @@ In <fr:link href="/shaoDeepSeekMathPushingLimits2024/" title="DeepSeekMath: Push
               </fr:author>
             </fr:authors>
             <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>27</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/OGCS0/</fr:uri>
+            <fr:display-uri>OGCS0</fr:display-uri>
+            <fr:route>/OGCS0/</fr:route>
+            <fr:title text="Flash Attention (Fwd)">Flash Attention (Fwd)</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>
+Unlike in the <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">online softmax</fr:link>, we are not interested in the outputted probability vector <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex>. Instead we are interested in the entire output matrix <fr:tex display="inline"><![CDATA[O]]></fr:tex> given by
+  </html:p><fr:tex display="block"><![CDATA[O = \mathrm {softmax}(QK^T) V]]></fr:tex><html:p>
+For more details see <fr:link href="/004G/" title="Self-Attention" uri="https://kellenkanarios.com/004G/" display-uri="004G" type="local">self-attention</fr:link>.
+  </html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Notation</fr:taxon></fr:frontmatter><fr:mainmatter>
+  In correspondence with the notation in the <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">online softmax</fr:link>, we define the following:
+  <fr:tex display="block"><![CDATA[x_{i,j} = \mathbf {q}_i \cdot  \mathbf {k}_j,]]></fr:tex>
+  where <fr:tex display="inline"><![CDATA[\mathbf {q}_i]]></fr:tex> is the <fr:tex display="inline"><![CDATA[i]]></fr:tex>th row of <fr:tex display="inline"><![CDATA[Q]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {k}_j]]></fr:tex> is the <fr:tex display="inline"><![CDATA[j]]></fr:tex>th row of <fr:tex display="inline"><![CDATA[K]]></fr:tex>. Similarly, <fr:tex display="inline"><![CDATA[\mathbf {o}_i]]></fr:tex> is the <fr:tex display="inline"><![CDATA[i]]></fr:tex>th row of the output matrix <fr:tex display="inline"><![CDATA[O]]></fr:tex> given by
+  <fr:tex display="block"><![CDATA[\mathbf {o}_i = \sum _{j = 1}^{n} \frac {\exp (x_{i,j} - m_n)}{d_n} \cdot  \mathbf {v}_j ]]></fr:tex>
+</fr:mainmatter></fr:tree>
+<html:p>Now following the template provided by the <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">online softmax</fr:link>, we must find a recurrence for <fr:tex display="inline"><![CDATA[\mathbf {o}_i]]></fr:tex>. Namely, we will consider the sequence <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,k}']]></fr:tex> given by
+<fr:tex display="block"><![CDATA[\mathbf {o}_{i,k}' = \sum _{j = 1}^{k} \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_j, ]]></fr:tex>
+such that <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,n}' = \mathbf {o}_n]]></fr:tex></html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Claim</fr:taxon></fr:frontmatter><fr:mainmatter>
+  We have the following recurrence for <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,k}']]></fr:tex>:
+  <fr:tex display="block"><![CDATA[
+  \mathbf {o}_{i,k}' = \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} + \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_k
+    ]]></fr:tex>
+</fr:mainmatter></fr:tree>
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>
+  We will proceed by directly rewriting the recurrence for <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,k}']]></fr:tex> as 
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+      \mathbf {o}_{i,k}' &= \sum _{j = 1}^{k} \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_j \\
+                        &= \left (\sum _{j = 1}^{k - 1} \frac {\exp (x_{i,j} - m_{k-1})}{d_{k-1}} \cdot  \mathbf {v}_j\right ) \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} +  \frac {\exp (x_{i,k} - m_k)}{d_k} \cdot  \mathbf {v}_k \\
+                        &= \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} +  \frac {\exp (x_{i,k} - m_k)}{d_k} \cdot  \mathbf {v}_k
+    .\end {align*}
+    ]]></fr:tex>
+  </fr:mainmatter></fr:tree>
+ 
+
+<html:p>Thus, we are left with the following algorithm</html:p><html:p><fr:resource hash="e443552973fe32fe694e594b454313d2"><fr:resource-content><html:img src="https://kellenkanarios.com/e443552973fe32fe694e594b454313d2.svg" /></fr:resource-content><fr:resource-source type="latex" part="preamble"><![CDATA[
+  \usepackage{tikz, tikz-cd, mathtools, amssymb, amsmath, stmaryrd, algpseudocodex}
+ \newenvironment{algo}{\begin{varwidth}{20cm}\begin{algorithmic}}{\end{algorithmic}\end{varwidth}}
+ \ExplSyntaxOff
+]]></fr:resource-source><fr:resource-source type="latex" part="body"><![CDATA[
+\begin {algo}
+\For {$i = 1$ \textbf {to} $N$}
+\State  $m_{0} \gets  -\infty ;\quad  d_{0} \gets  0$
+\For {$j = 1$ \textbf {to} $M$}
+  \State  $x_{i,j} \gets  \mathbf {q}_i \cdot  \mathbf {k}_j$
+  \State  $m_{j} \gets  \max (m_{j-1}, x_{i,j})$
+  \State  $d_{j} \gets  d_{j - 1} \cdot  e^{\,m_{j - 1} - m_{j}} + e^{\,x_{i,j} - m_{j}}$
+  \State  $\mathbf {o}_{i, j} \gets  \mathbf {o}_{i, j - 1} \cdot  \frac {d_{j - 1} \cdot  \exp (m_{j-1} - m_{j})}{d_j} +  \frac {\exp (x_{i,j} - m_j)}{d_j} \cdot  \mathbf {v}_j$
+\EndFor 
+\EndFor 
+\end {algo}
+]]></fr:resource-source></fr:resource></html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+A key benefit of this algorithm is that it is entirely parallelizable across rows. This means that we can loop across entire <fr:link href="https://kellenkanarios.com/OGCRV/" type="external">tiles</fr:link> like in the GEMM case.
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
               <fr:year>2025</fr:year>
               <fr:month>7</fr:month>
               <fr:day>14</fr:day>

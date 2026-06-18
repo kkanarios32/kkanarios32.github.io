@@ -212,7 +212,7 @@
           </fr:frontmatter>
           <fr:mainmatter>
             <html:p>When a process asks for new heap memory, the OS must guarantee the returned pages contain zeros (to avoid leaking other processes' data). The naive implementation zeroes the page at allocation time. <html:em>On-demand zeroing</html:em> defers that work to first touch: until the process actually accesses a freshly-allocated page, no zero-fill happens.</html:p>
-            <html:p>The OS marks the page as not-present in the <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>. The first access traps as a <fr:link href="/CXFM/" title="Page fault and swap space" uri="https://kellenkanarios.com/CXFM/" display-uri="CXFM" type="local">Page fault and swap space</fr:link>, the handler zeroes a physical page, installs it in the PTE, and resumes. Heap memory that is allocated but never used costs nothing.</html:p>
+            <html:p>The OS marks the page as not-present in the <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>. The first access traps as a <fr:link href="/CXFM/" title="Page fault" uri="https://kellenkanarios.com/CXFM/" display-uri="CXFM" type="local">Page fault</fr:link>, the handler zeroes a physical page, installs it in the PTE, and resumes. Heap memory that is allocated but never used costs nothing.</html:p>
           </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -226,7 +226,7 @@
             <fr:uri>https://kellenkanarios.com/CXFM/</fr:uri>
             <fr:display-uri>CXFM</fr:display-uri>
             <fr:route>/CXFM/</fr:route>
-            <fr:title text="Page fault and swap space">Page fault and swap space</fr:title>
+            <fr:title text="Page fault">Page fault</fr:title>
           </fr:frontmatter>
           <fr:mainmatter><html:p>Physical memory is finite, so the OS reserves a region of disk — <html:em>swap space</html:em> — to hold pages that don't fit. Pages currently on disk have their <html:em>present bit</html:em> cleared in the <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> entry; the PTE instead holds a disk address.</html:p><html:p>When a process touches a virtual address whose page is not present, the hardware traps to the OS. This is a <html:em>page fault</html:em>. The handler:</html:p><html:ol><html:li>Looks at the PTE: if invalid, the access is illegal — terminate the process.</html:li>
   <html:li>If valid but not present: read the page in from swap, update the PTE, retry the access.</html:li></html:ol>

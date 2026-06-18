@@ -32,6 +32,333 @@
           </fr:author>
         </fr:authors>
         <fr:date>
+          <fr:year>2026</fr:year>
+          <fr:month>5</fr:month>
+          <fr:day>25</fr:day>
+        </fr:date>
+        <fr:uri>https://kellenkanarios.com/R0PM/</fr:uri>
+        <fr:display-uri>R0PM</fr:display-uri>
+        <fr:route>/R0PM/</fr:route>
+        <fr:title text="Flash Attention (v1)">Flash Attention (v1)</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>20</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/PI7N/</fr:uri>
+            <fr:display-uri>PI7N</fr:display-uri>
+            <fr:route>/PI7N/</fr:route>
+            <fr:title text="Online Softmax">Online Softmax</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>This covers the math behind the online softmax algorithm required by <fr:link href="/R0PM/" title="Flash Attention (v1)" uri="https://kellenkanarios.com/R0PM/" display-uri="R0PM" type="local">Flash Attention (v1)</fr:link>.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:title text="Safe softmax">Safe softmax</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The first thing we must consider is numerical precision. Namely, the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">original softmax</fr:link> operation is given by</html:p>
+<fr:tex display="block"><![CDATA[\mathrm {softmax}(\mathbf {x}) = \frac {\exp (\mathbf {x})}{\sum _{i=1}^n \exp (\mathbf {x}_i)}]]></fr:tex>
+<html:p>However, when operating with <fr:link href="/DEQV/" title="Low Precision Data Types" uri="https://kellenkanarios.com/DEQV/" display-uri="DEQV" type="local">low precision data types</fr:link> (i.e. float16) the maximum value is <fr:tex display="inline"><![CDATA[65536]]></fr:tex>. Therefore, with <fr:tex display="inline"><![CDATA[\exp ]]></fr:tex> we can easily get numerically overflow.</html:p>
+<html:p>To get around this, the online softmax algorithm adheres to the <html:em>safe softmax</html:em>. For safe softmax, we simply multiply the numerator and denominator by <fr:tex display="inline"><![CDATA[\exp (-m)]]></fr:tex>, where <fr:tex display="inline"><![CDATA[m = \max  \{x_{1}, \ldots , x_n\}]]></fr:tex>. This gives</html:p>
+<fr:tex display="block"><![CDATA[\mathrm {softmax}(\mathbf {x}) = \frac {\exp (\mathbf {x} - m)}{\sum _{i=1}^n \exp (\mathbf {x}_i - m)}]]></fr:tex>
+<html:p>Since <fr:tex display="inline"><![CDATA[x_i - m \leq  0]]></fr:tex>, this ensures that each <fr:tex display="inline"><![CDATA[\exp (x_i - m)]]></fr:tex> is bounded in a safe range.</html:p>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Note that computing the <fr:tex display="inline"><![CDATA[\max ]]></fr:tex> over <fr:tex display="inline"><![CDATA[\mathbf {x}]]></fr:tex> means that we must have all of the logits in a row of <fr:tex display="inline"><![CDATA[QK^T]]></fr:tex> materialized in <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">SMEM</fr:link>, or first loop over all of them to compute the max before computing the normalization constant.</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:title text="Fusing the max and normalization">Fusing the max and normalization</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The online softmax algorithm fuses the max reduction into the normalization pass, so a single sweep over the row suffices to compute the normalization with the max. The key difficulty is that the denominator depends on <fr:tex display="inline"><![CDATA[n]]></fr:tex> <html:strong>for each</html:strong> <fr:tex display="inline"><![CDATA[i]]></fr:tex> i.e.</html:p>
+<fr:tex display="block"><![CDATA[d = \sum _{i=1}^{n} \exp (x_i - m_n)]]></fr:tex>
+<html:p>
+Therefore, we must find a recursive relationship such that <fr:tex display="inline"><![CDATA[d_{i+1} = f(d_i, m_i, x_{i+1})]]></fr:tex> for some function <fr:tex display="inline"><![CDATA[f]]></fr:tex>. This would then allow us to locally compute <fr:tex display="inline"><![CDATA[d_{i+1}]]></fr:tex> with only the local information of current <fr:tex display="inline"><![CDATA[x_{i+1}]]></fr:tex> and the two running statistics <fr:tex display="inline"><![CDATA[d_i]]></fr:tex> and <fr:tex display="inline"><![CDATA[m_i]]></fr:tex>. This is exactly the kind of algorithm that is conducive to <fr:link href="https://kellenkanarios.com/OGCRV/" type="external">memory tiling</fr:link>.
+</html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>What is <fr:tex display="inline"><![CDATA[f(d_i, m_i, x_{i+1})]]></fr:tex>?</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>Consider <fr:tex display="inline"><![CDATA[d_{i+1} = d_i \cdot  \exp (m_{i} - m_{i + 1}) + \exp (x_{i + 1} - m_{i + 1})]]></fr:tex>.</fr:mainmatter></fr:tree>
+
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>
+  This can be seen by directly rewriting <fr:tex display="inline"><![CDATA[d_{i + 1}]]></fr:tex>. 
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+      d_{i + 1} &= \sum _{j = 1}^{i+1} \exp (x_j - m_{i + 1}) \\
+      &= \left (\sum _{j = 1}^{i} \exp (x_j - m_{i+1})\right ) + \exp (x_{i+1} - m_{i+1}) \\
+      &= \left (\sum _{j = 1}^{i} \exp (x_j - m_{i})\right )\exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1}) \\
+      &= d_{i} \exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1})
+    \end {align*}
+  ]]></fr:tex>
+</fr:mainmatter></fr:tree>
+ 
+
+
+<html:p>
+The running denominator <fr:tex display="inline"><![CDATA[d]]></fr:tex> is rescaled by <fr:tex display="inline"><![CDATA[e^{m - m_{\text {new}}}]]></fr:tex> each time a new maximum is found, keeping it consistent with the safe-softmax shift.</html:p>
+<html:p><fr:resource hash="4a2d5b3202e83ff6780ef6fedca07f67"><fr:resource-content><html:img src="https://kellenkanarios.com/4a2d5b3202e83ff6780ef6fedca07f67.svg" /></fr:resource-content><fr:resource-source type="latex" part="preamble"><![CDATA[
+  \usepackage{tikz, tikz-cd, mathtools, amssymb, amsmath, stmaryrd, algpseudocodex}
+ \newenvironment{algo}{\begin{varwidth}{20cm}\begin{algorithmic}}{\end{algorithmic}\end{varwidth}}
+ \ExplSyntaxOff
+]]></fr:resource-source><fr:resource-source type="latex" part="body"><![CDATA[
+\begin {algo}
+\State  $m \gets  -\infty ;\quad  d \gets  0$
+\For {$i = 1$ \textbf {to} $n$}
+  \State  $m_{i+1} \gets  \max (m_i, x_i)$
+  \State  $d_{i + 1} \gets  d_i \cdot  e^{\,m_i - m_{i+1}} + e^{\,x_i - m_{i}}$
+\EndFor 
+\For {$i = 1$ \textbf {to} $n$}
+    \State  $\mathbf {p}_{i} \gets  e^{\,x_i - m_n} / d \;$
+\EndFor 
+\Return  $\mathbf {p}$
+\end {algo}
+]]></fr:resource-source></fr:resource></html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Unfortunately, we cannot get around the second pass to compute the normalized output for <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex>. However, this is not the case in <fr:link href="/R0PM/" title="Flash Attention (v1)" uri="https://kellenkanarios.com/R0PM/" display-uri="R0PM" type="local">Flash Attention (v1)</fr:link>.
+</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>27</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/OGCS0/</fr:uri>
+            <fr:display-uri>OGCS0</fr:display-uri>
+            <fr:route>/OGCS0/</fr:route>
+            <fr:title text="Flash Attention (Fwd)">Flash Attention (Fwd)</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>
+Unlike in the <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">online softmax</fr:link>, we are not interested in the outputted probability vector <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex>. Instead we are interested in the entire output matrix <fr:tex display="inline"><![CDATA[O]]></fr:tex> given by
+  </html:p><fr:tex display="block"><![CDATA[O = \mathrm {softmax}(QK^T) V]]></fr:tex><html:p>
+For more details see <fr:link href="/004G/" title="Self-Attention" uri="https://kellenkanarios.com/004G/" display-uri="004G" type="local">self-attention</fr:link>.
+  </html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Notation</fr:taxon></fr:frontmatter><fr:mainmatter>
+  In correspondence with the notation in the <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">online softmax</fr:link>, we define the following:
+  <fr:tex display="block"><![CDATA[x_{i,j} = \mathbf {q}_i \cdot  \mathbf {k}_j,]]></fr:tex>
+  where <fr:tex display="inline"><![CDATA[\mathbf {q}_i]]></fr:tex> is the <fr:tex display="inline"><![CDATA[i]]></fr:tex>th row of <fr:tex display="inline"><![CDATA[Q]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {k}_j]]></fr:tex> is the <fr:tex display="inline"><![CDATA[j]]></fr:tex>th row of <fr:tex display="inline"><![CDATA[K]]></fr:tex>. Similarly, <fr:tex display="inline"><![CDATA[\mathbf {o}_i]]></fr:tex> is the <fr:tex display="inline"><![CDATA[i]]></fr:tex>th row of the output matrix <fr:tex display="inline"><![CDATA[O]]></fr:tex> given by
+  <fr:tex display="block"><![CDATA[\mathbf {o}_i = \sum _{j = 1}^{n} \frac {\exp (x_{i,j} - m_n)}{d_n} \cdot  \mathbf {v}_j ]]></fr:tex>
+</fr:mainmatter></fr:tree>
+<html:p>Now following the template provided by the <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">online softmax</fr:link>, we must find a recurrence for <fr:tex display="inline"><![CDATA[\mathbf {o}_i]]></fr:tex>. Namely, we will consider the sequence <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,k}']]></fr:tex> given by
+<fr:tex display="block"><![CDATA[\mathbf {o}_{i,k}' = \sum _{j = 1}^{k} \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_j, ]]></fr:tex>
+such that <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,n}' = \mathbf {o}_n]]></fr:tex></html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Claim</fr:taxon></fr:frontmatter><fr:mainmatter>
+  We have the following recurrence for <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,k}']]></fr:tex>:
+  <fr:tex display="block"><![CDATA[
+  \mathbf {o}_{i,k}' = \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} + \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_k
+    ]]></fr:tex>
+</fr:mainmatter></fr:tree>
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>
+  We will proceed by directly rewriting the recurrence for <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,k}']]></fr:tex> as 
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+      \mathbf {o}_{i,k}' &= \sum _{j = 1}^{k} \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_j \\
+                        &= \left (\sum _{j = 1}^{k - 1} \frac {\exp (x_{i,j} - m_{k-1})}{d_{k-1}} \cdot  \mathbf {v}_j\right ) \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} +  \frac {\exp (x_{i,k} - m_k)}{d_k} \cdot  \mathbf {v}_k \\
+                        &= \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} +  \frac {\exp (x_{i,k} - m_k)}{d_k} \cdot  \mathbf {v}_k
+    .\end {align*}
+    ]]></fr:tex>
+  </fr:mainmatter></fr:tree>
+ 
+
+<html:p>Thus, we are left with the following algorithm</html:p><html:p><fr:resource hash="e443552973fe32fe694e594b454313d2"><fr:resource-content><html:img src="https://kellenkanarios.com/e443552973fe32fe694e594b454313d2.svg" /></fr:resource-content><fr:resource-source type="latex" part="preamble"><![CDATA[
+  \usepackage{tikz, tikz-cd, mathtools, amssymb, amsmath, stmaryrd, algpseudocodex}
+ \newenvironment{algo}{\begin{varwidth}{20cm}\begin{algorithmic}}{\end{algorithmic}\end{varwidth}}
+ \ExplSyntaxOff
+]]></fr:resource-source><fr:resource-source type="latex" part="body"><![CDATA[
+\begin {algo}
+\For {$i = 1$ \textbf {to} $N$}
+\State  $m_{0} \gets  -\infty ;\quad  d_{0} \gets  0$
+\For {$j = 1$ \textbf {to} $M$}
+  \State  $x_{i,j} \gets  \mathbf {q}_i \cdot  \mathbf {k}_j$
+  \State  $m_{j} \gets  \max (m_{j-1}, x_{i,j})$
+  \State  $d_{j} \gets  d_{j - 1} \cdot  e^{\,m_{j - 1} - m_{j}} + e^{\,x_{i,j} - m_{j}}$
+  \State  $\mathbf {o}_{i, j} \gets  \mathbf {o}_{i, j - 1} \cdot  \frac {d_{j - 1} \cdot  \exp (m_{j-1} - m_{j})}{d_j} +  \frac {\exp (x_{i,j} - m_j)}{d_j} \cdot  \mathbf {v}_j$
+\EndFor 
+\EndFor 
+\end {algo}
+]]></fr:resource-source></fr:resource></html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+A key benefit of this algorithm is that it is entirely parallelizable across rows. This means that we can loop across entire <fr:link href="https://kellenkanarios.com/OGCRV/" type="external">tiles</fr:link> like in the GEMM case.
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>27</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/OGCRZ/</fr:uri>
+            <fr:display-uri>OGCRZ</fr:display-uri>
+            <fr:route>/OGCRZ/</fr:route>
+            <fr:title text="Flash Attention (Bwd)">Flash Attention (Bwd)</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>To understand the innovation of the backward pass in <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">flash attention</fr:link>, we must first find all of the gradients we must compute.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Notation</fr:taxon></fr:frontmatter><fr:mainmatter>
+Following the notation in the <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">original paper</fr:link>, we have the following matrices
+<fr:tex display="block"><![CDATA[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex>
+Now suppose their is some scalar loss function <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. Then we define 
+<fr:tex display="block"><![CDATA[\frac {\partial  \phi }{\partial  \mathbf {O}}, \frac {\partial  \phi }{\partial  \mathbf {K}}, \frac {\partial  \phi }{\partial  \mathbf {V}}  = d\mathbf {O}, d\mathbf {K}, d\mathbf {V}]]></fr:tex>
+</fr:mainmatter></fr:tree>
+<html:p>We will compute each gradient individually.</html:p><html:ol><html:li><fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>: this is just a straightforward application of the chain rule. In particular, <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex> so that
+  <fr:tex display="block"><![CDATA[
+     d\mathbf {P} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {P}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T
+    ]]></fr:tex>
+    <html:p>
+    To sanity check, let us look at the shapes. <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> is the partial with respect to the outputs <fr:tex display="inline"><![CDATA[O]]></fr:tex>, so we need an entry for each output and it is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>. <fr:tex display="inline"><![CDATA[V^T]]></fr:tex> is <fr:tex display="inline"><![CDATA[d \times  N]]></fr:tex>, so that the result <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> is <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> as desired.
+    </html:p>
+    <html:p>Furthermore, we can see this by writing <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>. Then</html:p>
+    <fr:tex display="block"><![CDATA[
+      \begin {align*}
+       d\mathbf {P}_{ij} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}}  \\
+                        &= \sum _{i} d\mathbf {O}_{ik} \mathbf {V}_{jk} 
+      .\end {align*}
+    ]]></fr:tex></html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex>: this is just the same as <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>. In particular, <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex> so that
+  <fr:tex display="block"><![CDATA[
+     d\mathbf {V} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {V}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O} 
+    ]]></fr:tex>
+    <html:p>Furthermore, we can see this by writing <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>. Then</html:p>
+    <fr:tex display="block"><![CDATA[
+      \begin {align*}
+       d\mathbf {V}_{jk} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}}  \\
+                        &= \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} \\
+                        &= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
+      .\end {align*}
+    ]]></fr:tex></html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex>: now we apply chain rule with <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>. However, we must take the gradient through the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax</fr:link>. Exiting matrix notation hell, if we consider the scalar case. Let <fr:tex display="inline"><![CDATA[\mathbf {s}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex> just be rows. Then using the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">scalar softmax derivation</fr:link>
+    <fr:tex display="block"><![CDATA[
+      \begin {align*}
+       d\mathbf {s}_j &= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\  
+       &= \sum _{i} d\mathbf {p}_i \cdot  (\delta _{ij}\mathbf {p}_i - \mathbf {p}_{ij}) \\
+       &= d \mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
+      .\end {align*}
+      ]]></fr:tex>
+    Now if we rewrite this as the row vector, we get
+    <fr:tex display="block"><![CDATA[
+      \begin {align*}
+        d\mathbf {S}_{k} &= \mathbf {P}_{k} \odot  (d\mathbf {P}_{k} - \mathbf {P}_k \cdot  d\mathbf {P}_k)
+      .\end {align*}
+      ]]></fr:tex>
+    To get back to the full matrix, define <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> i.e. a vector whose <fr:tex display="inline"><![CDATA[i]]></fr:tex>th entry is <fr:tex display="inline"><![CDATA[\mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex>. Then we have that
+    <fr:tex display="block"><![CDATA[
+      \begin {align*}
+        d\mathbf {S} &= \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D})
+      .\end {align*}
+      ]]></fr:tex></html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex>: To get <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex>, we just apply the chain rule to <fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex>. Since <fr:tex display="inline"><![CDATA[\mathbf {S} = \mathbf {Q} \mathbf {K}^T]]></fr:tex>,
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+       d\mathbf {Q}_{i} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} \\
+                      &= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {K}_{j}
+    .\end {align*}
+    ]]></fr:tex></html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex>: Same as <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> i.e.
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+       d\mathbf {K}_{j} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {Q}_{i} \\
+                      &= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {Q}_{i}
+    .\end {align*}
+    ]]></fr:tex></html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter><fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> are <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrices. Materializing this is equivalent to materialing the attention matrix in the forward pass.</fr:mainmatter></fr:tree>
+
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  ">
+  <html:strong>Key Insight 1:</html:strong> <html:em>recomputing</html:em> <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex>.
+  <html:p>First, we can easily recompute <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> with <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex> (which are both <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> and must be resident in memory) via</html:p>
+  <fr:tex display="block"><![CDATA[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}}]]></fr:tex>
+  <html:p>We can apply the same trick to <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex> with <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex> (both <fr:tex display="inline"><![CDATA[N \times   d]]></fr:tex>). Namely,</html:p>
+  <fr:tex display="block"><![CDATA[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i}^T \mathbf {V}_j]]></fr:tex>
+  <html:p><html:strong>Never need an <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrix</html:strong>.</html:p>
+</html:div>
+<html:p>Now we can rewrite <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> as
+<fr:tex display="block"><![CDATA[
+  d\mathbf {Q}_{i} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {K}_{j}
+]]></fr:tex>
+and
+<fr:tex display="block"><![CDATA[
+  d\mathbf {K}_{j} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {Q}_{i}
+]]></fr:tex></html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter><fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> requires computing the <html:strong>global</html:strong> dot product <fr:tex display="inline"><![CDATA[\mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex>.</fr:mainmatter></fr:tree>
+
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  ">
+  <html:strong>Key Insight 2:</html:strong>
+  <html:p>To get around this, we precompute <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> using the <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> values from the forward pass and the current <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> values. In particular,</html:p>
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+    \mathbf {D}_i &= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
+    &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
+    &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{i}^{T} \mathbf {V}_{j} \\
+    &= \sum _{j} d\mathbf {O}_{i}^{T} \left (\frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j}\right ) \\
+    &=  d\mathbf {O}_{i}^{T} \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j} \\
+    &= d\mathbf {O}_{i}^{T} \mathbf {O}_{i}
+    .\end {align*}
+    ]]></fr:tex>
+    Thus, we can compute <fr:tex display="inline"><![CDATA[\mathbf {D}_i]]></fr:tex> directly from the vectors <fr:tex display="inline"><![CDATA[d\mathbf {O}_i]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {O}_i]]></fr:tex>.
+</html:div>
+
+  <html:hr />
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:title text="Summary">Summary</fr:title></fr:frontmatter><fr:mainmatter>
+<html:ul><html:li>In the forward pass,</html:li>
+  <html:ol><html:li>Compute and store <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> values in memory.</html:li> 
+    <html:li>Compute and store <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex> values in memory</html:li></html:ol>
+  <html:li>Between the forward and backward pass,</html:li>
+  <html:ol><html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex>. (This is done automatically in <fr:link href="https://kellenkanarios.com/OGCRY/" type="external">JAX</fr:link>)</html:li>
+    <html:li>Use <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> to compute <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> memory.</html:li></html:ol>
+  <html:li>In the backward pass,</html:li>
+  <html:ol><html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {V}_j]]></fr:tex> via <fr:tex display="inline"><![CDATA[\mathbf {Q}, \mathbf {K}, d\mathbf {O}]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> memory.</html:li>
+    <html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {Q}_i]]></fr:tex> via <fr:tex display="inline"><![CDATA[\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> memory.</html:li>
+    <html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {K}_j]]></fr:tex> via <fr:tex display="inline"><![CDATA[\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> memory.</html:li></html:ol></html:ul>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+      <fr:frontmatter>
+        <fr:authors>
+          <fr:author>
+            <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+          </fr:author>
+        </fr:authors>
+        <fr:date>
           <fr:year>2025</fr:year>
           <fr:month>7</fr:month>
           <fr:day>14</fr:day>
@@ -74,6 +401,47 @@ Similar to the <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanari
         <fr:title text="References">References</fr:title>
       </fr:frontmatter>
       <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>Tri Dao</fr:author>
+              <fr:author>Daniel Y. Fu</fr:author>
+              <fr:author>Stefano Ermon</fr:author>
+              <fr:author>Atri Rudra</fr:author>
+              <fr:author>Christopher Ré</fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2022</fr:year>
+              <fr:month>6</fr:month>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/</fr:uri>
+            <fr:display-uri>daoFlashAttentionFastMemoryEfficient2022</fr:display-uri>
+            <fr:route>/daoFlashAttentionFastMemoryEfficient2022/</fr:route>
+            <fr:title text="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness">FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness</fr:title>
+            <fr:taxon>Reference</fr:taxon>
+            <fr:meta name="doi">10.48550/arXiv.2205.14135</fr:meta>
+            <fr:meta name="external">https://arxiv.org/abs/2205.14135</fr:meta>
+            <fr:meta name="bibtex"><![CDATA[@misc{daoFlashAttentionFastMemoryEfficient2022,
+ title = {{{FlashAttention}}: {{Fast}} and {{Memory-Efficient Exact Attention}} with {{IO-Awareness}}},
+ author = {Dao, Tri and Fu, Daniel Y. and Ermon, Stefano and Rudra, Atri and R{\'e}, Christopher},
+ year = {2022},
+ doi = {10.48550/arXiv.2205.14135},
+ urldate = {2026-03-16},
+ number = {arXiv:2205.14135},
+ publisher = {arXiv},
+ file = {/home/kellen/Downloads/pdfs/storage/9ESU8EJV/Dao et al. - 2022 - FlashAttention Fast and Memory-Efficient Exact Attention with IO-Awareness.pdf},
+ keywords = {Computer Science - Machine Learning},
+ langid = {english},
+ archiveprefix = {arXiv},
+ abstract = {Transformers are slow and memory-hungry on long sequences, since the time and memory complexity of self-attention are quadratic in sequence length. Approximate attention methods have attempted to address this problem by trading off model quality to reduce the compute complexity, but often do not achieve wall-clock speedup. We argue that a missing principle is making attention algorithms IOaware---accounting for reads and writes between levels of GPU memory. We propose FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between GPU high bandwidth memory (HBM) and GPU on-chip SRAM. We analyze the IO complexity of FlashAttention, showing that it requires fewer HBM accesses than standard attention, and is optimal for a range of SRAM sizes. We also extend FlashAttention to block-sparse attention, yielding an approximate attention algorithm that is faster than any existing approximate attention method. FlashAttention trains Transformers faster than existing baselines: 15\% end-to-end wall-clock speedup on BERT-large (seq. length 512) compared to the MLPerf 1.1 training speed record, 3 speedup on GPT-2 (seq. length 1K), and 2.4 speedup on long-range arena (seq. length 1K-4K). FlashAttention and block-sparse FlashAttention enable longer context in Transformers, yielding higher quality models (0.7 better perplexity on GPT-2 and 6.4 points of lift on long-document classification) and entirely new capabilities: the first Transformers to achieve better-than-chance performance on the Path-X challenge (seq. length 16K, 61.4\% accuracy) and Path-256 (seq. length 64K, 63.1\% accuracy).},
+ primaryclass = {cs},
+ eprint = {2205.14135},
+ month = {June},
+ shorttitle = {{{FlashAttention}}}
+}]]></fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter />
+        </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
             <fr:authors>
@@ -140,8 +508,8 @@ Similar to the <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanari
           </fr:frontmatter>
           <fr:mainmatter>
             <html:p>
-    This is my <fr:link href="https://www.forester-notes.org/index/index.xml" type="external">forest</fr:link> (shoutout to <fr:link href="/jonmsterling/" title="Jon Sterling" uri="https://kellenkanarios.com/jonmsterling/" display-uri="jonmsterling" type="local">Jon Sterling</fr:link> who is remarkably helpful). This website functions both as a <fr:link href="https://en.wikipedia.org/wiki/Personal_knowledge_management" type="external">personal knowledge management system</fr:link>, where I store my notes in <fr:link href="/0015/" title="Notebooks" uri="https://kellenkanarios.com/0015/" display-uri="0015" type="local">notebooks</fr:link> and also have some additional external resources in <fr:link href="/0004/" title="/dev/null" uri="https://kellenkanarios.com/0004/" display-uri="0004" type="local">/dev/null</fr:link>. Additionally, I store my thoughts in a variety of consumption mediums. Namely, short-form notes / blog posts can be found in the "<fr:link href="/007L/" title="Marginalia" uri="https://kellenkanarios.com/007L/" display-uri="007L" type="local">marginalia</fr:link>". I also maintain two weekly posting obligations: a <fr:link href="/007S/" title="Weeknotes" uri="https://kellenkanarios.com/007S/" display-uri="007S" type="local">weeknotes / lifelog</fr:link> and a <fr:link href="/005G/" title="Research Bible" uri="https://kellenkanarios.com/005G/" display-uri="005G" type="local">paper of the week</fr:link>. 
-      </html:p>
+    This is my <fr:link href="https://www.forester-notes.org/index/index.xml" type="external">forest</fr:link> (shoutout to <fr:link href="/jonmsterling/" title="Jon Sterling" uri="https://kellenkanarios.com/jonmsterling/" display-uri="jonmsterling" type="local">Jon Sterling</fr:link> who is remarkably helpful). This website functions both as a <fr:link href="https://en.wikipedia.org/wiki/Personal_knowledge_management" type="external">personal knowledge management system</fr:link>, where I store my notes in <fr:link href="/0015/" title="Notebooks" uri="https://kellenkanarios.com/0015/" display-uri="0015" type="local">notebooks</fr:link>, some accompanying solutions in the <fr:link href="/914H/" title="Solution Manuals" uri="https://kellenkanarios.com/914H/" display-uri="914H" type="local">solution manuals</fr:link>, and any external resources I have made in <fr:link href="/0004/" title="/dev/null" uri="https://kellenkanarios.com/0004/" display-uri="0004" type="local">/dev/null</fr:link>. Additionally, I store my thoughts in a variety of consumption mediums. Namely, short-form notes / blog posts can be found in the "<fr:link href="/007L/" title="Marginalia" uri="https://kellenkanarios.com/007L/" display-uri="007L" type="local">marginalia</fr:link>". I also maintain two weekly posting obligations: a <fr:link href="/007S/" title="Weeknotes" uri="https://kellenkanarios.com/007S/" display-uri="007S" type="local">weeknotes / lifelog</fr:link> and a <fr:link href="/005G/" title="Research Bible" uri="https://kellenkanarios.com/005G/" display-uri="005G" type="local">paper of the week</fr:link>. 
+  </html:p>
           </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>
@@ -268,7 +636,7 @@ Similar to the <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanari
 
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:title text="Starting with MSI">Starting with MSI</fr:title></fr:frontmatter><fr:mainmatter>
 <html:p>The first thing we need to do is understand all the things that can go awry.</html:p>
-<html:p>First in the valid-invalid protocol example we were given they only have two <fr:link href="/DWV1/" title="Virtual channels and routing deadlock" uri="https://kellenkanarios.com/DWV1/" display-uri="DWV1" type="local">virtual channels</fr:link>. However, we need 3 channels to handle, request messages, <html:strong>forwarded</html:strong> messages, and response messages.</html:p>
+<html:p>First in the valid-invalid protocol example we were given they only have two <fr:link href="/DWV1/" title="Routing deadlock" uri="https://kellenkanarios.com/DWV1/" display-uri="DWV1" type="local">virtual channels</fr:link>. However, we need 3 channels to handle, request messages, <html:strong>forwarded</html:strong> messages, and response messages.</html:p>
 <html:p>Let us briefly understand why this is the case. Detecting a deadlock is equivalent to detecting a cycle in a dependency graph, so it is sufficient to show a cyclic dependency.</html:p>
 <html:ul><html:li>If we issue a <html:code>GetS</html:code> this goes to the directory, giving us an edge N1 -&gt; D.</html:li>
   <html:li>Then the directory issues a <html:code>Fwd-GetS</html:code> to the ownder, giving us the chain N1 -&gt; D -&gt; N2</html:li>
@@ -422,270 +790,6 @@ Once we have sent the <html:code>PutE</html:code>, or the <html:code>PutM</html:
 <html:img width="100%" src="/bafkrmifqg6owj5m5bnsuqphk73uuwqzybmwczbbwx432u5j3zju3fe52i4.png" /></html:figure>
 </fr:mainmatter></fr:tree>
 </fr:mainmatter>
-            </fr:tree>
-            <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
-              <fr:frontmatter>
-                <fr:authors>
-                  <fr:author>
-                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
-                  </fr:author>
-                </fr:authors>
-                <fr:date>
-                  <fr:year>2025</fr:year>
-                  <fr:month>9</fr:month>
-                  <fr:day>8</fr:day>
-                </fr:date>
-                <fr:uri>https://kellenkanarios.com/90VJ/</fr:uri>
-                <fr:display-uri>90VJ</fr:display-uri>
-                <fr:route>/90VJ/</fr:route>
-                <fr:title text="Highlights: Action and Perception">Highlights: Action and Perception</fr:title>
-              </fr:frontmatter>
-              <fr:mainmatter><html:p>Here are the notes of a selected few of the talks in the course <html:em>Action and Perception</html:em> taught by Stella Yu.</html:p><fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/AHH9/</fr:uri><fr:display-uri>AHH9</fr:display-uri><fr:route>/AHH9/</fr:route><fr:title text="Towards Physically Grounded Digital Twins and Beyond">Towards Physically Grounded Digital Twins and Beyond</fr:title></fr:frontmatter><fr:mainmatter>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>22</fr:day></fr:date><fr:title text="Building Digital Twin">Building Digital Twin</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>3D-reconstruction is not <html:strong>actionable</html:strong> i.e. we can reconstruct a room with a cup but if you try to lift the cup the whole image moves (cup is attached to counter).</html:p>
-
-<html:p><fr:link href="https://arxiv.org/abs/2504.15278" type="external">Drawer</fr:link></html:p>
-<html:ol><html:li>Anchor gaussians around the zero level-set</html:li>
-<html:li>Scene decomposition. Identify interactable and actionable objects</html:li>
-<html:li>Use LLM for reasoning over objects i.e. density, types of joints</html:li>
-<html:li>Recover invisible regions via differentiable rendering + generative modeling</html:li></html:ol>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>22</fr:day></fr:date><fr:title text="Learning From Humans">Learning From Humans</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Real-to-sim-to-real: record environment -&gt; build simulation of environment -&gt; train in simulator -&gt; deploy in real world.</html:p>
-<html:p>Ideas:</html:p>
-<html:ol><html:li>Object state as an anchor</html:li>
-  <html:ul><html:li>Get rid of human.</html:li>
-    <html:li>Find corresponding actions that match object states in trajectory.</html:li></html:ul>
-  <html:li>Still not robust for precise movements.</html:li>
-  <html:li>Test-time alignment</html:li>
-  <html:ul><html:li>Unroll in real world</html:li>
-    <html:li>Replay in simulation</html:li>
-    <html:li>Align</html:li></html:ul></html:ol>
-<html:p>RL -&gt; Imitation Learning</html:p>
-<html:ol><html:li>Do imitation learning on noisy trajectories.</html:li>
-  <html:li>Use noisy robot <html:strong>and</html:strong> human trajectories</html:li>
-  <html:li>Use classifier to try to predict whether trajectory is human or robot</html:li>
-  <html:ul><html:li>Noise here is the end noise in the diffusion training phase.</html:li>
-    <html:li>Only use indistinguishable trajectories.</html:li></html:ul></html:ol>
-<html:p>Upshot is that they can "augment" robot data with human data in the diffusion training phase by including human trajectories when sampling high noise.</html:p>
-</fr:mainmatter></fr:tree>
-</fr:mainmatter></fr:tree><fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>17</fr:day></fr:date><fr:uri>https://kellenkanarios.com/7AMZ/</fr:uri><fr:display-uri>7AMZ</fr:display-uri><fr:route>/7AMZ/</fr:route><fr:title text="Humanoid Robot Learning">Humanoid Robot Learning</fr:title></fr:frontmatter><fr:mainmatter>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>17</fr:day></fr:date><fr:title text="Benchmarking Humanoid Intelligence">Benchmarking Humanoid Intelligence</fr:title></fr:frontmatter><fr:mainmatter>
-    <html:p>Locomotion tasks: can humanoids move around? Vary terrain, avoid obstacles.</html:p>
-    <html:p>Loco-manipulation tasks: can humanoids interact with the environment?</html:p>
-    <html:p><fr:link href="https://humanoid-bench.github.io/" type="external">HumanoidBench</fr:link></html:p>
-    <html:p>Other manipulation / locomotion benchmarks are too trivial to see drastic performance between algorithms.</html:p>
-    <html:p>Learning algorithms struggle with large action space</html:p>
-    <html:p>Action space - number of degrees of freedom. Humanoid w/o hands - 19dof, w/ hands 61dof.</html:p>
-    <html:p>Idea: decouple dof. Problem want whole body control.</html:p>
-    <html:p>Idea: hierarchical learning via domain knowledge. learn to position hands. Extended to library of skills in 
-<fr:link href="https://arxiv.org/abs/2506.09366" type="external">Skillblender</fr:link>.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>17</fr:day></fr:date><fr:title text="Scaling sim-to-real learning for humanoids">Scaling sim-to-real learning for humanoids</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Robot / environment:</html:p>
-<html:ul><html:li> identify what you can (system identification). </html:li>
-    <html:li>what you cannot identify randomize!</html:li></html:ul>
-<html:p>Reward</html:p>
-<html:ul><html:li>stay away from things you cannot identify.</html:li></html:ul>
-<html:p>Simulator: training on cpu takes forever (enter IsaacGym, Mujoco Playground).</html:p>
-<html:p>Mujoco Playground limitations</html:p>
-<html:ul><html:li>JIT compilation can be slow</html:li>
-  <html:li>Computation time scales with the number of potential contacts</html:li>
-  <html:li>MJX warp is now supported (100x speedup)</html:li></html:ul>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>17</fr:day></fr:date><fr:title text="Where can we do better?">Where can we do better?</fr:title></fr:frontmatter><fr:mainmatter>
-    <html:p><fr:link href="https://younggyo.me/fast_td3/" type="external">Fast TD3</fr:link></html:p>
-    <html:p>FastTD3 vs. TD3</html:p>
-    <html:ol><html:li>Massively parallel environments</html:li>
-    <html:li>Large-batch training</html:li>
-    <html:li>Distributional RL</html:li>
-    <html:ul><html:li>Discretize value space and output distribution over values</html:li>
-      <html:li>Trained with cross entropy loss</html:li></html:ul></html:ol>
-    <fr:link href="https://arxiv.org/abs/2408.06316" type="external">Body Tranformer</fr:link>,
-    <html:ol><html:li>Inductive bias</html:li>
-      <html:li>Computationally efficient</html:li>
-      <html:li>Multi-frequency reasoning</html:li>
-      <html:li>Localized credit assignment</html:li></html:ol>
-    <html:p>Idea: construct graph to connect certain parts of body via embodiment graph. Have attention layers that only attend to neighbors on the graph via the mask being a graph mask.</html:p>
-    <html:p>Mask is sparse, allowing much more computationally efficient attention computation.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>17</fr:day></fr:date><fr:title text="A Generalizable Robot Learning Pipeline">A Generalizable Robot Learning Pipeline</fr:title></fr:frontmatter><fr:mainmatter>
-    <html:p>Future directions:</html:p>
-    <html:ol><html:li>Vision-based policies</html:li>
-<html:li>Real2sim</html:li>
-<html:li>Learning from videos</html:li></html:ol>
-<html:p>The pipeline</html:p>
-<html:ol><html:li>Learn low-level skills</html:li>
-  <html:li>Learn to compose skills</html:li>
-  <html:li>Finetune with RL</html:li></html:ol>
-</fr:mainmatter></fr:tree>
-</fr:mainmatter></fr:tree><fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>15</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XH0W/</fr:uri><fr:display-uri>XH0W</fr:display-uri><fr:route>/XH0W/</fr:route><fr:title text="Scalable Architectures for Robot Learning">Scalable Architectures for Robot Learning</fr:title></fr:frontmatter><fr:mainmatter><html:p>We have the following taxonomy for robot learning:</html:p><html:ol><html:li><html:strong>Autonomous driving:</html:strong> very perception heavy problem -&gt; Learning for perception</html:li>
-  <html:li><html:strong>Locomotion:</html:strong> very controls-heavy problem -&gt; Learning for control</html:li>
-  <html:li><html:strong>Manipulation:</html:strong> perception + controls -&gt; End-to-end visuomotor policy learning</html:li></html:ol><html:p>Specialist models are brittle i.e. sensitive to differences in lighting or camera angle.</html:p><html:p>More data -&gt; generalist models</html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>15</fr:day></fr:date><fr:title text="Robotics as multi-modal sequence modeling">Robotics as multi-modal sequence modeling</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Predict "action chunks" i.e. a sequence of actions (roughly 1sec into the future)</html:p>
-<html:p>Use imitation learning:
-<fr:tex display="block"><![CDATA[\max _{\theta } \sum _{(a,o,T)} \pi _{\theta }(a \mid  o, T)]]></fr:tex>
-where <fr:tex display="inline"><![CDATA[T]]></fr:tex> is the task identifier.
-</html:p>
-<html:p><html:strong>Datasets:</html:strong> DROID, Open-X embodiment.</html:p>
-<html:p><html:strong>Vision-Language-Action model:</html:strong> given images, text description output actions dx, dy, dz.</html:p>
-<html:ol><html:li>Scalable training</html:li>
-  <html:li>Flexible inputs + outpus</html:li>
-  <html:li>Internet scale pre-training</html:li></html:ol>
-<html:p>How do we output actions? Discretization via uniform bins.</html:p>
-<html:p><html:strong>OpenVLA:</html:strong></html:p>
-<html:ul><html:li>Two stream encoder for spatial (DinoV2) and semantic (CLIP) features.</html:li></html:ul>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>15</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-<html:p>RMA: in-context locomotion policies.</html:p>
-</fr:mainmatter></fr:tree>
-
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>15</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-<html:p>Models get worse with history. Its own actions are out of distribution, causing it to quickly see out of distribution data.</html:p>
-</fr:mainmatter></fr:tree>
-
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>15</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-<html:p>Simulation currently is only good for simulating rigid objects.</html:p>
-</fr:mainmatter></fr:tree>
-
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>15</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-<html:p>VLAs are still capable of outputting language. Can use this to produce chain of thought output to explain the action. People have found this increases generalization capabilities (see Embodied Chain of Thought Learning).</html:p>
-</fr:mainmatter></fr:tree>
-
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>15</fr:day></fr:date><fr:title text="Robotics-specific modeling considerations">Robotics-specific modeling considerations</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Two main considerations</html:p>
-<html:ol><html:li>Action tokenization</html:li>
-  <html:li>Speed</html:li></html:ol>
-<html:p>OpenVLA models degrade as you increase the control frequency.</html:p>
-<html:ul><html:li>Training in naive way, resort to "token-copying".</html:li></html:ul>
-<html:p>Idea: compress actions. Discrete cosine transform.</html:p>
-<html:p>FAST:</html:p>
-<html:ol><html:li>Apply DCT</html:li>
-  <html:li>Quantize</html:li>
-  <html:li>Flatten</html:li>
-  <html:li>BPE</html:li></html:ol>
-<html:p>Autoregressive decoding is slow AF:</html:p>
-<html:ul><html:li>Use sepcialized decoding head.</html:li>
-  <html:li>Diffusion to get the whole chunk at once.</html:li>
-  <html:ul><html:li>10 vs. 60 autoregressive steps</html:li>
-    <html:li>300m vs 3b params during inference.</html:li>
-    <html:li>Model trains 5x slower</html:li></html:ul></html:ul>
-<html:p>Train and inference via doing BOTH at the same time.</html:p>
-<html:ul><html:li>Freeze action expert gradients to VLM.</html:li>
-  <html:li>Train VLM via autoregressive predictions.</html:li>
-  <html:li><html:em>Knowledge insulating VLAs</html:em></html:li></html:ul>
-</fr:mainmatter></fr:tree>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>15</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>How to get started with (scalable) robotics research.</fr:mainmatter></fr:tree>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>15</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>
-  All sorts of resources:
-  <html:ol><html:li>Droid, OpenX</html:li>
-    <html:li>OpenPI</html:li>
-    <html:li>RoboArena</html:li></html:ol>
-</fr:mainmatter></fr:tree>
-</fr:mainmatter></fr:tree><fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>10</fr:day></fr:date><fr:uri>https://kellenkanarios.com/FQN6/</fr:uri><fr:display-uri>FQN6</fr:display-uri><fr:route>/FQN6/</fr:route><fr:title text="The Automated Interpretability Agent">The Automated Interpretability Agent</fr:title></fr:frontmatter><fr:mainmatter><html:p>Presentation given by Tamar Rott Shaham.</html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>10</fr:day></fr:date><fr:title text="Interpreting the role of a single neuron">Interpreting the role of a single neuron</fr:title></fr:frontmatter><fr:mainmatter>
-    <html:p>This is done in <fr:link href="https://arxiv.org/abs/1704.05796" type="external">Network dissection</fr:link></html:p>
-    <html:p><html:strong>Idea 1:</html:strong> find neuron with maximum activation for subsets of image. Need subset dataset.         
-    </html:p>
-    <html:p><html:strong>Problem:</html:strong> How do you do this for all of the neurons in your network? This is not scalable!</html:p>
-    <html:p>Approach 1: use segmentation network to segment images and use these as subsets. This requires the concepts to be detectabl by a segmentation model.</html:p>
-
-    <html:p>This is done in <fr:link href="https://arxiv.org/abs/2201.11114" type="external">MILAN</fr:link></html:p>
-    <html:p>Approach 2: train a "captioner" model i.e. an LSTM to generate captions for parts of images. Can also get labels using clips as done in <fr:link href="https://arxiv.org/abs/2204.10965" type="external">CLIP-dissect</fr:link></html:p>
-    <html:p>Problem with these approaches is they are one-shot i.e. we train the model to produce labels and use those in one-shot. We instead want a "loop" that allows us to refine labeler. Namely</html:p>
-    <html:ol><html:li>Train model to label something like "human faces"</html:li>
-      <html:li>Find sensitive neuron to images labeled "human faces" by the labeler.</html:li>
-      <html:li>Remove the neuron and see if the model becomes unable to detect human faces.</html:li>
-      <html:li>If this isn't the case then we need to refine the labeler.</html:li></html:ol>
-    <html:p>How can we automate this process?</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>10</fr:day></fr:date><fr:title text="Automating scientific explorations of neural networks">Automating scientific explorations of neural networks</fr:title></fr:frontmatter><fr:mainmatter>
-    <html:p> We want to be able to </html:p>
-    <html:ol><html:li>Analyze any model.</html:li>
-        <html:li>Answer any interpretability question.</html:li></html:ol>
-    <html:p>Observation: LLMs can draw via code see <html:em>Sparks of AGI</html:em>.</html:p>
-    <html:p><fr:link href="https://arxiv.org/abs/2303.08128" type="external">ViperGPT</fr:link>: Given an image reasoning task, an LLM can write code to solve the image reasoning task</html:p>
-    
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>10</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
-        <html:p>
-        Given a picture of kids with some amount of muffins, answer the question
-            </html:p>
-        <html:p>
-    How many muffins can each kid have for it to be fair?
-        </html:p>
-        <html:p>The LLM writes code to identify children / muffins in the image, counting them, and dividing number of muffins by number of kids.</html:p>
-    </fr:mainmatter></fr:tree>
- 
-
-    <html:p><fr:link href="https://arxiv.org/abs/2404.14394" type="external">MAIA</fr:link> API:
-    </html:p>
-    <html:ul><html:li>takes image, language description along with model and specific neuron i.e. "neuron 0 layer 4" and it will get the activation for the subset of the image focusing on the language description. </html:li>
-        <html:li>Can also take a dataset, or generate new images to test hypothesis.</html:li>
-        <html:li>Can go image to text</html:li></html:ul>
-    <html:p>End to end user can ask "what function does neuron 122 perform" and <fr:link href="https://arxiv.org/abs/2404.14394" type="external">MAIA</fr:link> will be able to answer.</html:p>
-    <html:p>How do we know the description is correct? One approach is "synthetic neurons". Provide the value of the neuron as the confidence score from SAM for a given language concept description.</html:p>
-    <html:p>Another approach: take the description given by MAIA, then generate images from the prompts along with "negatives" that have nothing to do with the label of MAIA. Then look at the activation value for each of the examples.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>10</fr:day></fr:date><fr:title text="Auditing and editing neural networks based on interpretations">Auditing and editing neural networks based on interpretations</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>For classifiers, can check the bias in the logit neurons. For one example, found beer detection class had a bias toward the gender of the person in the image i.e. low probability for females with beer glass.</html:p>
-<html:p>Can identify and remove biased neurons. Re-train only selective neurons on biased dataset and can match performance of classifier trained on unbiased dataset.</html:p>
-</fr:mainmatter></fr:tree>
-</fr:mainmatter></fr:tree><fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>8</fr:day></fr:date><fr:uri>https://kellenkanarios.com/83S7/</fr:uri><fr:display-uri>83S7</fr:display-uri><fr:route>/83S7/</fr:route><fr:title text="Whole-Body Conditioned Egocentric Video Prediction">Whole-Body Conditioned Egocentric Video Prediction</fr:title></fr:frontmatter><fr:mainmatter><html:p>Presentation on PEVA. Related work COSMOS.</html:p><html:p>Observation: you can only completely predict changes caused by your own actions. You cannot necessarily predict changes caused by the world.
-<fr:tex display="block"><![CDATA[\text {Prediction} = \text {change via your actions} + \text {change via the world}]]></fr:tex></html:p><html:p>Problem formulation: given history frames, actions predict what is going to happen in pixel space.</html:p><html:p>Challenges:</html:p><html:ol><html:li>There is a strong contextual dependence for both action and vision. Depending on context, you may hold / see things in a different way.</html:li>
-  <html:li>Human actions are harder than global condition. Language vs. high DoF control.</html:li></html:ol><html:p>Auto-Regressive diffusion model. Spatial-attention on image space, causal attention on temporal space.</html:p><html:p>Need architecture, so that actions only interact with <html:strong>next</html:strong> image.</html:p><html:p>Adaptive layer-norm.
-<fr:tex display="block"><![CDATA[(1 + \Delta  \gamma (c)) \cdot  \mathrm {LN}(x) + \Delta  \beta (c)]]></fr:tex>
-Adaptive per-frame layer-norm.
-<fr:tex display="block"><![CDATA[(1 + \Delta  \gamma (c_t)) \cdot  \mathrm {LN}(x_t) + \Delta  \beta (c_t)]]></fr:tex></html:p><html:p>Using PEVA for control. Other approaches</html:p><html:ol><html:li>Diffusion forcing</html:li>
-  <html:li>NWM (CDiT)</html:li></html:ol><html:p>Visual geometrially grounded transformer (VGGT).</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>8</fr:day></fr:date><fr:uri>https://kellenkanarios.com/VWJM/</fr:uri><fr:display-uri>VWJM</fr:display-uri><fr:route>/VWJM/</fr:route><fr:title text="Image/Video Diffusion Models">Image/Video Diffusion Models</fr:title></fr:frontmatter><fr:mainmatter><html:p>This is a crash course in image/video diffusion models as part of CSE 598</html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>8</fr:day></fr:date><fr:title text="Images">Images</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Classic denoising is <html:strong>TOO</html:strong> slow for images</html:p>
-<html:p>Idea: compress images into latent representation space. Then learn diffusion model on latent space. This is the idea in <html:em>Stable Diffusion</html:em></html:p>
-<html:ol><html:li>How do we scale? Use Transformers! Diffusion Transformer (DiT)</html:li>
-  <html:li>Still too slow. Enter flow matching.</html:li></html:ol>
-<html:p>(1) + (2) = Stable Diffusion 3.</html:p>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>8</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-Use U-net for image to image architectures.
-</fr:mainmatter></fr:tree>
-
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>8</fr:day></fr:date><fr:title text="Videos">Videos</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Much higher dimensionality! 30 frames = 900x FLOPS</html:p>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>8</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-*If you are doing naive self-attention.
-</fr:mainmatter></fr:tree>
-
-<html:p>Spatial / temporal decomposition. <html:em>Align your latents</html:em>.</html:p>
-<html:p>Stable video diffusion</html:p>
-<html:ol><html:li>Start with image model, add temporal layers</html:li>
-  <html:li>Synthetically label videos</html:li>
-  <html:li>Fine-tune on high quality videos</html:li></html:ol>
-<html:p>Instead of spatial / temporal decomposition, you can compress in space / time via 3d autoencoder. C-ViVit encoder, Phenaki.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>9</fr:month><fr:day>8</fr:day></fr:date><fr:title text="Takeaways">Takeaways</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>In diffusion, <html:strong>YOU</html:strong> add the noise. In GAN, whats being decoded is not determined by you.</html:p>
-</fr:mainmatter></fr:tree>
-</fr:mainmatter></fr:tree>
-  <html:hr />
-<html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" /></fr:mainmatter>
             </fr:tree>
             <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
               <fr:frontmatter>

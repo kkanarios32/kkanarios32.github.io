@@ -1,0 +1,891 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors>
+      <fr:author>
+        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+      </fr:author>
+    </fr:authors>
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>5</fr:month>
+      <fr:day>25</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/R0PM/</fr:uri>
+    <fr:display-uri>R0PM</fr:display-uri>
+    <fr:route>/R0PM/</fr:route>
+    <fr:title text="Flash Attention (v1)">Flash Attention (v1)</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter>
+    <fr:tree show-metadata="false">
+      <fr:frontmatter>
+        <fr:authors>
+          <fr:author>
+            <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+          </fr:author>
+        </fr:authors>
+        <fr:date>
+          <fr:year>2026</fr:year>
+          <fr:month>5</fr:month>
+          <fr:day>20</fr:day>
+        </fr:date>
+        <fr:uri>https://kellenkanarios.com/PI7N/</fr:uri>
+        <fr:display-uri>PI7N</fr:display-uri>
+        <fr:route>/PI7N/</fr:route>
+        <fr:title text="Online Softmax">Online Softmax</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter><html:p>This covers the math behind the online softmax algorithm required by <fr:link href="/R0PM/" title="Flash Attention (v1)" uri="https://kellenkanarios.com/R0PM/" display-uri="R0PM" type="local">Flash Attention (v1)</fr:link>.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:title text="Safe softmax">Safe softmax</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The first thing we must consider is numerical precision. Namely, the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">original softmax</fr:link> operation is given by</html:p>
+<fr:tex display="block"><![CDATA[\mathrm {softmax}(\mathbf {x}) = \frac {\exp (\mathbf {x})}{\sum _{i=1}^n \exp (\mathbf {x}_i)}]]></fr:tex>
+<html:p>However, when operating with <fr:link href="/DEQV/" title="Low Precision Data Types" uri="https://kellenkanarios.com/DEQV/" display-uri="DEQV" type="local">low precision data types</fr:link> (i.e. float16) the maximum value is <fr:tex display="inline"><![CDATA[65536]]></fr:tex>. Therefore, with <fr:tex display="inline"><![CDATA[\exp ]]></fr:tex> we can easily get numerically overflow.</html:p>
+<html:p>To get around this, the online softmax algorithm adheres to the <html:em>safe softmax</html:em>. For safe softmax, we simply multiply the numerator and denominator by <fr:tex display="inline"><![CDATA[\exp (-m)]]></fr:tex>, where <fr:tex display="inline"><![CDATA[m = \max  \{x_{1}, \ldots , x_n\}]]></fr:tex>. This gives</html:p>
+<fr:tex display="block"><![CDATA[\mathrm {softmax}(\mathbf {x}) = \frac {\exp (\mathbf {x} - m)}{\sum _{i=1}^n \exp (\mathbf {x}_i - m)}]]></fr:tex>
+<html:p>Since <fr:tex display="inline"><![CDATA[x_i - m \leq  0]]></fr:tex>, this ensures that each <fr:tex display="inline"><![CDATA[\exp (x_i - m)]]></fr:tex> is bounded in a safe range.</html:p>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Note that computing the <fr:tex display="inline"><![CDATA[\max ]]></fr:tex> over <fr:tex display="inline"><![CDATA[\mathbf {x}]]></fr:tex> means that we must have all of the logits in a row of <fr:tex display="inline"><![CDATA[QK^T]]></fr:tex> materialized in <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">SMEM</fr:link>, or first loop over all of them to compute the max before computing the normalization constant.</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:title text="Fusing the max and normalization">Fusing the max and normalization</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The online softmax algorithm fuses the max reduction into the normalization pass, so a single sweep over the row suffices to compute the normalization with the max. The key difficulty is that the denominator depends on <fr:tex display="inline"><![CDATA[n]]></fr:tex> <html:strong>for each</html:strong> <fr:tex display="inline"><![CDATA[i]]></fr:tex> i.e.</html:p>
+<fr:tex display="block"><![CDATA[d = \sum _{i=1}^{n} \exp (x_i - m_n)]]></fr:tex>
+<html:p>
+Therefore, we must find a recursive relationship such that <fr:tex display="inline"><![CDATA[d_{i+1} = f(d_i, m_i, x_{i+1})]]></fr:tex> for some function <fr:tex display="inline"><![CDATA[f]]></fr:tex>. This would then allow us to locally compute <fr:tex display="inline"><![CDATA[d_{i+1}]]></fr:tex> with only the local information of current <fr:tex display="inline"><![CDATA[x_{i+1}]]></fr:tex> and the two running statistics <fr:tex display="inline"><![CDATA[d_i]]></fr:tex> and <fr:tex display="inline"><![CDATA[m_i]]></fr:tex>. This is exactly the kind of algorithm that is conducive to <fr:link href="https://kellenkanarios.com/OGCRV/" type="external">memory tiling</fr:link>.
+</html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>What is <fr:tex display="inline"><![CDATA[f(d_i, m_i, x_{i+1})]]></fr:tex>?</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>Consider <fr:tex display="inline"><![CDATA[d_{i+1} = d_i \cdot  \exp (m_{i} - m_{i + 1}) + \exp (x_{i + 1} - m_{i + 1})]]></fr:tex>.</fr:mainmatter></fr:tree>
+
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>
+  This can be seen by directly rewriting <fr:tex display="inline"><![CDATA[d_{i + 1}]]></fr:tex>. 
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+      d_{i + 1} &= \sum _{j = 1}^{i+1} \exp (x_j - m_{i + 1}) \\
+      &= \left (\sum _{j = 1}^{i} \exp (x_j - m_{i+1})\right ) + \exp (x_{i+1} - m_{i+1}) \\
+      &= \left (\sum _{j = 1}^{i} \exp (x_j - m_{i})\right )\exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1}) \\
+      &= d_{i} \exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1})
+    \end {align*}
+  ]]></fr:tex>
+</fr:mainmatter></fr:tree>
+ 
+
+
+<html:p>
+The running denominator <fr:tex display="inline"><![CDATA[d]]></fr:tex> is rescaled by <fr:tex display="inline"><![CDATA[e^{m - m_{\text {new}}}]]></fr:tex> each time a new maximum is found, keeping it consistent with the safe-softmax shift.</html:p>
+<html:p><fr:resource hash="4a2d5b3202e83ff6780ef6fedca07f67"><fr:resource-content><html:img src="https://kellenkanarios.com/4a2d5b3202e83ff6780ef6fedca07f67.svg" /></fr:resource-content><fr:resource-source type="latex" part="preamble"><![CDATA[
+  \usepackage{tikz, tikz-cd, mathtools, amssymb, amsmath, stmaryrd, algpseudocodex}
+ \newenvironment{algo}{\begin{varwidth}{20cm}\begin{algorithmic}}{\end{algorithmic}\end{varwidth}}
+ \ExplSyntaxOff
+]]></fr:resource-source><fr:resource-source type="latex" part="body"><![CDATA[
+\begin {algo}
+\State  $m \gets  -\infty ;\quad  d \gets  0$
+\For {$i = 1$ \textbf {to} $n$}
+  \State  $m_{i+1} \gets  \max (m_i, x_i)$
+  \State  $d_{i + 1} \gets  d_i \cdot  e^{\,m_i - m_{i+1}} + e^{\,x_i - m_{i}}$
+\EndFor 
+\For {$i = 1$ \textbf {to} $n$}
+    \State  $\mathbf {p}_{i} \gets  e^{\,x_i - m_n} / d \;$
+\EndFor 
+\Return  $\mathbf {p}$
+\end {algo}
+]]></fr:resource-source></fr:resource></html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Unfortunately, we cannot get around the second pass to compute the normalized output for <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex>. However, this is not the case in <fr:link href="/R0PM/" title="Flash Attention (v1)" uri="https://kellenkanarios.com/R0PM/" display-uri="R0PM" type="local">Flash Attention (v1)</fr:link>.
+</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false">
+      <fr:frontmatter>
+        <fr:authors>
+          <fr:author>
+            <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+          </fr:author>
+        </fr:authors>
+        <fr:date>
+          <fr:year>2026</fr:year>
+          <fr:month>5</fr:month>
+          <fr:day>27</fr:day>
+        </fr:date>
+        <fr:uri>https://kellenkanarios.com/OGCS0/</fr:uri>
+        <fr:display-uri>OGCS0</fr:display-uri>
+        <fr:route>/OGCS0/</fr:route>
+        <fr:title text="Flash Attention (Fwd)">Flash Attention (Fwd)</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter><html:p>
+Unlike in the <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">online softmax</fr:link>, we are not interested in the outputted probability vector <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex>. Instead we are interested in the entire output matrix <fr:tex display="inline"><![CDATA[O]]></fr:tex> given by
+  </html:p><fr:tex display="block"><![CDATA[O = \mathrm {softmax}(QK^T) V]]></fr:tex><html:p>
+For more details see <fr:link href="/004G/" title="Self-Attention" uri="https://kellenkanarios.com/004G/" display-uri="004G" type="local">self-attention</fr:link>.
+  </html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Notation</fr:taxon></fr:frontmatter><fr:mainmatter>
+  In correspondence with the notation in the <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">online softmax</fr:link>, we define the following:
+  <fr:tex display="block"><![CDATA[x_{i,j} = \mathbf {q}_i \cdot  \mathbf {k}_j,]]></fr:tex>
+  where <fr:tex display="inline"><![CDATA[\mathbf {q}_i]]></fr:tex> is the <fr:tex display="inline"><![CDATA[i]]></fr:tex>th row of <fr:tex display="inline"><![CDATA[Q]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {k}_j]]></fr:tex> is the <fr:tex display="inline"><![CDATA[j]]></fr:tex>th row of <fr:tex display="inline"><![CDATA[K]]></fr:tex>. Similarly, <fr:tex display="inline"><![CDATA[\mathbf {o}_i]]></fr:tex> is the <fr:tex display="inline"><![CDATA[i]]></fr:tex>th row of the output matrix <fr:tex display="inline"><![CDATA[O]]></fr:tex> given by
+  <fr:tex display="block"><![CDATA[\mathbf {o}_i = \sum _{j = 1}^{n} \frac {\exp (x_{i,j} - m_n)}{d_n} \cdot  \mathbf {v}_j ]]></fr:tex>
+</fr:mainmatter></fr:tree>
+<html:p>Now following the template provided by the <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">online softmax</fr:link>, we must find a recurrence for <fr:tex display="inline"><![CDATA[\mathbf {o}_i]]></fr:tex>. Namely, we will consider the sequence <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,k}']]></fr:tex> given by
+<fr:tex display="block"><![CDATA[\mathbf {o}_{i,k}' = \sum _{j = 1}^{k} \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_j, ]]></fr:tex>
+such that <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,n}' = \mathbf {o}_n]]></fr:tex></html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Claim</fr:taxon></fr:frontmatter><fr:mainmatter>
+  We have the following recurrence for <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,k}']]></fr:tex>:
+  <fr:tex display="block"><![CDATA[
+  \mathbf {o}_{i,k}' = \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} + \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_k
+    ]]></fr:tex>
+</fr:mainmatter></fr:tree>
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>
+  We will proceed by directly rewriting the recurrence for <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,k}']]></fr:tex> as 
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+      \mathbf {o}_{i,k}' &= \sum _{j = 1}^{k} \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_j \\
+                        &= \left (\sum _{j = 1}^{k - 1} \frac {\exp (x_{i,j} - m_{k-1})}{d_{k-1}} \cdot  \mathbf {v}_j\right ) \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} +  \frac {\exp (x_{i,k} - m_k)}{d_k} \cdot  \mathbf {v}_k \\
+                        &= \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} +  \frac {\exp (x_{i,k} - m_k)}{d_k} \cdot  \mathbf {v}_k
+    .\end {align*}
+    ]]></fr:tex>
+  </fr:mainmatter></fr:tree>
+ 
+
+<html:p>Thus, we are left with the following algorithm</html:p><html:p><fr:resource hash="e443552973fe32fe694e594b454313d2"><fr:resource-content><html:img src="https://kellenkanarios.com/e443552973fe32fe694e594b454313d2.svg" /></fr:resource-content><fr:resource-source type="latex" part="preamble"><![CDATA[
+  \usepackage{tikz, tikz-cd, mathtools, amssymb, amsmath, stmaryrd, algpseudocodex}
+ \newenvironment{algo}{\begin{varwidth}{20cm}\begin{algorithmic}}{\end{algorithmic}\end{varwidth}}
+ \ExplSyntaxOff
+]]></fr:resource-source><fr:resource-source type="latex" part="body"><![CDATA[
+\begin {algo}
+\For {$i = 1$ \textbf {to} $N$}
+\State  $m_{0} \gets  -\infty ;\quad  d_{0} \gets  0$
+\For {$j = 1$ \textbf {to} $M$}
+  \State  $x_{i,j} \gets  \mathbf {q}_i \cdot  \mathbf {k}_j$
+  \State  $m_{j} \gets  \max (m_{j-1}, x_{i,j})$
+  \State  $d_{j} \gets  d_{j - 1} \cdot  e^{\,m_{j - 1} - m_{j}} + e^{\,x_{i,j} - m_{j}}$
+  \State  $\mathbf {o}_{i, j} \gets  \mathbf {o}_{i, j - 1} \cdot  \frac {d_{j - 1} \cdot  \exp (m_{j-1} - m_{j})}{d_j} +  \frac {\exp (x_{i,j} - m_j)}{d_j} \cdot  \mathbf {v}_j$
+\EndFor 
+\EndFor 
+\end {algo}
+]]></fr:resource-source></fr:resource></html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+A key benefit of this algorithm is that it is entirely parallelizable across rows. This means that we can loop across entire <fr:link href="https://kellenkanarios.com/OGCRV/" type="external">tiles</fr:link> like in the GEMM case.
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false">
+      <fr:frontmatter>
+        <fr:authors>
+          <fr:author>
+            <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+          </fr:author>
+        </fr:authors>
+        <fr:date>
+          <fr:year>2026</fr:year>
+          <fr:month>5</fr:month>
+          <fr:day>27</fr:day>
+        </fr:date>
+        <fr:uri>https://kellenkanarios.com/OGCRZ/</fr:uri>
+        <fr:display-uri>OGCRZ</fr:display-uri>
+        <fr:route>/OGCRZ/</fr:route>
+        <fr:title text="Flash Attention (Bwd)">Flash Attention (Bwd)</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter><html:p>To understand the innovation of the backward pass in <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">flash attention</fr:link>, we must first find all of the gradients we must compute.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Notation</fr:taxon></fr:frontmatter><fr:mainmatter>
+Following the notation in the <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">original paper</fr:link>, we have the following matrices
+<fr:tex display="block"><![CDATA[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex>
+Now suppose their is some scalar loss function <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. Then we define 
+<fr:tex display="block"><![CDATA[\frac {\partial  \phi }{\partial  \mathbf {O}}, \frac {\partial  \phi }{\partial  \mathbf {K}}, \frac {\partial  \phi }{\partial  \mathbf {V}}  = d\mathbf {O}, d\mathbf {K}, d\mathbf {V}]]></fr:tex>
+</fr:mainmatter></fr:tree>
+<html:p>We will compute each gradient individually.</html:p><html:ol><html:li><fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>: this is just a straightforward application of the chain rule. In particular, <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex> so that
+  <fr:tex display="block"><![CDATA[
+     d\mathbf {P} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {P}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T
+    ]]></fr:tex>
+    <html:p>
+    To sanity check, let us look at the shapes. <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> is the partial with respect to the outputs <fr:tex display="inline"><![CDATA[O]]></fr:tex>, so we need an entry for each output and it is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>. <fr:tex display="inline"><![CDATA[V^T]]></fr:tex> is <fr:tex display="inline"><![CDATA[d \times  N]]></fr:tex>, so that the result <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> is <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> as desired.
+    </html:p>
+    <html:p>Furthermore, we can see this by writing <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>. Then</html:p>
+    <fr:tex display="block"><![CDATA[
+      \begin {align*}
+       d\mathbf {P}_{ij} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}}  \\
+                        &= \sum _{i} d\mathbf {O}_{ik} \mathbf {V}_{jk} 
+      .\end {align*}
+    ]]></fr:tex></html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex>: this is just the same as <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>. In particular, <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex> so that
+  <fr:tex display="block"><![CDATA[
+     d\mathbf {V} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {V}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O} 
+    ]]></fr:tex>
+    <html:p>Furthermore, we can see this by writing <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>. Then</html:p>
+    <fr:tex display="block"><![CDATA[
+      \begin {align*}
+       d\mathbf {V}_{jk} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}}  \\
+                        &= \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} \\
+                        &= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
+      .\end {align*}
+    ]]></fr:tex></html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex>: now we apply chain rule with <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>. However, we must take the gradient through the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax</fr:link>. Exiting matrix notation hell, if we consider the scalar case. Let <fr:tex display="inline"><![CDATA[\mathbf {s}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex> just be rows. Then using the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">scalar softmax derivation</fr:link>
+    <fr:tex display="block"><![CDATA[
+      \begin {align*}
+       d\mathbf {s}_j &= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\  
+       &= \sum _{i} d\mathbf {p}_i \cdot  (\delta _{ij}\mathbf {p}_i - \mathbf {p}_{ij}) \\
+       &= d \mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
+      .\end {align*}
+      ]]></fr:tex>
+    Now if we rewrite this as the row vector, we get
+    <fr:tex display="block"><![CDATA[
+      \begin {align*}
+        d\mathbf {S}_{k} &= \mathbf {P}_{k} \odot  (d\mathbf {P}_{k} - \mathbf {P}_k \cdot  d\mathbf {P}_k)
+      .\end {align*}
+      ]]></fr:tex>
+    To get back to the full matrix, define <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> i.e. a vector whose <fr:tex display="inline"><![CDATA[i]]></fr:tex>th entry is <fr:tex display="inline"><![CDATA[\mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex>. Then we have that
+    <fr:tex display="block"><![CDATA[
+      \begin {align*}
+        d\mathbf {S} &= \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D})
+      .\end {align*}
+      ]]></fr:tex></html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex>: To get <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex>, we just apply the chain rule to <fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex>. Since <fr:tex display="inline"><![CDATA[\mathbf {S} = \mathbf {Q} \mathbf {K}^T]]></fr:tex>,
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+       d\mathbf {Q}_{i} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} \\
+                      &= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {K}_{j}
+    .\end {align*}
+    ]]></fr:tex></html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex>: Same as <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> i.e.
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+       d\mathbf {K}_{j} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {Q}_{i} \\
+                      &= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {Q}_{i}
+    .\end {align*}
+    ]]></fr:tex></html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter><fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> are <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrices. Materializing this is equivalent to materialing the attention matrix in the forward pass.</fr:mainmatter></fr:tree>
+
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  ">
+  <html:strong>Key Insight 1:</html:strong> <html:em>recomputing</html:em> <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex>.
+  <html:p>First, we can easily recompute <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> with <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex> (which are both <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> and must be resident in memory) via</html:p>
+  <fr:tex display="block"><![CDATA[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}}]]></fr:tex>
+  <html:p>We can apply the same trick to <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex> with <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex> (both <fr:tex display="inline"><![CDATA[N \times   d]]></fr:tex>). Namely,</html:p>
+  <fr:tex display="block"><![CDATA[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i}^T \mathbf {V}_j]]></fr:tex>
+  <html:p><html:strong>Never need an <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrix</html:strong>.</html:p>
+</html:div>
+<html:p>Now we can rewrite <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> as
+<fr:tex display="block"><![CDATA[
+  d\mathbf {Q}_{i} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {K}_{j}
+]]></fr:tex>
+and
+<fr:tex display="block"><![CDATA[
+  d\mathbf {K}_{j} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {Q}_{i}
+]]></fr:tex></html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter><fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> requires computing the <html:strong>global</html:strong> dot product <fr:tex display="inline"><![CDATA[\mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex>.</fr:mainmatter></fr:tree>
+
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  ">
+  <html:strong>Key Insight 2:</html:strong>
+  <html:p>To get around this, we precompute <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> using the <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> values from the forward pass and the current <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> values. In particular,</html:p>
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+    \mathbf {D}_i &= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
+    &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
+    &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{i}^{T} \mathbf {V}_{j} \\
+    &= \sum _{j} d\mathbf {O}_{i}^{T} \left (\frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j}\right ) \\
+    &=  d\mathbf {O}_{i}^{T} \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j} \\
+    &= d\mathbf {O}_{i}^{T} \mathbf {O}_{i}
+    .\end {align*}
+    ]]></fr:tex>
+    Thus, we can compute <fr:tex display="inline"><![CDATA[\mathbf {D}_i]]></fr:tex> directly from the vectors <fr:tex display="inline"><![CDATA[d\mathbf {O}_i]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {O}_i]]></fr:tex>.
+</html:div>
+
+  <html:hr />
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:title text="Summary">Summary</fr:title></fr:frontmatter><fr:mainmatter>
+<html:ul><html:li>In the forward pass,</html:li>
+  <html:ol><html:li>Compute and store <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> values in memory.</html:li> 
+    <html:li>Compute and store <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex> values in memory</html:li></html:ol>
+  <html:li>Between the forward and backward pass,</html:li>
+  <html:ol><html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex>. (This is done automatically in <fr:link href="https://kellenkanarios.com/OGCRY/" type="external">JAX</fr:link>)</html:li>
+    <html:li>Use <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> to compute <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> memory.</html:li></html:ol>
+  <html:li>In the backward pass,</html:li>
+  <html:ol><html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {V}_j]]></fr:tex> via <fr:tex display="inline"><![CDATA[\mathbf {Q}, \mathbf {K}, d\mathbf {O}]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> memory.</html:li>
+    <html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {Q}_i]]></fr:tex> via <fr:tex display="inline"><![CDATA[\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> memory.</html:li>
+    <html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {K}_j]]></fr:tex> via <fr:tex display="inline"><![CDATA[\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> memory.</html:li></html:ol></html:ul>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+    </fr:tree>
+  </fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>Tri Dao</fr:author>
+              <fr:author>Daniel Y. Fu</fr:author>
+              <fr:author>Stefano Ermon</fr:author>
+              <fr:author>Atri Rudra</fr:author>
+              <fr:author>Christopher Ré</fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2022</fr:year>
+              <fr:month>6</fr:month>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/</fr:uri>
+            <fr:display-uri>daoFlashAttentionFastMemoryEfficient2022</fr:display-uri>
+            <fr:route>/daoFlashAttentionFastMemoryEfficient2022/</fr:route>
+            <fr:title text="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness">FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness</fr:title>
+            <fr:taxon>Reference</fr:taxon>
+            <fr:meta name="doi">10.48550/arXiv.2205.14135</fr:meta>
+            <fr:meta name="external">https://arxiv.org/abs/2205.14135</fr:meta>
+            <fr:meta name="bibtex"><![CDATA[@misc{daoFlashAttentionFastMemoryEfficient2022,
+ title = {{{FlashAttention}}: {{Fast}} and {{Memory-Efficient Exact Attention}} with {{IO-Awareness}}},
+ author = {Dao, Tri and Fu, Daniel Y. and Ermon, Stefano and Rudra, Atri and R{\'e}, Christopher},
+ year = {2022},
+ doi = {10.48550/arXiv.2205.14135},
+ urldate = {2026-03-16},
+ number = {arXiv:2205.14135},
+ publisher = {arXiv},
+ file = {/home/kellen/Downloads/pdfs/storage/9ESU8EJV/Dao et al. - 2022 - FlashAttention Fast and Memory-Efficient Exact Attention with IO-Awareness.pdf},
+ keywords = {Computer Science - Machine Learning},
+ langid = {english},
+ archiveprefix = {arXiv},
+ abstract = {Transformers are slow and memory-hungry on long sequences, since the time and memory complexity of self-attention are quadratic in sequence length. Approximate attention methods have attempted to address this problem by trading off model quality to reduce the compute complexity, but often do not achieve wall-clock speedup. We argue that a missing principle is making attention algorithms IOaware---accounting for reads and writes between levels of GPU memory. We propose FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between GPU high bandwidth memory (HBM) and GPU on-chip SRAM. We analyze the IO complexity of FlashAttention, showing that it requires fewer HBM accesses than standard attention, and is optimal for a range of SRAM sizes. We also extend FlashAttention to block-sparse attention, yielding an approximate attention algorithm that is faster than any existing approximate attention method. FlashAttention trains Transformers faster than existing baselines: 15\% end-to-end wall-clock speedup on BERT-large (seq. length 512) compared to the MLPerf 1.1 training speed record, 3 speedup on GPT-2 (seq. length 1K), and 2.4 speedup on long-range arena (seq. length 1K-4K). FlashAttention and block-sparse FlashAttention enable longer context in Transformers, yielding higher quality models (0.7 better perplexity on GPT-2 and 6.4 points of lift on long-document classification) and entirely new capabilities: the first Transformers to achieve better-than-chance performance on the Path-X challenge (seq. length 16K, 61.4\% accuracy) and Path-256 (seq. length 64K, 63.1\% accuracy).},
+ primaryclass = {cs},
+ eprint = {2205.14135},
+ month = {June},
+ shorttitle = {{{FlashAttention}}}
+}]]></fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter />
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>3</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/005G/</fr:uri>
+            <fr:display-uri>005G</fr:display-uri>
+            <fr:route>/005G/</fr:route>
+            <fr:title text="Research Bible">Research Bible</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>I will be reading and reviewing ~2ish paper a week (tentatively). More accurately, I have allocated roughly 8hrs a week to reading papers. However much I accomplish in this time will determine the actual rate of these reviews. These reviews are mainly just for my own understanding. Rather than techinical details, I will aim to cover
+<html:ol><html:li>Existing / related work and their issues.</html:li>
+  <html:li>Key components of the methodology and how it solves these issues.</html:li>
+  <html:li>Limitations / future directions or relationships to my work.</html:li></html:ol></html:p>
+            <html:p>For more in-depth coverage of papers I find particularly interesting, see my <fr:link href="/0002/" title="Blog" uri="https://kellenkanarios.com/0002/" display-uri="0002" type="local">blog</fr:link>. There will likely be overlap i.e. most blogs will start here...</html:p>
+            <html:p>See <fr:link href="/007N/" title="Upcoming papers of the week" uri="https://kellenkanarios.com/007N/" display-uri="007N" type="local">upcoming papers</fr:link>!</html:p>
+            <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>25</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/R0PM/</fr:uri>
+                <fr:display-uri>R0PM</fr:display-uri>
+                <fr:route>/R0PM/</fr:route>
+                <fr:title text="Flash Attention (v1)">Flash Attention (v1)</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter>
+                <fr:tree show-metadata="false">
+                  <fr:frontmatter>
+                    <fr:authors>
+                      <fr:author>
+                        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                      </fr:author>
+                    </fr:authors>
+                    <fr:date>
+                      <fr:year>2026</fr:year>
+                      <fr:month>5</fr:month>
+                      <fr:day>20</fr:day>
+                    </fr:date>
+                    <fr:uri>https://kellenkanarios.com/PI7N/</fr:uri>
+                    <fr:display-uri>PI7N</fr:display-uri>
+                    <fr:route>/PI7N/</fr:route>
+                    <fr:title text="Online Softmax">Online Softmax</fr:title>
+                  </fr:frontmatter>
+                  <fr:mainmatter><html:p>This covers the math behind the online softmax algorithm required by <fr:link href="/R0PM/" title="Flash Attention (v1)" uri="https://kellenkanarios.com/R0PM/" display-uri="R0PM" type="local">Flash Attention (v1)</fr:link>.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:title text="Safe softmax">Safe softmax</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The first thing we must consider is numerical precision. Namely, the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">original softmax</fr:link> operation is given by</html:p>
+<fr:tex display="block"><![CDATA[\mathrm {softmax}(\mathbf {x}) = \frac {\exp (\mathbf {x})}{\sum _{i=1}^n \exp (\mathbf {x}_i)}]]></fr:tex>
+<html:p>However, when operating with <fr:link href="/DEQV/" title="Low Precision Data Types" uri="https://kellenkanarios.com/DEQV/" display-uri="DEQV" type="local">low precision data types</fr:link> (i.e. float16) the maximum value is <fr:tex display="inline"><![CDATA[65536]]></fr:tex>. Therefore, with <fr:tex display="inline"><![CDATA[\exp ]]></fr:tex> we can easily get numerically overflow.</html:p>
+<html:p>To get around this, the online softmax algorithm adheres to the <html:em>safe softmax</html:em>. For safe softmax, we simply multiply the numerator and denominator by <fr:tex display="inline"><![CDATA[\exp (-m)]]></fr:tex>, where <fr:tex display="inline"><![CDATA[m = \max  \{x_{1}, \ldots , x_n\}]]></fr:tex>. This gives</html:p>
+<fr:tex display="block"><![CDATA[\mathrm {softmax}(\mathbf {x}) = \frac {\exp (\mathbf {x} - m)}{\sum _{i=1}^n \exp (\mathbf {x}_i - m)}]]></fr:tex>
+<html:p>Since <fr:tex display="inline"><![CDATA[x_i - m \leq  0]]></fr:tex>, this ensures that each <fr:tex display="inline"><![CDATA[\exp (x_i - m)]]></fr:tex> is bounded in a safe range.</html:p>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Note that computing the <fr:tex display="inline"><![CDATA[\max ]]></fr:tex> over <fr:tex display="inline"><![CDATA[\mathbf {x}]]></fr:tex> means that we must have all of the logits in a row of <fr:tex display="inline"><![CDATA[QK^T]]></fr:tex> materialized in <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">SMEM</fr:link>, or first loop over all of them to compute the max before computing the normalization constant.</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:title text="Fusing the max and normalization">Fusing the max and normalization</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The online softmax algorithm fuses the max reduction into the normalization pass, so a single sweep over the row suffices to compute the normalization with the max. The key difficulty is that the denominator depends on <fr:tex display="inline"><![CDATA[n]]></fr:tex> <html:strong>for each</html:strong> <fr:tex display="inline"><![CDATA[i]]></fr:tex> i.e.</html:p>
+<fr:tex display="block"><![CDATA[d = \sum _{i=1}^{n} \exp (x_i - m_n)]]></fr:tex>
+<html:p>
+Therefore, we must find a recursive relationship such that <fr:tex display="inline"><![CDATA[d_{i+1} = f(d_i, m_i, x_{i+1})]]></fr:tex> for some function <fr:tex display="inline"><![CDATA[f]]></fr:tex>. This would then allow us to locally compute <fr:tex display="inline"><![CDATA[d_{i+1}]]></fr:tex> with only the local information of current <fr:tex display="inline"><![CDATA[x_{i+1}]]></fr:tex> and the two running statistics <fr:tex display="inline"><![CDATA[d_i]]></fr:tex> and <fr:tex display="inline"><![CDATA[m_i]]></fr:tex>. This is exactly the kind of algorithm that is conducive to <fr:link href="https://kellenkanarios.com/OGCRV/" type="external">memory tiling</fr:link>.
+</html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>What is <fr:tex display="inline"><![CDATA[f(d_i, m_i, x_{i+1})]]></fr:tex>?</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>Consider <fr:tex display="inline"><![CDATA[d_{i+1} = d_i \cdot  \exp (m_{i} - m_{i + 1}) + \exp (x_{i + 1} - m_{i + 1})]]></fr:tex>.</fr:mainmatter></fr:tree>
+
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>
+  This can be seen by directly rewriting <fr:tex display="inline"><![CDATA[d_{i + 1}]]></fr:tex>. 
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+      d_{i + 1} &= \sum _{j = 1}^{i+1} \exp (x_j - m_{i + 1}) \\
+      &= \left (\sum _{j = 1}^{i} \exp (x_j - m_{i+1})\right ) + \exp (x_{i+1} - m_{i+1}) \\
+      &= \left (\sum _{j = 1}^{i} \exp (x_j - m_{i})\right )\exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1}) \\
+      &= d_{i} \exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1})
+    \end {align*}
+  ]]></fr:tex>
+</fr:mainmatter></fr:tree>
+ 
+
+
+<html:p>
+The running denominator <fr:tex display="inline"><![CDATA[d]]></fr:tex> is rescaled by <fr:tex display="inline"><![CDATA[e^{m - m_{\text {new}}}]]></fr:tex> each time a new maximum is found, keeping it consistent with the safe-softmax shift.</html:p>
+<html:p><fr:resource hash="4a2d5b3202e83ff6780ef6fedca07f67"><fr:resource-content><html:img src="https://kellenkanarios.com/4a2d5b3202e83ff6780ef6fedca07f67.svg" /></fr:resource-content><fr:resource-source type="latex" part="preamble"><![CDATA[
+  \usepackage{tikz, tikz-cd, mathtools, amssymb, amsmath, stmaryrd, algpseudocodex}
+ \newenvironment{algo}{\begin{varwidth}{20cm}\begin{algorithmic}}{\end{algorithmic}\end{varwidth}}
+ \ExplSyntaxOff
+]]></fr:resource-source><fr:resource-source type="latex" part="body"><![CDATA[
+\begin {algo}
+\State  $m \gets  -\infty ;\quad  d \gets  0$
+\For {$i = 1$ \textbf {to} $n$}
+  \State  $m_{i+1} \gets  \max (m_i, x_i)$
+  \State  $d_{i + 1} \gets  d_i \cdot  e^{\,m_i - m_{i+1}} + e^{\,x_i - m_{i}}$
+\EndFor 
+\For {$i = 1$ \textbf {to} $n$}
+    \State  $\mathbf {p}_{i} \gets  e^{\,x_i - m_n} / d \;$
+\EndFor 
+\Return  $\mathbf {p}$
+\end {algo}
+]]></fr:resource-source></fr:resource></html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Unfortunately, we cannot get around the second pass to compute the normalized output for <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex>. However, this is not the case in <fr:link href="/R0PM/" title="Flash Attention (v1)" uri="https://kellenkanarios.com/R0PM/" display-uri="R0PM" type="local">Flash Attention (v1)</fr:link>.
+</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+                </fr:tree>
+                <fr:tree show-metadata="false">
+                  <fr:frontmatter>
+                    <fr:authors>
+                      <fr:author>
+                        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                      </fr:author>
+                    </fr:authors>
+                    <fr:date>
+                      <fr:year>2026</fr:year>
+                      <fr:month>5</fr:month>
+                      <fr:day>27</fr:day>
+                    </fr:date>
+                    <fr:uri>https://kellenkanarios.com/OGCS0/</fr:uri>
+                    <fr:display-uri>OGCS0</fr:display-uri>
+                    <fr:route>/OGCS0/</fr:route>
+                    <fr:title text="Flash Attention (Fwd)">Flash Attention (Fwd)</fr:title>
+                  </fr:frontmatter>
+                  <fr:mainmatter><html:p>
+Unlike in the <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">online softmax</fr:link>, we are not interested in the outputted probability vector <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex>. Instead we are interested in the entire output matrix <fr:tex display="inline"><![CDATA[O]]></fr:tex> given by
+  </html:p><fr:tex display="block"><![CDATA[O = \mathrm {softmax}(QK^T) V]]></fr:tex><html:p>
+For more details see <fr:link href="/004G/" title="Self-Attention" uri="https://kellenkanarios.com/004G/" display-uri="004G" type="local">self-attention</fr:link>.
+  </html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Notation</fr:taxon></fr:frontmatter><fr:mainmatter>
+  In correspondence with the notation in the <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">online softmax</fr:link>, we define the following:
+  <fr:tex display="block"><![CDATA[x_{i,j} = \mathbf {q}_i \cdot  \mathbf {k}_j,]]></fr:tex>
+  where <fr:tex display="inline"><![CDATA[\mathbf {q}_i]]></fr:tex> is the <fr:tex display="inline"><![CDATA[i]]></fr:tex>th row of <fr:tex display="inline"><![CDATA[Q]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {k}_j]]></fr:tex> is the <fr:tex display="inline"><![CDATA[j]]></fr:tex>th row of <fr:tex display="inline"><![CDATA[K]]></fr:tex>. Similarly, <fr:tex display="inline"><![CDATA[\mathbf {o}_i]]></fr:tex> is the <fr:tex display="inline"><![CDATA[i]]></fr:tex>th row of the output matrix <fr:tex display="inline"><![CDATA[O]]></fr:tex> given by
+  <fr:tex display="block"><![CDATA[\mathbf {o}_i = \sum _{j = 1}^{n} \frac {\exp (x_{i,j} - m_n)}{d_n} \cdot  \mathbf {v}_j ]]></fr:tex>
+</fr:mainmatter></fr:tree>
+<html:p>Now following the template provided by the <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">online softmax</fr:link>, we must find a recurrence for <fr:tex display="inline"><![CDATA[\mathbf {o}_i]]></fr:tex>. Namely, we will consider the sequence <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,k}']]></fr:tex> given by
+<fr:tex display="block"><![CDATA[\mathbf {o}_{i,k}' = \sum _{j = 1}^{k} \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_j, ]]></fr:tex>
+such that <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,n}' = \mathbf {o}_n]]></fr:tex></html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Claim</fr:taxon></fr:frontmatter><fr:mainmatter>
+  We have the following recurrence for <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,k}']]></fr:tex>:
+  <fr:tex display="block"><![CDATA[
+  \mathbf {o}_{i,k}' = \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} + \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_k
+    ]]></fr:tex>
+</fr:mainmatter></fr:tree>
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>
+  We will proceed by directly rewriting the recurrence for <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,k}']]></fr:tex> as 
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+      \mathbf {o}_{i,k}' &= \sum _{j = 1}^{k} \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_j \\
+                        &= \left (\sum _{j = 1}^{k - 1} \frac {\exp (x_{i,j} - m_{k-1})}{d_{k-1}} \cdot  \mathbf {v}_j\right ) \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} +  \frac {\exp (x_{i,k} - m_k)}{d_k} \cdot  \mathbf {v}_k \\
+                        &= \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} +  \frac {\exp (x_{i,k} - m_k)}{d_k} \cdot  \mathbf {v}_k
+    .\end {align*}
+    ]]></fr:tex>
+  </fr:mainmatter></fr:tree>
+ 
+
+<html:p>Thus, we are left with the following algorithm</html:p><html:p><fr:resource hash="e443552973fe32fe694e594b454313d2"><fr:resource-content><html:img src="https://kellenkanarios.com/e443552973fe32fe694e594b454313d2.svg" /></fr:resource-content><fr:resource-source type="latex" part="preamble"><![CDATA[
+  \usepackage{tikz, tikz-cd, mathtools, amssymb, amsmath, stmaryrd, algpseudocodex}
+ \newenvironment{algo}{\begin{varwidth}{20cm}\begin{algorithmic}}{\end{algorithmic}\end{varwidth}}
+ \ExplSyntaxOff
+]]></fr:resource-source><fr:resource-source type="latex" part="body"><![CDATA[
+\begin {algo}
+\For {$i = 1$ \textbf {to} $N$}
+\State  $m_{0} \gets  -\infty ;\quad  d_{0} \gets  0$
+\For {$j = 1$ \textbf {to} $M$}
+  \State  $x_{i,j} \gets  \mathbf {q}_i \cdot  \mathbf {k}_j$
+  \State  $m_{j} \gets  \max (m_{j-1}, x_{i,j})$
+  \State  $d_{j} \gets  d_{j - 1} \cdot  e^{\,m_{j - 1} - m_{j}} + e^{\,x_{i,j} - m_{j}}$
+  \State  $\mathbf {o}_{i, j} \gets  \mathbf {o}_{i, j - 1} \cdot  \frac {d_{j - 1} \cdot  \exp (m_{j-1} - m_{j})}{d_j} +  \frac {\exp (x_{i,j} - m_j)}{d_j} \cdot  \mathbf {v}_j$
+\EndFor 
+\EndFor 
+\end {algo}
+]]></fr:resource-source></fr:resource></html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+A key benefit of this algorithm is that it is entirely parallelizable across rows. This means that we can loop across entire <fr:link href="https://kellenkanarios.com/OGCRV/" type="external">tiles</fr:link> like in the GEMM case.
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+                </fr:tree>
+                <fr:tree show-metadata="false">
+                  <fr:frontmatter>
+                    <fr:authors>
+                      <fr:author>
+                        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                      </fr:author>
+                    </fr:authors>
+                    <fr:date>
+                      <fr:year>2026</fr:year>
+                      <fr:month>5</fr:month>
+                      <fr:day>27</fr:day>
+                    </fr:date>
+                    <fr:uri>https://kellenkanarios.com/OGCRZ/</fr:uri>
+                    <fr:display-uri>OGCRZ</fr:display-uri>
+                    <fr:route>/OGCRZ/</fr:route>
+                    <fr:title text="Flash Attention (Bwd)">Flash Attention (Bwd)</fr:title>
+                  </fr:frontmatter>
+                  <fr:mainmatter><html:p>To understand the innovation of the backward pass in <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">flash attention</fr:link>, we must first find all of the gradients we must compute.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Notation</fr:taxon></fr:frontmatter><fr:mainmatter>
+Following the notation in the <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">original paper</fr:link>, we have the following matrices
+<fr:tex display="block"><![CDATA[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex>
+Now suppose their is some scalar loss function <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. Then we define 
+<fr:tex display="block"><![CDATA[\frac {\partial  \phi }{\partial  \mathbf {O}}, \frac {\partial  \phi }{\partial  \mathbf {K}}, \frac {\partial  \phi }{\partial  \mathbf {V}}  = d\mathbf {O}, d\mathbf {K}, d\mathbf {V}]]></fr:tex>
+</fr:mainmatter></fr:tree>
+<html:p>We will compute each gradient individually.</html:p><html:ol><html:li><fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>: this is just a straightforward application of the chain rule. In particular, <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex> so that
+  <fr:tex display="block"><![CDATA[
+     d\mathbf {P} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {P}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T
+    ]]></fr:tex>
+    <html:p>
+    To sanity check, let us look at the shapes. <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> is the partial with respect to the outputs <fr:tex display="inline"><![CDATA[O]]></fr:tex>, so we need an entry for each output and it is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>. <fr:tex display="inline"><![CDATA[V^T]]></fr:tex> is <fr:tex display="inline"><![CDATA[d \times  N]]></fr:tex>, so that the result <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> is <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> as desired.
+    </html:p>
+    <html:p>Furthermore, we can see this by writing <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>. Then</html:p>
+    <fr:tex display="block"><![CDATA[
+      \begin {align*}
+       d\mathbf {P}_{ij} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}}  \\
+                        &= \sum _{i} d\mathbf {O}_{ik} \mathbf {V}_{jk} 
+      .\end {align*}
+    ]]></fr:tex></html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex>: this is just the same as <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>. In particular, <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex> so that
+  <fr:tex display="block"><![CDATA[
+     d\mathbf {V} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {V}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O} 
+    ]]></fr:tex>
+    <html:p>Furthermore, we can see this by writing <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>. Then</html:p>
+    <fr:tex display="block"><![CDATA[
+      \begin {align*}
+       d\mathbf {V}_{jk} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}}  \\
+                        &= \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} \\
+                        &= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
+      .\end {align*}
+    ]]></fr:tex></html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex>: now we apply chain rule with <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>. However, we must take the gradient through the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax</fr:link>. Exiting matrix notation hell, if we consider the scalar case. Let <fr:tex display="inline"><![CDATA[\mathbf {s}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex> just be rows. Then using the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">scalar softmax derivation</fr:link>
+    <fr:tex display="block"><![CDATA[
+      \begin {align*}
+       d\mathbf {s}_j &= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\  
+       &= \sum _{i} d\mathbf {p}_i \cdot  (\delta _{ij}\mathbf {p}_i - \mathbf {p}_{ij}) \\
+       &= d \mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
+      .\end {align*}
+      ]]></fr:tex>
+    Now if we rewrite this as the row vector, we get
+    <fr:tex display="block"><![CDATA[
+      \begin {align*}
+        d\mathbf {S}_{k} &= \mathbf {P}_{k} \odot  (d\mathbf {P}_{k} - \mathbf {P}_k \cdot  d\mathbf {P}_k)
+      .\end {align*}
+      ]]></fr:tex>
+    To get back to the full matrix, define <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> i.e. a vector whose <fr:tex display="inline"><![CDATA[i]]></fr:tex>th entry is <fr:tex display="inline"><![CDATA[\mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex>. Then we have that
+    <fr:tex display="block"><![CDATA[
+      \begin {align*}
+        d\mathbf {S} &= \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D})
+      .\end {align*}
+      ]]></fr:tex></html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex>: To get <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex>, we just apply the chain rule to <fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex>. Since <fr:tex display="inline"><![CDATA[\mathbf {S} = \mathbf {Q} \mathbf {K}^T]]></fr:tex>,
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+       d\mathbf {Q}_{i} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} \\
+                      &= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {K}_{j}
+    .\end {align*}
+    ]]></fr:tex></html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex>: Same as <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> i.e.
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+       d\mathbf {K}_{j} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {Q}_{i} \\
+                      &= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {Q}_{i}
+    .\end {align*}
+    ]]></fr:tex></html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter><fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> are <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrices. Materializing this is equivalent to materialing the attention matrix in the forward pass.</fr:mainmatter></fr:tree>
+
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  ">
+  <html:strong>Key Insight 1:</html:strong> <html:em>recomputing</html:em> <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex>.
+  <html:p>First, we can easily recompute <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> with <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex> (which are both <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> and must be resident in memory) via</html:p>
+  <fr:tex display="block"><![CDATA[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}}]]></fr:tex>
+  <html:p>We can apply the same trick to <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex> with <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex> (both <fr:tex display="inline"><![CDATA[N \times   d]]></fr:tex>). Namely,</html:p>
+  <fr:tex display="block"><![CDATA[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i}^T \mathbf {V}_j]]></fr:tex>
+  <html:p><html:strong>Never need an <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrix</html:strong>.</html:p>
+</html:div>
+<html:p>Now we can rewrite <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> as
+<fr:tex display="block"><![CDATA[
+  d\mathbf {Q}_{i} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {K}_{j}
+]]></fr:tex>
+and
+<fr:tex display="block"><![CDATA[
+  d\mathbf {K}_{j} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {Q}_{i}
+]]></fr:tex></html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter><fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> requires computing the <html:strong>global</html:strong> dot product <fr:tex display="inline"><![CDATA[\mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex>.</fr:mainmatter></fr:tree>
+
+ <html:div class="jms-indent-block" style="
+  margin-left: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid black;
+  padding-left: 12px;
+  background-color: whitesmoke;
+  ">
+  <html:strong>Key Insight 2:</html:strong>
+  <html:p>To get around this, we precompute <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> using the <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> values from the forward pass and the current <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> values. In particular,</html:p>
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+    \mathbf {D}_i &= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
+    &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
+    &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{i}^{T} \mathbf {V}_{j} \\
+    &= \sum _{j} d\mathbf {O}_{i}^{T} \left (\frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j}\right ) \\
+    &=  d\mathbf {O}_{i}^{T} \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j} \\
+    &= d\mathbf {O}_{i}^{T} \mathbf {O}_{i}
+    .\end {align*}
+    ]]></fr:tex>
+    Thus, we can compute <fr:tex display="inline"><![CDATA[\mathbf {D}_i]]></fr:tex> directly from the vectors <fr:tex display="inline"><![CDATA[d\mathbf {O}_i]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {O}_i]]></fr:tex>.
+</html:div>
+
+  <html:hr />
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:title text="Summary">Summary</fr:title></fr:frontmatter><fr:mainmatter>
+<html:ul><html:li>In the forward pass,</html:li>
+  <html:ol><html:li>Compute and store <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> values in memory.</html:li> 
+    <html:li>Compute and store <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex> values in memory</html:li></html:ol>
+  <html:li>Between the forward and backward pass,</html:li>
+  <html:ol><html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex>. (This is done automatically in <fr:link href="https://kellenkanarios.com/OGCRY/" type="external">JAX</fr:link>)</html:li>
+    <html:li>Use <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> to compute <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> memory.</html:li></html:ol>
+  <html:li>In the backward pass,</html:li>
+  <html:ol><html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {V}_j]]></fr:tex> via <fr:tex display="inline"><![CDATA[\mathbf {Q}, \mathbf {K}, d\mathbf {O}]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> memory.</html:li>
+    <html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {Q}_i]]></fr:tex> via <fr:tex display="inline"><![CDATA[\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> memory.</html:li>
+    <html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {K}_j]]></fr:tex> via <fr:tex display="inline"><![CDATA[\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> memory.</html:li></html:ol></html:ul>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+                </fr:tree>
+              </fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2025</fr:year>
+                  <fr:month>7</fr:month>
+                  <fr:day>14</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/W4YP/</fr:uri>
+                <fr:display-uri>W4YP</fr:display-uri>
+                <fr:route>/W4YP/</fr:route>
+                <fr:title text="Multi Query Attention">Multi Query Attention</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>Notes on the paper <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">Fast Transformer Decoding: One Write-Head is All You Need</fr:link>.</html:p><html:p>For, 
+<html:ul><html:li><fr:tex display="inline"><![CDATA[b]]></fr:tex> batch dimension,</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[n]]></fr:tex> sequence length,</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d]]></fr:tex> hidden dimension,</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[h]]></fr:tex> number of heads.</html:li></html:ul>
+The total <fr:link href="/4K5H/" title="Floating Point Operations" uri="https://kellenkanarios.com/4K5H/" display-uri="4K5H" type="local">FLOPS</fr:link> for <fr:link href="/004G/" title="Self-Attention" uri="https://kellenkanarios.com/004G/" display-uri="004G" type="local">attention</fr:link> are roughly <fr:tex display="inline"><![CDATA[bnd^2]]></fr:tex>. This comes from 
+<html:ol><html:li><fr:tex display="inline"><![CDATA[3nd^2]]></fr:tex> FLOPS to compute <fr:tex display="inline"><![CDATA[Q = XW_Q, K = XW_K, V = XW_V]]></fr:tex>.</html:li>
+  <html:li>Need to do this <fr:tex display="inline"><![CDATA[b]]></fr:tex> times for each input in batch.</html:li></html:ol>
+and the total memory accesses are roughly <fr:tex display="inline"><![CDATA[\underbrace {bnd}_{X} + \underbrace {bhn^2}_{\text {softmax}} + \underbrace {d^2}_{\text {projection}}]]></fr:tex>.
+This gives high arithmetic intensity
+<fr:tex display="block"><![CDATA[O\left (\left (\frac {h}{d} + \frac {1}{bn}\right )^{-1}\right )]]></fr:tex></html:p><html:p>However, if we do incremental inference then we must multiply our total number of memory accesses by <fr:tex display="inline"><![CDATA[n]]></fr:tex> i.e. <fr:tex display="inline"><![CDATA[bn^2d + nd^2]]></fr:tex>. This gives arithmetic intensity
+<fr:tex display="block"><![CDATA[O\left (\left (\frac {n}{d} + \frac {1}{b}\right )^{-1}\right ),]]></fr:tex>
+which requires large batch and short sequence length.
+</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+I believe we just ignore the softmax memory contribution in the inference case because it does not scale with <fr:tex display="inline"><![CDATA[n]]></fr:tex> anymore as we are computing the logits just for the next token. Therefore, it becomes a <fr:tex display="inline"><![CDATA[\frac {d}{h}]]></fr:tex> term, which we can safely ignore?
+</fr:mainmatter></fr:tree>
+<html:p>The key is that the <fr:tex display="inline"><![CDATA[\frac {n}{d}]]></fr:tex> term comes from the <fr:tex display="inline"><![CDATA[bn^2d]]></fr:tex> term, where we are loading <fr:tex display="inline"><![CDATA[h]]></fr:tex> <fr:tex display="inline"><![CDATA[(b \times  n \times  d / h)]]></fr:tex> <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrices <fr:tex display="inline"><![CDATA[n]]></fr:tex> times. Thus, we can improve the <fr:tex display="inline"><![CDATA[\frac {n}{d}]]></fr:tex> term by a factor of <fr:tex display="inline"><![CDATA[h]]></fr:tex> by simply not using a different <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrix for each head. This is the entire idea behind <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">MQA</fr:link>.</html:p>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Similar to the <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanarios.com/TJLA/" display-uri="TJLA" type="local">KV-cache</fr:link>, we still can use <fr:tex display="inline"><![CDATA[h]]></fr:tex> <fr:tex display="inline"><![CDATA[Q]]></fr:tex> matrices because we do not need to load <fr:tex display="inline"><![CDATA[n]]></fr:tex> of them into memory because only the last one matters for inference.
+</fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XUVV/</fr:uri><fr:display-uri>XUVV</fr:display-uri><fr:route>/XUVV/</fr:route><fr:title text="Group Query Attention">Group Query Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:em>Group query attention</html:em> is the same idea as <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">MQA</fr:link> but instead of using one <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> for every head, they use a <html:em>group</html:em> of them. Where obviously the number of groups needs to be less than the number of heads.</html:p><html:figure><html:img width="80%" src="/bafkrmicmjlgi2o3oetsssjdwk6y2pqce4vrdwiw2ah4wwe3ulnt74upkiu.png" />
+<html:figcaption>Grouped query uses subset of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrices.</html:figcaption></html:figure></fr:mainmatter></fr:tree><html:p>Also inspired by this idea of reducing the dependence of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> on the sequence length is sliding window attention.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/WM3M/</fr:uri><fr:display-uri>WM3M</fr:display-uri><fr:route>/WM3M/</fr:route><fr:title text="Sliding Window Attention">Sliding Window Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p>The idea behind <html:em>sliding window attention</html:em> is to ensure the number of weight matrices needed for the keys <fr:tex display="inline"><![CDATA[K]]></fr:tex> and values <fr:tex display="inline"><![CDATA[V]]></fr:tex> does not scale with the sequence length. Intuitively, this means allowing each word to "attend" to only some fixed number of previous words rather than the whole sequence</html:p><html:figure><html:img width="80%" src="/bafkrmidqeoo6wx6s4ry6u74fcelfzxvwreyf7d44whnql4ffnnyd2dwcha.png" />
+<html:figcaption>"the" only sees "on" and "sat" rather than the full sentence.</html:figcaption></html:figure></fr:mainmatter></fr:tree></fr:mainmatter>
+            </fr:tree>
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>20</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/PI7N/</fr:uri>
+            <fr:display-uri>PI7N</fr:display-uri>
+            <fr:route>/PI7N/</fr:route>
+            <fr:title text="Online Softmax">Online Softmax</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>This covers the math behind the online softmax algorithm required by <fr:link href="/R0PM/" title="Flash Attention (v1)" uri="https://kellenkanarios.com/R0PM/" display-uri="R0PM" type="local">Flash Attention (v1)</fr:link>.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:title text="Safe softmax">Safe softmax</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The first thing we must consider is numerical precision. Namely, the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">original softmax</fr:link> operation is given by</html:p>
+<fr:tex display="block"><![CDATA[\mathrm {softmax}(\mathbf {x}) = \frac {\exp (\mathbf {x})}{\sum _{i=1}^n \exp (\mathbf {x}_i)}]]></fr:tex>
+<html:p>However, when operating with <fr:link href="/DEQV/" title="Low Precision Data Types" uri="https://kellenkanarios.com/DEQV/" display-uri="DEQV" type="local">low precision data types</fr:link> (i.e. float16) the maximum value is <fr:tex display="inline"><![CDATA[65536]]></fr:tex>. Therefore, with <fr:tex display="inline"><![CDATA[\exp ]]></fr:tex> we can easily get numerically overflow.</html:p>
+<html:p>To get around this, the online softmax algorithm adheres to the <html:em>safe softmax</html:em>. For safe softmax, we simply multiply the numerator and denominator by <fr:tex display="inline"><![CDATA[\exp (-m)]]></fr:tex>, where <fr:tex display="inline"><![CDATA[m = \max  \{x_{1}, \ldots , x_n\}]]></fr:tex>. This gives</html:p>
+<fr:tex display="block"><![CDATA[\mathrm {softmax}(\mathbf {x}) = \frac {\exp (\mathbf {x} - m)}{\sum _{i=1}^n \exp (\mathbf {x}_i - m)}]]></fr:tex>
+<html:p>Since <fr:tex display="inline"><![CDATA[x_i - m \leq  0]]></fr:tex>, this ensures that each <fr:tex display="inline"><![CDATA[\exp (x_i - m)]]></fr:tex> is bounded in a safe range.</html:p>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Note that computing the <fr:tex display="inline"><![CDATA[\max ]]></fr:tex> over <fr:tex display="inline"><![CDATA[\mathbf {x}]]></fr:tex> means that we must have all of the logits in a row of <fr:tex display="inline"><![CDATA[QK^T]]></fr:tex> materialized in <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">SMEM</fr:link>, or first loop over all of them to compute the max before computing the normalization constant.</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:title text="Fusing the max and normalization">Fusing the max and normalization</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The online softmax algorithm fuses the max reduction into the normalization pass, so a single sweep over the row suffices to compute the normalization with the max. The key difficulty is that the denominator depends on <fr:tex display="inline"><![CDATA[n]]></fr:tex> <html:strong>for each</html:strong> <fr:tex display="inline"><![CDATA[i]]></fr:tex> i.e.</html:p>
+<fr:tex display="block"><![CDATA[d = \sum _{i=1}^{n} \exp (x_i - m_n)]]></fr:tex>
+<html:p>
+Therefore, we must find a recursive relationship such that <fr:tex display="inline"><![CDATA[d_{i+1} = f(d_i, m_i, x_{i+1})]]></fr:tex> for some function <fr:tex display="inline"><![CDATA[f]]></fr:tex>. This would then allow us to locally compute <fr:tex display="inline"><![CDATA[d_{i+1}]]></fr:tex> with only the local information of current <fr:tex display="inline"><![CDATA[x_{i+1}]]></fr:tex> and the two running statistics <fr:tex display="inline"><![CDATA[d_i]]></fr:tex> and <fr:tex display="inline"><![CDATA[m_i]]></fr:tex>. This is exactly the kind of algorithm that is conducive to <fr:link href="https://kellenkanarios.com/OGCRV/" type="external">memory tiling</fr:link>.
+</html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>What is <fr:tex display="inline"><![CDATA[f(d_i, m_i, x_{i+1})]]></fr:tex>?</fr:mainmatter></fr:tree>
+
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>Consider <fr:tex display="inline"><![CDATA[d_{i+1} = d_i \cdot  \exp (m_{i} - m_{i + 1}) + \exp (x_{i + 1} - m_{i + 1})]]></fr:tex>.</fr:mainmatter></fr:tree>
+
+
+   
+   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>
+  This can be seen by directly rewriting <fr:tex display="inline"><![CDATA[d_{i + 1}]]></fr:tex>. 
+  <fr:tex display="block"><![CDATA[
+    \begin {align*}
+      d_{i + 1} &= \sum _{j = 1}^{i+1} \exp (x_j - m_{i + 1}) \\
+      &= \left (\sum _{j = 1}^{i} \exp (x_j - m_{i+1})\right ) + \exp (x_{i+1} - m_{i+1}) \\
+      &= \left (\sum _{j = 1}^{i} \exp (x_j - m_{i})\right )\exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1}) \\
+      &= d_{i} \exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1})
+    \end {align*}
+  ]]></fr:tex>
+</fr:mainmatter></fr:tree>
+ 
+
+
+<html:p>
+The running denominator <fr:tex display="inline"><![CDATA[d]]></fr:tex> is rescaled by <fr:tex display="inline"><![CDATA[e^{m - m_{\text {new}}}]]></fr:tex> each time a new maximum is found, keeping it consistent with the safe-softmax shift.</html:p>
+<html:p><fr:resource hash="4a2d5b3202e83ff6780ef6fedca07f67"><fr:resource-content><html:img src="https://kellenkanarios.com/4a2d5b3202e83ff6780ef6fedca07f67.svg" /></fr:resource-content><fr:resource-source type="latex" part="preamble"><![CDATA[
+  \usepackage{tikz, tikz-cd, mathtools, amssymb, amsmath, stmaryrd, algpseudocodex}
+ \newenvironment{algo}{\begin{varwidth}{20cm}\begin{algorithmic}}{\end{algorithmic}\end{varwidth}}
+ \ExplSyntaxOff
+]]></fr:resource-source><fr:resource-source type="latex" part="body"><![CDATA[
+\begin {algo}
+\State  $m \gets  -\infty ;\quad  d \gets  0$
+\For {$i = 1$ \textbf {to} $n$}
+  \State  $m_{i+1} \gets  \max (m_i, x_i)$
+  \State  $d_{i + 1} \gets  d_i \cdot  e^{\,m_i - m_{i+1}} + e^{\,x_i - m_{i}}$
+\EndFor 
+\For {$i = 1$ \textbf {to} $n$}
+    \State  $\mathbf {p}_{i} \gets  e^{\,x_i - m_n} / d \;$
+\EndFor 
+\Return  $\mathbf {p}$
+\end {algo}
+]]></fr:resource-source></fr:resource></html:p>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+Unfortunately, we cannot get around the second pass to compute the normalized output for <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex>. However, this is not the case in <fr:link href="/R0PM/" title="Flash Attention (v1)" uri="https://kellenkanarios.com/R0PM/" display-uri="R0PM" type="local">Flash Attention (v1)</fr:link>.
+</fr:mainmatter></fr:tree>
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

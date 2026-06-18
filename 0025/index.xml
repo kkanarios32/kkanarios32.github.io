@@ -11,7 +11,7 @@
     <fr:uri>https://kellenkanarios.com/0025/</fr:uri>
     <fr:display-uri>0025</fr:display-uri>
     <fr:route>/0025/</fr:route>
-    <fr:title text="Stack vs. Heap">Stack vs. Heap</fr:title>
+    <fr:title text="https://kellenkanarios.com/NZBG/ vs. Heap"><fr:link href="https://kellenkanarios.com/NZBG/" type="external">NZBG</fr:link> vs. <fr:link href="/WLBG/" title="Heap" uri="https://kellenkanarios.com/WLBG/" display-uri="WLBG" type="local">Heap</fr:link></fr:title>
   </fr:frontmatter>
   <fr:mainmatter><html:p>I often hear this question come up amongst performance-driven developers, and for the longest time I could never get a straight answer as to why the stack was so much better? After a long foray into the inner workings of how memory allocation is actually done, I think I finally have an answer. I do not want to forget this, so I am doing a quick write up here.</html:p>
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2024</fr:year><fr:month>12</fr:month><fr:day>28</fr:day></fr:date><fr:title text="Why stack is faster.">Why stack is faster.</fr:title></fr:frontmatter><fr:mainmatter>
@@ -20,7 +20,7 @@ This all comes down to what happens during each memory allocation. Prior to actu
     <html:li>Writes value to new address pointed to by stack pointer.</html:li></html:ul>
 When you allocate memory on the heap i.e. <html:code>int *x = malloc(sizeof(int))</html:code>, we must instead choose how best to fulfill the request, which is a whole research direction in itself.
 <html:ul><html:li>One such implementation is the <fr:link href="https://en.wikipedia.org/wiki/Buddy_memory_allocation" type="external">buddy algorithm</fr:link></html:li></html:ul>
-However, <html:code>malloc</html:code> itself is not a system call and therefore is not terribly slow. A real issue occurs when we run out of pre-allocated heap memory. This requires invoking a system call like <html:code>sbrk</html:code> to increment the size of the allocated memory for the heap.
+However, <html:code>malloc</html:code> itself is not a system call and therefore is not terribly slow. A real issue occurs when we run out of pre-allocated heap memory. This requires <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">invoking a system call</fr:link> like <html:code>sbrk</html:code> to increment the size of the allocated memory for the heap.
 <html:ul><html:li>If no available pages, OS must evict and write to disk...</html:li>
       <html:li>Formally, this is known as "heap growth".</html:li></html:ul>
 Generally, if you know how much memory you need it is good practice to just allocated all up front to minimize any potential system calls. With this, the performance difference is not too drastic <![CDATA[ :)]]>
@@ -53,7 +53,55 @@ Generally, if you know how much memory you need it is good practice to just allo
         <fr:authors />
         <fr:title text="Related">Related</fr:title>
       </fr:frontmatter>
-      <fr:mainmatter />
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>6</fr:month>
+              <fr:day>1</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/WLBG/</fr:uri>
+            <fr:display-uri>WLBG</fr:display-uri>
+            <fr:route>/WLBG/</fr:route>
+            <fr:title text="Heap">Heap</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>In <fr:link href="/OGCS1/" title="Notebook: C++" uri="https://kellenkanarios.com/OGCS1/" display-uri="OGCS1" type="local">C++</fr:link>, you allocate memory on the heap with <html:code>new</html:code> and <html:code>delete</html:code>.</html:p>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/A5S6/</fr:uri>
+            <fr:display-uri>A5S6</fr:display-uri>
+            <fr:route>/A5S6/</fr:route>
+            <fr:title text="Syscall mechanism">Syscall mechanism</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>A syscall is a user-mode-initiated request for a privileged service from the kernel. Because user code cannot jump into kernel code directly, the mechanism is built around a single trap instruction plus a pre-agreed register convention identifying which service to perform.</html:p><html:p>The end-to-end sequence:</html:p><html:ol><html:li>User code places the syscall number in a pre-defined register and invokes the trap instruction.</html:li>
+  <html:li>Hardware saves enough state to resume the process and switches to kernel mode.</html:li>
+  <html:li>Hardware jumps to the OS-installed handler via the <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link>.</html:li>
+  <html:li>The handler reads the syscall number from the agreed register and dispatches to the corresponding OS routine.</html:li>
+  <html:li>The OS validates the request, performs the work, and arranges return values per the calling convention.</html:li>
+  <html:li>The OS restores user state and returns the process to user mode.</html:li></html:ol>
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Because the register convention is fixed by ABI, the user-mode side of a syscall is typically hand-written in assembly within libc.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Interrupts work via a similar trap-handler mechanism, but are initiated by hardware (timer, device) rather than user code.</fr:mainmatter></fr:tree>
+
+    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The kernel must validate any pointers or arguments the user supplies — user code cannot be trusted not to ask the kernel to read kernel memory on its behalf.</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
     </fr:tree>
     <fr:tree show-metadata="false" hidden-when-empty="true">
       <fr:frontmatter>
