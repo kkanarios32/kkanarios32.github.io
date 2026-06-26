@@ -23,7 +23,7 @@
  series = {Adaptive Computation and Machine Learning Series},
  publisher = {The MIT Press},
  address = {Cambridge, Massachusetts},
- file = {/home/kellen/Downloads/pdfs/storage/DY4UI6G7/Sutton and Barto - 2018 - Reinforcement learning an introduction.pdf},
+ file = {/home/kellen/Downloads/papers/Reinforcement learning an introduction - Sutton and Barto.pdf},
  keywords = {Reinforcement learning},
  lccn = {Q325.6 .R45 2018},
  langid = {english},
@@ -53,6 +53,77 @@
         <fr:title text="Backlinks">Backlinks</fr:title>
       </fr:frontmatter>
       <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>24</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/DJPO/</fr:uri>
+            <fr:display-uri>DJPO</fr:display-uri>
+            <fr:route>/DJPO/</fr:route>
+            <fr:title text="Eligibility Traces">Eligibility Traces</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>As I grow more interested in abandoning batched updates and the replay buffer, the importance of elibility traces grows with me. Due to this, I thought it finally time to re-prove / understand what makes these traces so eligible.</html:p><html:p>The reference followed is <fr:link href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction" uri="https://kellenkanarios.com/suttonReinforcementLearningIntroduction2018/" display-uri="suttonReinforcementLearningIntroduction2018" type="local">Sutton and Barto</fr:link> (Ch 12.).</html:p><html:p>The eligibility trace vector is given by
+<fr:tex display="block"><![CDATA[
+\begin {align*}
+ \mathbf {z}_{-1} &= 0 \\
+ \mathbf {z}_t &= \gamma  \lambda  \mathbf {z}_{t - 1} + \nabla  \hat {v}(S_t; \mathbf {w}_t)
+.\end {align*}
+]]></fr:tex>
+Recall the temporal difference error is given by
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \mathbf {\delta }_t = r_{t + 1} + \gamma  \hat {v}(s_{t + 1}; \mathbf {w}_t) - \hat {v}(s_t; \mathbf {w}_t)
+.\end {align*}]]></fr:tex>
+For TD(<fr:tex display="inline"><![CDATA[\lambda ]]></fr:tex>), the incremental update is given by
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \mathbf {w}_{t + 1} = \mathbf {w}_t + \alpha  \mathbf {\delta }_{t} \mathbf {z}_t
+.\end {align*}]]></fr:tex></html:p><html:p>We can rewrite the <fr:tex display="inline"><![CDATA[\lambda ]]></fr:tex>-return recursively in terms of reward and itself as follows:
+<fr:tex display="block"><![CDATA[\begin {align*}
+  G_t^{\lambda } &= (1 - \lambda ) \sum _{n=1}^{\infty } \lambda ^{n-1}G_{t:t+n} \\
+  G_t^{\lambda } &= (1 - \lambda ) \sum _{n=1}^{\infty } \lambda ^{n-1}(R_{t + 1} + \gamma  G_{t+1:t+n}) \\
+  G_t^{\lambda } &= R_{t + 1} + \gamma  (1 - \lambda ) \left [\hat {v}(S_{t + 1}; \mathbf {w}_t) + \sum _{n=2}^{\infty } \lambda ^{n-1} G_{t+1:t+n}\right ] \\
+  G_t^{\lambda } &= R_{t + 1} + (1 - \lambda )\gamma  \hat {v}(S_{t + 1}; \mathbf {w}_t) + \gamma  \lambda  G_{t + 1}^{\lambda }
+.\end {align*}]]></fr:tex></html:p><html:p>Now we will show that the prediction error of TD(<fr:tex display="inline"><![CDATA[\lambda ]]></fr:tex>) can be re-written as the sum of TD-errors. The prediction error is written as
+<fr:tex display="block"><![CDATA[PE = G_t^{\lambda } - \hat {v}(S_t, \mathbf {w}_t)]]></fr:tex>
+Rewriting the <fr:tex display="inline"><![CDATA[\lambda ]]></fr:tex>-return as above
+<fr:tex display="block"><![CDATA[
+\begin {align*}
+ PE &= R_{t + 1} + \gamma  \hat {v}(S_{t + 1} ; \mathbf {w}_t) + \gamma  \lambda  G_{t + 1}^{\lambda } - \gamma  \lambda  \hat {v}(S_{t + 1}, \mathbf {w}_t) - \hat {v}(S_t; \mathbf {w}_t) 
+ &= (R_{t + 1} + \gamma  \hat {v}(S_{t + 1} ; \mathbf {w}_t) - \hat {v}(S_t, \mathbf {w}_t)) + \gamma  \lambda  G_{t + 1}^{\lambda } - \gamma  \lambda  \hat {v}(S_{t + 1}; \mathbf {w}_t)
+ &= \mathbf {\delta }_t  + \gamma  \lambda  G_{t + 1}^{\lambda } - \gamma  \lambda  \hat {v}(S_{t + 1}; \mathbf {w}_t)
+.\end {align*}
+]]></fr:tex>
+<html:p>
+We now are left with <fr:tex display="inline"><![CDATA[\gamma  \lambda  (G_{t + 1}^{\lambda } - \hat {v}(S_{t + 1}, \mathbf {w}_t))]]></fr:tex>, where we can proceed in the same manner recursively, such that
+<fr:tex display="block"><![CDATA[PE = \sum _{t=1}^{\infty } (\gamma  \lambda )^{t - 1} \delta _t]]></fr:tex>
+It is easy to see the same thing goes through for the finite time slice <fr:tex display="inline"><![CDATA[\lambda ]]></fr:tex>-return i.e.
+<fr:tex display="block"><![CDATA[G_{t:t + k}^{\lambda } - \hat {v}(S_t, \mathbf {w}_{t - 1}) = \sum _{i = t}^{t + k} (\gamma  \lambda )^{i - t} \delta _i]]></fr:tex></html:p>
+<html:p>
+  Going back to the eligibility trace update, if we instead do not apply each elibgibility trace update but apply the sum of all the updates for the same fixed <fr:tex display="inline"><![CDATA[\mathbf {w}_t]]></fr:tex>, then we get that the total update is
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+   \mathbf {w}_{t+1} &= \sum _{t=1}^{T} \alpha  \delta _t \mathbf {z}_t \\
+   &= \sum _{t=1}^{T} \alpha  \delta _t \sum _{i=0}^{t} (\lambda  \gamma )^{i} \nabla  \hat {v}(S_i, \mathbf {w}_t) \\
+   &= \sum _{t=1}^{T} \alpha  (r_t + \gamma  \hat {v}(S_{t+1}, \mathbf {w}_t) - \hat {v}(S_t, \mathbf {w}_t)) \underbrace {\sum _{i=0}^{t} (\lambda  \gamma )^{i} \nabla  \hat {v}(S_i, \mathbf {w}_t)}_{X_t}
+  .\end {align*}
+  ]]></fr:tex>
+  Then
+  <fr:tex display="block"><![CDATA[\begin {align*}
+   &= \sum _{t=1}^{T} \alpha  r_t X_t + \gamma  \hat {v}(S_{t+1}, \mathbf {w}_t) X_t - \hat {v}(S_t, \mathbf {w}_t) X_t
+  .\end {align*}]]></fr:tex></html:p>
+<html:p>
+  This shows that the <html:em>backward-view</html:em> and <html:em>forward-view</html:em> are "equivalent". The forward-view in practice makes an update at each step, so it is typically better.
+</html:p></html:p>
+  <html:hr />
+<html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" /></fr:mainmatter>
+        </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
             <fr:authors>
