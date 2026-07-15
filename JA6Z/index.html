@@ -1,6 +1,315 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/JA6Z/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>FIFO scheduling</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>FIFO scheduling <a class="slug" href="/JA6Z/">[JA6Z]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">First-in, first-out. Jobs are run to completion in the order they arrive. Trivially fair under any reasonable notion of fairness, but suffers from the <em>convoy effect</em>: a single long-running job at the head delays every shorter job behind it, inflating average turnaround time.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> If the first arriving job is much longer than the rest, all subsequent jobs wait at least its full duration before getting any CPU.</div>
+</details></section><footer xmlns="">
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id3"><summary><header><h1>
+<span class="taxon"></span>Scheduling <a class="slug" href="/B8GC/">[B8GC]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">July 26, 2025</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The scheduler decides which runnable <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span> to put on the CPU at each moment. There is no single right answer because the metrics conflict:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>Turnaround time</strong>: time from arrival to completion, \(T_{\text {completion}} - T_{\text {arrival}}\). Minimized by running short jobs first.</li>
+  <li><strong>Response time</strong>: time from arrival to first scheduling. Minimized by frequent rotation.</li>
+  <li><strong>Fairness</strong>: every job makes progress; nobody starves.</li></ol><section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>FIFO scheduling <a class="slug" href="/JA6Z/">[JA6Z]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">First-in, first-out. Jobs are run to completion in the order they arrive. Trivially fair under any reasonable notion of fairness, but suffers from the <em>convoy effect</em>: a single long-running job at the head delays every shorter job behind it, inflating average turnaround time.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> If the first arriving job is much longer than the rest, all subsequent jobs wait at least its full duration before getting any CPU.</div>
+</details></section><section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon"></span>SJF scheduling <a class="slug" href="/VJ4F/">[VJ4F]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Shortest job first</em>. Run the job with the smallest total work first, run-to-completion. If all jobs arrive at the same time, SJF provably minimizes average turnaround time.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Real workloads don't all arrive at \(t = 0\). A long job that arrives slightly before a short one still gets to monopolize the CPU until it finishes — SJF degenerates to <span xmlns="" class="link local"><a href="/JA6Z/" title="FIFO scheduling [JA6Z]">FIFO scheduling</a></span> under sequential arrivals.</div>
+<p xmlns="http://www.w3.org/1999/xhtml">Removing the run-to-completion constraint and allowing preemption gives <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>.</p></details></section><section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon"></span>STCF scheduling <a class="slug" href="/7R07/">[7R07]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Shortest time-to-completion first</em>. A preemptive refinement of <span xmlns="" class="link local"><a href="/VJ4F/" title="SJF scheduling [VJ4F]">SJF scheduling</a></span>: whenever the scheduler is invoked, it picks the job with the least <em>remaining</em> work. A short job arriving mid-execution can preempt a long one.</p><p xmlns="http://www.w3.org/1999/xhtml">STCF is provably optimal for minimizing average turnaround time over all preemptive schedulers.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Long jobs starve in response time. The lowest-priority work might not get a CPU slice for a very long time, which is unacceptable for interactive workloads.</div>
+</details></section><section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon"></span>Round-robin scheduling <a class="slug" href="/NEL8/">[NEL8]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Cycle through all runnable jobs, giving each a fixed time slice — the <em>stride</em>, <em>time slice</em>, or <em>quantum length</em> — before preempting and moving to the next. The best you can do at minimizing <em>response time</em>: every job sees the CPU within at most \(N\) quanta where \(N\) is the runnable-job count.</p><p xmlns="http://www.w3.org/1999/xhtml">The quantum length is a tradeoff:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Short quantum: better response time, more frequent <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switches</a></span>, worse cache locality.</li>
+  <li>Long quantum: amortizes context-switch cost, worse response time.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Worst-case response time for \(N\) jobs at quantum \(S\) is \(S(N-1)\).</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Round-robin minimizes response time but is poor for turnaround time relative to <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>. A scheduler that wants both has to combine ideas — see <span xmlns="" class="link local"><a href="/4WG5/" title="Multi-level feedback queue [4WG5]">Multi-level feedback queue</a></span>.</div>
+</details></section><section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
+<span class="taxon"></span>Multi-level feedback queue <a class="slug" href="/4WG5/">[4WG5]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A practical scheduler that approximates <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>'s turnaround properties and <span xmlns="" class="link local"><a href="/NEL8/" title="Round-robin scheduling [NEL8]">Round-robin scheduling</a></span>'s response properties without requiring foreknowledge of job lengths. Maintain multiple priority queues; within a queue, schedule round-robin. Never service a lower-priority queue while a higher-priority queue has a runnable job.</p><p xmlns="http://www.w3.org/1999/xhtml">The priority of a job is not assigned by the user — it is <em>learned</em> from behavior:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>New jobs enter at the top priority.</li>
+  <li>Each priority level has an <em>allotment</em> — the total CPU time a job may consume before being demoted.</li>
+  <li>Once a job exhausts its allotment at a level, it drops to the next level.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Short jobs that finish quickly never leave the top queue (good turnaround). Interactive jobs that yield often stay at the top (good response time). CPU-bound jobs sink to the bottom and get scheduled when nothing better is runnable.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Gaming the allotment: a job can issue I/O just before its allotment expires to avoid demotion, since I/O time doesn't count.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Charge the job's allotment for total time at the priority level, including time spent blocked.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Starvation of low-priority queues if higher queues never empty.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Periodically reset all jobs to the top priority. Cheap and effective.</div>
+</details></section><section lang="en" class="block hide-metadata"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon"></span>Lottery scheduling <a class="slug" href="/AM8U/">[AM8U]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A proportional-share scheduler. Each runnable job holds some number of <em>tickets</em>, drawn from a fixed total. On each scheduling decision, the scheduler picks a random ticket and runs the job that owns it. Over time, a job receives CPU time proportional to its share of the tickets.</p><p xmlns="http://www.w3.org/1999/xhtml">The implementation is trivial: one random number per decision, plus a sum table. No global state about historical CPU usage is needed.</p><p xmlns="http://www.w3.org/1999/xhtml">Mechanisms layered on top:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Ticket currency</em> — give each user a fixed number of tickets to split among their processes however they like.</li>
+  <li><em>Ticket transfer</em> — a client process can hand tickets to a server to boost its priority while servicing the request.</li>
+  <li><em>Ticket inflation</em> — a process can grow its share temporarily, with bounds set by trust.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The unsolved problem is <em>how</em> to assign tickets in the first place. The mechanism is simple; the policy is not.</div>
+<p xmlns="http://www.w3.org/1999/xhtml">A deterministic version of the same idea is <span xmlns="" class="link local"><a href="/HCJ7/" title="Stride scheduling [HCJ7]">Stride scheduling</a></span>, which avoids the variance of random sampling at the cost of needing global state.</p></details></section><section lang="en" class="block hide-metadata"><details id="id10" open="open"><summary><header><h1>
+<span class="taxon"></span>Stride scheduling <a class="slug" href="/HCJ7/">[HCJ7]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A deterministic proportional-share scheduler. Each job has a <em>stride</em> inversely proportional to its ticket count (the more tickets, the smaller the stride) and a running <em>pass</em> counter that accumulates its stride every time it's scheduled.</p><p xmlns="http://www.w3.org/1999/xhtml">The decision is:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Pick the job with the lowest <em>pass</em>.</li>
+  <li>Run it for one quantum.</li>
+  <li>Increment its pass by its stride.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">A job with twice as many tickets has half the stride, so its pass grows half as fast, so it gets scheduled twice as often. Same long-run behavior as <span xmlns="" class="link local"><a href="/AM8U/" title="Lottery scheduling [AM8U]">Lottery scheduling</a></span>, but with zero variance.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> New jobs need an initial pass value. Setting it to 0 lets them dominate; setting it to the global minimum lets them merge in cleanly but requires tracking that minimum.</div>
+</details></section>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Each <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switch</a></span> is not free. Choosing a longer time slice amortizes that cost at the price of response time.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> I/O-bound jobs are commonly handled by splitting a job into its non-I/O segments and scheduling them individually — turning one long-but-mostly-blocked job into many short, runnable ones.</div>
+</details></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id12"><summary><header><h1>
+<span class="taxon"></span>SJF scheduling <a class="slug" href="/VJ4F/">[VJ4F]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Shortest job first</em>. Run the job with the smallest total work first, run-to-completion. If all jobs arrive at the same time, SJF provably minimizes average turnaround time.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Real workloads don't all arrive at \(t = 0\). A long job that arrives slightly before a short one still gets to monopolize the CPU until it finishes — SJF degenerates to <span xmlns="" class="link local"><a href="/JA6Z/" title="FIFO scheduling [JA6Z]">FIFO scheduling</a></span> under sequential arrivals.</div>
+<p xmlns="http://www.w3.org/1999/xhtml">Removing the run-to-completion constraint and allowing preemption gives <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>.</p></details></section>
+        <section lang="en" class="block"><details id="id13"><summary><header><h1>
+<span class="taxon"></span>Three Easy Pieces: Exercises <a class="slug" href="/W4DQ/">[W4DQ]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Worked homework for <span xmlns="" class="link local"><a href="/arpaci2018operating/" title="Operating Systems: Three Easy Pieces [arpaci2018operating]">Three Easy Pieces</a></span>. One section per chapter; the conceptual material for each chapter lives in the corresponding concept pages — Processes Intro across <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>, <span xmlns="" class="link local"><a href="/JJ45/" title="Process API [JJ45]">Process API</a></span>, <span xmlns="" class="link local"><a href="/JE53/" title="Process control block [JE53]">Process control block</a></span>; Process Interlude across <span xmlns="" class="link local"><a href="/O1S9/" title="fork() [O1S9]">fork()</a></span>, <span xmlns="" class="link local"><a href="/J6VZ/" title="wait() [J6VZ]">wait()</a></span>, <span xmlns="" class="link local"><a href="/YHJR/" title="exec() [YHJR]">exec()</a></span>, <span xmlns="" class="link local"><a href="/9V3H/" title="Unix signals [9V3H]">Unix signals</a></span>.</p>
+  
+
+
+  <section lang="en" class="block hide-metadata"><details id="id14"><summary><header><h1>
+<span class="taxon"></span>Processes Intro  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<ol xmlns="http://www.w3.org/1999/xhtml"><li>For what types of workloads does <span xmlns="" class="link local"><a href="/VJ4F/" title="SJF scheduling [VJ4F]">SJF scheduling</a></span> deliver the same turnaround as <span xmlns="" class="link local"><a href="/JA6Z/" title="FIFO scheduling [JA6Z]">FIFO scheduling</a></span>?</li>
+  
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> For workloads that arrive in increasing order of total job time.</div>
+
+  <li>For what types of workloads and quantum lengths does SJF deliver the same response times as <span xmlns="" class="link local"><a href="/NEL8/" title="Round-robin scheduling [NEL8]">Round-robin scheduling</a></span>?</li>
+  
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> For shorter jobs and longer quantum lengths, RR and SJF should deliver similar response times.</div>
+
+  <li>What happens to response time with SJF as job lengths increase?</li>
+  
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> Response time degrades because the longest jobs have to wait for each of the shorter jobs to finish. If these shorter jobs become longer than the response time grows linearly.</div>
+
+  <li>What happens to response time with RR as quantum lengths increase? Can you write an equation that gives the worst-case response time, given \(N\) jobs?</li>
+  
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> The response time is the average over stride length number of preceding jobs. The formula can be written as
+    \[\mathrm {RT} = \frac {1}{N} \sum _{i = 1}^{N} (i - 1)S = \frac {S(N - 1) N}{N} = S(N - 1)\]</div>
+
+    <li>Run <code>process.py</code> with the flags <code>-l 5:100, 5:100</code>. What should the CPU utilization be?
+    
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> The flags correspond to running two processes each with \(5\) instructions where each instruction has probability one of using the CPU. The output from the program is
+    <pre>  Process 0
+    cpu
+    cpu
+    cpu
+    cpu
+    cpu
+
+  Process 1
+    cpu
+    cpu
+    cpu
+    cpu
+    cpu</pre>
+    with this, we can conclude that the utilization is 100%. We will execute one instruction for the first process until it completes, then the five instructions of the next process. If both are waiting on IO, then I do not think this would be the case?
+    </div>
+
+    
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
+    Using the solution flags <code>-cp</code>, there is 100% utilization.
+    </div></li>
+    <li>Run <code>process.py</code> with the flags <code>-l 4:100, 1:0</code>. How long does it take to complete both processes?
+    
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> The flags correspond to running one process with \(4\) instructions with each instruction having probability one of using the CPU and one process with one instruction that uses the IO. The output from the program is
+    <pre>Process 0
+  cpu
+  cpu
+  cpu
+  cpu
+
+Process 1
+  io
+  io_done</pre>
+It will take \(4 + \text {time of IO}\). Since the process with \(4\) non-IO-dependent instructions will run each of those instructions and then the next process will begin which must wait for the entire duration of IO.
+    </div>
+
+    
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Using the <code>-cp</code> flags it takes \(11\) timesteps to complete which is \(\approx  4 + \text {time of IO}\).
+  </div></li>
+<li>
+Now switch the order of the processes: <code>./process-run.py -l
+1:0,4:100</code>. What happens now? Does switching the order mat-
+ter? Why?
+  
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> 
+The output of the code is
+    <pre>Process 0
+  io
+  io_done
+
+Process 1
+  cpu
+  cpu
+  cpu
+  cpu</pre>
+    Depending on the time of IO (<code>the -L flag</code>), it should take \(\max (5, 1 + \text {time IO})\). Switching the order does matter because we can run the CPU instructions while waiting for non-blocking IO. This motivates the idea of scheduling.
+  </div>
+
+  
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
+    It only takes \(7\) timesteps because we are able to perform the IO operations off the CPU as expected.
+  </div></li>
+  <li>
+We'll now explore some of the other flags. One important flag is <code>-S</code>, which determines how the system reacts when a process issues an I/O. With the flag set to <code>SWITCH_ON_END</code>, the system will NOT switch to another process while one is doing I/O, instead waiting until the process is completely finished. What happens when you run the following two processes, one doing I/O and the other doing CPU work? (<code>-l 1:0,4:100 -c -S SWITCH_ON_END</code>)
+
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> 
+  The output of the code is:
+<pre>Time        PID: 0        PID: 1           CPU           IOs
+  1         RUN:io         READY             1
+  2        BLOCKED         READY                           1
+  3        BLOCKED         READY                           1
+  4        BLOCKED         READY                           1
+  5        BLOCKED         READY                           1
+  6        BLOCKED         READY                           1
+  7*   RUN:io_done         READY             1
+  8           DONE       RUN:cpu             1
+  9           DONE       RUN:cpu             1
+ 10           DONE       RUN:cpu             1
+ 11           DONE       RUN:cpu             1</pre>
+As expected, it runs the IO process, blocking the CPU process until it is completed.
+</div></li>
+    <li>Now, run the same processes, but with the switching behavior set
+to switch to another process whenever one is <code>WAITING</code> for I/O (<code>-l 1:0,4:100 -c -S SWITCH ON IO</code>). What happens now? Use <code>-c</code>
+and <code>-p</code> to confirm that you are right</li>
+
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> 
+  I assume that at timestep \(1\) we will still <code>RUN:io</code>. However, we will then switch the <code>PID: 1</code> for the next \(4\) timesteps until it is completed. After one additional <code>BLOCKED</code> timestep, we will run <code>RUN:io_done</code> and complete both processes.
+</div>
+
+
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
+  The output of the code is:
+  <pre>Time        PID: 0        PID: 1           CPU           IOs
+  1         RUN:io         READY             1
+  2        BLOCKED       RUN:cpu             1             1
+  3        BLOCKED       RUN:cpu             1             1
+  4        BLOCKED       RUN:cpu             1             1
+  5        BLOCKED       RUN:cpu             1             1
+  6        BLOCKED          DONE                           1
+  7*   RUN:io_done          DONE             1</pre>
+</div>
+
+<li>
+One other important behavior is what to do when an I/O completes. With -I IO RUN LATER, when an I/O completes, the process that issued it is not necessarily run right away; rather, whatever was running at the time keeps running. What happens when you run this combination of processes? (<code>./process-run.py -l 3:0,5:100,5:100,5:100 -S SWITCH ON IO -I IO RUN LATER -c -p</code>) Are system resources being effectively utilized?
+
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> 
+  The resources are not efficiently utilized because we end up waiting until all of our CPU-bound processes finish before returning to the IO-bound process, which calls another <code>IO:run</code> and we do not get any concurrency benefit.
+</div>
+
+
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
+  The code output is pretty long but the end output is
+  <pre>Stats: Total Time 31
+Stats: CPU Busy 21 (67.74%)
+Stats: IO Busy  15 (48.39%)</pre>
+</div></li>
+<li>
+Now run the same processes, but with <code>-I IO RUN IMMEDIATE</code> set, which immediately runs the process that issued the I/O. How does this behavior differ? Why might running a process that just completed an I/O again be a good idea?
+
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> 
+  The behavior differs by returning to the IO-bound process, which can then immediately call the next <code>IO:run</code> before returning access to the CPU-bound processes, improving concurrency. In an attempt to predict the next IO call, it might be a good idea to run the process that just completed IO because it is more likely to make another IO call.
+</div>
+
+
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
+  The corresponding statistics are
+  <pre>Stats: Total Time 21
+Stats: CPU Busy 21 (100.00%)
+Stats: IO Busy  15 (71.43%)</pre>
+</div></li>
+<li>
+Now run with some randomly generated processes, e.g., <code>-s 1 -l
+3:50,3:50, -s 2 -l 3:50,3:50, -s 3 -l 3:50,3:50</code>. See
+if you can predict how the trace will turn out. What happens when
+you use <code>-I IO RUN IMMEDIATE</code> vs. <code>-I IO RUN LATER</code>? What hap-
+pens when you use <code>-S SWITCH ON IO</code> vs. <code>-S SWITCH ON END</code>?
+
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> 
+  Since each instruction has a 50% chance of being CPU or I/O, I do not think there will be much benefit to <code>IO_RUN_LATER</code> vs. <code>IO_RUN_IMMEDIATE</code>. However, I believe it will be crucial to enable <code>-S SWITCH_ON_IO</code> over <code>-S SWITCH_ON_END</code> as the number of processes grow because we should always have waiting CPU instructions to run. In the case of two processes, we still may not improve that much because they will likely both be IO-bound at some point.
+</div>
+
+
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
+  For <code>-s 1</code> (aka the seed), the observed performance between <code>IO_RUN_IMMEDIATE</code> and <code>IO_RUN_LATER</code> is the same. However, we do observe an improvement on both IO and CPU usage when we enable <code>SWITCH_ON_IO</code>.
+</div></li></ol>
+  </details></section>
+
+
+
+  <section lang="en" class="block hide-metadata"><details id="id15"><summary><header><h1>
+<span class="taxon"></span>Process Interlude  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/007U/" title="Deliberate-Practice [007U]">Deliberate-Practice</a></span> (6/66).</p>
+  <ol xmlns="http://www.w3.org/1999/xhtml"><li>Write a program that calls <code>fork()</code>. Before calling <code>fork()</code>, have the main process access a variable (e.g., <code>x</code>) and set its value to something (e.g., 100). What value is the variable in the child process? What happens to the variable when both the child and parent change the value of <code>x</code></li>
+    
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> 
+      Both the parent and the child get a copy of the variable values i.e. \(x\). When they modify \(x\) it only affects the copy of \(x\) in their local address space.
+    </div>
+
+    <li>Write a program that opens a file (with the <code>open()</code> system call) and then calls <code>fork()</code> to create a new process. Can both the child and parent access the file descriptor returned by <code>open()</code>? What happens when they are writing to the file concurrently, i.e., at the same time?</li>
+    
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> 
+      Both do have access to the same file descriptor. I believe that they can interleave writes if writing at the same time but for me whichever process got ran first always finished writing prior the other starting. This may be a scheduling thing, where one process is able to complete before the other is scheduled?
+    </div>
+
+    <li>Write another program using <code>fork()</code>. The child process should print "hello"; the parent process should print "goodbye". You should try to ensure that the child process always prints first; can you do this without calling <code>wait()</code> in the parent?</li>
+    
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> 
+      Using the previous problem, in the child, we can write something to a file. Then, in the parent, we can enforce an ordering by making the parent wait in a <code>while</code> loop until it reads the value written by the child. However, this is terribly inconvenient (and probably why <code>wait()</code> exists).
+    </div>
+
+    <li>Now write a program that uses <code>wait()</code> to wait for the child process to finish in the parent. What does <code>wait()</code> return? What happens if you use <code>wait()</code> in the child?</li>
+    
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> 
+      <code>wait()</code> returns the pid of the child process that died. Using <code>wait()</code> in the child just immediately returns \(-1\).
+    </div>
+
+    <li>Write a program that calls <code>fork()</code> and then calls some form of <code>exec()</code> to run the program <code>/bin/ls</code>. See if you can try all of the variants of <code>exec()</code>, including <code>execl()</code>, <code>execle()</code>, <code>execlp()</code>, <code>execv()</code>, <code>execvp()</code>, and <code>execvP()</code>. Why do you think there are so many variants of the same basic call?</li>
+    
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> 
+      It seems that some of them support different types of arguments i.e. <code>execv</code> family allows variable size argument list. Additionally, there is a distinction in the <em>environment</em>. This seems to be a list of environment variable values that <code>exec{l,v}e()</code> will search over. The \(p\) family use the same search as the shell i.e. the <code>PATH</code>.
+    </div>
+
+    <li>Write a slight modification of the previous program, this time using <code>waitpid()</code> instead of <code>wait()</code>. When would <code>waitpid()</code> be useful?</li>
+    
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> 
+      If a parent process has multiple children, then <code>wait()</code> will only wait until the first one dies. <code>waitpid()</code> lets you specify waiting on a specific child process.
+    </div>
+
+    <li>Write a program that creates a child process, and then in the child closes standard output (<code>STDOUT_FILENO</code>). What happens if the child calls <code>printf()</code> to print some output after closing the descriptor?</li>
+    
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> 
+      Nothing prints in the child process. However, stdout is still open in the parent process and able to print.
+    </div>
+
+    <li>Write a program that creates two children, and connects the standard output of one to the standard input of the other, using the <code>pipe()</code> system call</li>
+    
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> 
+      This required <code>fflush()</code> for me. I am not sure if this is true in general?
+    </div></ol>
+</details></section>
+
+
+</details></section>
+      </details></section>
+    
+    
+  </footer></article></div></body></html>

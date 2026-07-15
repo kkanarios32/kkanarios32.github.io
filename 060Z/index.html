@@ -1,6 +1,117 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/060Z/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>Pallas</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>Pallas <a class="slug" href="/060Z/">[060Z]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">March 23, 2026</li></ul></div></header></summary>
+  <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon">1. </span>Why Custom Kernels?  </h1>
+<div class="metadata"><ul><li class="meta-item">March 23, 2026</li></ul></div></header></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
+  In attention kernel, we perform \(QK^T\) in VMEM then copy back to HBM, then copy back to VMEM and do the softmax. Instead we want to <em>fuse</em> this into one kernel.
+  </div>
+
+  <figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmifn52vzltvmavkzqh7sj2oluirqgq2hpkxzldgkwhp2j2mbahh5ei.png"></img>
+  <figcaption>Summary of XLA fusions for attention kernel.</figcaption></figure>
+  <ul xmlns="http://www.w3.org/1999/xhtml"><li>Logit &amp; Max fusion:</li> 
+    <ul><li>34.45% flop utilization</li> 
+      <ul><li>Use MXU to get over 350TFLOP/s.</li></ul>
+      <li>18.74% HBM bandwidth utilization.</li>  
+      <li>3.55% On-chip read utilization</li></ul>
+    <li>Softmax denom:</li>
+    <ul><li>0.32% flop utilization.</li>
+      <li>0.0% HBM bandwidth utilization.</li>
+      <ul><li>Keeps 1024x1024 logit matrix resident in VMEM.</li></ul>
+      <li>22.61% On-chip read utilization</li>
+      <ul><li>Uses VPU to compute softmax which consumes data from VMEM at 6.6 TB/s.</li></ul></ul>
+    <li>Attention output:</li>
+    <ul><li>35.82% flop utilization.</li>
+      <li>19.49% HBM bandwidth utilization.</li>
+      <li>7.39% On-chip read utilization.</li></ul></ul>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>HBM Bottleneck:</strong> The default XLA attention does not fuse the softmax with the logit computation, requiring the entire logit matrix to be written back to HBM.</p>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>Vector Unit Limitations:</strong> MXU can be left idle while VPU is performing copmlex exponential and sum operations.</p>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>VMEM Residency and Loop Control:</strong> Pallas allows you to control data movement, so that we can explicitly enforce <em>online softmax</em> rather than writing back to HBM.</p>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>Temporal Control via LLO:</strong> Pallas also allows control over the <em>temporal flow</em>, preventing the compiler from reordering your manual optimizations.</p>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon">2. </span>Pallas Fundamentals  </h1>
+<div class="metadata"><ul><li class="meta-item">March 23, 2026</li></ul></div></header></summary>
+<em xmlns="http://www.w3.org/1999/xhtml">Ignore the HLO pass.</em>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Writing a kernel:</strong></p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>Inside the kernel, data has already been moved from HBM to VMEM.
+<figure><img width="100%" src="/bafkrmiha7cfu4qisvm3es3cn2gvqjz7u3l5o6piqj3lehpbl34j5bf42ma.png"></img></figure></li>
+  <li>If data exceeds VMEM, we need to <em>tile</em> with <code>BlockSpec</code>.</li>
+  <li>Also need to <em>pipeline</em> i.e. while doing computation on a given block, we need to be moving the next block from HBM to VMEM.
+  <figure><img width="100%" src="/bafkrmickz6lveguktbndsvjizvsm6h6cbezis3bext7ownzoczk5sqosei.png"></img></figure></li>
+  <li>By default, pipelining is done for you, but there are other APIs to control this(?)</li>
+  <ul><li>For-Loop scheduler.</li>
+    <li>Asynchronous overlap.</li>
+    <li>Buffer reuse. Uses same VMEM buffer across iterations.</li></ul></ul>
+  <figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmieaepdhrv4tueesd6qhpu2sfijzhjoeyqs2i7xtryiimjhaqvgdeu.png"></img></figure>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>Two-level Tiling:</strong></p>
+  <ul xmlns="http://www.w3.org/1999/xhtml"><li>Macro-tiling: this is done by Pallas / user. You define the larger software blocks i.e. 1024x1024 to hide latency DMA transfers. Pallas manages pipeling.</li>
+    <li>Micro-tiling: this is done by compiler / hardware. Translates larger block into hardware native VREG 8x128.
+    </li></ul>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>VPU Pipelining:</strong></p>
+  <ul xmlns="http://www.w3.org/1999/xhtml"><li>VLOAD: fetching inputs for <strong>chunk (8x128)(N + 1)th</strong> from VMEM and move to VRegs</li>
+    <li>VALU: Perform elementwise operations for <strong>current (Nth)</strong> chunk </li>
+    <li>VSTORE: write completed result for <strong>previous (N - 1)th</strong> chunk from VRegs back to VMEM.</li></ul>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon">3. </span>Flash Attention  </h1>
+<div class="metadata"><ul><li class="meta-item">March 23, 2026</li></ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Online softmax:</strong></p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>Each block does a local softmax calculation.</li>
+  <li>Tracks a shared maximum and adjusts results.</li></ul>
+<p xmlns="http://www.w3.org/1999/xhtml">Can Now fuse score calculation, softmax, and value aggregation into single pass.</p>
+<p xmlns="http://www.w3.org/1999/xhtml">No longer need to store NxN attention matrix in HBM.</p>
+<p xmlns="http://www.w3.org/1999/xhtml">Can break \(Q, K, V\) into small blocks that fit in VMEM.</p>
+<p xmlns="http://www.w3.org/1999/xhtml">Kernel available <span xmlns="" class="link external"><a href="https://github.com/jax-ml/jax/blob/main/jax/experimental/pallas/ops/tpu/flash_attention.py" title="">here</a></span>.</p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>Dynamic scaling \((\alpha )\): Computes \(e^{m_{prev} - m_{next}}\) to track change in maximum logit across blocks for numerical stability.</li>
+  <li>Re-scale accumulation: Multiplies by \(\alpha \) to the previously accumulated sums before adding current block output to accurately rescale all past results.</li>
+  <li>Additive updates: partial results (current softmax and outputs) are added to running totals via fast multiply and addition ops.</li>
+  <li>Delayed normalization: only divide by normalization once at the very end of the loop because division is slow.</li></ul>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Block-size tuning:</strong> to maximize compute-to-load ratio need biggest block sizes that fit into VMEM.</p>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon">4. </span>Splash Attention  </h1>
+<div class="metadata"><ul><li class="meta-item">March 23, 2026</li></ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">With certain masks (i.e. causal) can skip alot of computation for parts of the attention matrix that are being masked out.</p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>Finer blocks -&gt; can skip more but then have poorer utilization.</li></ul>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Pre-processing Mask Info:</strong></p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>Sparsity pruning: Divide mask into blocks and discard all inactive blocks (all zeros).</li>
+  <li>Data compression: see how many unique mask patterns are needed to describe the remaining active blocks.</li>
+  <li>Execution map and pre-fetching: (active_rows, mask_next) generated to map the computation order and tell the MXU which mask pattern to prefetch for zero-latency application.</li></ul>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Metadata structures:</strong></p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>Block filtering (block_mask): categorizes QK blocks as zero, non-zero, partial.</li>
+  <li>Coordinate mapping (active_ros/cols): provides the hardware with (Q, KV) grid indices, ensuring efficient loading of active blocks from HBM.</li>
+  <li>Mask pipelining (mask_next): tells the hardware which mask pattern to prefetch.</li>
+  <li>SMEM-resident metadata: computed once per mask and stored in SMEM. Enable high-speed access to sparse execution map without need to re-transfer from HBM.</li></ul>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Pallas Call</strong></p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>Grid definition: defined by (num_q_heads, grid_size). Grid size is set dynamically using the sparese meta data <code>fwd_mask_info.num_active_blocks[0]</code>.</li>
+  <li>SMEM Inputs: <code>num_scalar_prefetch</code> instructs hardware to prefetch critical scalar/metadata inputs into SMEM before thread begins computing.</li>
+  <li>VMEM Inputs: (Q, K, V) that must be moved from HBM to VMEM for kernel to execute.</li></ul>
+</details></section>
+</details></section><footer xmlns="">
+    
+    
+    
+    
+    
+  </footer></article><nav id="toc"><div class="block"><h1>Table of Contents</h1><ul xmlns="" class="block">
+<li>
+<a class="bullet" href="#id2" title="Why Custom Kernels?">■</a><span class="link local" data-target="#id2"><span class="taxon">1. </span>Why Custom Kernels?</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id3" title="Pallas Fundamentals">■</a><span class="link local" data-target="#id3"><span class="taxon">2. </span>Pallas Fundamentals</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id4" title="Flash Attention">■</a><span class="link local" data-target="#id4"><span class="taxon">3. </span>Flash Attention</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id5" title="Splash Attention">■</a><span class="link local" data-target="#id5"><span class="taxon">4. </span>Splash Attention</span><ul class="block"></ul>
+</li>
+</ul></div></nav></div></body></html>

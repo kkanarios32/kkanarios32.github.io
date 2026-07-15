@@ -1,6 +1,164 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/daoFlashAttentionFastMemoryEfficient2022/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Reference"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon">Reference. </span>FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness <a class="slug" href="/daoFlashAttentionFastMemoryEfficient2022/">[daoFlashAttentionFastMemoryEfficient2022]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">June, 2022</li></ul>
+<br><ul>
+<li class="meta-item"><a class="doi link" href="https://www.doi.org/10.48550/arXiv.2205.14135">10.48550/arXiv.2205.14135</a></li>
+<li class="meta-item"><a class="link external" href="https://arxiv.org/abs/2205.14135">https://arxiv.org/abs/2205.14135</a></li>
+</ul>
+</div></header></summary><pre>@misc{daoFlashAttentionFastMemoryEfficient2022,
+ title = {{{FlashAttention}}: {{Fast}} and {{Memory-Efficient Exact Attention}} with {{IO-Awareness}}},
+ author = {Dao, Tri and Fu, Daniel Y. and Ermon, Stefano and Rudra, Atri and R{\'e}, Christopher},
+ year = {2022},
+ doi = {10.48550/arXiv.2205.14135},
+ urldate = {2026-03-16},
+ number = {arXiv:2205.14135},
+ publisher = {arXiv},
+ file = {/home/kellen/Downloads/papers/FlashAttention Fast and Memory-Efficient Exact Attention with IO-Awareness - Dao et al..pdf},
+ keywords = {Computer Science - Machine Learning},
+ langid = {english},
+ archiveprefix = {arXiv},
+ abstract = {Transformers are slow and memory-hungry on long sequences, since the time and memory complexity of self-attention are quadratic in sequence length. Approximate attention methods have attempted to address this problem by trading off model quality to reduce the compute complexity, but often do not achieve wall-clock speedup. We argue that a missing principle is making attention algorithms IOaware---accounting for reads and writes between levels of GPU memory. We propose FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between GPU high bandwidth memory (HBM) and GPU on-chip SRAM. We analyze the IO complexity of FlashAttention, showing that it requires fewer HBM accesses than standard attention, and is optimal for a range of SRAM sizes. We also extend FlashAttention to block-sparse attention, yielding an approximate attention algorithm that is faster than any existing approximate attention method. FlashAttention trains Transformers faster than existing baselines: 15\% end-to-end wall-clock speedup on BERT-large (seq. length 512) compared to the MLPerf 1.1 training speed record, 3 speedup on GPT-2 (seq. length 1K), and 2.4 speedup on long-range arena (seq. length 1K-4K). FlashAttention and block-sparse FlashAttention enable longer context in Transformers, yielding higher quality models (0.7 better perplexity on GPT-2 and 6.4 points of lift on long-document classification) and entirely new capabilities: the first Transformers to achieve better-than-chance performance on the Path-X challenge (seq. length 16K, 61.4\% accuracy) and Path-256 (seq. length 64K, 63.1\% accuracy).},
+ primaryclass = {cs},
+ eprint = {2205.14135},
+ month = {June},
+ shorttitle = {{{FlashAttention}}}
+}</pre></details></section><footer xmlns="">
+    
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id3"><summary><header><h1>
+<span class="taxon"></span>Flash Attention (Bwd) <a class="slug" href="/OGCRZ/">[OGCRZ]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 27, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">To understand the innovation of the backward pass in <span xmlns="" class="link local"><a href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness [daoFlashAttentionFastMemoryEfficient2022]">flash attention</a></span>, we must first find all of the gradients we must compute.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(70, 100, 150, 0.75);   border-radius: var(--radius);   background-color: rgba(70, 100, 150, 0.05);   "><span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</span> 
+Following the notation in the <span xmlns="" class="link local"><a href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness [daoFlashAttentionFastMemoryEfficient2022]">original paper</a></span>, we have the following matrices
+\[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V}\]
+Now suppose their is some scalar loss function \(\phi \). Then we define 
+\[\frac {\partial  \phi }{\partial  \mathbf {O}}, \frac {\partial  \phi }{\partial  \mathbf {K}}, \frac {\partial  \phi }{\partial  \mathbf {V}}  = d\mathbf {O}, d\mathbf {K}, d\mathbf {V}\]
+</div>
+<p xmlns="http://www.w3.org/1999/xhtml">We will compute each gradient individually.</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>\(d\mathbf {P}\): this is just a straightforward application of the chain rule. In particular, \(\mathbf {O} = \mathbf {P} \mathbf {V}\) so that
+  \[
+     d\mathbf {P} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {P}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T
+    \]
+    <p>
+    To sanity check, let us look at the shapes. \(d\mathbf {O}\) is the partial with respect to the outputs \(O\), so we need an entry for each output and it is \(N \times  d\). \(V^T\) is \(d \times  N\), so that the result \(d\mathbf {P}\) is \(N \times  N\) as desired.
+    </p>
+    <p>Furthermore, we can see this by writing \(\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}\). Then</p>
+    \[
+      \begin {align*}
+       d\mathbf {P}_{ij} &amp;= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}}  \\
+                        &amp;= \sum _{i} d\mathbf {O}_{ik} \mathbf {V}_{jk} 
+      .\end {align*}
+    \]</li>
+  <li>\(d\mathbf {V}\): this is just the same as \(d\mathbf {P}\). In particular, \(\mathbf {O} = \mathbf {P} \mathbf {V}\) so that
+  \[
+     d\mathbf {V} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {V}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O} 
+    \]
+    <p>Furthermore, we can see this by writing \(\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}\). Then</p>
+    \[
+      \begin {align*}
+       d\mathbf {V}_{jk} &amp;= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}}  \\
+                        &amp;= \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} \\
+                        &amp;= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
+      .\end {align*}
+    \]</li>
+  <li>\(d\mathbf {S}\): now we apply chain rule with \(d\mathbf {P}\). However, we must take the gradient through the <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">softmax</a></span>. Exiting matrix notation hell, if we consider the scalar case. Let \(\mathbf {s}\) and \(\mathbf {p}\) just be rows. Then using the <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">scalar softmax derivation</a></span>
+    \[
+      \begin {align*}
+       d\mathbf {s}_j &amp;= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\  
+       &amp;= \sum _{i} d\mathbf {p}_i \cdot  (\delta _{ij}\mathbf {p}_i - \mathbf {p}_{ij}) \\
+       &amp;= d \mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
+      .\end {align*}
+      \]
+    Now if we rewrite this as the row vector, we get
+    \[
+      \begin {align*}
+        d\mathbf {S}_{k} &amp;= \mathbf {P}_{k} \odot  (d\mathbf {P}_{k} - \mathbf {P}_k \cdot  d\mathbf {P}_k)
+      .\end {align*}
+      \]
+    To get back to the full matrix, define \(\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i\) i.e. a vector whose \(i\)th entry is \(\mathbf {P}_i \cdot  d\mathbf {P}_i\). Then we have that
+    \[
+      \begin {align*}
+        d\mathbf {S} &amp;= \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D})
+      .\end {align*}
+      \]</li>
+  <li>\(d\mathbf {Q}\): To get \(d\mathbf {Q}\), we just apply the chain rule to \(d\mathbf {S}\). Since \(\mathbf {S} = \mathbf {Q} \mathbf {K}^T\),
+  \[
+    \begin {align*}
+       d\mathbf {Q}_{i} &amp;= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} \\
+                      &amp;= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {K}_{j}
+    .\end {align*}
+    \]</li>
+  <li>\(d\mathbf {K}\): Same as \(d\mathbf {Q}\) i.e.
+  \[
+    \begin {align*}
+       d\mathbf {K}_{j} &amp;= \sum _{j} d\mathbf {S}_{ij} \mathbf {Q}_{i} \\
+                      &amp;= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {Q}_{i}
+    .\end {align*}
+    \]</li></ol>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> \(\mathbf {P}\) and \(d\mathbf {P}\) are \(N \times  N\) matrices. Materializing this is equivalent to materialing the attention matrix in the forward pass.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 160, 175, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 160, 175, 0.06);   "><span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">Insight.</span> 
+  <em>recomputing</em> \(\mathbf {P}_{ij}\) and \(d\mathbf {P}_{ij}\).
+  <p>First, we can easily recompute \(\mathbf {P}_{ij}\) with \(\mathbf {Q}\) and \(\mathbf {K}\) (which are both \(N \times  d\) and must be resident in memory) via</p>
+  \[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}}\]
+  <p>We can apply the same trick to \(d\mathbf {P}_{ij}\) with \(d\mathbf {O}\) and \(\mathbf {V}\) (both \(N \times   d\)). Namely,</p>
+  \[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i}^T \mathbf {V}_j\]
+  <p><strong>Never need an \(N \times  N\) matrix</strong>.</p>
+</div>
+<p xmlns="http://www.w3.org/1999/xhtml">Now we can rewrite \(d\mathbf {Q}\) and \(d\mathbf {K}\) as
+\[
+  d\mathbf {Q}_{i} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {K}_{j}
+\]
+and
+\[
+  d\mathbf {K}_{j} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {Q}_{i}
+\]</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> \(\mathbf {D}\) requires computing the <strong>global</strong> dot product \(\mathbf {P}_i \cdot  d\mathbf {P}_i\).</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 160, 175, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 160, 175, 0.06);   "><span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">Insight.</span> 
+  <p>To get around this, we precompute \(\mathbf {D}\) using the \(\mathbf {O}\) values from the forward pass and the current \(d\mathbf {O}\) values. In particular,</p>
+  \[
+    \begin {align*}
+    \mathbf {D}_i &amp;= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
+    &amp;= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
+    &amp;= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{i}^{T} \mathbf {V}_{j} \\
+    &amp;= \sum _{j} d\mathbf {O}_{i}^{T} \left (\frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j}\right ) \\
+    &amp;=  d\mathbf {O}_{i}^{T} \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j} \\
+    &amp;= d\mathbf {O}_{i}^{T} \mathbf {O}_{i}
+    .\end {align*}
+    \]
+    Thus, we can compute \(\mathbf {D}_i\) directly from the vectors \(d\mathbf {O}_i\), \(\mathbf {O}_i\).
+</div>
+
+  <hr xmlns="http://www.w3.org/1999/xhtml"></hr>
+
+  <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>Summary  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 27, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>In the forward pass,</li>
+  <ol><li>Compute and store \(\mathbf {O}\) values in memory.</li> 
+    <li>Compute and store \(\mathbf {L}\) values in memory</li></ol>
+  <li>Between the forward and backward pass,</li>
+  <ol><li>Compute \(d\mathbf {O}\). (This is done automatically in <span xmlns="" class="link external"><a href="https://kellenkanarios.com/OGCRY/" title="">JAX</a></span>)</li>
+    <li>Use \(\mathbf {O}\) and \(d\mathbf {O}\) to compute \(\mathbf {D}\). \(O(n)\) memory.</li></ol>
+  <li>In the backward pass,</li>
+  <ol><li>Compute \(d\mathbf {V}_j\) via \(\mathbf {Q}, \mathbf {K}, d\mathbf {O}\). \(O(d)\) memory.</li>
+    <li>Compute \(d\mathbf {Q}_i\) via \(\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i\). \(O(d)\) memory.</li>
+    <li>Compute \(d\mathbf {K}_j\) via \(\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i\). \(O(d)\) memory.</li></ol></ul>
+</details></section>
+</details></section>
+      </details></section>
+    
+    
+  </footer></article></div></body></html>

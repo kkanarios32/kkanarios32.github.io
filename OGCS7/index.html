@@ -1,6 +1,173 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/OGCS7/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>Graphics Processing Cluster (GPC)</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>Graphics Processing Cluster (GPC) <a class="slug" href="/OGCS7/">[OGCS7]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">June 1, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    <p xmlns="http://www.w3.org/1999/xhtml">A Graphics Processing Cluster (GPC) is a top-level hardware partition inside an NVIDIA GPU. It's one level up from the <span xmlns="" class="link local"><a href="/OGCS6/" title="Streaming Multiprocessor (SM) [OGCS6]">SM</a></span> in the chip's hierarchy.</p>
+    <p xmlns="http://www.w3.org/1999/xhtml">As of Hopper, <span xmlns="" class="link local"><a href="/OGCS6/" title="Streaming Multiprocessor (SM) [OGCS6]">SMs</a></span> located in the same GPC are connected via an SM-to-SM network, enabling <span xmlns="" class="link external"><a href="https://kellenkanarios.com/OGCS8/" title="">DSMEM</a></span>.</p>
+  </details></section><footer xmlns="">
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id3"><summary><header><h1>
+<span class="taxon"></span>GPU architecture <a class="slug" href="/82U4/">[82U4]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 13, 2026</li>
+<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
+</address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A GPU sacrifices single-thread latency for aggregate throughput. The whole machine is built around the <span xmlns="" class="link local"><a href="/G4ML/" title="Thread-level parallelism [G4ML]">Thread-level parallelism</a></span> design point — keep many threads resident, switch on every stall, spend almost no silicon on per-instruction control. The opposite end of the axis from a CPU:</p>
+  <table xmlns="http://www.w3.org/1999/xhtml">
+
+  <tr>
+  <td></td>
+
+  <td><strong>CPU</strong></td>
+
+  <td><strong>GPU</strong></td>
+</tr>
+
+
+  <tr>
+  <td>Caches</td>
+
+  <td>Large</td>
+
+  <td>Small (boost memory throughput)</td>
+</tr>
+
+
+  <tr>
+  <td>Control</td>
+
+  <td>Sophisticated (branch prediction, OoO)</td>
+
+  <td>Simple (no branch prediction, no forwarding)</td>
+</tr>
+
+
+  <tr>
+  <td>ALUs</td>
+
+  <td>Powerful</td>
+
+  <td>Energy-efficient, heavily pipelined</td>
+</tr>
+
+
+  <tr>
+  <td>Optimizes for</td>
+
+  <td>Single-thread latency</td>
+
+  <td>Aggregate throughput</td>
+</tr>
+
+</table>
+<p xmlns="http://www.w3.org/1999/xhtml">The GPU equivalent of a core is a <em>streaming multiprocessor</em> (SM). Each SM executes the same instruction across many threads in lockstep — the <span xmlns="" class="link local"><a href="/7F19/" title="SIMT [7F19]">SIMT</a></span> programming model — and uses a per-register <span xmlns="" class="link local"><a href="/XPAA/" title="GPU register scoreboard [XPAA]">GPU register scoreboard</a></span> rather than CPU-style <span xmlns="" class="link local"><a href="/UJPD/" title="Issue queue wakeup-select [UJPD]">wakeup-select</a></span> to decide which warp can issue next.</p><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>SIMT <a class="slug" href="/7F19/">[7F19]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 13, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Single instruction, multiple threads</em>. A <span xmlns="" class="link local"><a href="/82U4/" title="GPU architecture [82U4]">GPU</a></span> streaming multiprocessor issues one instruction per cycle to a group of threads — a <span xmlns="" class="link local"><a href="/X9VZ/" title="Warp [X9VZ]">warp</a></span> — but each thread within the group keeps its own program counter and register state. The hardware enforces lockstep execution within the warp while preserving the <em>illusion</em> of independent threads to the programmer.</p><p xmlns="http://www.w3.org/1999/xhtml">SIMT is the GPU's answer to a question the <span xmlns="" class="link local"><a href="/Q7ZD/" title="Vector ISA / SIMD [Q7ZD]">Vector ISA / SIMD</a></span> world struggled with: how do you get the throughput of wide vector execution without forcing the programmer to manually vectorize? Two mechanisms make this work.</p><section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon"></span>Warp divergence serializes both sides of a branch <a class="slug" href="/OGCSM/">[OGCSM]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 6, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">When threads in a warp take different branches of a conditional, the warp does not split into smaller warps. Instead, the active mask selects which lanes execute each branch; lanes on the inactive side run <em>dummy</em> instructions until the warp reconverges at the post-conditional join point. The programmer writes ordinary scalar code with <code>if</code>/<code>else</code>, and the hardware silently masks the inactive lanes.</p><p xmlns="http://www.w3.org/1999/xhtml">This is the chief ergonomic win over SIMD: the compiler does not have to prove that all lanes will take the same path. The cost is that divergent code pays for both sides — a 32-wide warp where 16 threads take the if-branch and 16 take the else-branch executes both branches sequentially with half the lanes idle each time.</p><p xmlns="http://www.w3.org/1999/xhtml">The hardware sequences the two paths with a <span xmlns="" class="link local"><a href="/KY0M/" title="A reconvergence stack sequences a warp's divergent paths and can deadlock [KY0M]">reconvergence stack</a></span> — or, on recent GPUs, a barrier-based equivalent that avoids its deadlocks. The standard software mitigation is <span xmlns="" class="link external"><a href="https://kellenkanarios.com/JKNL/" title="">JKNL</a></span>: group threads with the same control-flow trajectory into one warp so the branch never diverges in the first place.</p></details></section>
+  <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon"></span>Grouping flexibility  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 13, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Threads are assigned to warps based on warp-ID, but the hardware and compiler are free to regroup. <span xmlns="" class="link external"><a href="https://kellenkanarios.com/JKNL/" title="">JKNL</a></span> re-bundles threads with similar control-flow trajectories into the same warp so that future branches stay non-divergent. This is a class of optimization that pure SIMD cannot express — a SIMD ISA fixes the lane assignment at compile time.</p>
+</details></section>
+<p xmlns="http://www.w3.org/1999/xhtml">The hardware cost of SIMT relative to SIMD is the per-thread PC and register state. The benefit is that a single binary runs efficiently across a wide range of dynamic control flow, which is why the model has dominated GPU programming since CUDA. The scoreboard mechanism described in <span xmlns="" class="link local"><a href="/XPAA/" title="GPU register scoreboard [XPAA]">GPU register scoreboard</a></span> operates per-warp rather than per-thread precisely because SIMT treats the warp as the unit of issue.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> SIMT is sometimes described as "SIMD with a per-lane PC," which captures the implementation but understates the programming-model impact: vectorization becomes a runtime, not a compile-time, decision.</div>
+</details></section><section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon"></span>Warp scheduling hides memory latency by switching among resident warps <a class="slug" href="/1PWL/">[1PWL]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 11, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A GPU keeps many <span xmlns="" class="link local"><a href="/X9VZ/" title="Warp [X9VZ]">warps</a></span> resident on each <span xmlns="" class="link local"><a href="/OGCS6/" title="Streaming Multiprocessor (SM) [OGCS6]">Streaming Multiprocessor (SM)</a></span> and switches between them on every stall. When a warp issues a memory op that misses cache it is dead for hundreds of cycles — but with dozens of resident warps the scheduler always has a runnable one, so aggregate throughput stays high even though single-warp latency is awful. This is the <span xmlns="" class="link local"><a href="/G4ML/" title="Thread-level parallelism [G4ML]">Thread-level parallelism</a></span> design point cashed out on the GPU: spend silicon on resident warp state rather than on latency-reduction machinery. The switch is free because each SM's <span xmlns="" class="link local"><a href="/ETWN/" title="Register file [ETWN]">register file</a></span> is large enough to hold every resident warp's registers at once, so a context switch is just changing which warp the scheduler picks — not saving state to memory the way a CPU <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switch</a></span> must.</p><p xmlns="http://www.w3.org/1999/xhtml">Two things bound how well this works. <span xmlns="" class="link local"><a href="/EPUD/" title="Occupancy bounds how much latency a GPU can hide [EPUD]">Occupancy</a></span> — how many warps are resident — sets the ceiling on latency hiding: with too few warps the scheduler runs out of runnable candidates. And the scheduler itself must stay cheap enough to choose a warp every cycle, which it does with a <span xmlns="" class="link local"><a href="/7SGF/" title="A two-loop scheduler makes warp readiness a constant-time scoreboard check [7SGF]">two-loop scoreboard check</a></span>, marshalling each issued instruction's register reads through an <span xmlns="" class="link local"><a href="/7QAW/" title="An operand collector serializes register reads to dodge register-file bank conflicts [7QAW]">operand collector</a></span>.</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id8" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>GPU register scoreboard <a class="slug" href="/XPAA/">[XPAA]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 13, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The readiness-tracking structure that lets a GPU issue instructions out of program order without any of the CAM machinery a CPU needs. A scoreboard is a small table — typically one busy bit per architectural register — that records whether some in-flight instruction is still computing a value that something else might want to read.</p><p xmlns="http://www.w3.org/1999/xhtml">The protocol is trivial. When an instruction issues, it sets the busy bit on its destination register. When it writes back, it clears the bit. Before any instruction can read its sources, the hardware checks the corresponding bits: if any source is busy, the instruction (or its entire warp) waits. The check is a single table lookup per source, so the per-instruction cost is \(O(1)\) regardless of how many other instructions are in flight.</p><p xmlns="http://www.w3.org/1999/xhtml">This is enough because GPUs lean on <span xmlns="" class="link local"><a href="/G4ML/" title="Thread-level parallelism [G4ML]">Thread-level parallelism</a></span> rather than <span xmlns="" class="link local"><a href="/JAZI/" title="Instruction-level parallelism [JAZI]">Instruction-level parallelism</a></span>. When a warp's next instruction reads a busy register, the <span xmlns="" class="link local"><a href="/82U4/" title="GPU architecture [82U4]">GPU architecture</a></span> scheduler does not stall — it picks a different ready warp from the dozens of resident warps and runs that one instead. The scoreboard's job is only to answer "is this warp ready? yes/no," which is far cheaper than the broadcast/compare a CPU <span xmlns="" class="link local"><a href="/UJPD/" title="Issue queue wakeup-select [UJPD]">Issue queue wakeup-select</a></span> does to find dependency satisfaction in a single thread's instruction window.</p><p xmlns="http://www.w3.org/1999/xhtml">The size difference falls out of this. CPU issue queues hold tens of entries; GPU instruction windows can hold many warps' worth of in-flight work, because every additional warp costs a row in the scoreboard and a register-file allocation, not a quadratic CAM expansion. See <span xmlns="" class="link local"><a href="/RJEB/" title="ILP vs TLP [RJEB]">ILP vs TLP</a></span> for why the design fork sits where it does.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The scoreboard's simplicity is what lets GPUs spend their transistor budget on ALUs and the <span xmlns="" class="link local"><a href="/ETWN/" title="Register file [ETWN]">Register file</a></span> instead of control logic. It is one of the most visible places where the <span xmlns="" class="link local"><a href="/G4ML/" title="Thread-level parallelism [G4ML]">Thread-level parallelism</a></span> design choice cashes out as silicon savings.</div>
+</details></section><section lang="en" class="block hide-metadata"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon"></span>Warp <a class="slug" href="/X9VZ/">[X9VZ]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>warp</em> is the unit of scheduling on an NVIDIA GPU: a group of ~32 threads that issue one instruction per cycle in lockstep. Each functional unit in the <span xmlns="" class="link local"><a href="/OGCS6/" title="Streaming Multiprocessor (SM) [OGCS6]">SM</a></span> has as many lanes as a warp has threads, so a single fetched instruction fans out across all 32 lanes at once. The warp — not the thread — is what the hardware fetches, schedules, and tracks; the per-thread <span xmlns="" class="link local"><a href="/7F19/" title="SIMT [7F19]">SIMT</a></span> programming model is an illusion built on top of it.</p><p xmlns="http://www.w3.org/1999/xhtml">Because the warp is the atom of execution, the two facts that dominate GPU performance are both properties of the warp: it <span xmlns="" class="link local"><a href="/1PWL/" title="Warp scheduling hides memory latency by switching among resident warps [1PWL]">hides memory latency by switching among resident warps</a></span> instead of stalling, and it <span xmlns="" class="link local"><a href="/OGCSM/" title="Warp divergence serializes both sides of a branch [OGCSM]">serializes both sides of a branch</a></span> when its threads diverge.</p></details></section><section lang="en" class="block hide-metadata"><details id="id10" open="open"><summary><header><h1>
+<span class="taxon"></span>CUDA Hierarchy <a class="slug" href="/OGCS4/">[OGCS4]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">June 1, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Grid: Top-level define how many blocks are needed to cover the computation across <span xmlns="" class="link local"><a href="/OGCS6/" title="Streaming Multiprocessor (SM) [OGCS6]">SMs</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml">Block: Ensures all warps in a block are resident on the same <span xmlns="" class="link local"><a href="/OGCS6/" title="Streaming Multiprocessor (SM) [OGCS6]">SM</a></span> and have the same <span xmlns="" class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">shared memory</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml">Warp: A group of 32 threads that execute the same instruction.</p><p xmlns="http://www.w3.org/1999/xhtml">Thread: A single thread within a warp.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="70%" src="/bafkrmifh7zymeaccsakd4gz3fi2ezerdzvccanztq45cqa3sxnqyhltx3m.png"></img>
+<figcaption>Which components share which memory at a high-level.</figcaption></figure></details></section><section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon"></span>Shared memory (GPU) <a class="slug" href="/8GZN/">[8GZN]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
+</address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Shared memory</em> on a GPU is a small (per-block) on-chip scratchpad with latency comparable to L1. Software-managed — the programmer explicitly stages data through it, the hardware does not cache for them. Used to:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Avoid non-coalesced global accesses by reorganizing data layouts on the fly.</li>
+  <li>Reuse loaded data across threads within a block.</li>
+  <li>Communicate between threads within a block.</li></ul><section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
+<span class="taxon"></span>Bank conflicts serialize shared-memory accesses to the same bank <a class="slug" href="/OGCRU/">[OGCRU]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 25, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Shared memory is divided into <em>banks</em> (typically 32). Each bank can service one access per cycle. If two threads in a <span xmlns="" class="link local"><a href="/X9VZ/" title="Warp [X9VZ]">warp</a></span> access different addresses in the <em>same</em> bank, the accesses serialize — a <em>bank conflict</em>.</p><p xmlns="http://www.w3.org/1999/xhtml">Three behaviors when warp threads access shared memory:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Different banks: full parallelism. No conflict.</li>
+  <li>Same bank, same word: hardware broadcasts the word to all threads. No conflict.</li>
+  <li>Same bank, different words: serialize.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> How to avoid bank conflicts?</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> Change the access pattern so threads hit different banks (often by transposing or by adding padding to break the stride that causes the conflict).</div>
+</details></section>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The GPU memory hierarchy is software-managed at L1 (shared memory) and coherent only at L2 — by restricting L1 to local-to-block scope, the architecture sidesteps the cost of a global <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">Cache coherence</a></span> protocol on a thousand-way-parallel chip.</div>
+<section lang="en" class="block hide-metadata"><details id="id13" open="open"><summary><header><h1>
+<span class="taxon"></span>Memory coalescing merges a warp's accesses into one transaction per cache line <a class="slug" href="/U1FO/">[U1FO]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The hardware optimization on GPUs that combines simultaneous memory accesses by threads in a <span xmlns="" class="link local"><a href="/X9VZ/" title="Warp [X9VZ]">warp</a></span> into a single transaction — when the accessed addresses fall in the same cache line.</p><p xmlns="http://www.w3.org/1999/xhtml">Global memory latency on a GPU is 400–800 cycles. Coalescing is the primary way to keep the SM fed:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>If all 32 threads in a warp access addresses within one cache line: one memory transaction, full bandwidth.</li>
+  <li>If addresses span multiple cache lines: the hardware serializes into multiple transactions; bandwidth drops proportionally.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Address permutations within a cache line don't hurt utilization — coalescing is about which lines are touched, not which exact bytes.</div>
+<p xmlns="http://www.w3.org/1999/xhtml">Coalescing is why memory layout matters so much for GPU code. The standard idiom is <em>structure-of-arrays</em> (SoA) instead of <em>array-of-structures</em> (AoS): threads accessing the same field of consecutive records hit consecutive bytes, which coalesce; threads accessing the same struct don't.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> Should you always cache on the GPU?</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> No. If you're memory-bound and have no <span xmlns="" class="link local"><a href="/PMP9/" title="Spatial locality [PMP9]">Spatial locality</a></span>, cache is wasted on data you won't reuse. CUDA exposes the option to disable L1 caching for these cases, which lets misaligned loads transfer only the bytes needed instead of full cache lines.</div>
+</details></section></details></section>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Use GPUs for parallel parts where throughput dominates. Use CPUs for sequential parts where latency dominates — the <span xmlns="" class="link local"><a href="/RJEB/" title="ILP vs TLP [RJEB]">ILP vs TLP</a></span> axis is the right frame for deciding which.</div>
+<section lang="en" class="block hide-metadata"><details id="id14" open="open"><summary><header><h1>
+<span class="taxon"></span>Graphics Processing Cluster (GPC) <a class="slug" href="/OGCS7/">[OGCS7]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">June 1, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A Graphics Processing Cluster (GPC) is a top-level hardware partition inside an NVIDIA GPU. It's one level up from the <span xmlns="" class="link local"><a href="/OGCS6/" title="Streaming Multiprocessor (SM) [OGCS6]">SM</a></span> in the chip's hierarchy.</p><p xmlns="http://www.w3.org/1999/xhtml">As of Hopper, <span xmlns="" class="link local"><a href="/OGCS6/" title="Streaming Multiprocessor (SM) [OGCS6]">SMs</a></span> located in the same GPC are connected via an SM-to-SM network, enabling <span xmlns="" class="link external"><a href="https://kellenkanarios.com/OGCS8/" title="">DSMEM</a></span>.</p></details></section><section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
+<span class="taxon"></span>Streaming Multiprocessor (SM) <a class="slug" href="/OGCS6/">[OGCS6]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">June 1, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="stub-notice" style="   margin: 0.5em 0;   padding: 8px 12px;   border-left: 4px solid 7cb342;   background-color: f1f8e9;   color: 33691e;   font-style: italic;   ">🌱 Stub — this concept is referenced but not yet written.</div>
+</details></section><section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
+<span class="taxon"></span>Cooperative Thread Array (CTA) <a class="slug" href="/W2D5/">[W2D5]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">June 1, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">NVIDIA's hardware-level term for what CUDA programmers call a thread block.</p><p xmlns="http://www.w3.org/1999/xhtml">A CTA is a group of threads that execute on the same Streaming Multiprocessor (SM), can synchronize via barriers (<code>__syncthreads()</code>), and share fast on-chip <em>shared memory</em> (<span xmlns="" class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">Shared memory (GPU)</a></span>). Threads within a CTA are scheduled and executed in groups of 32 called <span xmlns="" class="link external"><a href="https://kellenkanarios.com/OGCS5/" title="">warps</a></span>. </p></details></section></details></section>
+      </details></section>
+    
+    <section lang="en" class="block hide-metadata"><details id="id17" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id18"><summary><header><h1>
+<span class="taxon"></span>Streaming Multiprocessor (SM) <a class="slug" href="/OGCS6/">[OGCS6]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">June 1, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="stub-notice" style="   margin: 0.5em 0;   padding: 8px 12px;   border-left: 4px solid 7cb342;   background-color: f1f8e9;   color: 33691e;   font-style: italic;   ">🌱 Stub — this concept is referenced but not yet written.</div>
+</details></section>
+      </details></section>
+    
+  </footer></article></div></body></html>

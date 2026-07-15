@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors>
+      <fr:author>
+        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+      </fr:author>
+    </fr:authors>
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>7</fr:month>
+      <fr:day>11</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/7QAW/</fr:uri>
+    <fr:display-uri>7QAW</fr:display-uri>
+    <fr:route>/7QAW/</fr:route>
+    <fr:title text="An operand collector serializes register reads to dodge register-file bank conflicts">An operand collector serializes register reads to dodge register-file bank conflicts</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter>
+    <html:p>A <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link>'s 32 threads each read 2–4 registers per instruction, but the <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">register file</fr:link> is banked and cannot serve two reads to the same bank in one cycle. An <html:em>operand collector</html:em> absorbs this: it gathers a warp's register reads across multiple cycles and routes the collected values to the lanes once all are available, turning what would be a stall into a few cycles of latency the <fr:link href="/1PWL/" title="Warp scheduling hides memory latency by switching among resident warps" uri="https://kellenkanarios.com/1PWL/" display-uri="1PWL" type="local">scheduler</fr:link> hides anyway.</html:p>
+    <html:p>These register-file <fr:link href="/OGCRU/" title="Bank conflicts serialize shared-memory accesses to the same bank" uri="https://kellenkanarios.com/OGCRU/" display-uri="OGCRU" type="local">bank conflicts</fr:link> are invisible to the programmer — unlike shared-memory bank conflicts, which the programmer controls directly — but they shrink as <html:em>register pressure</html:em> drops. Fewer registers per thread means fewer simultaneous reads competing for banks, one more reason low register pressure raises throughput.</html:p>
+  </fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>11</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/1PWL/</fr:uri>
+            <fr:display-uri>1PWL</fr:display-uri>
+            <fr:route>/1PWL/</fr:route>
+            <fr:title text="Warp scheduling hides memory latency by switching among resident warps">Warp scheduling hides memory latency by switching among resident warps</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>A GPU keeps many <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warps</fr:link> resident on each <fr:link href="/OGCS6/" title="Streaming Multiprocessor (SM)" uri="https://kellenkanarios.com/OGCS6/" display-uri="OGCS6" type="local">Streaming Multiprocessor (SM)</fr:link> and switches between them on every stall. When a warp issues a memory op that misses cache it is dead for hundreds of cycles — but with dozens of resident warps the scheduler always has a runnable one, so aggregate throughput stays high even though single-warp latency is awful. This is the <fr:link href="/G4ML/" title="Thread-level parallelism" uri="https://kellenkanarios.com/G4ML/" display-uri="G4ML" type="local">Thread-level parallelism</fr:link> design point cashed out on the GPU: spend silicon on resident warp state rather than on latency-reduction machinery. The switch is free because each SM's <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">register file</fr:link> is large enough to hold every resident warp's registers at once, so a context switch is just changing which warp the scheduler picks — not saving state to memory the way a CPU <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link> must.</html:p>
+            <html:p>Two things bound how well this works. <fr:link href="/EPUD/" title="Occupancy bounds how much latency a GPU can hide" uri="https://kellenkanarios.com/EPUD/" display-uri="EPUD" type="local">Occupancy</fr:link> — how many warps are resident — sets the ceiling on latency hiding: with too few warps the scheduler runs out of runnable candidates. And the scheduler itself must stay cheap enough to choose a warp every cycle, which it does with a <fr:link href="/7SGF/" title="A two-loop scheduler makes warp readiness a constant-time scoreboard check" uri="https://kellenkanarios.com/7SGF/" display-uri="7SGF" type="local">two-loop scoreboard check</fr:link>, marshalling each issued instruction's register reads through an <fr:link href="/7QAW/" title="An operand collector serializes register reads to dodge register-file bank conflicts" uri="https://kellenkanarios.com/7QAW/" display-uri="7QAW" type="local">operand collector</fr:link>.</html:p>
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>11</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/1PWL/</fr:uri>
+            <fr:display-uri>1PWL</fr:display-uri>
+            <fr:route>/1PWL/</fr:route>
+            <fr:title text="Warp scheduling hides memory latency by switching among resident warps">Warp scheduling hides memory latency by switching among resident warps</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>A GPU keeps many <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warps</fr:link> resident on each <fr:link href="/OGCS6/" title="Streaming Multiprocessor (SM)" uri="https://kellenkanarios.com/OGCS6/" display-uri="OGCS6" type="local">Streaming Multiprocessor (SM)</fr:link> and switches between them on every stall. When a warp issues a memory op that misses cache it is dead for hundreds of cycles — but with dozens of resident warps the scheduler always has a runnable one, so aggregate throughput stays high even though single-warp latency is awful. This is the <fr:link href="/G4ML/" title="Thread-level parallelism" uri="https://kellenkanarios.com/G4ML/" display-uri="G4ML" type="local">Thread-level parallelism</fr:link> design point cashed out on the GPU: spend silicon on resident warp state rather than on latency-reduction machinery. The switch is free because each SM's <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">register file</fr:link> is large enough to hold every resident warp's registers at once, so a context switch is just changing which warp the scheduler picks — not saving state to memory the way a CPU <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link> must.</html:p>
+            <html:p>Two things bound how well this works. <fr:link href="/EPUD/" title="Occupancy bounds how much latency a GPU can hide" uri="https://kellenkanarios.com/EPUD/" display-uri="EPUD" type="local">Occupancy</fr:link> — how many warps are resident — sets the ceiling on latency hiding: with too few warps the scheduler runs out of runnable candidates. And the scheduler itself must stay cheap enough to choose a warp every cycle, which it does with a <fr:link href="/7SGF/" title="A two-loop scheduler makes warp readiness a constant-time scoreboard check" uri="https://kellenkanarios.com/7SGF/" display-uri="7SGF" type="local">two-loop scoreboard check</fr:link>, marshalling each issued instruction's register reads through an <fr:link href="/7QAW/" title="An operand collector serializes register reads to dodge register-file bank conflicts" uri="https://kellenkanarios.com/7QAW/" display-uri="7QAW" type="local">operand collector</fr:link>.</html:p>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>25</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/OGCRU/</fr:uri>
+            <fr:display-uri>OGCRU</fr:display-uri>
+            <fr:route>/OGCRU/</fr:route>
+            <fr:title text="Bank conflicts serialize shared-memory accesses to the same bank">Bank conflicts serialize shared-memory accesses to the same bank</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>Shared memory is divided into <html:em>banks</html:em> (typically 32). Each bank can service one access per cycle. If two threads in a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link> access different addresses in the <html:em>same</html:em> bank, the accesses serialize — a <html:em>bank conflict</html:em>.</html:p><html:p>Three behaviors when warp threads access shared memory:</html:p><html:ul><html:li>Different banks: full parallelism. No conflict.</html:li>
+  <html:li>Same bank, same word: hardware broadcasts the word to all threads. No conflict.</html:li>
+  <html:li>Same bank, different words: serialize.</html:li></html:ul>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 130, 0, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(200, 130, 0, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</html:span> How to avoid bank conflicts?</html:div>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(0, 140, 120, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(0, 140, 120, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</html:span> Change the access pattern so threads hit different banks (often by transposing or by adding padding to break the stride that causes the conflict).</html:div>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/X9VZ/</fr:uri>
+            <fr:display-uri>X9VZ</fr:display-uri>
+            <fr:route>/X9VZ/</fr:route>
+            <fr:title text="Warp">Warp</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>A <html:em>warp</html:em> is the unit of scheduling on an NVIDIA GPU: a group of ~32 threads that issue one instruction per cycle in lockstep. Each functional unit in the <fr:link href="/OGCS6/" title="Streaming Multiprocessor (SM)" uri="https://kellenkanarios.com/OGCS6/" display-uri="OGCS6" type="local">SM</fr:link> has as many lanes as a warp has threads, so a single fetched instruction fans out across all 32 lanes at once. The warp — not the thread — is what the hardware fetches, schedules, and tracks; the per-thread <fr:link href="/7F19/" title="SIMT" uri="https://kellenkanarios.com/7F19/" display-uri="7F19" type="local">SIMT</fr:link> programming model is an illusion built on top of it.</html:p>
+            <html:p>Because the warp is the atom of execution, the two facts that dominate GPU performance are both properties of the warp: it <fr:link href="/1PWL/" title="Warp scheduling hides memory latency by switching among resident warps" uri="https://kellenkanarios.com/1PWL/" display-uri="1PWL" type="local">hides memory latency by switching among resident warps</fr:link> instead of stalling, and it <fr:link href="/OGCSM/" title="Warp divergence serializes both sides of a branch" uri="https://kellenkanarios.com/OGCSM/" display-uri="OGCSM" type="local">serializes both sides of a branch</fr:link> when its threads diverge.</html:p>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/ETWN/</fr:uri>
+            <fr:display-uri>ETWN</fr:display-uri>
+            <fr:route>/ETWN/</fr:route>
+            <fr:title text="Register file">Register file</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The CPU's nearest tier of storage — the first NUMA level. Registers sit physically next to the ALUs and are addressed by name in the instruction encoding rather than by memory address. Their count is limited by the chip's surface area, which is why main memory exists at all.</html:p><html:p>The register file is the structure that holds the architecturally-visible registers. To support a superscalar machine, the file needs enough read and write ports to feed every ALU simultaneously: for an <fr:tex display="inline"><![CDATA[n]]></fr:tex>-ALU chip with two operands per op, that's <fr:tex display="inline"><![CDATA[2n]]></fr:tex> read ports and <fr:tex display="inline"><![CDATA[n]]></fr:tex> write ports.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> Die area for a register file scales <html:em>quadratically</html:em> in the number of ports.</html:div>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> Split it. Different execution units (integer, floating-point, vector) get their own smaller register files. Fewer ports per file, faster access, less area.</html:div>
+<html:p>Beyond the architecturally-named registers, modern chips keep many extra <html:em>rename</html:em> registers used by <fr:link href="/5CT9/" title="Register renaming breaks false dependencies" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">register renaming</fr:link> to break false data dependencies.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Instructions distinguish "immediate types" from "register types" so the decoder knows whether a field encodes a register name or a literal value.</html:div>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

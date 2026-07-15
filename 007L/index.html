@@ -1,6 +1,1041 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/007L/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>Marginalia</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>Marginalia <a class="slug" href="/007L/">[007L]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">June 5, 2025</li></ul></div></header></summary>
+    <p xmlns="http://www.w3.org/1999/xhtml">This is my short-form blog, where I will jot down (primarily) self-contained notes about things I find interesting or other random stuff in my life.</p>
+    <section lang="en" class="block"><details id="id2"><summary><header><h1>
+<span class="taxon"></span>Flash Attention (v1) <a class="slug" href="/R0PM/">[R0PM]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 25, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+        <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon"></span>Online Softmax <a class="slug" href="/PI7N/">[PI7N]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 20, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This covers the math behind the online softmax algorithm required by <span xmlns="" class="link local"><a href="/R0PM/" title="Flash Attention (v1) [R0PM]">Flash Attention (v1)</a></span>.</p>
+  <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>Safe softmax  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 20, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">The first thing we must consider is numerical precision. Namely, the <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">original softmax</a></span> operation is given by</p>
+\[\mathrm {softmax}(\mathbf {x}) = \frac {\exp (\mathbf {x})}{\sum _{i=1}^n \exp (\mathbf {x}_i)}\]
+<p xmlns="http://www.w3.org/1999/xhtml">However, when operating with <span xmlns="" class="link local"><a href="/DEQV/" title="Low Precision Data Types [DEQV]">low precision data types</a></span> (i.e. float16) the maximum value is \(65536\). Therefore, with \(\exp \) we can easily get numerically overflow.</p>
+<p xmlns="http://www.w3.org/1999/xhtml">To get around this, the online softmax algorithm adheres to the <em>safe softmax</em>. For safe softmax, we simply multiply the numerator and denominator by \(\exp (-m)\), where \(m = \max  \{x_{1}, \ldots , x_n\}\). This gives</p>
+\[\mathrm {softmax}(\mathbf {x}) = \frac {\exp (\mathbf {x} - m)}{\sum _{i=1}^n \exp (\mathbf {x}_i - m)}\]
+<p xmlns="http://www.w3.org/1999/xhtml">Since \(x_i - m \leq  0\), this ensures that each \(\exp (x_i - m)\) is bounded in a safe range.</p>
+
+
+    <section lang="en" class="block hide-metadata" data-taxon="Problem"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon">Problem. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 20, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>Note that computing the \(\max \) over \(\mathbf {x}\) means that we must have all of the logits in a row of \(QK^T\) materialized in <span class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">SMEM</a></span>, or first loop over all of them to compute the max before computing the normalization constant.</details></section>
+
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon"></span>Fusing the max and normalization  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 20, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">The online softmax algorithm fuses the max reduction into the normalization pass, so a single sweep over the row suffices to compute the normalization with the max. The key difficulty is that the denominator depends on \(n\) <strong>for each</strong> \(i\) i.e.</p>
+\[d = \sum _{i=1}^{n} \exp (x_i - m_n)\]
+<p xmlns="http://www.w3.org/1999/xhtml">
+Therefore, we must find a recursive relationship such that \(d_{i+1} = f(d_i, m_i, x_{i+1})\) for some function \(f\). This would then allow us to locally compute \(d_{i+1}\) with only the local information of current \(x_{i+1}\) and the two running statistics \(d_i\) and \(m_i\). This is exactly the kind of algorithm that is conducive to <span xmlns="" class="link external"><a href="https://kellenkanarios.com/OGCRV/" title="">memory tiling</a></span>.
+</p>
+
+    <section lang="en" class="block hide-metadata" data-taxon="Question"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon">Question. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 20, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>What is \(f(d_i, m_i, x_{i+1})\)?</details></section>
+
+
+    <section lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id8" open="open"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 20, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>Consider \(d_{i+1} = d_i \cdot  \exp (m_{i} - m_{i + 1}) + \exp (x_{i + 1} - m_{i + 1})\).</details></section>
+
+
+   
+   <section lang="en" class="block hide-metadata" data-taxon="Proof"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon">Proof. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 20, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  This can be seen by directly rewriting \(d_{i + 1}\). 
+  \[
+    \begin {align*}
+      d_{i + 1} &amp;= \sum _{j = 1}^{i+1} \exp (x_j - m_{i + 1}) \\
+      &amp;= \left (\sum _{j = 1}^{i} \exp (x_j - m_{i+1})\right ) + \exp (x_{i+1} - m_{i+1}) \\
+      &amp;= \left (\sum _{j = 1}^{i} \exp (x_j - m_{i})\right )\exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1}) \\
+      &amp;= d_{i} \exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1})
+    \end {align*}
+  \]
+</details></section>
+ 
+
+
+<p xmlns="http://www.w3.org/1999/xhtml">
+The running denominator \(d\) is rescaled by \(e^{m - m_{\text {new}}}\) each time a new maximum is found, keeping it consistent with the safe-softmax shift.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><img src="https://kellenkanarios.com/4a2d5b3202e83ff6780ef6fedca07f67.svg"></img></p>
+
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id10" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 20, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+Unfortunately, we cannot get around the second pass to compute the normalized output for \(\mathbf {p}\). However, this is not the case in <span class="link local"><a href="/R0PM/" title="Flash Attention (v1) [R0PM]">Flash Attention (v1)</a></span>.
+</details></section>
+
+</details></section>
+</details></section>
+        <section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon"></span>Flash Attention (Fwd) <a class="slug" href="/OGCS0/">[OGCS0]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 27, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">
+Unlike in the <span xmlns="" class="link local"><a href="/PI7N/" title="Online Softmax [PI7N]">online softmax</a></span>, we are not interested in the outputted probability vector \(\mathbf {p}\). Instead we are interested in the entire output matrix \(O\) given by
+  </p>\[O = \mathrm {softmax}(QK^T) V\]<p xmlns="http://www.w3.org/1999/xhtml">
+For more details see <span xmlns="" class="link local"><a href="/004G/" title="Self-Attention [004G]">self-attention</a></span>.
+  </p>
+    <section lang="en" class="block hide-metadata" data-taxon="Notation"><details id="id12" open="open"><summary><header><h1>
+<span class="taxon">Notation. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 27, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  In correspondence with the notation in the <span class="link local"><a href="/PI7N/" title="Online Softmax [PI7N]">online softmax</a></span>, we define the following:
+  \[x_{i,j} = \mathbf {q}_i \cdot  \mathbf {k}_j,\]
+  where \(\mathbf {q}_i\) is the \(i\)th row of \(Q\) and \(\mathbf {k}_j\) is the \(j\)th row of \(K\). Similarly, \(\mathbf {o}_i\) is the \(i\)th row of the output matrix \(O\) given by
+  \[\mathbf {o}_i = \sum _{j = 1}^{n} \frac {\exp (x_{i,j} - m_n)}{d_n} \cdot  \mathbf {v}_j \]
+</details></section>
+<p xmlns="http://www.w3.org/1999/xhtml">Now following the template provided by the <span xmlns="" class="link local"><a href="/PI7N/" title="Online Softmax [PI7N]">online softmax</a></span>, we must find a recurrence for \(\mathbf {o}_i\). Namely, we will consider the sequence \(\mathbf {o}_{i,k}'\) given by
+\[\mathbf {o}_{i,k}' = \sum _{j = 1}^{k} \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_j, \]
+such that \(\mathbf {o}_{i,n}' = \mathbf {o}_n\)</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Claim"><details id="id13" open="open"><summary><header><h1>
+<span class="taxon">Claim. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 27, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  We have the following recurrence for \(\mathbf {o}_{i,k}'\):
+  \[
+  \mathbf {o}_{i,k}' = \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} + \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_k
+    \]
+</details></section>
+
+   
+   <section lang="en" class="block hide-metadata" data-taxon="Proof"><details id="id14" open="open"><summary><header><h1>
+<span class="taxon">Proof. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 27, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  We will proceed by directly rewriting the recurrence for \(\mathbf {o}_{i,k}'\) as 
+  \[
+    \begin {align*}
+      \mathbf {o}_{i,k}' &amp;= \sum _{j = 1}^{k} \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_j \\
+                        &amp;= \left (\sum _{j = 1}^{k - 1} \frac {\exp (x_{i,j} - m_{k-1})}{d_{k-1}} \cdot  \mathbf {v}_j\right ) \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} +  \frac {\exp (x_{i,k} - m_k)}{d_k} \cdot  \mathbf {v}_k \\
+                        &amp;= \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} +  \frac {\exp (x_{i,k} - m_k)}{d_k} \cdot  \mathbf {v}_k
+    .\end {align*}
+    \]
+  </details></section>
+ 
+
+<p xmlns="http://www.w3.org/1999/xhtml">Thus, we are left with the following algorithm</p><p xmlns="http://www.w3.org/1999/xhtml"><img src="https://kellenkanarios.com/e443552973fe32fe694e594b454313d2.svg"></img></p>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id15" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 27, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+A key benefit of this algorithm is that it is entirely parallelizable across rows. This means that we can loop across entire <span class="link external"><a href="https://kellenkanarios.com/OGCRV/" title="">tiles</a></span> like in the GEMM case.
+</details></section>
+</details></section>
+        <section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
+<span class="taxon"></span>Flash Attention (Bwd) <a class="slug" href="/OGCRZ/">[OGCRZ]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 27, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">To understand the innovation of the backward pass in <span xmlns="" class="link local"><a href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness [daoFlashAttentionFastMemoryEfficient2022]">flash attention</a></span>, we must first find all of the gradients we must compute.</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Notation"><details id="id17" open="open"><summary><header><h1>
+<span class="taxon">Notation. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 27, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+Following the notation in the <span class="link local"><a href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness [daoFlashAttentionFastMemoryEfficient2022]">original paper</a></span>, we have the following matrices
+\[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V}\]
+Now suppose their is some scalar loss function \(\phi \). Then we define 
+\[\frac {\partial  \phi }{\partial  \mathbf {O}}, \frac {\partial  \phi }{\partial  \mathbf {K}}, \frac {\partial  \phi }{\partial  \mathbf {V}}  = d\mathbf {O}, d\mathbf {K}, d\mathbf {V}\]
+</details></section>
+<p xmlns="http://www.w3.org/1999/xhtml">We will compute each gradient individually.</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>\(d\mathbf {P}\): this is just a straightforward application of the chain rule. In particular, \(\mathbf {O} = \mathbf {P} \mathbf {V}\) so that
+  \[
+     d\mathbf {P} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {P}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T
+    \]
+    <p>
+    To sanity check, let us look at the shapes. \(d\mathbf {O}\) is the partial with respect to the outputs \(O\), so we need an entry for each output and it is \(N \times  d\). \(V^T\) is \(d \times  N\), so that the result \(d\mathbf {P}\) is \(N \times  N\) as desired.
+    </p>
+    <p>Furthermore, we can see this by writing \(\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}\). Then</p>
+    \[
+      \begin {align*}
+       d\mathbf {P}_{ij} &amp;= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}}  \\
+                        &amp;= \sum _{i} d\mathbf {O}_{ik} \mathbf {V}_{jk} 
+      .\end {align*}
+    \]</li>
+  <li>\(d\mathbf {V}\): this is just the same as \(d\mathbf {P}\). In particular, \(\mathbf {O} = \mathbf {P} \mathbf {V}\) so that
+  \[
+     d\mathbf {V} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {V}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O} 
+    \]
+    <p>Furthermore, we can see this by writing \(\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}\). Then</p>
+    \[
+      \begin {align*}
+       d\mathbf {V}_{jk} &amp;= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}}  \\
+                        &amp;= \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} \\
+                        &amp;= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
+      .\end {align*}
+    \]</li>
+  <li>\(d\mathbf {S}\): now we apply chain rule with \(d\mathbf {P}\). However, we must take the gradient through the <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">softmax</a></span>. Exiting matrix notation hell, if we consider the scalar case. Let \(\mathbf {s}\) and \(\mathbf {p}\) just be rows. Then using the <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">scalar softmax derivation</a></span>
+    \[
+      \begin {align*}
+       d\mathbf {s}_j &amp;= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\  
+       &amp;= \sum _{i} d\mathbf {p}_i \cdot  (\delta _{ij}\mathbf {p}_i - \mathbf {p}_{ij}) \\
+       &amp;= d \mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
+      .\end {align*}
+      \]
+    Now if we rewrite this as the row vector, we get
+    \[
+      \begin {align*}
+        d\mathbf {S}_{k} &amp;= \mathbf {P}_{k} \odot  (d\mathbf {P}_{k} - \mathbf {P}_k \cdot  d\mathbf {P}_k)
+      .\end {align*}
+      \]
+    To get back to the full matrix, define \(\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i\) i.e. a vector whose \(i\)th entry is \(\mathbf {P}_i \cdot  d\mathbf {P}_i\). Then we have that
+    \[
+      \begin {align*}
+        d\mathbf {S} &amp;= \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D})
+      .\end {align*}
+      \]</li>
+  <li>\(d\mathbf {Q}\): To get \(d\mathbf {Q}\), we just apply the chain rule to \(d\mathbf {S}\). Since \(\mathbf {S} = \mathbf {Q} \mathbf {K}^T\),
+  \[
+    \begin {align*}
+       d\mathbf {Q}_{i} &amp;= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} \\
+                      &amp;= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {K}_{j}
+    .\end {align*}
+    \]</li>
+  <li>\(d\mathbf {K}\): Same as \(d\mathbf {Q}\) i.e.
+  \[
+    \begin {align*}
+       d\mathbf {K}_{j} &amp;= \sum _{j} d\mathbf {S}_{ij} \mathbf {Q}_{i} \\
+                      &amp;= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {Q}_{i}
+    .\end {align*}
+    \]</li></ol>
+    <section lang="en" class="block hide-metadata" data-taxon="Problem"><details id="id18" open="open"><summary><header><h1>
+<span class="taxon">Problem. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 27, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>\(\mathbf {P}\) and \(d\mathbf {P}\) are \(N \times  N\) matrices. Materializing this is equivalent to materialing the attention matrix in the forward pass.</details></section>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-indent-block" style="   margin-left: 1em;   margin-bottom: 1em;   border-left: 4px solid black;   padding-left: 12px;   background-color: whitesmoke;   ">
+  <strong>Key Insight 1:</strong> <em>recomputing</em> \(\mathbf {P}_{ij}\) and \(d\mathbf {P}_{ij}\).
+  <p>First, we can easily recompute \(\mathbf {P}_{ij}\) with \(\mathbf {Q}\) and \(\mathbf {K}\) (which are both \(N \times  d\) and must be resident in memory) via</p>
+  \[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}}\]
+  <p>We can apply the same trick to \(d\mathbf {P}_{ij}\) with \(d\mathbf {O}\) and \(\mathbf {V}\) (both \(N \times   d\)). Namely,</p>
+  \[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i}^T \mathbf {V}_j\]
+  <p><strong>Never need an \(N \times  N\) matrix</strong>.</p>
+</div>
+<p xmlns="http://www.w3.org/1999/xhtml">Now we can rewrite \(d\mathbf {Q}\) and \(d\mathbf {K}\) as
+\[
+  d\mathbf {Q}_{i} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {K}_{j}
+\]
+and
+\[
+  d\mathbf {K}_{j} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {Q}_{i}
+\]</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Problem"><details id="id19" open="open"><summary><header><h1>
+<span class="taxon">Problem. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 27, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>\(\mathbf {D}\) requires computing the <strong xmlns="http://www.w3.org/1999/xhtml">global</strong> dot product \(\mathbf {P}_i \cdot  d\mathbf {P}_i\).</details></section>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-indent-block" style="   margin-left: 1em;   margin-bottom: 1em;   border-left: 4px solid black;   padding-left: 12px;   background-color: whitesmoke;   ">
+  <strong>Key Insight 2:</strong>
+  <p>To get around this, we precompute \(\mathbf {D}\) using the \(\mathbf {O}\) values from the forward pass and the current \(d\mathbf {O}\) values. In particular,</p>
+  \[
+    \begin {align*}
+    \mathbf {D}_i &amp;= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
+    &amp;= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
+    &amp;= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{i}^{T} \mathbf {V}_{j} \\
+    &amp;= \sum _{j} d\mathbf {O}_{i}^{T} \left (\frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j}\right ) \\
+    &amp;=  d\mathbf {O}_{i}^{T} \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j} \\
+    &amp;= d\mathbf {O}_{i}^{T} \mathbf {O}_{i}
+    .\end {align*}
+    \]
+    Thus, we can compute \(\mathbf {D}_i\) directly from the vectors \(d\mathbf {O}_i\), \(\mathbf {O}_i\).
+</div>
+
+  <hr xmlns="http://www.w3.org/1999/xhtml"></hr>
+
+  <section lang="en" class="block hide-metadata"><details id="id20" open="open"><summary><header><h1>
+<span class="taxon"></span>Summary  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 27, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>In the forward pass,</li>
+  <ol><li>Compute and store \(\mathbf {O}\) values in memory.</li> 
+    <li>Compute and store \(\mathbf {L}\) values in memory</li></ol>
+  <li>Between the forward and backward pass,</li>
+  <ol><li>Compute \(d\mathbf {O}\). (This is done automatically in <span xmlns="" class="link external"><a href="https://kellenkanarios.com/OGCRY/" title="">JAX</a></span>)</li>
+    <li>Use \(\mathbf {O}\) and \(d\mathbf {O}\) to compute \(\mathbf {D}\). \(O(n)\) memory.</li></ol>
+  <li>In the backward pass,</li>
+  <ol><li>Compute \(d\mathbf {V}_j\) via \(\mathbf {Q}, \mathbf {K}, d\mathbf {O}\). \(O(d)\) memory.</li>
+    <li>Compute \(d\mathbf {Q}_i\) via \(\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i\). \(O(d)\) memory.</li>
+    <li>Compute \(d\mathbf {K}_j\) via \(\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i\). \(O(d)\) memory.</li></ol></ul>
+</details></section>
+</details></section>
+      </details></section>
+    <section lang="en" class="block"><details id="id21"><summary><header><h1>
+<span class="taxon"></span>Reinforcement Learning \(\iff \) Linear Programming <a class="slug" href="/J3CP/">[J3CP]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 31, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <section lang="en" class="block hide-metadata"><details id="id22" open="open"><summary><header><h1>
+<span class="taxon"></span>Linear Program  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 31, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    For this note, we will consider a <em xmlns="http://www.w3.org/1999/xhtml">maximization</em> linear program. Namely, an optimization problem of the following form
+    \[
+        \begin {align*}
+        \max _{\mathbf {x}} \quad  &amp;\mathbf {c}^{\top } \mathbf {x} \\
+        \text {s.t.} \quad  &amp;A\mathbf {x} \leq  b
+        .\end {align*}
+        \]
+        In the spirit of <em xmlns="http://www.w3.org/1999/xhtml">lagrange multipliers</em>, we can also get a <em xmlns="http://www.w3.org/1999/xhtml">dual formulation</em>. To do so, we add a multiplier \(y_i\) for each constraint i.e. 
+        \[y_i \mathbf {a}_i^T \mathbf {x} \leq  y_i b_i\]
+        we then consider the summed constraint (which ends up being tight enough),
+        \[\mathbf {y}^T A \mathbf {x} \leq  \mathbf {y}^T\mathbf {b}\]
+        To relate this back to our primal problem, we enforce the additional constraint that \[\mathbf {y}^T A = \mathbf {c}^T \iff  A \mathbf {y} = \mathbf {c} \]. The reason for this is that for a feasible \(\mathbf {y}\), we have
+        \[\mathbf {y}^T A \mathbf {x} = \mathbf {c}^T \mathbf {x} \leq  \mathbf {y}^T \mathbf {b},  \]
+        so that \(\mathbf {y}^T \mathbf {b}\) is an upper bound for our primal objective \(\mathbf {c}^T \mathbf {x} \). Intuitively, to recover \(\mathbf {c}^T \mathbf {x}^* \), we can just minimize over \(\mathbf {y}\), resulting in the following <em xmlns="http://www.w3.org/1999/xhtml">dual</em> program
+        \[
+            \begin {align*}
+             \min _{\mathbf {y}} \quad  &amp;\mathbf {b}^T\mathbf {y} \\   
+             \text {s.t.} \quad  &amp;A \mathbf {y} = \mathbf {c} \\ 
+             &amp; \mathbf {y} \geq  0
+            .\end {align*}
+            \]
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id23" open="open"><summary><header><h1>
+<span class="taxon"></span>RL as Linear Program  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 31, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    Let \(\rho (s) \in  \mathbb {R}^{|\mathcal {S}|} \) be the initial state distribution. Then consider the following LP 
+    \[\begin {align*}
+\begin {array}{ll} \displaystyle  \max _{V \in  \mathbb {R}^{|\mathcal {S}|}} &amp; \displaystyle  \sum _{s \in  \mathcal {S}} \rho (s) V(s) \\ \text {s.t.} &amp; V(s) \leq  r(s,a) + \gamma  \sum _{s'} P(s' \mid  s,a) \, V(s'), \qquad  \forall  s,a. \end {array}
+    \end {align*}\]
+    Translating this into our standard form, we have
+    <ol xmlns="http://www.w3.org/1999/xhtml"><li>\(\mathbf {c} \in  \mathbb {R}^{|\mathcal {S}|}\) with \(c_s = \rho (s)\)</li>
+      <li>\(A \in  \mathbb {R}^{|\mathcal {S}| \times  |\mathcal {A}| \times  |\mathcal {S}|}\) with \(A_{(s,a),s'} = -\delta _{s,s'} + \gamma  P(s'|s,a).
+\)</li></ol>
+    Substituting this in for the dual formulation gives us
+    \[\begin {align*}
+&amp; \min _{y(s,a) \geq  0} &amp; &amp; \sum _{s,a} r(s,a) \, y(s,a) \\ &amp; \text {s.t.} &amp; &amp; \sum _{a} y(s,a) - \gamma  \sum _{s',a'} P(s \mid  s',a') \, y(s',a') = \rho (s), \qquad  \forall  s
+    \end {align*}\]
+    Here \(\mathbf {y}\) can be seen as the <em xmlns="http://www.w3.org/1999/xhtml">discounted occupancy measure</em>. This allows us to recover a randomized optimal policy via
+    \[\mathbb {P}(\pi ^*(s) = a) = \frac {y(s, a)}{\sum _{a} y(s,a)}\]
+</details></section>
+</details></section>
+    <section lang="en" class="block"><details id="id24"><summary><header><h1>
+<span class="taxon"></span>Rapidly Exploring Random Trees <a class="slug" href="/QQC1/">[QQC1]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">August 14, 2025</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Rapidly exploring random trees (RRT) is a very simple, elegant and widely used algorithm for motion planning. The algorithm proceeds as follows:</p>
+  <section lang="en" class="block hide-metadata"><details id="id25" open="open"><summary><header><h1>
+<span class="taxon"></span>The Algorithm  </h1>
+<div class="metadata"><ul><li class="meta-item">August 14, 2025</li></ul></div></header></summary>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-indent-block" style="   margin-left: 1em;   margin-bottom: 1em;   border-left: 4px solid black;   padding-left: 12px;   background-color: whitesmoke;   ">
+  For \(k = 1\) to \(K\) do
+ <ol><li>\(x_{rand} \gets  \mathsf {RANDOM\_STATE}()\)</li>
+  <li>\(x_{near} \gets  \mathsf {NEAREST\_NEIGHBOR}(x_{rand}, \mathcal {T})\)</li>
+  <li>\(u \gets  \mathsf {SELECT\_INPUT}(x_{near})\)</li>
+  <li>\(x_{new} \gets  \mathsf {NEW\_STATE}(x_{near}, u, \Delta  t)\)</li>
+  <li>\(\mathcal {T}.add\_vertex(x_{new})\)</li>
+  <li>\(\mathcal {T}.add\_edge((x_{near}, u, x_{new}))\)</li></ol>
+ return \(\mathcal {T}\)
+</div>
+
+
+
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id26" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">August 14, 2025</li></ul></div></header></summary>
+Given some dynamics model \(\dot {x} = f(x, u)\), \(\mathsf {NEW\_STATE}\) is some approximate integration, such as Euler integration i.e.
+\[x_{new} = x_{near} + f(x_{near}, u) \Delta  t\]
+Preferable to use higher-order method like Runge-Kutta.
+</details></section>
+
+
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id27" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">August 14, 2025</li></ul></div></header></summary>
+\(\mathsf {SELECT\_INPUT}\) is determined by whether the system is holonomic or non-holomonic. If the agent is holonomic, then \(u\) will just be the control corresponding to the difference in the two states.
+</details></section>
+
+</details></section>
+</details></section>
+    <section lang="en" class="block"><details id="id28"><summary><header><h1>
+<span class="taxon"></span>Multi Query Attention <a class="slug" href="/W4YP/">[W4YP]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 14, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Notes on the paper <span xmlns="" class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">Fast Transformer Decoding: One Write-Head is All You Need</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml">For, 
+<ul><li>\(b\) batch dimension,</li>
+  <li>\(n\) sequence length,</li>
+  <li>\(d\) hidden dimension,</li>
+  <li>\(h\) number of heads.</li></ul>
+The total <span xmlns="" class="link local"><a href="/4K5H/" title="Floating Point Operations [4K5H]">FLOPS</a></span> for <span xmlns="" class="link local"><a href="/004G/" title="Self-Attention [004G]">attention</a></span> are roughly \(bnd^2\). This comes from 
+<ol><li>\(3nd^2\) FLOPS to compute \(Q = XW_Q, K = XW_K, V = XW_V\).</li>
+  <li>Need to do this \(b\) times for each input in batch.</li></ol>
+and the total memory accesses are roughly \(\underbrace {bnd}_{X} + \underbrace {bhn^2}_{\text {softmax}} + \underbrace {d^2}_{\text {projection}}\).
+This gives high arithmetic intensity
+\[O\left (\left (\frac {h}{d} + \frac {1}{bn}\right )^{-1}\right )\]</p><p xmlns="http://www.w3.org/1999/xhtml">However, if we do incremental inference then we must multiply our total number of memory accesses by \(n\) i.e. \(bn^2d + nd^2\). This gives arithmetic intensity
+\[O\left (\left (\frac {n}{d} + \frac {1}{b}\right )^{-1}\right ),\]
+which requires large batch and short sequence length.
+</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id29" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 14, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+I believe we just ignore the softmax memory contribution in the inference case because it does not scale with \(n\) anymore as we are computing the logits just for the next token. Therefore, it becomes a \(\frac {d}{h}\) term, which we can safely ignore?
+</details></section>
+<p xmlns="http://www.w3.org/1999/xhtml">The key is that the \(\frac {n}{d}\) term comes from the \(bn^2d\) term, where we are loading \(h\) \((b \times  n \times  d / h)\) \(K\) and \(V\) matrices \(n\) times. Thus, we can improve the \(\frac {n}{d}\) term by a factor of \(h\) by simply not using a different \(K\) and \(V\) matrix for each head. This is the entire idea behind <span xmlns="" class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">MQA</a></span>.</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id30" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 14, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+Similar to the <span class="link local"><a href="/TJLA/" title="KV-cache [TJLA]">KV-cache</a></span>, we still can use \(h\) \(Q\) matrices because we do not need to load \(n\) of them into memory because only the last one matters for inference.
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id31" open="open"><summary><header><h1>
+<span class="taxon"></span>Group Query Attention <a class="slug" href="/XUVV/">[XUVV]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">July 14, 2025</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Group query attention</em> is the same idea as <span xmlns="" class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">MQA</a></span> but instead of using one \(K\) and \(V\) for every head, they use a <em>group</em> of them. Where obviously the number of groups needs to be less than the number of heads.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmicmjlgi2o3oetsssjdwk6y2pqce4vrdwiw2ah4wwe3ulnt74upkiu.png"></img>
+<figcaption>Grouped query uses subset of \(K\) and \(V\) matrices.</figcaption></figure></details></section><p xmlns="http://www.w3.org/1999/xhtml">Also inspired by this idea of reducing the dependence of \(K\) and \(V\) on the sequence length is sliding window attention.</p><section lang="en" class="block hide-metadata"><details id="id32" open="open"><summary><header><h1>
+<span class="taxon"></span>Sliding Window Attention <a class="slug" href="/WM3M/">[WM3M]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">July 14, 2025</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The idea behind <em>sliding window attention</em> is to ensure the number of weight matrices needed for the keys \(K\) and values \(V\) does not scale with the sequence length. Intuitively, this means allowing each word to "attend" to only some fixed number of previous words rather than the whole sequence</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmidqeoo6wx6s4ry6u74fcelfzxvwreyf7d44whnql4ffnnyd2dwcha.png"></img>
+<figcaption>"the" only sees "on" and "sat" rather than the full sentence.</figcaption></figure></details></section></details></section>
+    <section lang="en" class="block"><details id="id33"><summary><header><h1>
+<span class="taxon"></span>Expectation Maximization <a class="slug" href="/0088/">[0088]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This is the follow up to the previous note on the <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span>. Mainly, here we aim to show how we can use the ELBO to find \(\theta ^*\) i.e. 
+\[
+\begin {align*}
+ \theta ^* &amp;= \arg \max  \mathbb {E}_{x \sim  \mathcal {D}} \log  p(x; \theta ) \\ 
+ &amp;= \arg \max  \mathbb {E}_{x \sim  \mathcal {D}} \log  \int  p(x, z; \theta ) \mathrm {d}z 
+.\end {align*}
+\]
+Notably, <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> gives us the lower bound 
+\[\log  p(x; \theta ) \geq  \mathbb {E}_{z \sim  q}\left [\log  \frac {p(x,  Z; \theta )}{q(z)}\right ]  \eqqcolon  \mathsf {ELBO}(x, q, \theta )\]
+for a <strong>fixed</strong> theta <strong>and</strong> \(q\). Therefore, <strong>for each</strong> \(\theta  \), we want to find some \(q\), such that
+  \[\mathsf {ELBO}(x, q, \theta ) = \log  p(x, \theta )\]
+  With this, we can easily perform gradient ascent
+  \[\theta _{t + 1} \gets  \theta _t + \nabla _{\theta } \mathsf {ELBO}(x, q, \theta _t),\]
+  to maximize the log-likelihood \(\log  p(x; \theta )\). 
+</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id34" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+Note that the gradient is with respect to \(\theta \), where \(\theta \) is just the third argument to \(\mathsf {ELBO}\) as defined above. Notably, \(\theta _t\) will show up elsewhere later but will <strong xmlns="http://www.w3.org/1999/xhtml">NOT</strong> be backpropagated through.
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id35" open="open"><summary><header><h1>
+<span class="taxon"></span>Expectation  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">The above motivates the <em>expectation</em> step of the EM algorithm. Namely how can we compute the lower bound expectation for the <strong>best</strong> possible \(q\).</p>
+<p xmlns="http://www.w3.org/1999/xhtml">Recall (or review) from the discussion on <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> that \(q(z) = p(z | x; \theta )\) maximizes the ELBO for a given \(x\) and \(\theta  \). Therefore, we actually want to learn \(q_{\phi }(z, x, \theta ) \approx  p(z | x; \theta )\). To do so, we can simply maximize the ELBO (duh). Formally,
+\[\phi _{t+1} = \argmax _{\phi } \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q}\left [\log  \frac {p(x,  Z; \theta _t)}{q_{\phi }(Z, x, \theta _t)}\right ]\]</p>
+
+    <section lang="en" class="block hide-metadata" data-taxon="Question"><details id="id36" open="open"><summary><header><h1>
+<span class="taxon">Question. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+Now this is all cool theoretically but how TF do we actually maximize this thing? 
+</details></section>
+
+
+    <section lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id37" open="open"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  It is highly dependent on the parametrization of \(p\) and \(q\).
+</details></section>
+
+
+   
+   <section lang="en" class="block hide-metadata" data-taxon="Example"><details id="id38" open="open"><summary><header><h1>
+<span class="taxon">Example. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">
+  We define the problem as 
+  <ol><li>\(p(z) \sim  N(0, 1)\)</li>
+    <li>\(p(x | z; \theta ) \sim  N(\mu _{\theta }(z), \sigma _{\theta }(z))\)</li>
+    <li>\(q_{\phi }(z | x, \theta ) \sim  N(\mu _{\phi }(x), \sigma _\phi (x))\)</li></ol>
+  where \(\mu _{\{\phi , \theta \}}, \sigma _{\{\phi , \theta \}}\) are parametrized neural networks. Then we can rewrite the <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> as (ignoring constants)
+  \[
+    \begin {align*}
+     \mathsf {ELBO}(x, q, \theta ) &amp;= \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q(\cdot  \mid  x, \theta )} \left [\log  p(Z) - \log  \frac {p(x \mid  Z; \theta )}{q_{\phi }(Z, x, \theta )}\right ] \\
+&amp;= \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q(\cdot  \mid  x, \theta )} \left [-\frac {Z^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((Z - \mu _{\theta }(Z))^2 - (Z - \mu _{\phi }(x))^2\big )\right ]
+    .\end {align*}
+    \]
+    We face one more obstacle.
+  </p>
+  
+    <section lang="en" class="block hide-metadata" data-taxon="Question"><details id="id39" open="open"><summary><header><h1>
+<span class="taxon">Question. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    We need to sample realization \(z \sim  q_{\phi }(\cdot  |x, \theta )\). So isn't our realization \(z\) a function of \(\phi \). How would we optimize this?
+  </details></section>
+
+  
+    <section lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id40" open="open"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    The <span class="link local"><a href="/0089/" title="Reparametrization Trick [0089]">reparametrization trick</a></span>!!
+  </details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id41" open="open"><summary><header><h1>
+<span class="taxon"></span>Reparametrization Trick <a class="slug" href="/0089/">[0089]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">For \(q_{\phi }(\cdot  | x) \sim  N(\mu _{\phi }(x), \sigma _{\phi }(x))\). The <em>reparametrization trick</em> allows us to differentate through a random sample by sampling from \(q_{\phi }(\cdot  | x)\) via 
+\[z(\phi ) = \mu _{\phi }(x) + \sigma _{\phi }(x) \cdot  \epsilon ,\]
+where \(\epsilon  \sim  N(0, 1)\). Then, for a given sample \(\epsilon \), we can easily compute
+\[\nabla _{\phi } z(\phi ) = \nabla _{\phi } \mu _{\phi }(x) + \nabla _{\phi }\sigma _{\phi }(x) \cdot  \epsilon \]</p></details></section>
+  <p xmlns="http://www.w3.org/1999/xhtml">Now for a given sample \(x_i \sim  \mathcal {D}\), we can get a sample \(z_i(\phi ) \sim  q(\cdot  \mid  x_i, \theta )\) that is differentiable with respect to \(\phi \). Using this, we can get the stochastic gradient estimate
+  \[\nabla _q \widetilde {\mathsf {ELBO}}(x, q, \theta ) = \nabla _{\phi } \left [\frac {z_i(\phi )^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((z_i(\phi ) - \mu _{\theta }(z_i(\phi )))^2 - (z_i(\phi ) - \mu _{\phi }(x))^2\big )\right ]\]</p>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-indent-block" style="   margin-left: 1em;   margin-bottom: 1em;   border-left: 4px solid black;   padding-left: 12px;   background-color: whitesmoke;   ">
+  <strong>Algorithm:</strong> input \(\theta _t\)
+  <ol><li>Sample \(x_i\) from dataset \(\mathcal {D}\)</li>
+    <li>Sample \(z_i(\phi ) \sim  q_{\phi }(\cdot  \mid  x_i, \theta _t)\) via <span xmlns="" class="link local"><a href="/0089/" title="Reparametrization Trick [0089]">trick</a></span>.</li>
+    <li>Compute \(\nabla _q \widetilde {\mathsf {ELBO}}\)</li>
+    <li>Update via SGD</li></ol>
+</div>
+
+</details></section>
+ 
+
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id42" open="open"><summary><header><h1>
+<span class="taxon"></span>Maximization  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Finally, we have reached the maximization step. This step is fairly straightforward after all the progress we have made. Once we have a tight lower bound i.e. \(q(z) \approx  p(z \mid  x; \theta )\) then we simply fix \(q\) and maximize the <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> for \(\theta \) i.e. in the above example and algorithm we instead compute
+\[\nabla _\theta  \widetilde {\mathsf {ELBO}}(x, q, \theta ) = \nabla _{\theta } \left [\frac {z_i(\phi )^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((z_i(\phi ) - \mu _{\theta }(z_i(\phi )))^2 - (z_i(\phi ) - \mu _{\phi }(x))^2\big )\right ]\]
+Alternating between these steps yields the <em>expectation-maximization</em> algorithm the ML oldheads mythologize.
+</p>
+</details></section>
+</details></section>
+    <section lang="en" class="block"><details id="id43"><summary><header><h1>
+<span class="taxon"></span>Evidence Lower Bound <a class="slug" href="/0082/">[0082]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">June 30, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong>Setup:</strong>
+We are given a joint distribution \(p(X, Z; \theta )\), where \(X\) and \(Z\) are random variables with their joint parametrized by \(\theta \). We are also given a dataset \(\mathcal {D}\) containing realizations of <strong>only</strong> \(X\) i.e. \(Z\) is a <span xmlns="" class="link local"><a href="/0083/" title="Latent Variable [0083]">latent random variable</a></span>.
+  </p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-indent-block" style="   margin-left: 1em;   margin-bottom: 1em;   border-left: 4px solid black;   padding-left: 12px;   background-color: whitesmoke;   "><strong>Goal:</strong> We want to learn \(p(x; \theta )\).</div>
+<p xmlns="http://www.w3.org/1999/xhtml"> However, \[p(x; \theta ) = \int  p(x, z; \theta ) \mathrm {d}z = \int  p(x | z; \theta )p(z) \mathrm {d}z,\] which is computationally intractable for most continuous \(Z\).</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-indent-block" style="   margin-left: 1em;   margin-bottom: 1em;   border-left: 4px solid black;   padding-left: 12px;   background-color: whitesmoke;   "><strong>Question:</strong> Can we update \(\theta \) for a given realization of \(x\) and \(z\)?</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-indent-block" style="   margin-left: 1em;   margin-bottom: 1em;   border-left: 4px solid black;   padding-left: 12px;   background-color: whitesmoke;   "><strong>Answer:</strong> Yes!!!</div>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Motivation:</strong> Suppose we had some \(q(z)\) that we could sample realizations of \(Z\) from. Then we want to find some reasonable \(\ell _{\theta }\), such that
+\[\theta ^* \approx  \arg \max _{\theta } \mathbb {E}_{x, \sim  p(x; \theta ^*), z \sim  q(z)}[\ell _{\theta }(X, Z)]\]
+
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id44" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">June 30, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+\(q(z)\) can potentially (and will) depend on the sample \(x_i\). This is OK because we are given \(x_i\)'s, which we can then just pass to \(q\) to get the corresponding \(z_i\).
+</details></section>
+
+Why is this the case? Because then (for well-behaved \(\ell _{\theta }\))
+\[\theta _{t + 1} = \theta _{t} - \alpha  \nabla _{\theta _{t}}\ell _{\theta _{t}}(x_i, z_i) \to  \theta ^*\]
+i.e. SGD is a reasonable thing to do, where the gradient is for a <strong>single</strong> sample of \(x_i\) and \(z_i\) which we have readily available from our dataset \(\mathcal {D}\) and our distribution \(q\) that we can sample from. This idea comes up a lot in optimization, such as the \(\log \) trick in the original policy gradient.
+</p><p xmlns="http://www.w3.org/1999/xhtml">Similar to the \(\log \) trick, the <em>Evidence Lower Bound</em> (ELBO) comes from a simple multiply and divide trick. Namely,
+\[\begin {align*}
+  \log  p(x; \theta ) &amp;= \log  \int  p(x, z; \theta ) \mathrm {d}z \\
+  &amp;= \log  \int  p(x, z; \theta ) \frac {q(z)}{q(z)} \mathrm {d}z \\
+  &amp;= \log  \mathbb {E}_{z \sim  q(z)} \frac {p(x, Z; \theta )}{q(z)} \\
+  &amp;\geq  \mathbb {E}_{z \sim  q(z)} \log  \frac {p(x, Z; \theta )}{q(z)}
+.\end {align*}\]
+The last inequality follows directly from <span xmlns="" class="link local"><a href="/002G/" title="Jensen's Inequality [002G]">Jensen's Inequality</a></span>. However, note that this is only a lower bound and therefore not exactly what we want. For example, if we were to pick \(q \sim  N(0, 1)\) and then optimize the ELBO for \(\theta \) we would not necessarily find a good \(\theta \) for the likelihood \(\log  p(x; \theta )\). Luckily, we can actually get the difference \(\log  p(x; \theta ) - \)ELBO in closed form! Namely,
+\[\begin {align*}
+  \log  p(x; \theta ) - \mathrm {ELBO} &amp;= \log  p(x; \theta ) - \mathbb {E}_{z \sim  q(z)} \log  \frac {p(x, Z; \theta )}{q(z)} \\ 
+&amp;= \int  \left (\log  p(x; \theta ) - \log  \frac {p(x, z; \theta )}{q(z)}\right )q(z) \\ 
+&amp;= \int  \left (\log  \frac {p(x; \theta )q(z)}{p(x, z; \theta )}\right )q(z) \\ 
+&amp;= \int  \left (\log  \frac {p(x; \theta )q(z)}{p(z | x; \theta )p(x; \theta )}\right )q(z) \\ 
+&amp;= \int  \left (\log  \frac {q(z)}{p(z | x; \theta )}\right )q(z) \\ 
+&amp;= \mathrm {KL}\big (q(z) \mid \mid  p(z | x; \theta )\big )
+.\end {align*}\]
+Thus, to tighten the lower bound we can optimize \(q_{\phi }(z)\) to try to match \(p(z | x; \theta )\). As a sanity check, lets make sure these match when \(q(z) = p(z \mid  x; \theta )\). 
+\[\begin {align*}
+  \mathbb {E}_{z \sim  q(z)} \log  \frac {p(x, Z; \theta )}{q(z)} &amp;= \int  \log  \frac {p(x, z; \theta )}{q(z)}\mathrm {d}z \\
+  &amp;= \int  \log  \frac {p(x; \theta )p(z \mid  x; \theta )}{p(z \mid  x; \theta )}\mathrm {d}z \\
+  &amp;= \int  \log  p(x; \theta )\mathrm {d}z \\
+  &amp;= \log (x; \theta )
+.\end {align*}\]
+You may be wondering how we use this algorithmically to find \(\theta ^*\)? This will be the main idea of <span xmlns="" class="link local"><a href="/0088/" title="Expectation Maximization [0088]">expectation maximization</a></span>. Feel free to check it out!
+</p></details></section>
+    <section lang="en" class="block"><details id="id45"><summary><header><h1>
+<span class="taxon"></span><span class="link external"><a href="https://kellenkanarios.com/NZBG/" title="">NZBG</a></span> vs. <span class="link local"><a href="/WLBG/" title="Heap [WLBG]">Heap</a></span> <a class="slug" href="/0025/">[0025]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">December 28, 2024</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">I often hear this question come up amongst performance-driven developers, and for the longest time I could never get a straight answer as to why the stack was so much better? After a long foray into the inner workings of how memory allocation is actually done, I think I finally have an answer. I do not want to forget this, so I am doing a quick write up here.</p>
+  <section lang="en" class="block hide-metadata"><details id="id46" open="open"><summary><header><h1>
+<span class="taxon"></span>Why stack is faster.  </h1>
+<div class="metadata"><ul><li class="meta-item">December 28, 2024</li></ul></div></header></summary>
+This all comes down to what happens during each memory allocation. Prior to actually running the program, the operating system allocates some amount of memory for both the stack and the heap (I think around 2-4MB?). When you allocate memory on the stack i.e. <code xmlns="http://www.w3.org/1999/xhtml">int x = 1;</code>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>Stack just increments stack pointer.</li>
+    <li>Writes value to new address pointed to by stack pointer.</li></ul>
+When you allocate memory on the heap i.e. <code xmlns="http://www.w3.org/1999/xhtml">int *x = malloc(sizeof(int))</code>, we must instead choose how best to fulfill the request, which is a whole research direction in itself.
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>One such implementation is the <span xmlns="" class="link external"><a href="https://en.wikipedia.org/wiki/Buddy_memory_allocation" title="">buddy algorithm</a></span></li></ul>
+However, <code xmlns="http://www.w3.org/1999/xhtml">malloc</code> itself is not a system call and therefore is not terribly slow. A real issue occurs when we run out of pre-allocated heap memory. This requires <span class="link local"><a href="/A5S6/" title="Syscall mechanism [A5S6]">invoking a system call</a></span> like <code xmlns="http://www.w3.org/1999/xhtml">sbrk</code> to increment the size of the allocated memory for the heap.
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>If no available pages, OS must evict and write to disk...</li>
+      <li>Formally, this is known as "heap growth".</li></ul>
+Generally, if you know how much memory you need it is good practice to just allocated all up front to minimize any potential system calls. With this, the performance difference is not too drastic  :)
+</details></section>
+</details></section>
+  </details></section><footer xmlns="">
+    
+    
+    <section lang="en" class="block hide-metadata"><details id="id47" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id48"><summary><header><h1>
+<span class="taxon"></span>Blog <a class="slug" href="/0002/">[0002]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">October 29, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">This is my blog, in which I write about a variety of topics including computer science, mathematics, and more. For more short-form blogs, see the <span xmlns="" class="link local"><a href="/007L/" title="Marginalia [007L]">marginalia</a></span>. See <span xmlns="" class="link local"><a href="/007M/" title="Upcoming Blogs [007M]">upcoming blogs</a></span> and feel free to request! This blog also has a corresponding <span xmlns="" class="link external"><a href="/0002/atom.xml" title="">Atom feed</a></span>.</p>
+            <section lang="en" class="block"><details id="id49"><summary><header><h1>
+<span class="taxon"></span>Implementing Directory-based MESI in Murphi <a class="slug" href="/HHZO/">[HHZO]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This will also serve as a bit of notes from <span xmlns="" class="link external"><a href="https://pages.cs.wisc.edu/~markhill/papers/primer2020_2nd_edition.pdf" title="">A Primer on Memory Consistency and Cache Coherence</a></span></p>
+  <section lang="en" class="block hide-metadata"><details id="id50" open="open"><summary><header><h1>
+<span class="taxon"></span>Murphi  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Syntactical things I need to remember from Murphi docs. Most things are straightforward, but there are a few things to note:</p>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>Declarations.</strong> A <em>declaration</em> is a variable or a collection of variables that are used in the rules.</p>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>Rules</strong>. A <em>rule</em> is a transition from one state to another</p>
+  <ul xmlns="http://www.w3.org/1999/xhtml"><li>Each rule can optionally have an initial condition required to be fired</li>
+    <li>We can easily define rules for all the processors or collection of \(n\) things with <code>ruleset</code>.</li>
+    <li>For our use case, rules are used to define</li>
+    <ol><li>Controller actions</li>
+      <li>Receiving a request from the network</li>
+      <li>Retrying stalled requests</li></ol></ul>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>Startstates.</strong> A <em>startstate</em> is the intial configuration for all our declarations.</p>
+  <ul xmlns="http://www.w3.org/1999/xhtml"><li>Must assign a value to every global variable</li></ul>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>Invariants</strong>. An <em>invariant</em> is something that Murphi checks to ensure is true at all possible configurations of the system.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Overview straight from the docs</strong>. Repeat forever:
+</p>
+<ol xmlns="http://www.w3.org/1999/xhtml"><li>Find all rules whose conditions are true in the current state.
+       (i.e. conditional expressions are true, given the current values
+       of the global variables).</li>
+    <li>Choose one arbitrarily and execute the action, yielding a new state.</li></ol>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id51" open="open"><summary><header><h1>
+<span class="taxon"></span>Starting with MSI  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">The first thing we need to do is understand all the things that can go awry.</p>
+<p xmlns="http://www.w3.org/1999/xhtml">First in the valid-invalid protocol example we were given they only have two <span xmlns="" class="link local"><a href="/DWV1/" title="Routing deadlock [DWV1]">virtual channels</a></span>. However, we need 3 channels to handle, request messages, <strong>forwarded</strong> messages, and response messages.</p>
+<p xmlns="http://www.w3.org/1999/xhtml">Let us briefly understand why this is the case. Detecting a deadlock is equivalent to detecting a cycle in a dependency graph, so it is sufficient to show a cyclic dependency.</p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>If we issue a <code>GetS</code> this goes to the directory, giving us an edge N1 -&gt; D.</li>
+  <li>Then the directory issues a <code>Fwd-GetS</code> to the ownder, giving us the chain N1 -&gt; D -&gt; N2</li>
+  <li>The owner then needs to send data to the requester, giving us the chain N1 -&gt; D -&gt; N2 -&gt; N1.</li>
+  <li>Namely, the data must go through the same channel as all of the requests depending on it.</li></ul>
+<p xmlns="http://www.w3.org/1999/xhtml">To avoid this, we partition into 3 channels:</p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>Request: GetS, GetM, PutM</li>
+  <li>Forwarded: Fwd-GetS, Fwd-GetM, PutAck, Inv</li>
+  <li>Response: InvAck, Data</li></ul>
+<p xmlns="http://www.w3.org/1999/xhtml">We directly enumerate these in our <code>MessageType</code> as </p>
+<pre xmlns="http://www.w3.org/1999/xhtml">  MessageType: enum {
+    GetS,           -- request for shared copy
+    GetM,           -- request for modified (exclusive) copy
+    PutS,           -- evict shared copy
+    PutM,           -- evict modified copy (w/ data)
+
+    FwdGetS,        -- forwarded GetS to owner
+    FwdGetM,        -- forwarded GetM to owner
+    Inv,            -- invalidation request
+
+    Data,           -- data response
+    InvAck,         -- invalidation acknowledgment
+    PutAck          -- put acknowledgment
+  };</pre>
+<strong xmlns="http://www.w3.org/1999/xhtml">Cache controller.</strong> We will start with MSI cache controller, given by the following table:
+<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmifhoq7kszlwemrlvvy4yuuvuk6l6bjadkvsmzclbemz2tzxdt6bjm.png"></img></figure>
+<p xmlns="http://www.w3.org/1999/xhtml">Notably, we are missing some of the messages in the figures below. We can handle these based on the <code>AckCount</code></p>
+<pre xmlns="http://www.w3.org/1999/xhtml">  ProcState:
+    Record
+      state: enum { 
+        P_Invalid, P_Shared, P_Modified,       --stable states
+        PT_IS_D,      --sent GetS, waiting for Data
+        PT_IS_DI,     --sent GetS, got Inv, waiting for Data then go to I
+        PT_IM_AD,     --sent GetM (from I), waiting for Data and InvAcks
+        PT_SM_AD,     --sent GetM (from S), waiting for Data and InvAcks
+        PT_IM_A,      --got Data for GetM, waiting for remaining InvAcks
+        PT_MI_A,      --sent PutM, waiting for PutAck
+        PT_SI_A,      --sent PutS, waiting for PutAck
+        PT_II_A       --waiting for PutAck, already invalidated
+      };
+      val: Value;
+      ack: AckCount;  -- tracks InvAck count
+    End;</pre>
+
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id52" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+The <code xmlns="http://www.w3.org/1999/xhtml">load</code>, <code xmlns="http://www.w3.org/1999/xhtml">store</code>, and <code xmlns="http://www.w3.org/1999/xhtml">replacement</code> all only alter the states of the coherence protocol for the permanent states. Therefore, to simulate the system it is sufficient to only implement the rules that initiate these state transitions i.e. evict in modified state or load from invalid state.
+</details></section>
+
+<strong xmlns="http://www.w3.org/1999/xhtml">Directory controller.</strong> Now for the directory controller:
+<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmiadmfswkegttky27zg2gxvkwag3pt72ur7qam2z6vufr6xlvujqca.png"></img>
+<figcaption></figcaption></figure>
+
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id53" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+We actually end up adding a second transient state to the directory controller \(M^D\). This is to handle the <code xmlns="http://www.w3.org/1999/xhtml">PutM</code>, <code xmlns="http://www.w3.org/1999/xhtml">GetM</code> race described below.
+</details></section>
+
+<strong xmlns="http://www.w3.org/1999/xhtml">Weird Race Conditions</strong>
+
+    <section lang="en" class="block hide-metadata" data-taxon="Problem"><details id="id54" open="open"><summary><header><h1>
+<span class="taxon">Problem. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+When implementing the <code xmlns="http://www.w3.org/1999/xhtml">PutM</code> rule to downgrade from modified to invalid. We must <strong xmlns="http://www.w3.org/1999/xhtml">NOT</strong> get rid of the data until we have been acknowledged, so that we can still service forward requests. This is a transition to \(MI^A\). However, we can still receive the <code xmlns="http://www.w3.org/1999/xhtml">PutAck</code> causing us to transition to \(I\) before servicing the <code xmlns="http://www.w3.org/1999/xhtml">Fwd-GetM</code> request. This is lost data.
+</details></section>
+
+
+ 
+   
+   <section lang="en" class="block hide-metadata" data-taxon="Solution"><details id="id55" open="open"><summary><header><h1>
+<span class="taxon">Solution. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  We must add a \(M^D\) state to the directory controller. In this state, if we get a <code xmlns="http://www.w3.org/1999/xhtml">PutM</code> request from a node that is not our current owner we stall and wait for data to arrive. For \(M^D\) to transition to \(M\), we must send the data back to the directory even though we are doing a three-hop, so that the directory knows the data has also been forwarded to the new owner. It is unclear to me the best way to do this without this state.
+</details></section>
+ 
+
+
+    <section lang="en" class="block hide-metadata" data-taxon="Problem"><details id="id56" open="open"><summary><header><h1>
+<span class="taxon">Problem. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+ <p xmlns="http://www.w3.org/1999/xhtml">The above solution causes a deadlock, where two processors both store miss and one load misses. The "winning processor" of the store will be the second one. The first one will get the data from the directory transitioning from \(IM^{AD} \to  IM^{A}\), but the second one will then trigger a <code>Fwd-GetM</code> overwriting the first.</p>
+
+<p xmlns="http://www.w3.org/1999/xhtml">
+The load miss transitions to \(IS^D\). However, when it receives an <code>Inv</code> it stalls according to the above figure. This blocks the <code>Fwd-GetM</code> from reaching the other winning processor because they are on the same VC. Thus, we have a deadlock where the owner never gets the data.
+</p>
+</details></section>
+
+
+ 
+   
+   <section lang="en" class="block hide-metadata" data-taxon="Solution"><details id="id57" open="open"><summary><header><h1>
+<span class="taxon">Solution. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>We need to add another transient state not included in the figure. Namely, we add \(II^{A}\) that says we were in \(IS^{A}\), but we got invalidated and now we are waiting for our <code xmlns="http://www.w3.org/1999/xhtml">PutAck</code> before we transition to \(I\).</details></section>
+ 
+
+
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id58" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+When the home directory is in \(M\) and we get a <code xmlns="http://www.w3.org/1999/xhtml">GetS</code> we cannot clear owner as directed by figure. Otherwise in \(S^D\), we will not be able to tell if the <code xmlns="http://www.w3.org/1999/xhtml">PutM</code> is from the owner and stall, so we only remove the owner once we have received the data.
+</details></section>
+
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id59" open="open"><summary><header><h1>
+<span class="taxon"></span>Moving to MESI  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+Aside from the modifications discussed above, the rest was straightforward and we now are ready to move on to MESI.
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Cache controller.</strong> We will start with MESI cache controller, given by the following table:
+</p>
+<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmia4fllqvr7nzhifqxwk5stk2kyje2tfokhddzfjkteyw4kbj6k25i.png"></img></figure>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Design choice 1.</strong> Since we allow immediate upgrade to \(M\), without forwarding, if E upgrades to M, then the value in the directory sent to the next <code>GetS / GetM</code> would not have updated value. It seems we must either
+<ol><li>not allow E to silently upgrade to M and then we do not need forwarding, or</li>
+  <li>allow E to silently upgrade to M and treat E as M basically and forward everything.</li></ol>
+Notably, neither of these have to write back on <code>PutE</code>, but we will go with 1 because that is how it is indicated in the figure.
+</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Design Choice 2.</strong> In order to indicate that the directory received the first <code>GetS</code> we introduce a <code>ExclusiveData</code> message. Upon receiving, <code>ExclusiveData</code> in \(IS^D\) we transition to \(E\).</p>
+
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id60" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+Once we have sent the <code xmlns="http://www.w3.org/1999/xhtml">PutE</code>, or the <code xmlns="http://www.w3.org/1999/xhtml">PutM</code> \(EI^A\) and \(MI^A\) are functionally the same. I include both for completeness but verified that transitioning directly to \(MI^A\) from \(E\) works the same.
+</details></section>
+
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Directory controller.</strong> We start with the analagous table.</p>
+<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png"></img></figure>
+<p xmlns="http://www.w3.org/1999/xhtml">Similar to the cache controller, we also add a \(E^D\) state for completion that can be absorbed into \(M^D\) introduced in the MSI protocol.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Weird Races.</strong></p>
+
+    <section lang="en" class="block hide-metadata" data-taxon="Problem"><details id="id61" open="open"><summary><header><h1>
+<span class="taxon">Problem. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>First processor does <code xmlns="http://www.w3.org/1999/xhtml">GetS</code> and is in \(IS^D\) but the Home directory sends it exclusive data and is now in \(E\). Then second processor does <code xmlns="http://www.w3.org/1999/xhtml">GetM</code> and Home issues <code xmlns="http://www.w3.org/1999/xhtml">Fwd-GetM</code> to processor one, which arrives before data.</details></section>
+
+
+ 
+   
+   <section lang="en" class="block hide-metadata" data-taxon="Solution"><details id="id62" open="open"><summary><header><h1>
+<span class="taxon">Solution. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>Need to stall on <code xmlns="http://www.w3.org/1999/xhtml">Fwd-GetM</code> and <code xmlns="http://www.w3.org/1999/xhtml">Fwd-GetS</code> in \(IS^D\) until data arrives</details></section>
+ 
+
+
+    <section lang="en" class="block hide-metadata" data-taxon="Problem"><details id="id63" open="open"><summary><header><h1>
+<span class="taxon">Problem. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>An even crazier race happens when we get invalidated before the <code xmlns="http://www.w3.org/1999/xhtml">Fwd-GetM</code> or <code xmlns="http://www.w3.org/1999/xhtml">Fwd-GetS</code> arrive. Due to our previous design decision, we transition to \(II^A\), where if we receive a <code xmlns="http://www.w3.org/1999/xhtml">PutAck</code> we transition to invalid. This then loses the needed forward data.</details></section>
+
+
+   
+   <section lang="en" class="block hide-metadata" data-taxon="Example"><details id="id64" open="open"><summary><header><h1>
+<span class="taxon">Example. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  The timeline:
+  <ol xmlns="http://www.w3.org/1999/xhtml"><li><code>Proc_1</code> performs a load miss → \(IS^D\)</li>
+    <li><code>Home</code> receives first <code>GetS</code> from <code>Proc_1</code> → \(E\) and sends <code>ExclusiveData</code> to <code>Proc_1</code></li>
+    <li><code>Proc_2</code> issues <code>GetM</code> → \(IM^AD\)</li>
+    <li><code>Home</code> sends <code>Inv</code> to <code>Proc_1</code></li>
+    <li><code>Home</code> forwards <code>Fwd-GetM</code> to <code>Proc_1</code></li>
+    <li><code>Proc_1</code> receives <code>Inv</code> → \(II^D\)</li>
+    <li><code>Proc_1</code> receives <code>ExclusiveData</code> → \(I\)</li></ol>
+  Data is lost
+</details></section>
+ 
+
+
+ 
+   
+   <section lang="en" class="block hide-metadata" data-taxon="Solution"><details id="id65" open="open"><summary><header><h1>
+<span class="taxon">Solution. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  We once again have to use the <code xmlns="http://www.w3.org/1999/xhtml">ExclusiveData</code> message. We can then see that we got <code xmlns="http://www.w3.org/1999/xhtml">ExclusiveData</code> in \(II^D\) and transition to \(E\) instead of \(I\). \(E\) will then correctly handle the <code xmlns="http://www.w3.org/1999/xhtml">Fwd-GetM</code> or <code xmlns="http://www.w3.org/1999/xhtml">Fwd-GetS</code>.
+</details></section>
+ 
+
+
+<p xmlns="http://www.w3.org/1999/xhtml">We are left with the following state diagrams for the cache and directory controllers respectively</p>
+<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmif36mc6riik263rmccsazkkvtb5la47ocbsbm664xrm323b3jyufm.png"></img>
+<img width="100%" src="/bafkrmifqg6owj5m5bnsuqphk73uuwqzybmwczbbwx432u5j3zju3fe52i4.png"></img></figure>
+</details></section>
+</details></section>
+            <section lang="en" class="block"><details id="id66"><summary><header><h1>
+<span class="taxon"></span>Rebuilding My (Neo)Vim Config From Scratch <a class="slug" href="/005F/">[005F]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 4, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">I have been using LazyVim for some time now, but I have now run into issues multiple times where understanding how LazyVim is doing something is far more difficult than if I had written my own setup. I allocated one day for this adventure and really just wanted to make sure I had support for \(\TeX \), python, forester, and C/C++. Due to my (self-imposed) time constraint, I do not have the associated resources linked for each of the things discussed below. At some point, I hope to come back and more thoroughly cover each of the components.
+</p>
+  <section lang="en" class="block hide-metadata"><details id="id67" open="open"><summary><header><h1>
+<span class="taxon"></span>Sane Defaults  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 4, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+To my surprise, a lot of the features that I had come to take for granted were actually options set up internally by Lazyvim. For example, I was shocked with 8 space indents!! and I could not even copy from one terminal instance to another... Due to this, I went and found all of the options I liked from Lazyvim and added them to my new configuration in <code xmlns="http://www.w3.org/1999/xhtml">configs/options.lua</code>.
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id68" open="open"><summary><header><h1>
+<span class="taxon"></span>Installing a Plugin Manager  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 4, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+For this, we will be using the defacto standard <code xmlns="http://www.w3.org/1999/xhtml">lazy.nvim</code>. This is actually straightforward and kind of "just works". Just follow the installation guide in their documentation.
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id69" open="open"><summary><header><h1>
+<span class="taxon"></span>Setting up Auto Complete  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 4, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+This is one of the main motivations for me making the switch. It seems <code xmlns="http://www.w3.org/1999/xhtml">nvim-cmp</code> has finally been replaced with a new <code xmlns="http://www.w3.org/1999/xhtml">blink.cmp</code>, so that is what we will be using.
+
+
+  <section lang="en" class="block hide-metadata"><details id="id70" open="open"><summary><header><h1>
+<span class="taxon"></span><span class="link local"><a href="/005F/" title="Rebuilding My (Neo)Vim Config From Scratch [005F]">Rebuilding My (Neo)Vim Config From Scratch</a></span> › Language Server Protocol  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 4, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+It turns out there is a lot that goes into getting LSP setup correctly.
+<ol xmlns="http://www.w3.org/1999/xhtml"><li>First we must actually install the language servers. To do this the easiest way, we use the <code>mason.nvim</code> and <code>mason.nvim-lspconfig</code> plugins. At some point, I might actually figure out how to set up lsp myself without lspconfig but that point is not now.
+</li>
+<li>Through <code>nvim-lspconfig</code>, we can set up each of the servers we want to have LSP support. I just set up clangd, pyright, and texlab.</li></ol>
+This was a bit ridiculous. The first of many challenges was around import resolution in python. To remedy this, I needed to write a function to find the virtual environment directory and then set the <code xmlns="http://www.w3.org/1999/xhtml">pythonPath</code> to the venv python binary. Previously, I think I was just using pylsp and installing it as a pip package to each python venv. I much prefer the new way, and I think pyright is overall a much better lsp.
+</details></section>
+
+
+  <section lang="en" class="block hide-metadata"><details id="id71" open="open"><summary><header><h1>
+<span class="taxon"></span><span class="link local"><a href="/005F/" title="Rebuilding My (Neo)Vim Config From Scratch [005F]">Rebuilding My (Neo)Vim Config From Scratch</a></span> › Forester Completion  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 4, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  Another necessary completion source for me is the one provided by <code xmlns="http://www.w3.org/1999/xhtml">forester.nvim</code>. Similar to vimtex, the reference completion support is VERY useful. Obviously, I need completion when I am writing this blog!!! This was a little more involved. The first difficulty was that the completion source provided by the <code xmlns="http://www.w3.org/1999/xhtml">forester.nvim</code> plugin was for <code xmlns="http://www.w3.org/1999/xhtml">nvim-cmp</code>. It turns out this is a prevalent enough problem that the author of <code xmlns="http://www.w3.org/1999/xhtml">blink.cmp</code> wrote an additional plugin <code xmlns="http://www.w3.org/1999/xhtml">blink.compat</code> to allow for <code xmlns="http://www.w3.org/1999/xhtml">nvim-cmp</code> completion sources. While this sounds all fine and good, <code xmlns="http://www.w3.org/1999/xhtml">nvim-compat</code> expects plugins that return the completion source themselves, whereas in <code xmlns="http://www.w3.org/1999/xhtml">forester.nvim</code> the completion source is just one submodule of a more feature-rich plugin. To get around this, I needed to look into the <code xmlns="http://www.w3.org/1999/xhtml">blink.compat</code> code and find how they are registering the sources and just do it myself.
+</details></section>
+
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id72" open="open"><summary><header><h1>
+<span class="taxon"></span>Snippets  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 4, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">
+  Going all the way back to the <span xmlns="" class="link external"><a href="https://castel.dev/post/lecture-notes-1/" title="">Gilles Castel blog post</a></span>, I have always been partial to snippets that auto-expand. I had them set up prior to Lazyvim but with Lazyvim I had resigned to using friendly-snippets with native nvim snippets. Since I was already redoing everything, this time around I decided not to compromise. Once upon a time (right when it came out I think?) I tried out Luasnips, but it seems that they now have far more extensive features. They are also natively supported by <code>blink.cmp</code>!! It feels necessary that I plug the <span xmlns="" class="link external"><a href="https://github.com/iurimateus/luasnip-latex-snippets.nvim" title="">awesome repo</a></span> that ports the original Ultisnips snippets to Luasnip. With this, I was able to easily add my own forester snippets!!!
+  </p>
+  <p xmlns="http://www.w3.org/1999/xhtml">
+  A fun little thing that I had been hoping to do for awhile and is finally now possible - I can load latex snippets when inside math environments in forester!!!! To do this, I looked into the forester treesitter grammar and found the corresponding nodetypes for math envs. It was then straightforward to detect whether we were in a math env and to load the associated latex snippets.
+  </p>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id73" open="open"><summary><header><h1>
+<span class="taxon"></span>Anki  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 4, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">
+  There is a very cool add-on to anki called <span xmlns="" class="link external"><a href="https://git.sr.ht/~foosoft/anki-connectdeck-actions" title="">AnkiConnect</a></span> that has an associated plugin <code>anki.nvim</code>. Basically, AnkiConnects allows you to make requests to Anki and receive/send useful information from/to your decks. Unfortunately, <code>anki.nvim</code> built-in commands didn't seem all that useful to me. However, it provided the necessary infrastructure for me to accomplish my desired workflow.
+  </p>
+  <p xmlns="http://www.w3.org/1999/xhtml">
+  Namely, I made my own command that queries Anki for the deck names, which you can then pick from using telescope pickers. When you select one it will create a new flashcard in a specified flashcard directory under a directory created based on the deck name. You can then send this card to that deck using the existing <code>AnkiSend</code> command.
+  </p>
+  <p xmlns="http://www.w3.org/1999/xhtml">I also continued the snippet fun here. When writing Anki cards, you can write latex code between [latex] [/latex] delimiters. I wrote a quick function to detect whether we are in these delimiters and if we are then to load the latex snippets from the previous section. I also added some basic anki filetype plugins to insert things like these delimiters.</p>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id74" open="open"><summary><header><h1>
+<span class="taxon"></span>Formatters and Linters  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 4, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <code xmlns="http://www.w3.org/1999/xhtml">compat.nvim</code>, <code xmlns="http://www.w3.org/1999/xhtml">mason.nvim</code>, black, isort.
+</details></section>
+<script xmlns="http://www.w3.org/1999/xhtml" src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="nvim" theme="boxy-light" crossorigin="anonymous" async=""></script></details></section>
+          </details></section>
+        <section lang="en" class="block"><details id="id75"><summary><header><h1>
+<span class="taxon"></span><span class="link local"><a href="/index/" title="Kellen Kanarios [index]">Kellen Kanarios</a></span> › About this website <a class="slug" href="/about/">[about]</a> </h1>
+<div class="metadata"><ul><li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">
+    This is my <span xmlns="" class="link external"><a href="https://www.forester-notes.org/index/index.xml" title="">forest</a></span> (shoutout to <span xmlns="" class="link local"><a href="/jonmsterling/" title="Jon Sterling [jonmsterling]">Jon Sterling</a></span> who is remarkably helpful). This website functions both as a <span xmlns="" class="link external"><a href="https://en.wikipedia.org/wiki/Personal_knowledge_management" title="">personal knowledge management system</a></span>, where I store my notes in <span xmlns="" class="link local"><a href="/0015/" title="Notebooks [0015]">notebooks</a></span>, some accompanying solutions in the <span xmlns="" class="link local"><a href="/914H/" title="Solution Manuals [914H]">solution manuals</a></span>, and any external resources I have made in <span xmlns="" class="link local"><a href="/0004/" title="/dev/null [0004]">/dev/null</a></span>. Additionally, I store my thoughts in a variety of consumption mediums. Namely, short-form notes / blog posts can be found in the "<span xmlns="" class="link local"><a href="/007L/" title="Marginalia [007L]">marginalia</a></span>". I also maintain two weekly posting obligations: a <span xmlns="" class="link local"><a href="/007S/" title="Weeknotes [007S]">weeknotes / lifelog</a></span> and a <span xmlns="" class="link local"><a href="/005G/" title="Research Bible [005G]">paper of the week</a></span>. 
+  </p>
+          </details></section>
+      </details></section>
+    
+    
+  </footer></article></div></body></html>

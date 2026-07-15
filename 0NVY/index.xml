@@ -14,7 +14,13 @@
     <fr:title text="Trap table">Trap table</fr:title>
   </fr:frontmatter>
   <fr:mainmatter><html:p>A hardware-readable table installed by the OS at boot that maps each kind of exceptional control-flow event (<fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">syscall</fr:link>, interrupt, <fr:link href="/CXFM/" title="Page fault" uri="https://kellenkanarios.com/CXFM/" display-uri="CXFM" type="local">page fault</fr:link>, illegal instruction, ...) to the address of an OS handler. When the CPU takes a trap, it consults this table to decide where to jump, switches into kernel mode, and runs the handler.</html:p><html:p>The table is what makes it safe to expose privileged operations to user mode: user code never gets to pick the destination of a mode-switch, only the trap number. The OS controls every entry point, the CPU enforces the indirection.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Installing the trap table is itself a privileged operation. It happens once, early in boot, before any user process exists.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Installing the trap table is itself a privileged operation. It happens once, early in boot, before any user process exists.</html:div>
 </fr:mainmatter>
   <fr:backmatter>
     <fr:tree show-metadata="false" hidden-when-empty="true">
@@ -48,38 +54,74 @@
             <fr:title text="Limited Direct Execution">Limited Direct Execution</fr:title>
           </fr:frontmatter>
           <fr:mainmatter><html:p>The OS lets user code run directly on the CPU for speed, but with hardware-enforced limits that prevent a buggy or malicious program from compromising the rest of the system. Two questions motivate the mechanism:</html:p>
- <html:div class="jms-indent-block" style="
-  margin-left: 1em;
-  margin-bottom: 1em;
-  border-left: 4px solid black;
-  padding-left: 12px;
-  background-color: whitesmoke;
-  ">
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 130, 0, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(200, 130, 0, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</html:span> 
   <html:ol><html:li><html:em>How do we make sure a program doesn't do what we don't want it to do?</html:em></html:li>
     <html:li><html:em>How do we enable time-sharing?</html:em></html:li></html:ol>
 </html:div>
 <html:p>The first question is answered by hardware <fr:link href="/QUQC/" title="User mode vs kernel mode" uri="https://kellenkanarios.com/QUQC/" display-uri="QUQC" type="local">User mode vs kernel mode</fr:link> enforced via the <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link>, with a controlled <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">Syscall mechanism</fr:link> as the only path from one to the other. The second is answered by periodic timer interrupts that trap to the OS, which performs a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">Context switch</fr:link> and runs the <fr:link href="/B8GC/" title="Scheduling" uri="https://kellenkanarios.com/B8GC/" display-uri="B8GC" type="local">scheduler</fr:link>.</html:p><html:p>The whole stack is bootstrapped during the <fr:link href="/XSFO/" title="Boot sequence" uri="https://kellenkanarios.com/XSFO/" display-uri="XSFO" type="local">Boot sequence</fr:link>, when the kernel installs the trap table and starts the timer before handing control to user space.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/QUQC/</fr:uri><fr:display-uri>QUQC</fr:display-uri><fr:route>/QUQC/</fr:route><fr:title text="User mode vs kernel mode">User mode vs kernel mode</fr:title></fr:frontmatter><fr:mainmatter><html:p>Two privilege levels supported by the CPU. <html:em>User mode</html:em> restricts the running process to a limited set of instructions and a limited view of memory — usually just its own <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">address space</fr:link>. <html:em>Kernel mode</html:em> runs the OS with full access to all instructions and all of physical memory.</html:p><html:p>Switching between modes is mediated by hardware via a <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link> populated at boot. The OS sets up the table; the CPU enforces it. A process cannot promote itself to kernel mode arbitrarily — it must invoke a <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">Syscall mechanism</fr:link>, which traps to a fixed entry point in the OS.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Kernel mode is dangerous because the address space is effectively the entire machine. The mode bit + the trap table together are what makes it safe to time-share a CPU between mutually distrusting programs.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Kernel mode is dangerous because the address space is effectively the entire machine. The mode bit + the trap table together are what makes it safe to time-share a CPU between mutually distrusting programs.</html:div>
 </fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/0NVY/</fr:uri><fr:display-uri>0NVY</fr:display-uri><fr:route>/0NVY/</fr:route><fr:title text="Trap table">Trap table</fr:title></fr:frontmatter><fr:mainmatter><html:p>A hardware-readable table installed by the OS at boot that maps each kind of exceptional control-flow event (<fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">syscall</fr:link>, interrupt, <fr:link href="/CXFM/" title="Page fault" uri="https://kellenkanarios.com/CXFM/" display-uri="CXFM" type="local">page fault</fr:link>, illegal instruction, ...) to the address of an OS handler. When the CPU takes a trap, it consults this table to decide where to jump, switches into kernel mode, and runs the handler.</html:p><html:p>The table is what makes it safe to expose privileged operations to user mode: user code never gets to pick the destination of a mode-switch, only the trap number. The OS controls every entry point, the CPU enforces the indirection.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Installing the trap table is itself a privileged operation. It happens once, early in boot, before any user process exists.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Installing the trap table is itself a privileged operation. It happens once, early in boot, before any user process exists.</html:div>
 </fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/A5S6/</fr:uri><fr:display-uri>A5S6</fr:display-uri><fr:route>/A5S6/</fr:route><fr:title text="Syscall mechanism">Syscall mechanism</fr:title></fr:frontmatter><fr:mainmatter><html:p>A syscall is a user-mode-initiated request for a privileged service from the kernel. Because user code cannot jump into kernel code directly, the mechanism is built around a single trap instruction plus a pre-agreed register convention identifying which service to perform.</html:p><html:p>The end-to-end sequence:</html:p><html:ol><html:li>User code places the syscall number in a pre-defined register and invokes the trap instruction.</html:li>
   <html:li>Hardware saves enough state to resume the process and switches to kernel mode.</html:li>
   <html:li>Hardware jumps to the OS-installed handler via the <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link>.</html:li>
   <html:li>The handler reads the syscall number from the agreed register and dispatches to the corresponding OS routine.</html:li>
   <html:li>The OS validates the request, performs the work, and arranges return values per the calling convention.</html:li>
   <html:li>The OS restores user state and returns the process to user mode.</html:li></html:ol>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Because the register convention is fixed by ABI, the user-mode side of a syscall is typically hand-written in assembly within libc.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Because the register convention is fixed by ABI, the user-mode side of a syscall is typically hand-written in assembly within libc.</html:div>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Interrupts work via a similar trap-handler mechanism, but are initiated by hardware (timer, device) rather than user code.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Interrupts work via a similar trap-handler mechanism, but are initiated by hardware (timer, device) rather than user code.</html:div>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The kernel must validate any pointers or arguments the user supplies — user code cannot be trusted not to ask the kernel to read kernel memory on its behalf.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> The kernel must validate any pointers or arguments the user supplies — user code cannot be trusted not to ask the kernel to read kernel memory on its behalf.</html:div>
 </fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/OKCI/</fr:uri><fr:display-uri>OKCI</fr:display-uri><fr:route>/OKCI/</fr:route><fr:title text="Context switch">Context switch</fr:title></fr:frontmatter><fr:mainmatter><html:p>The operation of saving the full execution state of one process (or <fr:link href="/63U3/" title="Thread" uri="https://kellenkanarios.com/63U3/" display-uri="63U3" type="local">thread</fr:link>) and restoring another's so the CPU can resume it as if it had never been interrupted. On a trap into the kernel, the hardware stashes the user-visible state (PC, condition codes, stack pointer) into a known location, and the OS saves the remaining general-purpose registers as part of the switching code.</html:p><html:p>Two flavors of state are involved:</html:p><html:ol><html:li><html:strong>User registers</html:strong>: the current program's context (general-purpose registers, stack vars).</html:li>
   <html:li><html:strong>Kernel registers</html:strong>: meta-information used to resume the trap correctly (PC at trap, syscall number, etc.).</html:li></html:ol><html:p>Context switches are not free — they incur the cost of cache and <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">TLB</fr:link> pollution in addition to the direct cost of saving/restoring state. This is the cost amortized by larger <fr:link href="/B8GC/" title="Scheduling" uri="https://kellenkanarios.com/B8GC/" display-uri="B8GC" type="local">scheduling</fr:link> quanta and a recurring concern for any <fr:link href="/5P43/" title="Concurrency" uri="https://kellenkanarios.com/5P43/" display-uri="5P43" type="local">Concurrency</fr:link> system.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XSFO/</fr:uri><fr:display-uri>XSFO</fr:display-uri><fr:route>/XSFO/</fr:route><fr:title text="Boot sequence">Boot sequence</fr:title></fr:frontmatter><fr:mainmatter><html:p>The fixed series of steps a machine performs from power-on until a usable operating system is running. Each stage runs from a known location and hands off control to the next.</html:p><html:ol><html:li>Power signal resets the CPU to a known state.</html:li>
   <html:li>The CPU fetches from a hard-wired address — the BIOS (or UEFI firmware). The BIOS runs basic hardware checks (POST).</html:li>
   <html:li>The BIOS loads and jumps to the bootloader (e.g. GRUB) from a known location on disk.</html:li>
   <html:li>The bootloader places the kernel image at the correct address and jumps to its entry point.</html:li>
   <html:li>The kernel performs early setup: installs the <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link> (a special privileged instruction), starts the timer interrupt, sets up memory management, and finally enters user space.</html:li></html:ol>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The hardware is hard-wired only to find the BIOS. Everything past that is software the user can replace, which is why dual-booting and custom bootloaders work.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> The hardware is hard-wired only to find the BIOS. Everything past that is software the user can replace, which is why dual-booting and custom bootloaders work.</html:div>
 </fr:mainmatter></fr:tree></fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>
@@ -108,7 +150,13 @@
   <html:li>The BIOS loads and jumps to the bootloader (e.g. GRUB) from a known location on disk.</html:li>
   <html:li>The bootloader places the kernel image at the correct address and jumps to its entry point.</html:li>
   <html:li>The kernel performs early setup: installs the <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link> (a special privileged instruction), starts the timer interrupt, sets up memory management, and finally enters user space.</html:li></html:ol>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The hardware is hard-wired only to find the BIOS. Everything past that is software the user can replace, which is why dual-booting and custom bootloaders work.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> The hardware is hard-wired only to find the BIOS. Everything past that is software the user can replace, which is why dual-booting and custom bootloaders work.</html:div>
 </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -130,11 +178,29 @@
   <html:li>The handler reads the syscall number from the agreed register and dispatches to the corresponding OS routine.</html:li>
   <html:li>The OS validates the request, performs the work, and arranges return values per the calling convention.</html:li>
   <html:li>The OS restores user state and returns the process to user mode.</html:li></html:ol>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Because the register convention is fixed by ABI, the user-mode side of a syscall is typically hand-written in assembly within libc.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Because the register convention is fixed by ABI, the user-mode side of a syscall is typically hand-written in assembly within libc.</html:div>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Interrupts work via a similar trap-handler mechanism, but are initiated by hardware (timer, device) rather than user code.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Interrupts work via a similar trap-handler mechanism, but are initiated by hardware (timer, device) rather than user code.</html:div>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The kernel must validate any pointers or arguments the user supplies — user code cannot be trusted not to ask the kernel to read kernel memory on its behalf.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> The kernel must validate any pointers or arguments the user supplies — user code cannot be trusted not to ask the kernel to read kernel memory on its behalf.</html:div>
 </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -151,7 +217,13 @@
             <fr:title text="User mode vs kernel mode">User mode vs kernel mode</fr:title>
           </fr:frontmatter>
           <fr:mainmatter><html:p>Two privilege levels supported by the CPU. <html:em>User mode</html:em> restricts the running process to a limited set of instructions and a limited view of memory — usually just its own <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">address space</fr:link>. <html:em>Kernel mode</html:em> runs the OS with full access to all instructions and all of physical memory.</html:p><html:p>Switching between modes is mediated by hardware via a <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link> populated at boot. The OS sets up the table; the CPU enforces it. A process cannot promote itself to kernel mode arbitrarily — it must invoke a <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">Syscall mechanism</fr:link>, which traps to a fixed entry point in the OS.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Kernel mode is dangerous because the address space is effectively the entire machine. The mode bit + the trap table together are what makes it safe to time-share a CPU between mutually distrusting programs.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Kernel mode is dangerous because the address space is effectively the entire machine. The mode bit + the trap table together are what makes it safe to time-share a CPU between mutually distrusting programs.</html:div>
 </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -172,38 +244,74 @@
             <fr:title text="Limited Direct Execution">Limited Direct Execution</fr:title>
           </fr:frontmatter>
           <fr:mainmatter><html:p>The OS lets user code run directly on the CPU for speed, but with hardware-enforced limits that prevent a buggy or malicious program from compromising the rest of the system. Two questions motivate the mechanism:</html:p>
- <html:div class="jms-indent-block" style="
-  margin-left: 1em;
-  margin-bottom: 1em;
-  border-left: 4px solid black;
-  padding-left: 12px;
-  background-color: whitesmoke;
-  ">
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 130, 0, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(200, 130, 0, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</html:span> 
   <html:ol><html:li><html:em>How do we make sure a program doesn't do what we don't want it to do?</html:em></html:li>
     <html:li><html:em>How do we enable time-sharing?</html:em></html:li></html:ol>
 </html:div>
 <html:p>The first question is answered by hardware <fr:link href="/QUQC/" title="User mode vs kernel mode" uri="https://kellenkanarios.com/QUQC/" display-uri="QUQC" type="local">User mode vs kernel mode</fr:link> enforced via the <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link>, with a controlled <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">Syscall mechanism</fr:link> as the only path from one to the other. The second is answered by periodic timer interrupts that trap to the OS, which performs a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">Context switch</fr:link> and runs the <fr:link href="/B8GC/" title="Scheduling" uri="https://kellenkanarios.com/B8GC/" display-uri="B8GC" type="local">scheduler</fr:link>.</html:p><html:p>The whole stack is bootstrapped during the <fr:link href="/XSFO/" title="Boot sequence" uri="https://kellenkanarios.com/XSFO/" display-uri="XSFO" type="local">Boot sequence</fr:link>, when the kernel installs the trap table and starts the timer before handing control to user space.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/QUQC/</fr:uri><fr:display-uri>QUQC</fr:display-uri><fr:route>/QUQC/</fr:route><fr:title text="User mode vs kernel mode">User mode vs kernel mode</fr:title></fr:frontmatter><fr:mainmatter><html:p>Two privilege levels supported by the CPU. <html:em>User mode</html:em> restricts the running process to a limited set of instructions and a limited view of memory — usually just its own <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">address space</fr:link>. <html:em>Kernel mode</html:em> runs the OS with full access to all instructions and all of physical memory.</html:p><html:p>Switching between modes is mediated by hardware via a <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link> populated at boot. The OS sets up the table; the CPU enforces it. A process cannot promote itself to kernel mode arbitrarily — it must invoke a <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">Syscall mechanism</fr:link>, which traps to a fixed entry point in the OS.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Kernel mode is dangerous because the address space is effectively the entire machine. The mode bit + the trap table together are what makes it safe to time-share a CPU between mutually distrusting programs.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Kernel mode is dangerous because the address space is effectively the entire machine. The mode bit + the trap table together are what makes it safe to time-share a CPU between mutually distrusting programs.</html:div>
 </fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/0NVY/</fr:uri><fr:display-uri>0NVY</fr:display-uri><fr:route>/0NVY/</fr:route><fr:title text="Trap table">Trap table</fr:title></fr:frontmatter><fr:mainmatter><html:p>A hardware-readable table installed by the OS at boot that maps each kind of exceptional control-flow event (<fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">syscall</fr:link>, interrupt, <fr:link href="/CXFM/" title="Page fault" uri="https://kellenkanarios.com/CXFM/" display-uri="CXFM" type="local">page fault</fr:link>, illegal instruction, ...) to the address of an OS handler. When the CPU takes a trap, it consults this table to decide where to jump, switches into kernel mode, and runs the handler.</html:p><html:p>The table is what makes it safe to expose privileged operations to user mode: user code never gets to pick the destination of a mode-switch, only the trap number. The OS controls every entry point, the CPU enforces the indirection.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Installing the trap table is itself a privileged operation. It happens once, early in boot, before any user process exists.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Installing the trap table is itself a privileged operation. It happens once, early in boot, before any user process exists.</html:div>
 </fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/A5S6/</fr:uri><fr:display-uri>A5S6</fr:display-uri><fr:route>/A5S6/</fr:route><fr:title text="Syscall mechanism">Syscall mechanism</fr:title></fr:frontmatter><fr:mainmatter><html:p>A syscall is a user-mode-initiated request for a privileged service from the kernel. Because user code cannot jump into kernel code directly, the mechanism is built around a single trap instruction plus a pre-agreed register convention identifying which service to perform.</html:p><html:p>The end-to-end sequence:</html:p><html:ol><html:li>User code places the syscall number in a pre-defined register and invokes the trap instruction.</html:li>
   <html:li>Hardware saves enough state to resume the process and switches to kernel mode.</html:li>
   <html:li>Hardware jumps to the OS-installed handler via the <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link>.</html:li>
   <html:li>The handler reads the syscall number from the agreed register and dispatches to the corresponding OS routine.</html:li>
   <html:li>The OS validates the request, performs the work, and arranges return values per the calling convention.</html:li>
   <html:li>The OS restores user state and returns the process to user mode.</html:li></html:ol>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Because the register convention is fixed by ABI, the user-mode side of a syscall is typically hand-written in assembly within libc.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Because the register convention is fixed by ABI, the user-mode side of a syscall is typically hand-written in assembly within libc.</html:div>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Interrupts work via a similar trap-handler mechanism, but are initiated by hardware (timer, device) rather than user code.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Interrupts work via a similar trap-handler mechanism, but are initiated by hardware (timer, device) rather than user code.</html:div>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The kernel must validate any pointers or arguments the user supplies — user code cannot be trusted not to ask the kernel to read kernel memory on its behalf.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> The kernel must validate any pointers or arguments the user supplies — user code cannot be trusted not to ask the kernel to read kernel memory on its behalf.</html:div>
 </fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/OKCI/</fr:uri><fr:display-uri>OKCI</fr:display-uri><fr:route>/OKCI/</fr:route><fr:title text="Context switch">Context switch</fr:title></fr:frontmatter><fr:mainmatter><html:p>The operation of saving the full execution state of one process (or <fr:link href="/63U3/" title="Thread" uri="https://kellenkanarios.com/63U3/" display-uri="63U3" type="local">thread</fr:link>) and restoring another's so the CPU can resume it as if it had never been interrupted. On a trap into the kernel, the hardware stashes the user-visible state (PC, condition codes, stack pointer) into a known location, and the OS saves the remaining general-purpose registers as part of the switching code.</html:p><html:p>Two flavors of state are involved:</html:p><html:ol><html:li><html:strong>User registers</html:strong>: the current program's context (general-purpose registers, stack vars).</html:li>
   <html:li><html:strong>Kernel registers</html:strong>: meta-information used to resume the trap correctly (PC at trap, syscall number, etc.).</html:li></html:ol><html:p>Context switches are not free — they incur the cost of cache and <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">TLB</fr:link> pollution in addition to the direct cost of saving/restoring state. This is the cost amortized by larger <fr:link href="/B8GC/" title="Scheduling" uri="https://kellenkanarios.com/B8GC/" display-uri="B8GC" type="local">scheduling</fr:link> quanta and a recurring concern for any <fr:link href="/5P43/" title="Concurrency" uri="https://kellenkanarios.com/5P43/" display-uri="5P43" type="local">Concurrency</fr:link> system.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XSFO/</fr:uri><fr:display-uri>XSFO</fr:display-uri><fr:route>/XSFO/</fr:route><fr:title text="Boot sequence">Boot sequence</fr:title></fr:frontmatter><fr:mainmatter><html:p>The fixed series of steps a machine performs from power-on until a usable operating system is running. Each stage runs from a known location and hands off control to the next.</html:p><html:ol><html:li>Power signal resets the CPU to a known state.</html:li>
   <html:li>The CPU fetches from a hard-wired address — the BIOS (or UEFI firmware). The BIOS runs basic hardware checks (POST).</html:li>
   <html:li>The BIOS loads and jumps to the bootloader (e.g. GRUB) from a known location on disk.</html:li>
   <html:li>The bootloader places the kernel image at the correct address and jumps to its entry point.</html:li>
   <html:li>The kernel performs early setup: installs the <fr:link href="/0NVY/" title="Trap table" uri="https://kellenkanarios.com/0NVY/" display-uri="0NVY" type="local">Trap table</fr:link> (a special privileged instruction), starts the timer interrupt, sets up memory management, and finally enters user space.</html:li></html:ol>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The hardware is hard-wired only to find the BIOS. Everything past that is software the user can replace, which is why dual-booting and custom bootloaders work.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> The hardware is hard-wired only to find the BIOS. Everything past that is software the user can replace, which is why dual-booting and custom bootloaders work.</html:div>
 </fr:mainmatter></fr:tree></fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>
@@ -229,13 +337,23 @@
           </fr:frontmatter>
           <fr:mainmatter><html:p>Physical memory is finite, so the OS reserves a region of disk — <html:em>swap space</html:em> — to hold pages that don't fit. Pages currently on disk have their <html:em>present bit</html:em> cleared in the <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> entry; the PTE instead holds a disk address.</html:p><html:p>When a process touches a virtual address whose page is not present, the hardware traps to the OS. This is a <html:em>page fault</html:em>. The handler:</html:p><html:ol><html:li>Looks at the PTE: if invalid, the access is illegal — terminate the process.</html:li>
   <html:li>If valid but not present: read the page in from swap, update the PTE, retry the access.</html:li></html:ol>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The hardware never handles page faults itself — that would require it to understand disk I/O and the OS's swap layout. Page-fault handling is always in software.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> The hardware never handles page faults itself — that would require it to understand disk I/O and the OS's swap layout. Page-fault handling is always in software.</html:div>
 <html:p>The three cases on every memory access:</html:p><html:ol><html:li><html:strong>Present + valid</html:strong>: hardware reads the PPN from the PTE and proceeds.</html:li>
   <html:li><html:strong>Not present + valid</html:strong>: hardware invokes the page-fault handler to retrieve from swap.</html:li>
   <html:li><html:strong>Not valid</html:strong>: hardware raises an exception; the OS typically kills the process.</html:li></html:ol>
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter><html:strong>What happens when you dereference a nullptr?</html:strong> The TLB misses on VPN 0, the page-table walk finds the PTE marked invalid, and the hardware traps to the OS — which delivers SIGSEGV.</fr:mainmatter></fr:tree>
- 
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(60, 90, 180, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(60, 90, 180, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> <html:strong>What happens when you dereference a nullptr?</html:strong> The TLB misses on VPN 0, the page-table walk finds the PTE marked invalid, and the hardware traps to the OS — which delivers SIGSEGV.</html:div>
 </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -257,11 +375,29 @@
   <html:li>The handler reads the syscall number from the agreed register and dispatches to the corresponding OS routine.</html:li>
   <html:li>The OS validates the request, performs the work, and arranges return values per the calling convention.</html:li>
   <html:li>The OS restores user state and returns the process to user mode.</html:li></html:ol>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Because the register convention is fixed by ABI, the user-mode side of a syscall is typically hand-written in assembly within libc.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Because the register convention is fixed by ABI, the user-mode side of a syscall is typically hand-written in assembly within libc.</html:div>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Interrupts work via a similar trap-handler mechanism, but are initiated by hardware (timer, device) rather than user code.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Interrupts work via a similar trap-handler mechanism, but are initiated by hardware (timer, device) rather than user code.</html:div>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The kernel must validate any pointers or arguments the user supplies — user code cannot be trusted not to ask the kernel to read kernel memory on its behalf.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> The kernel must validate any pointers or arguments the user supplies — user code cannot be trusted not to ask the kernel to read kernel memory on its behalf.</html:div>
 </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>

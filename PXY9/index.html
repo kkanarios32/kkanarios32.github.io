@@ -1,6 +1,201 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/PXY9/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>Test-and-test-and-set lock</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>Test-and-test-and-set lock <a class="slug" href="/PXY9/">[PXY9]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A refinement of the <span xmlns="" class="link local"><a href="/MJ5L/" title="Test-and-set lock [MJ5L]">Test-and-set lock</a></span> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <code>test_and_set</code> when it does. Spinning is then read-only, so cores can share the cache line.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+  while (true):
+    // Perform "test"
+    load [lock_ptr] -&gt; original_value
+    if (original_value == UNLOCKED):
+      // Perform "test-and-set"
+      test_and_set(old, lock_ptr)
+      if (old == UNLOCKED):
+        break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] &lt;- UNLOCKED</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Spinning is a read-only operation now.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> When the lock is released, the line must be invalidated on every waiter, and they all simultaneously read and try to write. The contention is shifted from steady state to release time but is still \(O(n)\) in the number of waiters.</div>
+</details></section><footer xmlns="">
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id3"><summary><header><h1>
+<span class="taxon"></span>Locks <a class="slug" href="/Q2DT/">[Q2DT]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">March 9, 2026</li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">A lock is a synchronization primitive that grants mutually exclusive access to a critical section. The implementations below trade off coherence traffic, fairness, and memory in different ways. The naive locks (<span xmlns="" class="link local"><a href="/MJ5L/" title="Test-and-set lock [MJ5L]">Test-and-set lock</a></span> and <span xmlns="" class="link local"><a href="/PXY9/" title="Test-and-test-and-set lock [PXY9]">Test-and-test-and-set lock</a></span>) are simple but generate \(O(n)\) coherence traffic per release; queue-based locks (<span xmlns="" class="link local"><a href="/V7KP/" title="Ticket lock [V7KP]">Ticket lock</a></span>, <span xmlns="" class="link local"><a href="/BJ7N/" title="Array-based lock [BJ7N]">Array-based lock</a></span>, <span xmlns="" class="link local"><a href="/IN64/" title="MCS lock [IN64]">MCS lock</a></span>) scale better at the cost of extra state per waiter.</p>
+            <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>Test-and-set lock <a class="slug" href="/MJ5L/">[MJ5L]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The simplest spin lock. The acquire loop spins on an atomic <code>test_and_set</code>: it writes <code>LOCKED</code> and reads the previous value in one step. If the previous value was <code>UNLOCKED</code>, the caller has the lock; otherwise it tries again.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+  while (true):
+    // Perform "test-and-set"
+    // UNLOCKED = 0, LOCKED = 1
+    test_and_set(old, lock_ptr)
+    if (old == UNLOCKED):
+      break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] &lt;- UNLOCKED</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <code>test_and_set</code>, so contention scales badly with the number of waiters.</div>
+</details></section>
+            <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon"></span>Test-and-test-and-set lock <a class="slug" href="/PXY9/">[PXY9]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A refinement of the <span xmlns="" class="link local"><a href="/MJ5L/" title="Test-and-set lock [MJ5L]">Test-and-set lock</a></span> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <code>test_and_set</code> when it does. Spinning is then read-only, so cores can share the cache line.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+  while (true):
+    // Perform "test"
+    load [lock_ptr] -&gt; original_value
+    if (original_value == UNLOCKED):
+      // Perform "test-and-set"
+      test_and_set(old, lock_ptr)
+      if (old == UNLOCKED):
+        break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] &lt;- UNLOCKED</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Spinning is a read-only operation now.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> When the lock is released, the line must be invalidated on every waiter, and they all simultaneously read and try to write. The contention is shifted from steady state to release time but is still \(O(n)\) in the number of waiters.</div>
+</details></section>
+            <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon"></span>Ticket lock <a class="slug" href="/V7KP/">[V7KP]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <code>next_ticket</code> and then spins until <code>now_serving</code> equals its ticket. Release simply increments <code>now_serving</code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+  my_ticket = fetch_and_increment(lock_ptr-&gt;next_ticket)
+  while (lock_ptr-&gt;now_serving != my_ticket); // spin
+
+release(lock_ptr):
+  lock_ptr-&gt;now_serving = lock_ptr-&gt;now_serving + 1</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Still \(O(n)\) coherence traffic on release: incrementing <code>now_serving</code> invalidates the line on every waiter, and they all reload it to recheck their ticket.</div>
+</details></section>
+            <section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon"></span>Array-based lock <a class="slug" href="/BJ7N/">[BJ7N]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Each waiter is assigned its own slot in an array and spins only on that slot. Release just flips the next slot to "go-ahead", so the cache line touched by release is the one read by exactly one other thread. Coherence traffic per release is constant rather than \(O(n)\), at the cost of one slot per waiter.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Give each waiter its own "slot" to wait on.</li>
+  <li>Only need to set the next slot to "go-ahead" on release.</li>
+  <li>Constant coherence traffic.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> \(O(n)\) memory for the lock array, and padding each slot to \(64\)b (one cache line) to avoid false sharing makes that cost real.</div>
+</details></section>
+            <section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
+<span class="taxon"></span>MCS lock <a class="slug" href="/IN64/">[IN64]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+                <p xmlns="http://www.w3.org/1999/xhtml">A scalable, list-based queue lock. The lock variable is a pointer to the tail of a linked list of per-thread nodes. Each thread enqueues its own node and spins on a flag in its own cache line. The releaser wakes only its direct successor, so coherence traffic per handoff is constant and memory cost is proportional only to threads currently waiting, not to the lock's fanout.</p>
+                <pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock):
+  I-&gt;next = null
+  predecessor = fetch_and_store(lock, I)
+  if predecessor != nil:                   // some node holds the lock
+    I-&gt;must_wait = true
+    predecessor-&gt;next = I                  // predecessor must wake us
+    repeat while I-&gt;must_wait              // spin till lock is free
+
+release(lock):
+  if (I-&gt;next == null):                    // no known successor
+    if compare_and_swap(lock, I, nil):     // make sure...
+      return                               // CAS succeeded; lock freed
+    repeat while I-&gt;next == nil            // spin to learn successor
+  I-&gt;next-&gt;must_wait = false               // wake successor</pre>
+              </details></section>
+          </details></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id10"><summary><header><h1>
+<span class="taxon"></span>Locks <a class="slug" href="/Q2DT/">[Q2DT]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">March 9, 2026</li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">A lock is a synchronization primitive that grants mutually exclusive access to a critical section. The implementations below trade off coherence traffic, fairness, and memory in different ways. The naive locks (<span xmlns="" class="link local"><a href="/MJ5L/" title="Test-and-set lock [MJ5L]">Test-and-set lock</a></span> and <span xmlns="" class="link local"><a href="/PXY9/" title="Test-and-test-and-set lock [PXY9]">Test-and-test-and-set lock</a></span>) are simple but generate \(O(n)\) coherence traffic per release; queue-based locks (<span xmlns="" class="link local"><a href="/V7KP/" title="Ticket lock [V7KP]">Ticket lock</a></span>, <span xmlns="" class="link local"><a href="/BJ7N/" title="Array-based lock [BJ7N]">Array-based lock</a></span>, <span xmlns="" class="link local"><a href="/IN64/" title="MCS lock [IN64]">MCS lock</a></span>) scale better at the cost of extra state per waiter.</p>
+            <section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon"></span>Test-and-set lock <a class="slug" href="/MJ5L/">[MJ5L]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The simplest spin lock. The acquire loop spins on an atomic <code>test_and_set</code>: it writes <code>LOCKED</code> and reads the previous value in one step. If the previous value was <code>UNLOCKED</code>, the caller has the lock; otherwise it tries again.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+  while (true):
+    // Perform "test-and-set"
+    // UNLOCKED = 0, LOCKED = 1
+    test_and_set(old, lock_ptr)
+    if (old == UNLOCKED):
+      break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] &lt;- UNLOCKED</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <code>test_and_set</code>, so contention scales badly with the number of waiters.</div>
+</details></section>
+            <section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
+<span class="taxon"></span>Test-and-test-and-set lock <a class="slug" href="/PXY9/">[PXY9]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A refinement of the <span xmlns="" class="link local"><a href="/MJ5L/" title="Test-and-set lock [MJ5L]">Test-and-set lock</a></span> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <code>test_and_set</code> when it does. Spinning is then read-only, so cores can share the cache line.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+  while (true):
+    // Perform "test"
+    load [lock_ptr] -&gt; original_value
+    if (original_value == UNLOCKED):
+      // Perform "test-and-set"
+      test_and_set(old, lock_ptr)
+      if (old == UNLOCKED):
+        break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] &lt;- UNLOCKED</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Spinning is a read-only operation now.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> When the lock is released, the line must be invalidated on every waiter, and they all simultaneously read and try to write. The contention is shifted from steady state to release time but is still \(O(n)\) in the number of waiters.</div>
+</details></section>
+            <section lang="en" class="block hide-metadata"><details id="id13" open="open"><summary><header><h1>
+<span class="taxon"></span>Ticket lock <a class="slug" href="/V7KP/">[V7KP]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <code>next_ticket</code> and then spins until <code>now_serving</code> equals its ticket. Release simply increments <code>now_serving</code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+  my_ticket = fetch_and_increment(lock_ptr-&gt;next_ticket)
+  while (lock_ptr-&gt;now_serving != my_ticket); // spin
+
+release(lock_ptr):
+  lock_ptr-&gt;now_serving = lock_ptr-&gt;now_serving + 1</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Still \(O(n)\) coherence traffic on release: incrementing <code>now_serving</code> invalidates the line on every waiter, and they all reload it to recheck their ticket.</div>
+</details></section>
+            <section lang="en" class="block hide-metadata"><details id="id14" open="open"><summary><header><h1>
+<span class="taxon"></span>Array-based lock <a class="slug" href="/BJ7N/">[BJ7N]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Each waiter is assigned its own slot in an array and spins only on that slot. Release just flips the next slot to "go-ahead", so the cache line touched by release is the one read by exactly one other thread. Coherence traffic per release is constant rather than \(O(n)\), at the cost of one slot per waiter.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Give each waiter its own "slot" to wait on.</li>
+  <li>Only need to set the next slot to "go-ahead" on release.</li>
+  <li>Constant coherence traffic.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> \(O(n)\) memory for the lock array, and padding each slot to \(64\)b (one cache line) to avoid false sharing makes that cost real.</div>
+</details></section>
+            <section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
+<span class="taxon"></span>MCS lock <a class="slug" href="/IN64/">[IN64]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+                <p xmlns="http://www.w3.org/1999/xhtml">A scalable, list-based queue lock. The lock variable is a pointer to the tail of a linked list of per-thread nodes. Each thread enqueues its own node and spins on a flag in its own cache line. The releaser wakes only its direct successor, so coherence traffic per handoff is constant and memory cost is proportional only to threads currently waiting, not to the lock's fanout.</p>
+                <pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock):
+  I-&gt;next = null
+  predecessor = fetch_and_store(lock, I)
+  if predecessor != nil:                   // some node holds the lock
+    I-&gt;must_wait = true
+    predecessor-&gt;next = I                  // predecessor must wake us
+    repeat while I-&gt;must_wait              // spin till lock is free
+
+release(lock):
+  if (I-&gt;next == null):                    // no known successor
+    if compare_and_swap(lock, I, nil):     // make sure...
+      return                               // CAS succeeded; lock freed
+    repeat while I-&gt;next == nil            // spin to learn successor
+  I-&gt;next-&gt;must_wait = false               // wake successor</pre>
+              </details></section>
+          </details></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id17"><summary><header><h1>
+<span class="taxon"></span>Test-and-set lock <a class="slug" href="/MJ5L/">[MJ5L]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The simplest spin lock. The acquire loop spins on an atomic <code>test_and_set</code>: it writes <code>LOCKED</code> and reads the previous value in one step. If the previous value was <code>UNLOCKED</code>, the caller has the lock; otherwise it tries again.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+  while (true):
+    // Perform "test-and-set"
+    // UNLOCKED = 0, LOCKED = 1
+    test_and_set(old, lock_ptr)
+    if (old == UNLOCKED):
+      break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] &lt;- UNLOCKED</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <code>test_and_set</code>, so contention scales badly with the number of waiters.</div>
+</details></section>
+      </details></section>
+    
+  </footer></article></div></body></html>

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors>
+      <fr:author>
+        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+      </fr:author>
+    </fr:authors>
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>7</fr:month>
+      <fr:day>11</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/EPUD/</fr:uri>
+    <fr:display-uri>EPUD</fr:display-uri>
+    <fr:route>/EPUD/</fr:route>
+    <fr:title text="Occupancy bounds how much latency a GPU can hide">Occupancy bounds how much latency a GPU can hide</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter>
+    <html:p><html:em>Occupancy</html:em> is the ratio of a GPU <fr:link href="/OGCS6/" title="Streaming Multiprocessor (SM)" uri="https://kellenkanarios.com/OGCS6/" display-uri="OGCS6" type="local">SM</fr:link>'s active <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warps</fr:link> to the maximum it can hold. It is the ceiling on <fr:link href="/1PWL/" title="Warp scheduling hides memory latency by switching among resident warps" uri="https://kellenkanarios.com/1PWL/" display-uri="1PWL" type="local">latency hiding</fr:link>: every resident warp is a candidate to switch to when another stalls, so higher occupancy gives the scheduler more runnable work, while low occupancy stalls the SM whenever its few resident warps all wait on the same transaction. For latency-bound workloads — most GPU code — raising occupancy is the first-order optimization. What caps it is per-warp resource use: registers and shared memory are finite per SM, so heavier kernels fit fewer warps, which is why cutting register pressure can raise throughput even when it does no less work.</html:p>
+  </fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>11</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/1PWL/</fr:uri>
+            <fr:display-uri>1PWL</fr:display-uri>
+            <fr:route>/1PWL/</fr:route>
+            <fr:title text="Warp scheduling hides memory latency by switching among resident warps">Warp scheduling hides memory latency by switching among resident warps</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>A GPU keeps many <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warps</fr:link> resident on each <fr:link href="/OGCS6/" title="Streaming Multiprocessor (SM)" uri="https://kellenkanarios.com/OGCS6/" display-uri="OGCS6" type="local">Streaming Multiprocessor (SM)</fr:link> and switches between them on every stall. When a warp issues a memory op that misses cache it is dead for hundreds of cycles — but with dozens of resident warps the scheduler always has a runnable one, so aggregate throughput stays high even though single-warp latency is awful. This is the <fr:link href="/G4ML/" title="Thread-level parallelism" uri="https://kellenkanarios.com/G4ML/" display-uri="G4ML" type="local">Thread-level parallelism</fr:link> design point cashed out on the GPU: spend silicon on resident warp state rather than on latency-reduction machinery. The switch is free because each SM's <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">register file</fr:link> is large enough to hold every resident warp's registers at once, so a context switch is just changing which warp the scheduler picks — not saving state to memory the way a CPU <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link> must.</html:p>
+            <html:p>Two things bound how well this works. <fr:link href="/EPUD/" title="Occupancy bounds how much latency a GPU can hide" uri="https://kellenkanarios.com/EPUD/" display-uri="EPUD" type="local">Occupancy</fr:link> — how many warps are resident — sets the ceiling on latency hiding: with too few warps the scheduler runs out of runnable candidates. And the scheduler itself must stay cheap enough to choose a warp every cycle, which it does with a <fr:link href="/7SGF/" title="A two-loop scheduler makes warp readiness a constant-time scoreboard check" uri="https://kellenkanarios.com/7SGF/" display-uri="7SGF" type="local">two-loop scoreboard check</fr:link>, marshalling each issued instruction's register reads through an <fr:link href="/7QAW/" title="An operand collector serializes register reads to dodge register-file bank conflicts" uri="https://kellenkanarios.com/7QAW/" display-uri="7QAW" type="local">operand collector</fr:link>.</html:p>
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>11</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/1PWL/</fr:uri>
+            <fr:display-uri>1PWL</fr:display-uri>
+            <fr:route>/1PWL/</fr:route>
+            <fr:title text="Warp scheduling hides memory latency by switching among resident warps">Warp scheduling hides memory latency by switching among resident warps</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>A GPU keeps many <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warps</fr:link> resident on each <fr:link href="/OGCS6/" title="Streaming Multiprocessor (SM)" uri="https://kellenkanarios.com/OGCS6/" display-uri="OGCS6" type="local">Streaming Multiprocessor (SM)</fr:link> and switches between them on every stall. When a warp issues a memory op that misses cache it is dead for hundreds of cycles — but with dozens of resident warps the scheduler always has a runnable one, so aggregate throughput stays high even though single-warp latency is awful. This is the <fr:link href="/G4ML/" title="Thread-level parallelism" uri="https://kellenkanarios.com/G4ML/" display-uri="G4ML" type="local">Thread-level parallelism</fr:link> design point cashed out on the GPU: spend silicon on resident warp state rather than on latency-reduction machinery. The switch is free because each SM's <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">register file</fr:link> is large enough to hold every resident warp's registers at once, so a context switch is just changing which warp the scheduler picks — not saving state to memory the way a CPU <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link> must.</html:p>
+            <html:p>Two things bound how well this works. <fr:link href="/EPUD/" title="Occupancy bounds how much latency a GPU can hide" uri="https://kellenkanarios.com/EPUD/" display-uri="EPUD" type="local">Occupancy</fr:link> — how many warps are resident — sets the ceiling on latency hiding: with too few warps the scheduler runs out of runnable candidates. And the scheduler itself must stay cheap enough to choose a warp every cycle, which it does with a <fr:link href="/7SGF/" title="A two-loop scheduler makes warp readiness a constant-time scoreboard check" uri="https://kellenkanarios.com/7SGF/" display-uri="7SGF" type="local">two-loop scoreboard check</fr:link>, marshalling each issued instruction's register reads through an <fr:link href="/7QAW/" title="An operand collector serializes register reads to dodge register-file bank conflicts" uri="https://kellenkanarios.com/7QAW/" display-uri="7QAW" type="local">operand collector</fr:link>.</html:p>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>6</fr:month>
+              <fr:day>1</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/OGCS6/</fr:uri>
+            <fr:display-uri>OGCS6</fr:display-uri>
+            <fr:route>/OGCS6/</fr:route>
+            <fr:title text="Streaming Multiprocessor (SM)">Streaming Multiprocessor (SM)</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+ <html:div class="stub-notice" style="
+  margin: 0.5em 0;
+  padding: 8px 12px;
+  border-left: 4px solid 7cb342;
+  background-color: f1f8e9;
+  color: 33691e;
+  font-style: italic;
+  ">🌱 Stub — this concept is referenced but not yet written.</html:div>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/X9VZ/</fr:uri>
+            <fr:display-uri>X9VZ</fr:display-uri>
+            <fr:route>/X9VZ/</fr:route>
+            <fr:title text="Warp">Warp</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>A <html:em>warp</html:em> is the unit of scheduling on an NVIDIA GPU: a group of ~32 threads that issue one instruction per cycle in lockstep. Each functional unit in the <fr:link href="/OGCS6/" title="Streaming Multiprocessor (SM)" uri="https://kellenkanarios.com/OGCS6/" display-uri="OGCS6" type="local">SM</fr:link> has as many lanes as a warp has threads, so a single fetched instruction fans out across all 32 lanes at once. The warp — not the thread — is what the hardware fetches, schedules, and tracks; the per-thread <fr:link href="/7F19/" title="SIMT" uri="https://kellenkanarios.com/7F19/" display-uri="7F19" type="local">SIMT</fr:link> programming model is an illusion built on top of it.</html:p>
+            <html:p>Because the warp is the atom of execution, the two facts that dominate GPU performance are both properties of the warp: it <fr:link href="/1PWL/" title="Warp scheduling hides memory latency by switching among resident warps" uri="https://kellenkanarios.com/1PWL/" display-uri="1PWL" type="local">hides memory latency by switching among resident warps</fr:link> instead of stalling, and it <fr:link href="/OGCSM/" title="Warp divergence serializes both sides of a branch" uri="https://kellenkanarios.com/OGCSM/" display-uri="OGCSM" type="local">serializes both sides of a branch</fr:link> when its threads diverge.</html:p>
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

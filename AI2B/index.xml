@@ -15,7 +15,13 @@
   </fr:frontmatter>
   <fr:mainmatter><html:p><fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link> extended with an <html:em>Owned</html:em> state — shared but dirty. The owning cache holds a writable-by-only-it copy, while other caches may hold clean read-only copies. The owner is responsible for writing back on eviction.</html:p><html:p>The point: if a dataset is heavily shared but rarely changes, MESI would require write-back to memory each time it transitions out of M to S. MOESI lets a dirty line stay dirty in the cache while other caches read clean copies of it, deferring the writeback until the owner actually evicts.</html:p><html:p>This is most useful when you have producer-consumer or migratory sharing patterns where one core repeatedly writes and others repeatedly read.</html:p><html:figure><html:img width="100%" src="/bafkrmifclvn2y2qimjwqk4f3bfwm6cxsxyaiqt4csfc33y2apyabag6joe.png" />
 <html:figcaption>MOESI venn diagram.</html:figcaption></html:figure>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter><html:em>DEC Firefly</html:em> is a contemporary alternative that uses write-update for the Shared state — every write broadcasts to all sharers via wired-OR signaling — and write-back for Exclusive and Dirty. Good for small bus systems with high update frequency; bad for large systems where the broadcast cost dominates.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> <html:em>DEC Firefly</html:em> is a contemporary alternative that uses write-update for the Shared state — every write broadcasts to all sharers via wired-OR signaling — and write-back for Exclusive and Dirty. Good for small bus systems with high update frequency; bad for large systems where the broadcast cost dominates.</html:div>
 </fr:mainmatter>
   <fr:backmatter>
     <fr:tree show-metadata="false" hidden-when-empty="true">
@@ -82,9 +88,10 @@
             <html:ol><html:li><html:strong>Single-writer invariant</html:strong>: at any moment, at most one core has permission to write a given line. No other core can read or write it concurrently.</html:li>
   <html:li><html:strong>Data-value invariant</html:strong>: all cores see the same order of updates to a given line.</html:li></html:ol>
             <html:p>Two organizational families:</html:p>
-            <html:ul><html:li><fr:link href="/8C2H/" title="Snoop-based coherence" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">Snoop-based coherence</fr:link> — every cache watches a shared bus and reacts to other cores' traffic. Scales to ~8 cores.</html:li>
-  <html:li><fr:link href="/KIT8/" title="Directory-based coherence" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">Directory-based coherence</fr:link> — a structure tracks who has a copy of each line; coherence messages are point-to-point. Scales to hundreds of cores at the cost of an extra hop.</html:li></html:ul>
+            <html:ul><html:li><fr:link href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">snoop-based coherence</fr:link> — every cache watches a shared bus and reacts to other cores' traffic. Scales to ~8 cores.</html:li>
+  <html:li><fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory-based coherence</fr:link> — a structure tracks who has a copy of each line; coherence messages are point-to-point. Scales to hundreds of cores at the cost of an extra hop.</html:li></html:ul>
             <html:p>The concrete state machines are protocols like <fr:link href="/EYXU/" title="MSI protocol" uri="https://kellenkanarios.com/EYXU/" display-uri="EYXU" type="local">MSI protocol</fr:link>, <fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link>, <fr:link href="/AI2B/" title="MOESI protocol" uri="https://kellenkanarios.com/AI2B/" display-uri="AI2B" type="local">MOESI protocol</fr:link>, and DEC Firefly, each adding states to handle more cases or to optimize specific sharing patterns. A worked implementation of directory-based MESI in Murphi lives in <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link>.</html:p>
+            <html:p>Worked instance: <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link> implements directory-based MESI in Murphi.</html:p>
           </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>

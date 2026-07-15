@@ -1,6 +1,100 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/7AMZ/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>Humanoid Robot Learning</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>Humanoid Robot Learning <a class="slug" href="/7AMZ/">[7AMZ]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">September 17, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon">1. </span>Benchmarking Humanoid Intelligence  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">September 17, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    <p xmlns="http://www.w3.org/1999/xhtml">Locomotion tasks: can humanoids move around? Vary terrain, avoid obstacles.</p>
+    <p xmlns="http://www.w3.org/1999/xhtml">Loco-manipulation tasks: can humanoids interact with the environment?</p>
+    <p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link external"><a href="https://humanoid-bench.github.io/" title="">HumanoidBench</a></span></p>
+    <p xmlns="http://www.w3.org/1999/xhtml">Other manipulation / locomotion benchmarks are too trivial to see drastic performance between algorithms.</p>
+    <p xmlns="http://www.w3.org/1999/xhtml">Learning algorithms struggle with large action space</p>
+    <p xmlns="http://www.w3.org/1999/xhtml">Action space - number of degrees of freedom. Humanoid w/o hands - 19dof, w/ hands 61dof.</p>
+    <p xmlns="http://www.w3.org/1999/xhtml">Idea: decouple dof. Problem want whole body control.</p>
+    <p xmlns="http://www.w3.org/1999/xhtml">Idea: hierarchical learning via domain knowledge. learn to position hands. Extended to library of skills in 
+<span xmlns="" class="link external"><a href="https://arxiv.org/abs/2506.09366" title="">Skillblender</a></span>.</p>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon">2. </span>Scaling sim-to-real learning for humanoids  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">September 17, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Robot / environment:</p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li> identify what you can (system identification). </li>
+    <li>what you cannot identify randomize!</li></ul>
+<p xmlns="http://www.w3.org/1999/xhtml">Reward</p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>stay away from things you cannot identify.</li></ul>
+<p xmlns="http://www.w3.org/1999/xhtml">Simulator: training on cpu takes forever (enter IsaacGym, Mujoco Playground).</p>
+<p xmlns="http://www.w3.org/1999/xhtml">Mujoco Playground limitations</p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>JIT compilation can be slow</li>
+  <li>Computation time scales with the number of potential contacts</li>
+  <li>MJX warp is now supported (100x speedup)</li></ul>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon">3. </span>Where can we do better?  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">September 17, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    <p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link external"><a href="https://younggyo.me/fast_td3/" title="">Fast TD3</a></span></p>
+    <p xmlns="http://www.w3.org/1999/xhtml">FastTD3 vs. TD3</p>
+    <ol xmlns="http://www.w3.org/1999/xhtml"><li>Massively parallel environments</li>
+    <li>Large-batch training</li>
+    <li>Distributional RL</li>
+    <ul><li>Discretize value space and output distribution over values</li>
+      <li>Trained with cross entropy loss</li></ul></ol>
+    <span class="link external"><a href="https://arxiv.org/abs/2408.06316" title="">Body Tranformer</a></span>,
+    <ol xmlns="http://www.w3.org/1999/xhtml"><li>Inductive bias</li>
+      <li>Computationally efficient</li>
+      <li>Multi-frequency reasoning</li>
+      <li>Localized credit assignment</li></ol>
+    <p xmlns="http://www.w3.org/1999/xhtml">Idea: construct graph to connect certain parts of body via embodiment graph. Have attention layers that only attend to neighbors on the graph via the mask being a graph mask.</p>
+    <p xmlns="http://www.w3.org/1999/xhtml">Mask is sparse, allowing much more computationally efficient attention computation.</p>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon">4. </span>A Generalizable Robot Learning Pipeline  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">September 17, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    <p xmlns="http://www.w3.org/1999/xhtml">Future directions:</p>
+    <ol xmlns="http://www.w3.org/1999/xhtml"><li>Vision-based policies</li>
+<li>Real2sim</li>
+<li>Learning from videos</li></ol>
+<p xmlns="http://www.w3.org/1999/xhtml">The pipeline</p>
+<ol xmlns="http://www.w3.org/1999/xhtml"><li>Learn low-level skills</li>
+  <li>Learn to compose skills</li>
+  <li>Finetune with RL</li></ol>
+</details></section>
+</details></section><footer xmlns="">
+    
+    
+    
+    
+    
+  </footer></article><nav id="toc"><div class="block"><h1>Table of Contents</h1><ul xmlns="" class="block">
+<li>
+<a class="bullet" href="#id2" title="Benchmarking Humanoid Intelligence">■</a><span class="link local" data-target="#id2"><span class="taxon">1. </span>Benchmarking Humanoid Intelligence</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id3" title="Scaling sim-to-real learning for humanoids">■</a><span class="link local" data-target="#id3"><span class="taxon">2. </span>Scaling sim-to-real learning for humanoids</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id4" title="Where can we do better?">■</a><span class="link local" data-target="#id4"><span class="taxon">3. </span>Where can we do better?</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id5" title="A Generalizable Robot Learning Pipeline">■</a><span class="link local" data-target="#id5"><span class="taxon">4. </span>A Generalizable Robot Learning Pipeline</span><ul class="block"></ul>
+</li>
+</ul></div></nav></div></body></html>

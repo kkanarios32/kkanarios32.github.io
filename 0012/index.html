@@ -1,6 +1,1802 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/0012/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>Notebook: Reinforcement learning: An introduction</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>Notebook: <span class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">Reinforcement learning: An introduction</a></span> <a class="slug" href="/0012/">[0012]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This won't really be notes, my lab has begun taking a few undergrads who are not familiar with RL. I will be onboarding them by going through <span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">Reinforcement learning: An introduction</a></span>. Specifically, I will be following the <span xmlns="" class="link local"><a href="/richardsutton/" title="Richard Sutton [richardsutton]">Richard Sutton</a></span> flavor of RL through his <span xmlns="" class="link external"><a href="https://drive.google.com/drive/folders/0B3w765rOKuKANmxNbXdwaE1YU1k?resourcekey=0-JZz-noRuJgogNsg1ljgV8w" title="">CMPUT 609</a></span> course. You know what the say: the best way to learn is to teach! Here, I will try to solve all the problems as we go and prepare some questions for the undergrads for when we meet. Additionally, I will document my foray into more advanced exploration of topics introduced in the textbook.</p><p xmlns="http://www.w3.org/1999/xhtml">The worked exercises are collected separately in <span xmlns="" class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span>. What stays here are the conceptual asides and the open questions I want to raise with the undergrads.</p>
+  <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon">1. </span>Dynamic Programming  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> <strong>Value Iteration as Linear Algebra:</strong> During my brief stint at <span xmlns="" class="link external"><a href="https://www.ipam.ucla.edu/" title="">IPAM</a></span>, I spent a lot of time focused on <span xmlns="" class="link local"><a href="/kanariosParallelAMG2023/" title="Parallel Algebraic Multigrid for Higher Order PDEs [kanariosParallelAMG2023]">solving large systems for discretized PDEs</a></span>. From this, I learned about iterative methods, such as Gauss-Jacobi and Gauss-Seidel. Interestingly, these methods can be used to interpret some of RL's most fundamental algorithms. If we define the following matrices,
+\[
+  \begin {align*}
+        R &amp;= \begin {bmatrix}
+        \mathbb {E}[r(s = 1)]\\
+        \vdots  \\
+        \mathbb {E}[r(s = n)]
+        \end {bmatrix}, \quad  P = \begin {bmatrix}
+        P_{\pi }(s'=1 | s=1) &amp; \cdots  &amp; P_{\pi }(s'=n | s=1) \\
+        \vdots  &amp; \ddots  &amp; \vdots  \\
+        P_{\pi }(s'=1 | s=n) &amp; \cdots  &amp; P_{\pi }(s'=n | s=n)
+        \end {bmatrix}, \\
+        V_k &amp;= \begin {bmatrix}
+        V_k(s = 1)\\
+        \vdots  \\
+        V_k(s = n)
+        \end {bmatrix}
+  \end {align*}
+      \]
+      Then we can write the value function \(V_{\pi }\) as the solution to the linear system
+      \[
+          V_{\pi } = R + PV_{\pi } \iff  V_{\pi } = (1 - P)^{-1} R
+        \]
+    This is just inverting a matrix! Updating one state with the canonical update
+\[
+    \begin {align*}
+      v_{k + 1}(s) = \sum _{a}\pi (a|s)\sum _{s^{\prime },r}p(s^{\prime },r\,|\,s,a)\Big [r+\gamma  v_{k}(s^{\prime })\Big ]
+    \end {align*}
+\]
+Is actually just one iteration of Gauss-Seidel!
+    </div>
+
+    
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> (Number of updates as pseudo discount factor). </div>
+
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon">2. </span>On-policy Prediction with Approximation  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">
+In my opinion, the most important part of this chapter is now that when we update say a \(Q\) function for a specific state action pair \((s,a)\), then this update can affect the value of the \(Q(s', a')\) due to the reuse of the internal parameters.
+  </p>
+
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> 
+  <ol><li>In section 9.5.2, what do they mean when they say you can select \(n\) so all the fourier features can be used?
+    <ol><li>Pick \(n\) so that \((n + 1)^k &lt; mk^2\).</li>
+        <li>Pick \(n\) so that \((n + 1)^k\) is reasonable.</li></ol></li>
+    <p>
+    In the tabular case, I think (a) is correct. My initial understanding of state representation is as a representation learning i.e. compression type objective. If we assume that \(s_i \in  [m]\), then we do not gain anything in the tabular setting if our value function vector is the same size as the underlying transition kernel. When in the continuous state space regime i.e. \(s_i \in  [0,1]\), there is no amount of features that would overfit the transition kernel. Therefore, it is just about trying to learn as much as possible about the underlying relations of the state dimensions.
+    </p>
+    <p>
+    In the \(2\)-dimensional case, the feature vector \(c_i = [1,1]\) would provide information on how \(s_1\) and \(s_2\) relate not just their specific values. You want the learning algorithm to understand the relationships, so that it can make better use of the internal parameters when learning something like a \(Q\) function. This is basically just SVD but instead of classification you are learning a \(Q\) function. The compression
+    </p></ol>
+  </div>
+
+
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> 
+  <ol><li>In Figure 9.5, why do fourier features outperform polynomial features?
+    <ol><li>The fourier features got lucky on the seeds (lol).</li>
+        <li>The choice of \(\boldsymbol {c}\) is not specified. A good choice can provide improvement specific to the problem?</li>
+        <li>Polynomial features range is very large. Can suffer from blowup or vanishing of features.</li></ol></li>
+    One of the advantages of fourier features mentioned previously is the ability to select which features to serve as your basis. However, for this setup I assume they just use all of the fourier features. This likely means it is more of an issue with the polynomial features and (c). If you have a large polynomial then even relative similar states \(s_1 = 1.1\), \(s_2 = 0.9\), \(\ldots \) can blow up or vanish making them likely more unstable when using gradient-based methods.
+  </ol>
+  </div>
+
+
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> I think that RBF as a continuous generalization coarse-coding is a nice intuition I want to remember here. Essentially, you just weight a state by how close it is to the center of the receptive field. This weighting is done via a Gaussian kernel, which I believe is arbitrary and can be any distance measure of choice.</div>
+
+</details></section>
+</details></section><footer xmlns="">
+    <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>References  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block" data-taxon="Reference"><details id="id5"><summary><header><div class="frontmatter-image"><img class="frontmatter-image" src="/bafkrmibm4snnzyzdaqzlgk52d7fm2kno2dehv7nbd4jjmw3qxzsj3m2tkq.png"></div>
+<h1>
+<span class="taxon">Reference. </span>Parallel Algebraic Multigrid for Higher Order PDEs <a class="slug" href="/kanariosParallelAMG2023/">[kanariosParallelAMG2023]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">August 20, 2023</li></ul>
+<br><ul>
+<li class="meta-item"><a class="doi link" href="https://www.doi.org/10.2172/2205732">10.2172/2205732</a></li>
+<li class="meta-item"><a class="link external" href="/bafkrmignmsxm4a4sps6664cfy2fipolzrsomzmdxnhhhdtvjzfprlppuee.pdf">Slides</a></li>
+</ul>
+</div></header></summary></details></section>
+        <section lang="en" class="block" data-taxon="Reference"><details id="id6"><summary><header><h1>
+<span class="taxon">Reference. </span>Reinforcement learning: An introduction <a class="slug" href="/suttonReinforcementLearningIntroduction2018/">[suttonReinforcementLearningIntroduction2018]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">2018</li></ul>
+<br><ul></ul>
+</div></header></summary><pre>@book{suttonReinforcementLearningIntroduction2018,
+ title = {Reinforcement Learning: An Introduction},
+ author = {Sutton, Richard S. and Barto, Andrew G.},
+ year = {2018},
+ isbn = {978-0-262-03924-6},
+ edition = {Second edition},
+ series = {Adaptive Computation and Machine Learning Series},
+ publisher = {The MIT Press},
+ address = {Cambridge, Massachusetts},
+ file = {/home/kellen/Downloads/papers/Reinforcement learning an introduction - Sutton and Barto.pdf},
+ keywords = {Reinforcement learning},
+ lccn = {Q325.6 .R45 2018},
+ langid = {english},
+ abstract = {"Reinforcement learning, one of the most active research areas in artificial intelligence, is a computational approach to learning whereby an agent tries to maximize the total amount of reward it receives while interacting with a complex, uncertain environment. In Reinforcement Learning, Richard Sutton and Andrew Barto provide a clear and simple account of the field's key ideas and algorithms."--},
+ shorttitle = {Reinforcement Learning}
+}</pre></details></section>
+      </details></section>
+    
+    <section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id8"><summary><header><h1>
+<span class="taxon"></span>Sutton &amp; Barto: Exercises <a class="slug" href="/P86P/">[P86P]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Worked exercises accompanying <span xmlns="" class="link local"><a href="/0012/" title="Notebook: Reinforcement learning: An introduction [0012]">Notebook: </a><span class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">Reinforcement learning: An introduction</a></span></span>, my notebook on <span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">Reinforcement learning: An introduction</a></span>. The conceptual notes live in the notebook; every solved exercise is parked here, one section per chapter.</p>
+  
+
+
+  <section lang="en" class="block hide-metadata"><details id="id9"><summary><header><h1>
+<span class="taxon"></span>Multi-armed Bandits  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id10"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="2.1" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 2.1]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  In the case of two actions, (assuming that \(Q_*(a_1) &gt; Q_*(a_2)\)) the probability of the greedy action being selected is \(1 - \epsilon \) or 0.5.
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id11"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="2.2" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 2.2]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  In the long run \(\epsilon  = 0.01\), would achieve the highest reward. The expected reward can be written as
+\[
+    \begin {align*}
+      R^* = \max _{a} q^*(a) + \frac {\epsilon }{n}\sum _{i \neq  a}^{n} q^*(i)
+    \end {align*}
+  \]
+  The exception is that if \(\epsilon  = 0\), then there are no guarantees. For example, if your initialization is zeros. Then you could have an empirical average of a suboptimal arm that is always positive and you would never deviate. Thus, to ensure you converge to the true optimal arm you need \(\epsilon  &gt; 0\).
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id12"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="2.4" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 2.4]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  Following the steps in 2.6,
+  \[
+      \begin {align*}
+        Q_{n + 1} &amp;= Q_n + \alpha _n [R_n - Q_n] \\
+        &amp;= Q_{n - 1} + \alpha _{n - 1}[R_{n - 1} - Q_{n - 1}] + \alpha _n \Big [R_n - (Q_{n - 1} + \alpha _{n - 1}[R_{n - 1} - Q_{n - 1}])\Big ] \\
+        &amp;\vdots  \\
+        &amp; = \left (\prod _{i = 1}^{n} (1 - \alpha _{i})\right ) Q_1 + \sum _{i = 1}^{n} \alpha _n \left (\prod _{i = 1}^{n} (1 - \alpha _{n - i})\right )R_i
+      \end {align*}
+    \]
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id13"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="2.6" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 2.6]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  Since all of the arms in the testbed have distributions with support less than 5, in the beginning the unpulled arm's optimistic estimates will be higher than the empirical estimates of the previously pulled arms. Therefore, in the early stages all of the arms will be pulled in a round robin fashion, and assuming deterministic rewards the optimal arm will keep being pulled until it falls below the other optimistic values.
+
+</details></section>
+  
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id14"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="2.8" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 2.8]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  Since there are 10 arms (presumably with the same initialization), the UCB bonus will enforce that the first 10 pulls are round robin (uniform) pulling of each of the 10 arms. Then on the 11th step each will have the same UCB bonus term but the one with the highest empirical reward will be pulled, leading to a spike. It then drops in subsequent steps because the UCB bonus of that arm will decrease and other (possibly less optimal) arms are pulled in subsequent steps.
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id15"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="2.9" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 2.9]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  We can just expand the denominator as
+\[
+    \begin {align*}
+      \Pr \{A_t = a\} &amp;= \frac {e^{H_t(a)}}{e^{H_t(a)} + e^{H_t(b)}} \\
+      &amp;= \frac {1}{1 + e^{\frac {H_t(b)}{H_t(a)}}} \\
+      &amp;= \frac {1}{1 + e^{-\frac {H_t(a)}{H_t(b)}}} \\
+    \end {align*}
+  \]
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id16"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="2.10" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 2.10]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  In case 1, the best you can hope to achieve is \(\max _{a} \mathbb {E} [R(a)]\). In this case, we have
+\[
+    \begin {align*}
+      \mathbb {E}[R(1)] &amp;= 0.5 \cdot  10 + 0.5 \cdot  90 = 50, \\
+      \mathbb {E}[R(2)] &amp;= 0.5 \cdot  20 + 0.5 \cdot  80 = 50
+    \end {align*}
+  \]
+  Therefore, the best we can hope to achieve is \(50\). If we are given what case we are in, then we can achieve
+\[
+    \begin {align*}
+      R^* &amp;= 0.5 \cdot  \max _{a}\mathbb {E}[R(a) \mid  x = 1] +
+      0.5 \cdot  \max _{a}\mathbb {E}[R(a) \mid  x = 2] \\
+      &amp;= 0.5 \cdot  20 + 0.5 \cdot  90 \\
+      &amp;= 55
+    \end {align*}
+  \]
+
+</details></section>
+  
+
+</details></section>
+
+
+
+  <section lang="en" class="block hide-metadata"><details id="id17"><summary><header><h1>
+<span class="taxon"></span>Markov Decision Processes  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id18"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.3" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.3]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  I think you draw the line at where you can already execute the necessary behavior to get from one state to another. This is eerily familiar to the line of work known as hierarchical reinforcement learning, where you gradually learn higher level of abstraction by executing subpolicies.
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id19"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.5" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.5]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  We need to add the notion of a terminal state. This can be done by just adding some \(t\) to the state space \(S\). Then
+  \[
+      \begin {cases}
+        p(t, 0 \mid  s, a) = 1, &amp;\text { if } s = t\\
+        \sum _{s^{\prime }\in \mathcal {S}}\sum _{r\in \mathcal {R}}p(s^{\prime },r|s,a)=1,\mathrm {~for~all~}s\in \mathcal {S},a\in \mathcal {A}(s), &amp;\text { if } s \neq  t
+      \end {cases}
+\]
+I think the idea is just that when you hit a terminal state you no longer can reach other states.
+  
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id20"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.6" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.6]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  Let \(T\) denote the length of the episode. Then the return \(G_t\) would be
+\[
+  \begin {align*}
+G_t &amp;= R_{t+1} + \gamma  R_{t + 2} + \cdots  + \gamma ^{T - {t + 1}} R_T = - \gamma ^{T - {t + 1}}
+  \end {align*}
+\]
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id21"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.7" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.7]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  You have not effectively communicated the task. The agent has no incentive to solve the maze as fast as possible. This means that no matter the duration it took to solve the task the agent would receive the same reward. To fix this, you can give -1 reward at each time step, or use a discount factor to capture the time.
+
+</details></section>
+  
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id22"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.8" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.8]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  Due to the recursive relationship, we will start from the back
+\[
+    \begin {align*}
+      G_5 &amp;= 0 \\
+      G_4 &amp;= R_{5} + \gamma  G_5 = 2 \\
+      G_3 &amp;= R_{4} + \gamma  G_4 = 4 \\
+      G_2 &amp;= R_{3} + \gamma  G_3 = 8 \\
+      G_1 &amp;= R_{2} + \gamma  G_2 = 6 \\
+      G_0 &amp;= R_{1} + \gamma  G_1 = 2
+    \end {align*}
+  \]
+
+</details></section>
+  
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id23"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.9" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.9]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+From the definition,
+\[
+\begin {align*}
+  G_0 &amp;= R_{1} + \gamma  R_{2} + \gamma ^2 R_{3} + \cdots  \\
+&amp;= 2 + \sum _{i = 1}^{\infty } \gamma ^{i} R_{i} \\
+&amp;= 2 + \gamma  \sum _{i = 0}^{\infty } \gamma ^{i} R_{i + 2} \\
+&amp;= 2 + \frac {7 \gamma }{1 - \gamma } \\
+&amp;= 65
+\end {align*}
+\]
+and
+\[
+\begin {align*}
+  G_1 &amp;= R_{2} + \gamma  R_{2} + \gamma ^2 R_{3} + \cdots  \\
+&amp;= 7 + \sum _{i = 1}^{\infty } \gamma ^{i} R_{i} \\
+&amp;= 7 + \gamma  \sum _{i = 0}^{\infty } \gamma ^{i} R_{i + 3} \\
+&amp;= 7 + \frac {7 \gamma }{1 - \gamma } \\
+&amp;= 70
+\end {align*}
+\]
+  
+</details></section>
+  
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id24"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.11" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.11]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  By just expanding,
+\[
+    \begin {align*}
+      \mathbb {E}[R_{t + 1} \mid  S_{t} = s] = \sum _{a} \pi (a \mid  s) \sum _{s'} \sum _{r} p(s', r \mid  s, a) \cdot  r
+    \end {align*}
+  \]
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id25"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.12" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.12]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  \[
+      \begin {align*}
+        v_{\pi }(s) &amp;= \sum _{a} \pi (a \mid  s) q_{\pi }(s, a)
+      \end {align*}
+    \]
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id26"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.12" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.12]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+\[
+\begin {align*}
+  q_{\pi }(s, a) = \sum _{s', r} p(s', r \mid  s, a) \big (r + \gamma  v_{\pi }(s')\big )
+\end {align*}
+  \]
+
+</details></section>
+  
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id27"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.15" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.15]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  Recall that
+\[
+    \begin {align*}
+      v_{\pi }(s) = \mathbb {E}_{\pi } [\sum _{k = 0}^{\infty } R_{t + k + 1} \mid  S_t = s]
+    \end {align*}
+  \]
+  Adding a constant \(c\), we get
+\[
+    \begin {align*}
+      v_{\pi }'(s) &amp;= \mathbb {E}_{\pi } [\sum _{k = 0}^{\infty } \gamma ^{k} R_{t + k + 1} + c \mid  S_t = s] \\
+      &amp;= \mathbb {E}_{\pi } [\sum _{k = 0}^{\infty } R_{t + k + 1}\mid  S_t = s] +
+\sum _{k = 0}^{\infty } \gamma ^{k} c \\
+      &amp;= v_{\pi }(s) + \frac {c}{1 - \gamma }
+    \end {align*}
+  \]
+  Therefore, \(v_c = \frac {c}{1 - \gamma }\).
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id28"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.16" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.16]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  In the episodic case, this would not be the same. In the maze running example, \(v_c\) would be larger for longer episodes. This would then incentivize the agent to actually take LONGER, where as we want the agent to solve the maze as fast as possible.
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id29"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.18" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.18]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  This is similar to Exercise 3.12. Namely,
+\[v_{\pi }(s) = \mathbb {E}_{\pi }[q_{\pi }(s, a)] = \sum _{a} \pi (a \mid  s) q_{\pi }(s, a)\]
+
+</details></section>
+  
+
+</details></section>
+
+
+
+  <section lang="en" class="block hide-metadata"><details id="id30"><summary><header><h1>
+<span class="taxon"></span>Dynamic Programming  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id31"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="4.1" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 4.1]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+    We have that
+\[
+      \begin {align*}
+        q_{\pi }(11, \mathrm {down}) &amp;= -1,
+      \end {align*}
+    \]
+    where there is no recursion because the episode ends.
+    Next,
+\[
+      \begin {align*}
+        q_{\pi }(7, \mathrm {down}) &amp;= -1 + v(11) \\
+        &amp;= -1 - 14 \\
+        &amp;= -15
+      \end {align*}
+    \]
+  
+</details></section>
+  
+
+  
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id32"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="4.3" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 4.3]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  
+</details></section>
+  
+
+</details></section>
+
+
+
+  <section lang="en" class="block hide-metadata"><details id="id33"><summary><header><h1>
+<span class="taxon"></span>Review: Part I  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Review the methods discussed in the first part of the book. What are their strengths and weaknesses? When should they be used?</div>
+
+  <span xmlns="http://www.w3.org/1999/xhtml" style="white-space: nowrap">
+    
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
+      
+  <table>
+        
+  <tr>
+          
+  <td></td>
+
+          
+  <td><strong>Strength</strong></td>
+
+          
+  <td><strong>Weakness</strong></td>
+
+          
+  <td><strong>Use case</strong></td>
+
+        </tr>
+
+        
+  <tr>
+          
+  <td><strong>Bandits</strong></td>
+
+          
+  <td>Simplest case. Can isolate exploration problem.</td>
+
+          
+  <td>No credit assignment. Action only effect next timestep.</td>
+
+          
+  <td>Clinical trials. Things without temporally extended outcomes.</td>
+
+        </tr>
+
+        
+  <tr>
+          
+  <td><strong>Dynamic Programming</strong></td>
+
+          
+  <td>Exact solution.</td>
+
+          
+  <td>Complexity blows up with state and action space. Model-based.</td>
+
+          
+  <td>Tabular MDPs.</td>
+
+        </tr>
+
+        
+  <tr>
+          
+  <td><strong>Monte Carlo</strong></td>
+
+          
+  <td>Unbiased estimator. Model-free.</td>
+
+          
+  <td>Extremely high variance. Must wait till end of episode.</td>
+
+          
+  <td>When interacting with environment is inexpensive, episode length is short.</td>
+
+        </tr>
+
+        
+  <tr>
+          
+  <td><strong>TD methods</strong></td>
+
+          
+  <td>Model-free. Online.</td>
+
+          
+  <td>Biased estimator.</td>
+
+          
+  <td>Environment interaction is cheap but also episode length is long or continuing.</td>
+
+        </tr>
+
+        
+  <tr>
+          
+  <td><strong>N step</strong></td>
+
+          
+  <td>Balance bias-variance tradeoff.</td>
+
+          
+  <td>Must choose \(n\).</td>
+
+          
+  <td>Lower variance continuing environments?</td>
+
+        </tr>
+
+        
+  <tr>
+          
+  <td><strong>Dyna</strong></td>
+
+          
+  <td>Sample efficiency.</td>
+
+          
+  <td>Model-based.</td>
+
+          
+  <td>When interacting with environment is costly i.e. driving.</td>
+
+        </tr>
+
+      </table>
+
+    </div>
+
+  </span>
+</details></section>
+
+
+
+  <section lang="en" class="block hide-metadata"><details id="id34"><summary><header><h1>
+<span class="taxon"></span>Planning and Learning with Tabular Methods  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id35"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="8.1" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 8.1]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  If you pick \(n\) large enough, then the "first pass" would be just as good. This means that you will be able to update the \(Q\)-values of every \((s,a)\) pair you encountered. However, with Dyna you are updating your \(Q\)-value based on updated \(Q\)-values, meaning that you are no longer limited to the \(n\)-step trajectory encountered. Thus, I do not think that \(n\)-step methods can match Dyna with a perfect world model.
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id36"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="8.5" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 8.5]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  You could modify the algorithm by maintaining an empirical distribution for states and rewards in your model instead of the exact deterministic transition. To handle changing environments, you could then weight the updates to the empirical distribution to value the more recent entries higher i.e.
+  \[\hat {R}_{t + 1}(S,A) = \lambda  \hat {R}_{t}(S, A) + (1 - \lambda )R_{t + 1}(S, A)\]
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id37"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="8.6" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 8.6]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  This would strengthen the case for sample updates because the samples would most likely concentrate around the higher probability states. Since these states are much more likely to occur, the computed \(Q\)-values will likely end up very similar without the extra computation required by the expected update.
+
+</details></section>
+  
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id38"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="8.7" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 8.7]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+
+
+</details></section>
+  
+
+</details></section>
+
+
+
+  <section lang="en" class="block hide-metadata"><details id="id39"><summary><header><h1>
+<span class="taxon"></span>On-policy Prediction with Approximation  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="exercise"><details id="id40"><summary><header><h1>
+<span class="taxon">exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="9.1" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 9.1]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  <p xmlns="http://www.w3.org/1999/xhtml">Show that tabular methods are a special case of linear function approximation. What would the feature vectors be?</p>
+
+</details></section>
+  
+
+
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
+<p>As a linear function approximation method, we have two quantities \(\boldsymbol {w}\) and \(\boldsymbol {x}(s)\). We make the update
+\[w_{t + 1} = w_{t} + \alpha (r_t + \gamma  w_{t}^{\top } x_{t+1} - w_t^{\top } x_t) x_t\]
+In the tabular setting, we just assume that we have the capacity to represent every possible state. This means that \(x(s) \in  \mathbb {R}^{|S|}\). Therefore, if we define the features as \(x : s_i \mapsto  \boldsymbol {e}_i\) then we can recover policy evaluation by taking,
+\[r_i = \mathbb {E}_{a \sim  \pi , s \sim  p}[r(s_i)], \quad  w_i = v_{\pi }(s_i)\]</p>
+Substituting, we get
+\[
+w_{t + 1} = w_{t} + \alpha (\mathbb {E}_{a \sim  \pi , s \sim  p}[r(s_i)] + v(s_{t + 1}) - v(s_{t})) \cdot  \boldsymbol {e}_i
+\]
+Since \(\boldsymbol {w}\) is our vector of values, updating the \(i\)th entry is exactly performing exactly one update to \(v_{\pi }(s_i)\) in the tabular setting.
+</div>
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="exercise"><details id="id41"><summary><header><h1>
+<span class="taxon">exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="9.2" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 9.2]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  <p xmlns="http://www.w3.org/1999/xhtml">Why does (9.17) define \((n + 1)^k\) distinct features for dimension k? </p>
+
+</details></section>
+  
+
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
+  <p>For each \(s_j\), there are \(n + 1\) options for \(c_{i, j}\). Since there are \(k\), \(s_{j}\)'s, there are \((n + 1)^k\) total possible features for \(x_i\).</p>
+</div>
+
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="exercise"><details id="id42"><summary><header><h1>
+<span class="taxon">exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="9.3" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 9.3]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+<p xmlns="http://www.w3.org/1999/xhtml">What \(n\) and \(c_{i,j}\) produce the feature vectors \[\mathbf {x}(s)=(1,s_{1},s_{2},s_{1}s_{2},s_{1}^{2},s_{2}^{2},s_{1}^{2}s_{2}^{2},s_{1}s_{2}^{2},s_{1}^{2}s_{2}^{2})^{\top }?\]</p>
+
+</details></section>
+  
+
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
+  <p>\(n = 2\) and \(c_{ij}\) as
+\[\boldsymbol {c_0} = [0, 0], \quad 
+  \boldsymbol {c_1} = [1, 0] \\
+  \boldsymbol {c_2} = [0, 1], \quad 
+  \boldsymbol {c_3} = [1, 1] \\
+  \boldsymbol {c_4} = [2, 0], \quad 
+  \boldsymbol {c_5} = [0, 2] \\
+  \boldsymbol {c_6} = [2, 2], \quad 
+  \boldsymbol {c_7} = [1, 2], \quad 
+  \boldsymbol {c_8} = [2, 2]
+  \]</p>
+</div>
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="exercise"><details id="id43"><summary><header><h1>
+<span class="taxon">exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="9.4" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 9.4]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  <p xmlns="http://www.w3.org/1999/xhtml">
+    You could do anisotropic (big word for asymmetric) tile partitioning. If we consider the two state dimensions as (x,y) coordinates and suppose that we want to only generalize across the \(y\)-direction i.e. we want states with the same \(x\) coordinate to have similar values then we would tile with long thin tiles. Therefore, states with the same \(x\) coordinate would lie in the same vertical tile and if the tiles are very thin any change in \(x\)-coordinate would lie in disjoint tiles.
+  </p>
+
+</details></section>
+  
+
+</details></section>
+
+
+</details></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id44" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id45"><summary><header><h1>
+<span class="taxon"></span>Sutton &amp; Barto: Exercises <a class="slug" href="/P86P/">[P86P]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Worked exercises accompanying <span xmlns="" class="link local"><a href="/0012/" title="Notebook: Reinforcement learning: An introduction [0012]">Notebook: </a><span class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">Reinforcement learning: An introduction</a></span></span>, my notebook on <span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">Reinforcement learning: An introduction</a></span>. The conceptual notes live in the notebook; every solved exercise is parked here, one section per chapter.</p>
+  
+
+
+  <section lang="en" class="block hide-metadata"><details id="id46"><summary><header><h1>
+<span class="taxon"></span>Multi-armed Bandits  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id47"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="2.1" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 2.1]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  In the case of two actions, (assuming that \(Q_*(a_1) &gt; Q_*(a_2)\)) the probability of the greedy action being selected is \(1 - \epsilon \) or 0.5.
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id48"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="2.2" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 2.2]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  In the long run \(\epsilon  = 0.01\), would achieve the highest reward. The expected reward can be written as
+\[
+    \begin {align*}
+      R^* = \max _{a} q^*(a) + \frac {\epsilon }{n}\sum _{i \neq  a}^{n} q^*(i)
+    \end {align*}
+  \]
+  The exception is that if \(\epsilon  = 0\), then there are no guarantees. For example, if your initialization is zeros. Then you could have an empirical average of a suboptimal arm that is always positive and you would never deviate. Thus, to ensure you converge to the true optimal arm you need \(\epsilon  &gt; 0\).
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id49"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="2.4" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 2.4]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  Following the steps in 2.6,
+  \[
+      \begin {align*}
+        Q_{n + 1} &amp;= Q_n + \alpha _n [R_n - Q_n] \\
+        &amp;= Q_{n - 1} + \alpha _{n - 1}[R_{n - 1} - Q_{n - 1}] + \alpha _n \Big [R_n - (Q_{n - 1} + \alpha _{n - 1}[R_{n - 1} - Q_{n - 1}])\Big ] \\
+        &amp;\vdots  \\
+        &amp; = \left (\prod _{i = 1}^{n} (1 - \alpha _{i})\right ) Q_1 + \sum _{i = 1}^{n} \alpha _n \left (\prod _{i = 1}^{n} (1 - \alpha _{n - i})\right )R_i
+      \end {align*}
+    \]
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id50"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="2.6" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 2.6]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  Since all of the arms in the testbed have distributions with support less than 5, in the beginning the unpulled arm's optimistic estimates will be higher than the empirical estimates of the previously pulled arms. Therefore, in the early stages all of the arms will be pulled in a round robin fashion, and assuming deterministic rewards the optimal arm will keep being pulled until it falls below the other optimistic values.
+
+</details></section>
+  
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id51"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="2.8" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 2.8]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  Since there are 10 arms (presumably with the same initialization), the UCB bonus will enforce that the first 10 pulls are round robin (uniform) pulling of each of the 10 arms. Then on the 11th step each will have the same UCB bonus term but the one with the highest empirical reward will be pulled, leading to a spike. It then drops in subsequent steps because the UCB bonus of that arm will decrease and other (possibly less optimal) arms are pulled in subsequent steps.
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id52"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="2.9" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 2.9]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  We can just expand the denominator as
+\[
+    \begin {align*}
+      \Pr \{A_t = a\} &amp;= \frac {e^{H_t(a)}}{e^{H_t(a)} + e^{H_t(b)}} \\
+      &amp;= \frac {1}{1 + e^{\frac {H_t(b)}{H_t(a)}}} \\
+      &amp;= \frac {1}{1 + e^{-\frac {H_t(a)}{H_t(b)}}} \\
+    \end {align*}
+  \]
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id53"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="2.10" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 2.10]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  In case 1, the best you can hope to achieve is \(\max _{a} \mathbb {E} [R(a)]\). In this case, we have
+\[
+    \begin {align*}
+      \mathbb {E}[R(1)] &amp;= 0.5 \cdot  10 + 0.5 \cdot  90 = 50, \\
+      \mathbb {E}[R(2)] &amp;= 0.5 \cdot  20 + 0.5 \cdot  80 = 50
+    \end {align*}
+  \]
+  Therefore, the best we can hope to achieve is \(50\). If we are given what case we are in, then we can achieve
+\[
+    \begin {align*}
+      R^* &amp;= 0.5 \cdot  \max _{a}\mathbb {E}[R(a) \mid  x = 1] +
+      0.5 \cdot  \max _{a}\mathbb {E}[R(a) \mid  x = 2] \\
+      &amp;= 0.5 \cdot  20 + 0.5 \cdot  90 \\
+      &amp;= 55
+    \end {align*}
+  \]
+
+</details></section>
+  
+
+</details></section>
+
+
+
+  <section lang="en" class="block hide-metadata"><details id="id54"><summary><header><h1>
+<span class="taxon"></span>Markov Decision Processes  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id55"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.3" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.3]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  I think you draw the line at where you can already execute the necessary behavior to get from one state to another. This is eerily familiar to the line of work known as hierarchical reinforcement learning, where you gradually learn higher level of abstraction by executing subpolicies.
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id56"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.5" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.5]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  We need to add the notion of a terminal state. This can be done by just adding some \(t\) to the state space \(S\). Then
+  \[
+      \begin {cases}
+        p(t, 0 \mid  s, a) = 1, &amp;\text { if } s = t\\
+        \sum _{s^{\prime }\in \mathcal {S}}\sum _{r\in \mathcal {R}}p(s^{\prime },r|s,a)=1,\mathrm {~for~all~}s\in \mathcal {S},a\in \mathcal {A}(s), &amp;\text { if } s \neq  t
+      \end {cases}
+\]
+I think the idea is just that when you hit a terminal state you no longer can reach other states.
+  
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id57"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.6" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.6]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  Let \(T\) denote the length of the episode. Then the return \(G_t\) would be
+\[
+  \begin {align*}
+G_t &amp;= R_{t+1} + \gamma  R_{t + 2} + \cdots  + \gamma ^{T - {t + 1}} R_T = - \gamma ^{T - {t + 1}}
+  \end {align*}
+\]
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id58"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.7" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.7]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  You have not effectively communicated the task. The agent has no incentive to solve the maze as fast as possible. This means that no matter the duration it took to solve the task the agent would receive the same reward. To fix this, you can give -1 reward at each time step, or use a discount factor to capture the time.
+
+</details></section>
+  
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id59"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.8" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.8]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  Due to the recursive relationship, we will start from the back
+\[
+    \begin {align*}
+      G_5 &amp;= 0 \\
+      G_4 &amp;= R_{5} + \gamma  G_5 = 2 \\
+      G_3 &amp;= R_{4} + \gamma  G_4 = 4 \\
+      G_2 &amp;= R_{3} + \gamma  G_3 = 8 \\
+      G_1 &amp;= R_{2} + \gamma  G_2 = 6 \\
+      G_0 &amp;= R_{1} + \gamma  G_1 = 2
+    \end {align*}
+  \]
+
+</details></section>
+  
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id60"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.9" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.9]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+From the definition,
+\[
+\begin {align*}
+  G_0 &amp;= R_{1} + \gamma  R_{2} + \gamma ^2 R_{3} + \cdots  \\
+&amp;= 2 + \sum _{i = 1}^{\infty } \gamma ^{i} R_{i} \\
+&amp;= 2 + \gamma  \sum _{i = 0}^{\infty } \gamma ^{i} R_{i + 2} \\
+&amp;= 2 + \frac {7 \gamma }{1 - \gamma } \\
+&amp;= 65
+\end {align*}
+\]
+and
+\[
+\begin {align*}
+  G_1 &amp;= R_{2} + \gamma  R_{2} + \gamma ^2 R_{3} + \cdots  \\
+&amp;= 7 + \sum _{i = 1}^{\infty } \gamma ^{i} R_{i} \\
+&amp;= 7 + \gamma  \sum _{i = 0}^{\infty } \gamma ^{i} R_{i + 3} \\
+&amp;= 7 + \frac {7 \gamma }{1 - \gamma } \\
+&amp;= 70
+\end {align*}
+\]
+  
+</details></section>
+  
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id61"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.11" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.11]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  By just expanding,
+\[
+    \begin {align*}
+      \mathbb {E}[R_{t + 1} \mid  S_{t} = s] = \sum _{a} \pi (a \mid  s) \sum _{s'} \sum _{r} p(s', r \mid  s, a) \cdot  r
+    \end {align*}
+  \]
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id62"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.12" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.12]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  \[
+      \begin {align*}
+        v_{\pi }(s) &amp;= \sum _{a} \pi (a \mid  s) q_{\pi }(s, a)
+      \end {align*}
+    \]
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id63"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.12" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.12]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+\[
+\begin {align*}
+  q_{\pi }(s, a) = \sum _{s', r} p(s', r \mid  s, a) \big (r + \gamma  v_{\pi }(s')\big )
+\end {align*}
+  \]
+
+</details></section>
+  
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id64"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.15" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.15]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  Recall that
+\[
+    \begin {align*}
+      v_{\pi }(s) = \mathbb {E}_{\pi } [\sum _{k = 0}^{\infty } R_{t + k + 1} \mid  S_t = s]
+    \end {align*}
+  \]
+  Adding a constant \(c\), we get
+\[
+    \begin {align*}
+      v_{\pi }'(s) &amp;= \mathbb {E}_{\pi } [\sum _{k = 0}^{\infty } \gamma ^{k} R_{t + k + 1} + c \mid  S_t = s] \\
+      &amp;= \mathbb {E}_{\pi } [\sum _{k = 0}^{\infty } R_{t + k + 1}\mid  S_t = s] +
+\sum _{k = 0}^{\infty } \gamma ^{k} c \\
+      &amp;= v_{\pi }(s) + \frac {c}{1 - \gamma }
+    \end {align*}
+  \]
+  Therefore, \(v_c = \frac {c}{1 - \gamma }\).
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id65"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.16" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.16]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  In the episodic case, this would not be the same. In the maze running example, \(v_c\) would be larger for longer episodes. This would then incentivize the agent to actually take LONGER, where as we want the agent to solve the maze as fast as possible.
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id66"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="3.18" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 3.18]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  This is similar to Exercise 3.12. Namely,
+\[v_{\pi }(s) = \mathbb {E}_{\pi }[q_{\pi }(s, a)] = \sum _{a} \pi (a \mid  s) q_{\pi }(s, a)\]
+
+</details></section>
+  
+
+</details></section>
+
+
+
+  <section lang="en" class="block hide-metadata"><details id="id67"><summary><header><h1>
+<span class="taxon"></span>Dynamic Programming  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id68"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="4.1" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 4.1]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+    We have that
+\[
+      \begin {align*}
+        q_{\pi }(11, \mathrm {down}) &amp;= -1,
+      \end {align*}
+    \]
+    where there is no recursion because the episode ends.
+    Next,
+\[
+      \begin {align*}
+        q_{\pi }(7, \mathrm {down}) &amp;= -1 + v(11) \\
+        &amp;= -1 - 14 \\
+        &amp;= -15
+      \end {align*}
+    \]
+  
+</details></section>
+  
+
+  
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id69"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="4.3" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 4.3]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  
+</details></section>
+  
+
+</details></section>
+
+
+
+  <section lang="en" class="block hide-metadata"><details id="id70"><summary><header><h1>
+<span class="taxon"></span>Review: Part I  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Review the methods discussed in the first part of the book. What are their strengths and weaknesses? When should they be used?</div>
+
+  <span xmlns="http://www.w3.org/1999/xhtml" style="white-space: nowrap">
+    
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
+      
+  <table>
+        
+  <tr>
+          
+  <td></td>
+
+          
+  <td><strong>Strength</strong></td>
+
+          
+  <td><strong>Weakness</strong></td>
+
+          
+  <td><strong>Use case</strong></td>
+
+        </tr>
+
+        
+  <tr>
+          
+  <td><strong>Bandits</strong></td>
+
+          
+  <td>Simplest case. Can isolate exploration problem.</td>
+
+          
+  <td>No credit assignment. Action only effect next timestep.</td>
+
+          
+  <td>Clinical trials. Things without temporally extended outcomes.</td>
+
+        </tr>
+
+        
+  <tr>
+          
+  <td><strong>Dynamic Programming</strong></td>
+
+          
+  <td>Exact solution.</td>
+
+          
+  <td>Complexity blows up with state and action space. Model-based.</td>
+
+          
+  <td>Tabular MDPs.</td>
+
+        </tr>
+
+        
+  <tr>
+          
+  <td><strong>Monte Carlo</strong></td>
+
+          
+  <td>Unbiased estimator. Model-free.</td>
+
+          
+  <td>Extremely high variance. Must wait till end of episode.</td>
+
+          
+  <td>When interacting with environment is inexpensive, episode length is short.</td>
+
+        </tr>
+
+        
+  <tr>
+          
+  <td><strong>TD methods</strong></td>
+
+          
+  <td>Model-free. Online.</td>
+
+          
+  <td>Biased estimator.</td>
+
+          
+  <td>Environment interaction is cheap but also episode length is long or continuing.</td>
+
+        </tr>
+
+        
+  <tr>
+          
+  <td><strong>N step</strong></td>
+
+          
+  <td>Balance bias-variance tradeoff.</td>
+
+          
+  <td>Must choose \(n\).</td>
+
+          
+  <td>Lower variance continuing environments?</td>
+
+        </tr>
+
+        
+  <tr>
+          
+  <td><strong>Dyna</strong></td>
+
+          
+  <td>Sample efficiency.</td>
+
+          
+  <td>Model-based.</td>
+
+          
+  <td>When interacting with environment is costly i.e. driving.</td>
+
+        </tr>
+
+      </table>
+
+    </div>
+
+  </span>
+</details></section>
+
+
+
+  <section lang="en" class="block hide-metadata"><details id="id71"><summary><header><h1>
+<span class="taxon"></span>Planning and Learning with Tabular Methods  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id72"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="8.1" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 8.1]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  If you pick \(n\) large enough, then the "first pass" would be just as good. This means that you will be able to update the \(Q\)-values of every \((s,a)\) pair you encountered. However, with Dyna you are updating your \(Q\)-value based on updated \(Q\)-values, meaning that you are no longer limited to the \(n\)-step trajectory encountered. Thus, I do not think that \(n\)-step methods can match Dyna with a perfect world model.
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id73"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="8.5" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 8.5]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  You could modify the algorithm by maintaining an empirical distribution for states and rewards in your model instead of the exact deterministic transition. To handle changing environments, you could then weight the updates to the empirical distribution to value the more recent entries higher i.e.
+  \[\hat {R}_{t + 1}(S,A) = \lambda  \hat {R}_{t}(S, A) + (1 - \lambda )R_{t + 1}(S, A)\]
+
+</details></section>
+  
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id74"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="8.6" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 8.6]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  This would strengthen the case for sample updates because the samples would most likely concentrate around the higher probability states. Since these states are much more likely to occur, the computed \(Q\)-values will likely end up very similar without the extra computation required by the expected update.
+
+</details></section>
+  
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id75"><summary><header><h1>
+<span class="taxon">Exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="8.7" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 8.7]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+
+
+</details></section>
+  
+
+</details></section>
+
+
+
+  <section lang="en" class="block hide-metadata"><details id="id76"><summary><header><h1>
+<span class="taxon"></span>On-policy Prediction with Approximation  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="exercise"><details id="id77"><summary><header><h1>
+<span class="taxon">exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="9.1" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 9.1]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  <p xmlns="http://www.w3.org/1999/xhtml">Show that tabular methods are a special case of linear function approximation. What would the feature vectors be?</p>
+
+</details></section>
+  
+
+
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
+<p>As a linear function approximation method, we have two quantities \(\boldsymbol {w}\) and \(\boldsymbol {x}(s)\). We make the update
+\[w_{t + 1} = w_{t} + \alpha (r_t + \gamma  w_{t}^{\top } x_{t+1} - w_t^{\top } x_t) x_t\]
+In the tabular setting, we just assume that we have the capacity to represent every possible state. This means that \(x(s) \in  \mathbb {R}^{|S|}\). Therefore, if we define the features as \(x : s_i \mapsto  \boldsymbol {e}_i\) then we can recover policy evaluation by taking,
+\[r_i = \mathbb {E}_{a \sim  \pi , s \sim  p}[r(s_i)], \quad  w_i = v_{\pi }(s_i)\]</p>
+Substituting, we get
+\[
+w_{t + 1} = w_{t} + \alpha (\mathbb {E}_{a \sim  \pi , s \sim  p}[r(s_i)] + v(s_{t + 1}) - v(s_{t})) \cdot  \boldsymbol {e}_i
+\]
+Since \(\boldsymbol {w}\) is our vector of values, updating the \(i\)th entry is exactly performing exactly one update to \(v_{\pi }(s_i)\) in the tabular setting.
+</div>
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="exercise"><details id="id78"><summary><header><h1>
+<span class="taxon">exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="9.2" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 9.2]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  <p xmlns="http://www.w3.org/1999/xhtml">Why does (9.17) define \((n + 1)^k\) distinct features for dimension k? </p>
+
+</details></section>
+  
+
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
+  <p>For each \(s_j\), there are \(n + 1\) options for \(c_{i, j}\). Since there are \(k\), \(s_{j}\)'s, there are \((n + 1)^k\) total possible features for \(x_i\).</p>
+</div>
+
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="exercise"><details id="id79"><summary><header><h1>
+<span class="taxon">exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="9.3" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 9.3]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+<p xmlns="http://www.w3.org/1999/xhtml">What \(n\) and \(c_{i,j}\) produce the feature vectors \[\mathbf {x}(s)=(1,s_{1},s_{2},s_{1}s_{2},s_{1}^{2},s_{2}^{2},s_{1}^{2}s_{2}^{2},s_{1}s_{2}^{2},s_{1}^{2}s_{2}^{2})^{\top }?\]</p>
+
+</details></section>
+  
+
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
+  <p>\(n = 2\) and \(c_{ij}\) as
+\[\boldsymbol {c_0} = [0, 0], \quad 
+  \boldsymbol {c_1} = [1, 0] \\
+  \boldsymbol {c_2} = [0, 1], \quad 
+  \boldsymbol {c_3} = [1, 1] \\
+  \boldsymbol {c_4} = [2, 0], \quad 
+  \boldsymbol {c_5} = [0, 2] \\
+  \boldsymbol {c_6} = [2, 2], \quad 
+  \boldsymbol {c_7} = [1, 2], \quad 
+  \boldsymbol {c_8} = [2, 2]
+  \]</p>
+</div>
+
+
+
+  
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="exercise"><details id="id80"><summary><header><h1>
+<span class="taxon">exercise. </span><span class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span> ›  <span xmlns="http://www.w3.org/1999/xhtml" class="link-reference" tid="9.4" refid="suttonReinforcementLearningIntroduction2018"><span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">[suttonReinforcementLearningIntroduction2018, 9.4]</a></span></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  <p xmlns="http://www.w3.org/1999/xhtml">
+    You could do anisotropic (big word for asymmetric) tile partitioning. If we consider the two state dimensions as (x,y) coordinates and suppose that we want to only generalize across the \(y\)-direction i.e. we want states with the same \(x\) coordinate to have similar values then we would tile with long thin tiles. Therefore, states with the same \(x\) coordinate would lie in the same vertical tile and if the tiles are very thin any change in \(x\)-coordinate would lie in disjoint tiles.
+  </p>
+
+</details></section>
+  
+
+</details></section>
+
+
+</details></section>
+        <section lang="en" class="block" data-taxon="Person"><details id="id81"><summary><header><h1>
+<span class="taxon">Person. </span>Richard Sutton <a class="slug" href="/richardsutton/">[richardsutton]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">Professor</li>
+<li class="meta-item">
+              <span class="link external"><a href="https://www.ualberta.ca/en/index.html" title="">University of Alberta</a></span>
+            </li>
+<li class="meta-item"><a class="link external" href="http://incompleteideas.net">http://incompleteideas.net</a></li>
+</ul></div></header></summary></details></section>
+      </details></section>
+    
+  </footer></article><nav id="toc"><div class="block"><h1>Table of Contents</h1><ul xmlns="" class="block">
+<li>
+<a class="bullet" href="#id2" title="Dynamic Programming">■</a><span class="link local" data-target="#id2"><span class="taxon">1. </span>Dynamic Programming</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id3" title="On-policy Prediction with Approximation">■</a><span class="link local" data-target="#id3"><span class="taxon">2. </span>On-policy Prediction with Approximation</span><ul class="block"></ul>
+</li>
+</ul></div></nav></div></body></html>

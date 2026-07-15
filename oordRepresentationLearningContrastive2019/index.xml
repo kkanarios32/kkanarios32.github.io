@@ -71,7 +71,8 @@
             <fr:taxon>Definition</fr:taxon>
           </fr:frontmatter>
           <fr:mainmatter>
-            <html:p>The <html:em><fr:link href="/oordRepresentationLearningContrastive2019/" title="Representation Learning with Contrastive Predictive Coding" uri="https://kellenkanarios.com/oordRepresentationLearningContrastive2019/" display-uri="oordRepresentationLearningContrastive2019" type="local">InfoNCE</fr:link></html:em> loss aims to minimize the following information-theoretic objective <fr:tex display="block"><![CDATA[\mathcal {L}_{N} = - \mathbb {E}_{\mathcal {X}} \left [\log  \frac {f_k(x_{t + k}, c_t)}{\sum _{x_j \in  \mathcal {X}} f_k(x_j, c_t)}\right ]]]></fr:tex></html:p>
+            <html:p><html:em><fr:link href="/oordRepresentationLearningContrastive2019/" title="Representation Learning with Contrastive Predictive Coding" uri="https://kellenkanarios.com/oordRepresentationLearningContrastive2019/" display-uri="oordRepresentationLearningContrastive2019" type="local">InfoNCE</fr:link></html:em> recasts representation learning as classification: given a context <fr:tex display="inline"><![CDATA[c_t]]></fr:tex> and a batch <fr:tex display="inline"><![CDATA[\mathcal {X}]]></fr:tex> holding one positive future sample <fr:tex display="inline"><![CDATA[x_{t+k}]]></fr:tex> among <fr:tex display="inline"><![CDATA[N-1]]></fr:tex> distractors, it trains a score <fr:tex display="inline"><![CDATA[f_k]]></fr:tex> to pick the positive out of the batch. This is the workhorse objective of contrastive learning.</html:p>
+            <html:p>The loss is the cross-entropy of that identification: <fr:tex display="block"><![CDATA[\mathcal {L}_{N} = - \mathbb {E}_{\mathcal {X}} \left [\log  \frac {f_k(x_{t + k}, c_t)}{\sum _{x_j \in  \mathcal {X}} f_k(x_j, c_t)}\right ]]]></fr:tex> The numerator rewards a high score on the true pair; the denominator normalizes over the positive <html:em>plus every negative</html:em>, so a score only counts by being large <html:em>relative</html:em> to the distractors. Minimizing <fr:tex display="inline"><![CDATA[\mathcal {L}_N]]></fr:tex> maximizes a lower bound on the mutual information <fr:tex display="inline"><![CDATA[I(x_{t+k}; c_t)]]></fr:tex>, and the bound tightens with <fr:tex display="inline"><![CDATA[N]]></fr:tex> — which is the mechanistic reason contrastive methods reward large batches and many negatives.</html:p>
           </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -89,8 +90,13 @@
             <fr:taxon>Theorem</fr:taxon>
           </fr:frontmatter>
           <fr:mainmatter><html:p><fr:tex display="inline"><![CDATA[\mathcal {L}_N]]></fr:tex> from <fr:link href="/oordRepresentationLearningContrastive2019/" title="Representation Learning with Contrastive Predictive Coding" uri="https://kellenkanarios.com/oordRepresentationLearningContrastive2019/" display-uri="oordRepresentationLearningContrastive2019" type="local">InfoNCE paper</fr:link> maximizes a lower bound on the <fr:link href="/000V/" title="Mutual Information" uri="https://kellenkanarios.com/000V/" display-uri="000V" type="local">Mutual Information</fr:link> between <fr:tex display="inline"><![CDATA[x_{t + k}]]></fr:tex> and <fr:tex display="inline"><![CDATA[c_t]]></fr:tex>.</html:p>
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2024</fr:year><fr:month>11</fr:month><fr:day>4</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>All we must do is plug <fr:tex display="inline"><![CDATA[\frac {p(x \mid  c)}{p(x)}]]></fr:tex> back into the objective.
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(0, 0, 0, 0.4);
+  border-radius: var(--radius);
+  background-color: rgba(0, 0, 0, 0.03);
+  "><html:span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</html:span> All we must do is plug <fr:tex display="inline"><![CDATA[\frac {p(x \mid  c)}{p(x)}]]></fr:tex> back into the objective.
   <fr:tex display="block"><![CDATA[\begin {align*}
     \mathcal {L}_{\mathbb {N}}^{\text {opt}}&=-\,\mathbb {E}\log \left [\frac {\frac {p(x_{t+k}|c_{t})}{p(x_{t+k})}}{\frac {p(x_{t+k}|c_{t})}{p(x_{t+k})}+\sum _{x_{j}\in  X_{\text {neg}}}\frac {p(x_{j}|c_{t})}{p(x_{j})}}\right ] \\
     &=\mathbb {E}\log \left [1+\frac {p(x_{t+k})}{p(x_{t+k}|c_{t})}\sum _{x_{j}\in  X_{\text {neg}}}\frac {p(x_{j}|c_{t})}{p(x_{j})}\right ] \\
@@ -100,9 +106,7 @@
     &= - I(x_{t + k}, c_t) + \log  N
  \end {align*}
   ]]></fr:tex>
-</fr:mainmatter></fr:tree>
- 
-
+</html:div>
 </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>

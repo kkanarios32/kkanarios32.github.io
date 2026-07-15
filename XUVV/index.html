@@ -1,6 +1,82 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/XUVV/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>Group Query Attention</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>Group Query Attention <a class="slug" href="/XUVV/">[XUVV]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">July 14, 2025</li></ul></div></header></summary>
+    <p xmlns="http://www.w3.org/1999/xhtml"><em>Group query attention</em> is the same idea as <span xmlns="" class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">MQA</a></span> but instead of using one \(K\) and \(V\) for every head, they use a <em>group</em> of them. Where obviously the number of groups needs to be less than the number of heads.</p>
+    <figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmicmjlgi2o3oetsssjdwk6y2pqce4vrdwiw2ah4wwe3ulnt74upkiu.png"></img>
+<figcaption>Grouped query uses subset of \(K\) and \(V\) matrices.</figcaption></figure>
+  </details></section><footer xmlns="">
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>References  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block" data-taxon="Reference"><details id="id3"><summary><header><h1>
+<span class="taxon">Reference. </span>Fast Transformer Decoding: One Write-Head is All You Need <a class="slug" href="/shazeerFastTransformerDecoding2019/">[shazeerFastTransformerDecoding2019]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">November, 2019</li></ul>
+<br><ul>
+<li class="meta-item"><a class="doi link" href="https://www.doi.org/10.48550/arXiv.1911.02150">10.48550/arXiv.1911.02150</a></li>
+<li class="meta-item"><a class="link external" href="https://arxiv.org/abs/1911.02150">https://arxiv.org/abs/1911.02150</a></li>
+</ul>
+</div></header></summary><pre>@misc{shazeerFastTransformerDecoding2019,
+ title = {Fast {{Transformer Decoding}}: {{One Write-Head}} Is {{All You Need}}},
+ author = {Shazeer, Noam},
+ year = {2019},
+ doi = {10.48550/arXiv.1911.02150},
+ urldate = {2025-07-14},
+ number = {arXiv:1911.02150},
+ publisher = {arXiv},
+ file = {/home/kellen/Downloads/papers/Fast Transformer Decoding One Write-Head is All You Need - Shazeer.pdf},
+ keywords = {Computer Science - Computation and Language,Computer Science - Machine Learning,Computer Science - Neural and Evolutionary Computing},
+ langid = {english},
+ archiveprefix = {arXiv},
+ abstract = {Multi-head attention layers, as used in the Transformer neural sequence model, are a powerful alternative to RNNs for moving information across and between sequences. While training these layers is generally fast and simple, due to parallelizability across the length of the sequence, incremental inference (where such paralleization is impossible) is often slow, due to the memory-bandwidth cost of repeatedly loading the large "keys" and "values" tensors. We propose a variant called multi-query attention, where the keys and values are shared across all of the different attention "heads", greatly reducing the size of these tensors and hence the memory bandwidth requirements of incremental decoding. We verify experimentally that the resulting models can indeed be much faster to decode, and incur only minor quality degradation from the baseline.},
+ primaryclass = {cs},
+ eprint = {1911.02150},
+ month = {November},
+ shorttitle = {Fast {{Transformer Decoding}}}
+}</pre></details></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id5"><summary><header><h1>
+<span class="taxon"></span>Multi Query Attention <a class="slug" href="/W4YP/">[W4YP]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 14, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Notes on the paper <span xmlns="" class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">Fast Transformer Decoding: One Write-Head is All You Need</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml">For, 
+<ul><li>\(b\) batch dimension,</li>
+  <li>\(n\) sequence length,</li>
+  <li>\(d\) hidden dimension,</li>
+  <li>\(h\) number of heads.</li></ul>
+The total <span xmlns="" class="link local"><a href="/4K5H/" title="Floating Point Operations [4K5H]">FLOPS</a></span> for <span xmlns="" class="link local"><a href="/004G/" title="Self-Attention [004G]">attention</a></span> are roughly \(bnd^2\). This comes from 
+<ol><li>\(3nd^2\) FLOPS to compute \(Q = XW_Q, K = XW_K, V = XW_V\).</li>
+  <li>Need to do this \(b\) times for each input in batch.</li></ol>
+and the total memory accesses are roughly \(\underbrace {bnd}_{X} + \underbrace {bhn^2}_{\text {softmax}} + \underbrace {d^2}_{\text {projection}}\).
+This gives high arithmetic intensity
+\[O\left (\left (\frac {h}{d} + \frac {1}{bn}\right )^{-1}\right )\]</p><p xmlns="http://www.w3.org/1999/xhtml">However, if we do incremental inference then we must multiply our total number of memory accesses by \(n\) i.e. \(bn^2d + nd^2\). This gives arithmetic intensity
+\[O\left (\left (\frac {n}{d} + \frac {1}{b}\right )^{-1}\right ),\]
+which requires large batch and short sequence length.
+</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+I believe we just ignore the softmax memory contribution in the inference case because it does not scale with \(n\) anymore as we are computing the logits just for the next token. Therefore, it becomes a \(\frac {d}{h}\) term, which we can safely ignore?
+</div>
+<p xmlns="http://www.w3.org/1999/xhtml">The key is that the \(\frac {n}{d}\) term comes from the \(bn^2d\) term, where we are loading \(h\) \((b \times  n \times  d / h)\) \(K\) and \(V\) matrices \(n\) times. Thus, we can improve the \(\frac {n}{d}\) term by a factor of \(h\) by simply not using a different \(K\) and \(V\) matrix for each head. This is the entire idea behind <span xmlns="" class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">MQA</a></span>.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+Similar to the <span xmlns="" class="link local"><a href="/TJLA/" title="KV-cache [TJLA]">KV-cache</a></span>, we still can use \(h\) \(Q\) matrices because we do not need to load \(n\) of them into memory because only the last one matters for inference.
+</div>
+<section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon"></span>Group Query Attention <a class="slug" href="/XUVV/">[XUVV]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">July 14, 2025</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Group query attention</em> is the same idea as <span xmlns="" class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">MQA</a></span> but instead of using one \(K\) and \(V\) for every head, they use a <em>group</em> of them. Where obviously the number of groups needs to be less than the number of heads.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmicmjlgi2o3oetsssjdwk6y2pqce4vrdwiw2ah4wwe3ulnt74upkiu.png"></img>
+<figcaption>Grouped query uses subset of \(K\) and \(V\) matrices.</figcaption></figure></details></section><p xmlns="http://www.w3.org/1999/xhtml">Also inspired by this idea of reducing the dependence of \(K\) and \(V\) on the sequence length is sliding window attention.</p><section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon"></span>Sliding Window Attention <a class="slug" href="/WM3M/">[WM3M]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">July 14, 2025</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The idea behind <em>sliding window attention</em> is to ensure the number of weight matrices needed for the keys \(K\) and values \(V\) does not scale with the sequence length. Intuitively, this means allowing each word to "attend" to only some fixed number of previous words rather than the whole sequence</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmidqeoo6wx6s4ry6u74fcelfzxvwreyf7d44whnql4ffnnyd2dwcha.png"></img>
+<figcaption>"the" only sees "on" and "sat" rather than the full sentence.</figcaption></figure></details></section>
+  <hr xmlns="http://www.w3.org/1999/xhtml"></hr>
+<script xmlns="http://www.w3.org/1999/xhtml" src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async=""></script></details></section>
+      </details></section>
+    
+    
+    
+  </footer></article></div></body></html>

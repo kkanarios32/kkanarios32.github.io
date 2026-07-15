@@ -206,7 +206,13 @@ This is the harder part (and requires the most discipline). When working on a ta
 <html:p>Since <fr:tex display="inline"><![CDATA[x_i - m \leq  0]]></fr:tex>, this ensures that each <fr:tex display="inline"><![CDATA[\exp (x_i - m)]]></fr:tex> is bounded in a safe range.</html:p>
 
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>Note that computing the <fr:tex display="inline"><![CDATA[\max ]]></fr:tex> over <fr:tex display="inline"><![CDATA[\mathbf {x}]]></fr:tex> means that we must have all of the logits in a row of <fr:tex display="inline"><![CDATA[QK^T]]></fr:tex> materialized in <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">SMEM</fr:link>, or first loop over all of them to compute the max before computing the normalization constant.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> Note that computing the <fr:tex display="inline"><![CDATA[\max ]]></fr:tex> over <fr:tex display="inline"><![CDATA[\mathbf {x}]]></fr:tex> means that we must have all of the logits in a row of <fr:tex display="inline"><![CDATA[QK^T]]></fr:tex> materialized in <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">SMEM</fr:link>, or first loop over all of them to compute the max before computing the normalization constant.</html:div>
 
 </fr:mainmatter></fr:tree>
 
@@ -214,17 +220,34 @@ This is the harder part (and requires the most discipline). When working on a ta
 <html:p>The online softmax algorithm fuses the max reduction into the normalization pass, so a single sweep over the row suffices to compute the normalization with the max. The key difficulty is that the denominator depends on <fr:tex display="inline"><![CDATA[n]]></fr:tex> <html:strong>for each</html:strong> <fr:tex display="inline"><![CDATA[i]]></fr:tex> i.e.</html:p>
 <fr:tex display="block"><![CDATA[d = \sum _{i=1}^{n} \exp (x_i - m_n)]]></fr:tex>
 <html:p>
-Therefore, we must find a recursive relationship such that <fr:tex display="inline"><![CDATA[d_{i+1} = f(d_i, m_i, x_{i+1})]]></fr:tex> for some function <fr:tex display="inline"><![CDATA[f]]></fr:tex>. This would then allow us to locally compute <fr:tex display="inline"><![CDATA[d_{i+1}]]></fr:tex> with only the local information of current <fr:tex display="inline"><![CDATA[x_{i+1}]]></fr:tex> and the two running statistics <fr:tex display="inline"><![CDATA[d_i]]></fr:tex> and <fr:tex display="inline"><![CDATA[m_i]]></fr:tex>. This is exactly the kind of algorithm that is conducive to <fr:link href="https://kellenkanarios.com/OGCRV/" type="external">memory tiling</fr:link>.
+Therefore, we must find a recursive relationship such that <fr:tex display="inline"><![CDATA[d_{i+1} = f(d_i, m_i, x_{i+1})]]></fr:tex> for some function <fr:tex display="inline"><![CDATA[f]]></fr:tex>. This would then allow us to locally compute <fr:tex display="inline"><![CDATA[d_{i+1}]]></fr:tex> with only the local information of current <fr:tex display="inline"><![CDATA[x_{i+1}]]></fr:tex> and the two running statistics <fr:tex display="inline"><![CDATA[d_i]]></fr:tex> and <fr:tex display="inline"><![CDATA[m_i]]></fr:tex>. This is exactly the kind of algorithm that is conducive to <fr:link href="/OGCRV/" title="Memory Tiling (GPU)" uri="https://kellenkanarios.com/OGCRV/" display-uri="OGCRV" type="local">memory tiling</fr:link>.
 </html:p>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>What is <fr:tex display="inline"><![CDATA[f(d_i, m_i, x_{i+1})]]></fr:tex>?</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 130, 0, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(200, 130, 0, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</html:span> What is <fr:tex display="inline"><![CDATA[f(d_i, m_i, x_{i+1})]]></fr:tex>?</html:div>
 
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>Consider <fr:tex display="inline"><![CDATA[d_{i+1} = d_i \cdot  \exp (m_{i} - m_{i + 1}) + \exp (x_{i + 1} - m_{i + 1})]]></fr:tex>.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(0, 140, 120, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(0, 140, 120, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</html:span> Consider <fr:tex display="inline"><![CDATA[d_{i+1} = d_i \cdot  \exp (m_{i} - m_{i + 1}) + \exp (x_{i + 1} - m_{i + 1})]]></fr:tex>.</html:div>
 
 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(0, 0, 0, 0.4);
+  border-radius: var(--radius);
+  background-color: rgba(0, 0, 0, 0.03);
+  "><html:span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</html:span> 
   This can be seen by directly rewriting <fr:tex display="inline"><![CDATA[d_{i + 1}]]></fr:tex>. 
   <fr:tex display="block"><![CDATA[
     \begin {align*}
@@ -234,9 +257,7 @@ Therefore, we must find a recursive relationship such that <fr:tex display="inli
       &= d_{i} \exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1})
     \end {align*}
   ]]></fr:tex>
-</fr:mainmatter></fr:tree>
- 
-
+</html:div>
 
 <html:p>
 The running denominator <fr:tex display="inline"><![CDATA[d]]></fr:tex> is rescaled by <fr:tex display="inline"><![CDATA[e^{m - m_{\text {new}}}]]></fr:tex> each time a new maximum is found, keeping it consistent with the safe-softmax shift.</html:p>
@@ -258,9 +279,15 @@ The running denominator <fr:tex display="inline"><![CDATA[d]]></fr:tex> is resca
 \end {algo}
 ]]></fr:resource-source></fr:resource></html:p>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 Unfortunately, we cannot get around the second pass to compute the normalized output for <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex>. However, this is not the case in <fr:link href="/R0PM/" title="Flash Attention (v1)" uri="https://kellenkanarios.com/R0PM/" display-uri="R0PM" type="local">Flash Attention (v1)</fr:link>.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 </fr:mainmatter></fr:tree>
 </fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:uri>https://kellenkanarios.com/OGCS0/</fr:uri><fr:display-uri>OGCS0</fr:display-uri><fr:route>/OGCS0/</fr:route><fr:title text="Flash Attention (Fwd)">Flash Attention (Fwd)</fr:title></fr:frontmatter><fr:mainmatter><html:p>
@@ -268,24 +295,41 @@ Unlike in the <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenk
   </html:p><fr:tex display="block"><![CDATA[O = \mathrm {softmax}(QK^T) V]]></fr:tex><html:p>
 For more details see <fr:link href="/004G/" title="Self-Attention" uri="https://kellenkanarios.com/004G/" display-uri="004G" type="local">self-attention</fr:link>.
   </html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Notation</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(70, 100, 150, 0.75);
+  border-radius: var(--radius);
+  background-color: rgba(70, 100, 150, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</html:span> 
   In correspondence with the notation in the <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">online softmax</fr:link>, we define the following:
   <fr:tex display="block"><![CDATA[x_{i,j} = \mathbf {q}_i \cdot  \mathbf {k}_j,]]></fr:tex>
   where <fr:tex display="inline"><![CDATA[\mathbf {q}_i]]></fr:tex> is the <fr:tex display="inline"><![CDATA[i]]></fr:tex>th row of <fr:tex display="inline"><![CDATA[Q]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {k}_j]]></fr:tex> is the <fr:tex display="inline"><![CDATA[j]]></fr:tex>th row of <fr:tex display="inline"><![CDATA[K]]></fr:tex>. Similarly, <fr:tex display="inline"><![CDATA[\mathbf {o}_i]]></fr:tex> is the <fr:tex display="inline"><![CDATA[i]]></fr:tex>th row of the output matrix <fr:tex display="inline"><![CDATA[O]]></fr:tex> given by
   <fr:tex display="block"><![CDATA[\mathbf {o}_i = \sum _{j = 1}^{n} \frac {\exp (x_{i,j} - m_n)}{d_n} \cdot  \mathbf {v}_j ]]></fr:tex>
-</fr:mainmatter></fr:tree>
+</html:div>
 <html:p>Now following the template provided by the <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">online softmax</fr:link>, we must find a recurrence for <fr:tex display="inline"><![CDATA[\mathbf {o}_i]]></fr:tex>. Namely, we will consider the sequence <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,k}']]></fr:tex> given by
 <fr:tex display="block"><![CDATA[\mathbf {o}_{i,k}' = \sum _{j = 1}^{k} \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_j, ]]></fr:tex>
 such that <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,n}' = \mathbf {o}_n]]></fr:tex></html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Claim</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(140, 60, 170, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(140, 60, 170, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(140, 60, 170, 0.8);">Claim.</html:span> 
   We have the following recurrence for <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,k}']]></fr:tex>:
   <fr:tex display="block"><![CDATA[
   \mathbf {o}_{i,k}' = \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} + \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_k
     ]]></fr:tex>
-</fr:mainmatter></fr:tree>
+</html:div>
 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Proof</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(0, 0, 0, 0.4);
+  border-radius: var(--radius);
+  background-color: rgba(0, 0, 0, 0.03);
+  "><html:span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</html:span> 
   We will proceed by directly rewriting the recurrence for <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,k}']]></fr:tex> as 
   <fr:tex display="block"><![CDATA[
     \begin {align*}
@@ -294,9 +338,7 @@ such that <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,n}' = \mathbf {o}_n]]
                         &= \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} +  \frac {\exp (x_{i,k} - m_k)}{d_k} \cdot  \mathbf {v}_k
     .\end {align*}
     ]]></fr:tex>
-  </fr:mainmatter></fr:tree>
- 
-
+  </html:div>
 <html:p>Thus, we are left with the following algorithm</html:p><html:p><fr:resource hash="e443552973fe32fe694e594b454313d2"><fr:resource-content><html:img src="https://kellenkanarios.com/e443552973fe32fe694e594b454313d2.svg" /></fr:resource-content><fr:resource-source type="latex" part="preamble"><![CDATA[
   \usepackage{tikz, tikz-cd, mathtools, amssymb, amsmath, stmaryrd, algpseudocodex}
  \newenvironment{algo}{\begin{varwidth}{20cm}\begin{algorithmic}}{\end{algorithmic}\end{varwidth}}
@@ -314,16 +356,28 @@ such that <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,n}' = \mathbf {o}_n]]
 \EndFor 
 \end {algo}
 ]]></fr:resource-source></fr:resource></html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
-A key benefit of this algorithm is that it is entirely parallelizable across rows. This means that we can loop across entire <fr:link href="https://kellenkanarios.com/OGCRV/" type="external">tiles</fr:link> like in the GEMM case.
-</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+A key benefit of this algorithm is that it is entirely parallelizable across rows. This means that we can loop across entire <fr:link href="/OGCRV/" title="Memory Tiling (GPU)" uri="https://kellenkanarios.com/OGCRV/" display-uri="OGCRV" type="local">tiles</fr:link> like in the GEMM case.
+</html:div>
 </fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:uri>https://kellenkanarios.com/OGCRZ/</fr:uri><fr:display-uri>OGCRZ</fr:display-uri><fr:route>/OGCRZ/</fr:route><fr:title text="Flash Attention (Bwd)">Flash Attention (Bwd)</fr:title></fr:frontmatter><fr:mainmatter><html:p>To understand the innovation of the backward pass in <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">flash attention</fr:link>, we must first find all of the gradients we must compute.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Notation</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(70, 100, 150, 0.75);
+  border-radius: var(--radius);
+  background-color: rgba(70, 100, 150, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</html:span> 
 Following the notation in the <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">original paper</fr:link>, we have the following matrices
 <fr:tex display="block"><![CDATA[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex>
 Now suppose their is some scalar loss function <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. Then we define 
 <fr:tex display="block"><![CDATA[\frac {\partial  \phi }{\partial  \mathbf {O}}, \frac {\partial  \phi }{\partial  \mathbf {K}}, \frac {\partial  \phi }{\partial  \mathbf {V}}  = d\mathbf {O}, d\mathbf {K}, d\mathbf {V}]]></fr:tex>
-</fr:mainmatter></fr:tree>
+</html:div>
 <html:p>We will compute each gradient individually.</html:p><html:ol><html:li><fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>: this is just a straightforward application of the chain rule. In particular, <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex> so that
   <fr:tex display="block"><![CDATA[
      d\mathbf {P} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {P}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T
@@ -384,16 +438,22 @@ Now suppose their is some scalar loss function <fr:tex display="inline"><![CDATA
                       &= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {Q}_{i}
     .\end {align*}
     ]]></fr:tex></html:li></html:ol>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter><fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> are <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrices. Materializing this is equivalent to materialing the attention matrix in the forward pass.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> are <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrices. Materializing this is equivalent to materialing the attention matrix in the forward pass.</html:div>
 
- <html:div class="jms-indent-block" style="
-  margin-left: 1em;
-  margin-bottom: 1em;
-  border-left: 4px solid black;
-  padding-left: 12px;
-  background-color: whitesmoke;
-  ">
-  <html:strong>Key Insight 1:</html:strong> <html:em>recomputing</html:em> <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex>.
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(0, 160, 175, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(0, 160, 175, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">Insight.</html:span> 
+  <html:em>recomputing</html:em> <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex>.
   <html:p>First, we can easily recompute <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> with <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex> (which are both <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> and must be resident in memory) via</html:p>
   <fr:tex display="block"><![CDATA[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}}]]></fr:tex>
   <html:p>We can apply the same trick to <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex> with <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex> (both <fr:tex display="inline"><![CDATA[N \times   d]]></fr:tex>). Namely,</html:p>
@@ -408,16 +468,21 @@ and
 <fr:tex display="block"><![CDATA[
   d\mathbf {K}_{j} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {Q}_{i}
 ]]></fr:tex></html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter><fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> requires computing the <html:strong>global</html:strong> dot product <fr:tex display="inline"><![CDATA[\mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex>.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> requires computing the <html:strong>global</html:strong> dot product <fr:tex display="inline"><![CDATA[\mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex>.</html:div>
 
- <html:div class="jms-indent-block" style="
-  margin-left: 1em;
-  margin-bottom: 1em;
-  border-left: 4px solid black;
-  padding-left: 12px;
-  background-color: whitesmoke;
-  ">
-  <html:strong>Key Insight 2:</html:strong>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(0, 160, 175, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(0, 160, 175, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">Insight.</html:span> 
   <html:p>To get around this, we precompute <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> using the <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> values from the forward pass and the current <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> values. In particular,</html:p>
   <fr:tex display="block"><![CDATA[
     \begin {align*}
@@ -536,51 +601,87 @@ and
       ack: AckCount;  -- tracks InvAck count
     End;]]></html:pre>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 The <html:code>load</html:code>, <html:code>store</html:code>, and <html:code>replacement</html:code> all only alter the states of the coherence protocol for the permanent states. Therefore, to simulate the system it is sufficient to only implement the rules that initiate these state transitions i.e. evict in modified state or load from invalid state.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 <html:strong>Directory controller.</html:strong> Now for the directory controller:
 <html:figure><html:img width="100%" src="/bafkrmiadmfswkegttky27zg2gxvkwag3pt72ur7qam2z6vufr6xlvujqca.png" />
 <html:figcaption /></html:figure>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 We actually end up adding a second transient state to the directory controller <fr:tex display="inline"><![CDATA[M^D]]></fr:tex>. This is to handle the <html:code>PutM</html:code>, <html:code>GetM</html:code> race described below.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 <html:strong>Weird Race Conditions</html:strong>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> 
 When implementing the <html:code>PutM</html:code> rule to downgrade from modified to invalid. We must <html:strong>NOT</html:strong> get rid of the data until we have been acknowledged, so that we can still service forward requests. This is a transition to <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex>. However, we can still receive the <html:code>PutAck</html:code> causing us to transition to <fr:tex display="inline"><![CDATA[I]]></fr:tex> before servicing the <html:code>Fwd-GetM</html:code> request. This is lost data.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 
- 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> 
   We must add a <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> state to the directory controller. In this state, if we get a <html:code>PutM</html:code> request from a node that is not our current owner we stall and wait for data to arrive. For <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> to transition to <fr:tex display="inline"><![CDATA[M]]></fr:tex>, we must send the data back to the directory even though we are doing a three-hop, so that the directory knows the data has also been forwarded to the new owner. It is unclear to me the best way to do this without this state.
-</fr:mainmatter></fr:tree>
- 
+</html:div>
 
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> 
  <html:p>The above solution causes a deadlock, where two processors both store miss and one load misses. The "winning processor" of the store will be the second one. The first one will get the data from the directory transitioning from <fr:tex display="inline"><![CDATA[IM^{AD} \to  IM^{A}]]></fr:tex>, but the second one will then trigger a <html:code>Fwd-GetM</html:code> overwriting the first.</html:p>
 
 <html:p>
 The load miss transitions to <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex>. However, when it receives an <html:code>Inv</html:code> it stalls according to the above figure. This blocks the <html:code>Fwd-GetM</html:code> from reaching the other winning processor because they are on the same VC. Thus, we have a deadlock where the owner never gets the data.
 </html:p>
-</fr:mainmatter></fr:tree>
+</html:div>
 
 
- 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>We need to add another transient state not included in the figure. Namely, we add <fr:tex display="inline"><![CDATA[II^{A}]]></fr:tex> that says we were in <fr:tex display="inline"><![CDATA[IS^{A}]]></fr:tex>, but we got invalidated and now we are waiting for our <html:code>PutAck</html:code> before we transition to <fr:tex display="inline"><![CDATA[I]]></fr:tex>.</fr:mainmatter></fr:tree>
- 
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> We need to add another transient state not included in the figure. Namely, we add <fr:tex display="inline"><![CDATA[II^{A}]]></fr:tex> that says we were in <fr:tex display="inline"><![CDATA[IS^{A}]]></fr:tex>, but we got invalidated and now we are waiting for our <html:code>PutAck</html:code> before we transition to <fr:tex display="inline"><![CDATA[I]]></fr:tex>.</html:div>
 
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 When the home directory is in <fr:tex display="inline"><![CDATA[M]]></fr:tex> and we get a <html:code>GetS</html:code> we cannot clear owner as directed by figure. Otherwise in <fr:tex display="inline"><![CDATA[S^D]]></fr:tex>, we will not be able to tell if the <html:code>PutM</html:code> is from the owner and stall, so we only remove the owner once we have received the data.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 </fr:mainmatter></fr:tree>
 
@@ -596,29 +697,55 @@ Notably, neither of these have to write back on <html:code>PutE</html:code>, but
 </html:p>
 <html:p><html:strong>Design Choice 2.</html:strong> In order to indicate that the directory received the first <html:code>GetS</html:code> we introduce a <html:code>ExclusiveData</html:code> message. Upon receiving, <html:code>ExclusiveData</html:code> in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> we transition to <fr:tex display="inline"><![CDATA[E]]></fr:tex>.</html:p>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 Once we have sent the <html:code>PutE</html:code>, or the <html:code>PutM</html:code> <fr:tex display="inline"><![CDATA[EI^A]]></fr:tex> and <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> are functionally the same. I include both for completeness but verified that transitioning directly to <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> from <fr:tex display="inline"><![CDATA[E]]></fr:tex> works the same.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 <html:p><html:strong>Directory controller.</html:strong> We start with the analagous table.</html:p>
 <html:figure><html:img width="100%" src="/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png" /></html:figure>
 <html:p>Similar to the cache controller, we also add a <fr:tex display="inline"><![CDATA[E^D]]></fr:tex> state for completion that can be absorbed into <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> introduced in the MSI protocol.</html:p>
 <html:p><html:strong>Weird Races.</html:strong></html:p>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>First processor does <html:code>GetS</html:code> and is in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> but the Home directory sends it exclusive data and is now in <fr:tex display="inline"><![CDATA[E]]></fr:tex>. Then second processor does <html:code>GetM</html:code> and Home issues <html:code>Fwd-GetM</html:code> to processor one, which arrives before data.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> First processor does <html:code>GetS</html:code> and is in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> but the Home directory sends it exclusive data and is now in <fr:tex display="inline"><![CDATA[E]]></fr:tex>. Then second processor does <html:code>GetM</html:code> and Home issues <html:code>Fwd-GetM</html:code> to processor one, which arrives before data.</html:div>
 
 
- 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Need to stall on <html:code>Fwd-GetM</html:code> and <html:code>Fwd-GetS</html:code> in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> until data arrives</fr:mainmatter></fr:tree>
- 
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> Need to stall on <html:code>Fwd-GetM</html:code> and <html:code>Fwd-GetS</html:code> in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> until data arrives</html:div>
 
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>An even crazier race happens when we get invalidated before the <html:code>Fwd-GetM</html:code> or <html:code>Fwd-GetS</html:code> arrive. Due to our previous design decision, we transition to <fr:tex display="inline"><![CDATA[II^A]]></fr:tex>, where if we receive a <html:code>PutAck</html:code> we transition to invalid. This then loses the needed forward data.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> An even crazier race happens when we get invalidated before the <html:code>Fwd-GetM</html:code> or <html:code>Fwd-GetS</html:code> arrive. Due to our previous design decision, we transition to <fr:tex display="inline"><![CDATA[II^A]]></fr:tex>, where if we receive a <html:code>PutAck</html:code> we transition to invalid. This then loses the needed forward data.</html:div>
 
 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(60, 90, 180, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(60, 90, 180, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
   The timeline:
   <html:ol><html:li><html:code>Proc_1</html:code> performs a load miss → <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex></html:li>
     <html:li><html:code>Home</html:code> receives first <html:code>GetS</html:code> from <html:code>Proc_1</html:code> → <fr:tex display="inline"><![CDATA[E]]></fr:tex> and sends <html:code>ExclusiveData</html:code> to <html:code>Proc_1</html:code></html:li>
@@ -628,16 +755,18 @@ Once we have sent the <html:code>PutE</html:code>, or the <html:code>PutM</html:
     <html:li><html:code>Proc_1</html:code> receives <html:code>Inv</html:code> → <fr:tex display="inline"><![CDATA[II^D]]></fr:tex></html:li>
     <html:li><html:code>Proc_1</html:code> receives <html:code>ExclusiveData</html:code> → <fr:tex display="inline"><![CDATA[I]]></fr:tex></html:li></html:ol>
   Data is lost
-</fr:mainmatter></fr:tree>
- 
+</html:div>
 
 
- 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> 
   We once again have to use the <html:code>ExclusiveData</html:code> message. We can then see that we got <html:code>ExclusiveData</html:code> in <fr:tex display="inline"><![CDATA[II^D]]></fr:tex> and transition to <fr:tex display="inline"><![CDATA[E]]></fr:tex> instead of <fr:tex display="inline"><![CDATA[I]]></fr:tex>. <fr:tex display="inline"><![CDATA[E]]></fr:tex> will then correctly handle the <html:code>Fwd-GetM</html:code> or <html:code>Fwd-GetS</html:code>.
-</fr:mainmatter></fr:tree>
- 
+</html:div>
 
 
 <html:p>We are left with the following state diagrams for the cache and directory controllers respectively</html:p>
@@ -728,13 +857,13 @@ Once we have sent the <html:code>PutE</html:code>, or the <html:code>PutM</html:
               <fr:mainmatter><html:p>Rapidly exploring random trees (RRT) is a very simple, elegant and widely used algorithm for motion planning. The algorithm proceeds as follows:</html:p>
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>14</fr:day></fr:date><fr:title text="The Algorithm">The Algorithm</fr:title></fr:frontmatter><fr:mainmatter>
 
- <html:div class="jms-indent-block" style="
-  margin-left: 1em;
-  margin-bottom: 1em;
-  border-left: 4px solid black;
-  padding-left: 12px;
-  background-color: whitesmoke;
-  ">
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(0, 100, 255, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(0, 100, 255, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(0, 100, 255, 0.7);">Algorithm.</html:span> 
   For <fr:tex display="inline"><![CDATA[k = 1]]></fr:tex> to <fr:tex display="inline"><![CDATA[K]]></fr:tex> do
  <html:ol><html:li><fr:tex display="inline"><![CDATA[x_{rand} \gets  \mathsf {RANDOM\_STATE}()]]></fr:tex></html:li>
   <html:li><fr:tex display="inline"><![CDATA[x_{near} \gets  \mathsf {NEAREST\_NEIGHBOR}(x_{rand}, \mathcal {T})]]></fr:tex></html:li>
@@ -747,16 +876,28 @@ Once we have sent the <html:code>PutE</html:code>, or the <html:code>PutM</html:
 
 
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>14</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 Given some dynamics model <fr:tex display="inline"><![CDATA[\dot {x} = f(x, u)]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathsf {NEW\_STATE}]]></fr:tex> is some approximate integration, such as Euler integration i.e.
 <fr:tex display="block"><![CDATA[x_{new} = x_{near} + f(x_{near}, u) \Delta  t]]></fr:tex>
 Preferable to use higher-order method like Runge-Kutta.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>14</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 <fr:tex display="inline"><![CDATA[\mathsf {SELECT\_INPUT}]]></fr:tex> is determined by whether the system is holonomic or non-holomonic. If the agent is holonomic, then <fr:tex display="inline"><![CDATA[u]]></fr:tex> will just be the control corresponding to the difference in the two states.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 </fr:mainmatter></fr:tree>
 
@@ -865,13 +1006,25 @@ This gives high arithmetic intensity
 <fr:tex display="block"><![CDATA[O\left (\left (\frac {n}{d} + \frac {1}{b}\right )^{-1}\right ),]]></fr:tex>
 which requires large batch and short sequence length.
 </html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 I believe we just ignore the softmax memory contribution in the inference case because it does not scale with <fr:tex display="inline"><![CDATA[n]]></fr:tex> anymore as we are computing the logits just for the next token. Therefore, it becomes a <fr:tex display="inline"><![CDATA[\frac {d}{h}]]></fr:tex> term, which we can safely ignore?
-</fr:mainmatter></fr:tree>
+</html:div>
 <html:p>The key is that the <fr:tex display="inline"><![CDATA[\frac {n}{d}]]></fr:tex> term comes from the <fr:tex display="inline"><![CDATA[bn^2d]]></fr:tex> term, where we are loading <fr:tex display="inline"><![CDATA[h]]></fr:tex> <fr:tex display="inline"><![CDATA[(b \times  n \times  d / h)]]></fr:tex> <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrices <fr:tex display="inline"><![CDATA[n]]></fr:tex> times. Thus, we can improve the <fr:tex display="inline"><![CDATA[\frac {n}{d}]]></fr:tex> term by a factor of <fr:tex display="inline"><![CDATA[h]]></fr:tex> by simply not using a different <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrix for each head. This is the entire idea behind <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">MQA</fr:link>.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 Similar to the <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanarios.com/TJLA/" display-uri="TJLA" type="local">KV-cache</fr:link>, we still can use <fr:tex display="inline"><![CDATA[h]]></fr:tex> <fr:tex display="inline"><![CDATA[Q]]></fr:tex> matrices because we do not need to load <fr:tex display="inline"><![CDATA[n]]></fr:tex> of them into memory because only the last one matters for inference.
-</fr:mainmatter></fr:tree>
+</html:div>
 <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XUVV/</fr:uri><fr:display-uri>XUVV</fr:display-uri><fr:route>/XUVV/</fr:route><fr:title text="Group Query Attention">Group Query Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:em>Group query attention</html:em> is the same idea as <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">MQA</fr:link> but instead of using one <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> for every head, they use a <html:em>group</html:em> of them. Where obviously the number of groups needs to be less than the number of heads.</html:p><html:figure><html:img width="80%" src="/bafkrmicmjlgi2o3oetsssjdwk6y2pqce4vrdwiw2ah4wwe3ulnt74upkiu.png" />
 <html:figcaption>Grouped query uses subset of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrices.</html:figcaption></html:figure></fr:mainmatter></fr:tree><html:p>Also inspired by this idea of reducing the dependence of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> on the sequence length is sliding window attention.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/WM3M/</fr:uri><fr:display-uri>WM3M</fr:display-uri><fr:route>/WM3M/</fr:route><fr:title text="Sliding Window Attention">Sliding Window Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p>The idea behind <html:em>sliding window attention</html:em> is to ensure the number of weight matrices needed for the keys <fr:tex display="inline"><![CDATA[K]]></fr:tex> and values <fr:tex display="inline"><![CDATA[V]]></fr:tex> does not scale with the sequence length. Intuitively, this means allowing each word to "attend" to only some fixed number of previous words rather than the whole sequence</html:p><html:figure><html:img width="80%" src="/bafkrmidqeoo6wx6s4ry6u74fcelfzxvwreyf7d44whnql4ffnnyd2dwcha.png" />
 <html:figcaption>"the" only sees "on" and "sat" rather than the full sentence.</html:figcaption></html:figure></fr:mainmatter></fr:tree>
@@ -910,27 +1063,50 @@ for a <html:strong>fixed</html:strong> theta <html:strong>and</html:strong> <fr:
   <fr:tex display="block"><![CDATA[\theta _{t + 1} \gets  \theta _t + \nabla _{\theta } \mathsf {ELBO}(x, q, \theta _t),]]></fr:tex>
   to maximize the log-likelihood <fr:tex display="inline"><![CDATA[\log  p(x; \theta )]]></fr:tex>. 
 </html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 Note that the gradient is with respect to <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex>, where <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> is just the third argument to <fr:tex display="inline"><![CDATA[\mathsf {ELBO}]]></fr:tex> as defined above. Notably, <fr:tex display="inline"><![CDATA[\theta _t]]></fr:tex> will show up elsewhere later but will <html:strong>NOT</html:strong> be backpropagated through.
-</fr:mainmatter></fr:tree>
+</html:div>
 
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:title text="Expectation">Expectation</fr:title></fr:frontmatter><fr:mainmatter>
 <html:p>The above motivates the <html:em>expectation</html:em> step of the EM algorithm. Namely how can we compute the lower bound expectation for the <html:strong>best</html:strong> possible <fr:tex display="inline"><![CDATA[q]]></fr:tex>.</html:p>
 <html:p>Recall (or review) from the discussion on <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link> that <fr:tex display="inline"><![CDATA[q(z) = p(z | x; \theta )]]></fr:tex> maximizes the ELBO for a given <fr:tex display="inline"><![CDATA[x]]></fr:tex> and <fr:tex display="inline"><![CDATA[\theta  ]]></fr:tex>. Therefore, we actually want to learn <fr:tex display="inline"><![CDATA[q_{\phi }(z, x, \theta ) \approx  p(z | x; \theta )]]></fr:tex>. To do so, we can simply maximize the ELBO (duh). Formally,
 <fr:tex display="block"><![CDATA[\phi _{t+1} = \argmax _{\phi } \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q}\left [\log  \frac {p(x,  Z; \theta _t)}{q_{\phi }(Z, x, \theta _t)}\right ]]]></fr:tex></html:p>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 130, 0, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(200, 130, 0, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</html:span> 
 Now this is all cool theoretically but how TF do we actually maximize this thing? 
-</fr:mainmatter></fr:tree>
+</html:div>
 
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(0, 140, 120, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(0, 140, 120, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</html:span> 
   It is highly dependent on the parametrization of <fr:tex display="inline"><![CDATA[p]]></fr:tex> and <fr:tex display="inline"><![CDATA[q]]></fr:tex>.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(60, 90, 180, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(60, 90, 180, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
   <html:p>
   We define the problem as 
   <html:ol><html:li><fr:tex display="inline"><![CDATA[p(z) \sim  N(0, 1)]]></fr:tex></html:li>
@@ -946,14 +1122,26 @@ Now this is all cool theoretically but how TF do we actually maximize this thing
     We face one more obstacle.
   </html:p>
   
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Question</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 130, 0, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(200, 130, 0, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</html:span> 
     We need to sample realization <fr:tex display="inline"><![CDATA[z \sim  q_{\phi }(\cdot  |x, \theta )]]></fr:tex>. So isn't our realization <fr:tex display="inline"><![CDATA[z]]></fr:tex> a function of <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. How would we optimize this?
-  </fr:mainmatter></fr:tree>
+  </html:div>
 
   
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:taxon>Answer</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(0, 140, 120, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(0, 140, 120, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</html:span> 
     The <fr:link href="/0089/" title="Reparametrization Trick" uri="https://kellenkanarios.com/0089/" display-uri="0089" type="local">reparametrization trick</fr:link>!!
-  </fr:mainmatter></fr:tree>
+  </html:div>
 
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:uri>https://kellenkanarios.com/0089/</fr:uri><fr:display-uri>0089</fr:display-uri><fr:route>/0089/</fr:route><fr:title text="Reparametrization Trick">Reparametrization Trick</fr:title></fr:frontmatter><fr:mainmatter><html:p>For <fr:tex display="inline"><![CDATA[q_{\phi }(\cdot  | x) \sim  N(\mu _{\phi }(x), \sigma _{\phi }(x))]]></fr:tex>. The <html:em>reparametrization trick</html:em> allows us to differentate through a random sample by sampling from <fr:tex display="inline"><![CDATA[q_{\phi }(\cdot  | x)]]></fr:tex> via 
 <fr:tex display="block"><![CDATA[z(\phi ) = \mu _{\phi }(x) + \sigma _{\phi }(x) \cdot  \epsilon ,]]></fr:tex>
@@ -962,22 +1150,21 @@ where <fr:tex display="inline"><![CDATA[\epsilon  \sim  N(0, 1)]]></fr:tex>. The
   <html:p>Now for a given sample <fr:tex display="inline"><![CDATA[x_i \sim  \mathcal {D}]]></fr:tex>, we can get a sample <fr:tex display="inline"><![CDATA[z_i(\phi ) \sim  q(\cdot  \mid  x_i, \theta )]]></fr:tex> that is differentiable with respect to <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. Using this, we can get the stochastic gradient estimate
   <fr:tex display="block"><![CDATA[\nabla _q \widetilde {\mathsf {ELBO}}(x, q, \theta ) = \nabla _{\phi } \left [\frac {z_i(\phi )^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((z_i(\phi ) - \mu _{\theta }(z_i(\phi )))^2 - (z_i(\phi ) - \mu _{\phi }(x))^2\big )\right ]]]></fr:tex></html:p>
 
- <html:div class="jms-indent-block" style="
-  margin-left: 1em;
-  margin-bottom: 1em;
-  border-left: 4px solid black;
-  padding-left: 12px;
-  background-color: whitesmoke;
-  ">
-  <html:strong>Algorithm:</html:strong> input <fr:tex display="inline"><![CDATA[\theta _t]]></fr:tex>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(0, 100, 255, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(0, 100, 255, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(0, 100, 255, 0.7);">Algorithm.</html:span> 
+  input <fr:tex display="inline"><![CDATA[\theta _t]]></fr:tex>
   <html:ol><html:li>Sample <fr:tex display="inline"><![CDATA[x_i]]></fr:tex> from dataset <fr:tex display="inline"><![CDATA[\mathcal {D}]]></fr:tex></html:li>
     <html:li>Sample <fr:tex display="inline"><![CDATA[z_i(\phi ) \sim  q_{\phi }(\cdot  \mid  x_i, \theta _t)]]></fr:tex> via <fr:link href="/0089/" title="Reparametrization Trick" uri="https://kellenkanarios.com/0089/" display-uri="0089" type="local">trick</fr:link>.</html:li>
     <html:li>Compute <fr:tex display="inline"><![CDATA[\nabla _q \widetilde {\mathsf {ELBO}}]]></fr:tex></html:li>
     <html:li>Update via SGD</html:li></html:ol>
 </html:div>
 
-</fr:mainmatter></fr:tree>
- 
+</html:div>
 
 </fr:mainmatter></fr:tree>
 
@@ -1011,35 +1198,41 @@ Alternating between these steps yields the <html:em>expectation-maximization</ht
               <fr:mainmatter><html:p><html:strong>Setup:</html:strong>
 We are given a joint distribution <fr:tex display="inline"><![CDATA[p(X, Z; \theta )]]></fr:tex>, where <fr:tex display="inline"><![CDATA[X]]></fr:tex> and <fr:tex display="inline"><![CDATA[Z]]></fr:tex> are random variables with their joint parametrized by <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex>. We are also given a dataset <fr:tex display="inline"><![CDATA[\mathcal {D}]]></fr:tex> containing realizations of <html:strong>only</html:strong> <fr:tex display="inline"><![CDATA[X]]></fr:tex> i.e. <fr:tex display="inline"><![CDATA[Z]]></fr:tex> is a <fr:link href="/0083/" title="Latent Variable" uri="https://kellenkanarios.com/0083/" display-uri="0083" type="local">latent random variable</fr:link>.
   </html:p>
- <html:div class="jms-indent-block" style="
-  margin-left: 1em;
-  margin-bottom: 1em;
-  border-left: 4px solid black;
-  padding-left: 12px;
-  background-color: whitesmoke;
-  "><html:strong>Goal:</html:strong> We want to learn <fr:tex display="inline"><![CDATA[p(x; \theta )]]></fr:tex>.</html:div>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(190, 50, 130, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(190, 50, 130, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</html:span> We want to learn <fr:tex display="inline"><![CDATA[p(x; \theta )]]></fr:tex>.</html:div>
 <html:p> However, <fr:tex display="block"><![CDATA[p(x; \theta ) = \int  p(x, z; \theta ) \mathrm {d}z = \int  p(x | z; \theta )p(z) \mathrm {d}z,]]></fr:tex> which is computationally intractable for most continuous <fr:tex display="inline"><![CDATA[Z]]></fr:tex>.</html:p>
- <html:div class="jms-indent-block" style="
-  margin-left: 1em;
-  margin-bottom: 1em;
-  border-left: 4px solid black;
-  padding-left: 12px;
-  background-color: whitesmoke;
-  "><html:strong>Question:</html:strong> Can we update <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> for a given realization of <fr:tex display="inline"><![CDATA[x]]></fr:tex> and <fr:tex display="inline"><![CDATA[z]]></fr:tex>?</html:div>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 130, 0, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(200, 130, 0, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</html:span> Can we update <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> for a given realization of <fr:tex display="inline"><![CDATA[x]]></fr:tex> and <fr:tex display="inline"><![CDATA[z]]></fr:tex>?</html:div>
 
- <html:div class="jms-indent-block" style="
-  margin-left: 1em;
-  margin-bottom: 1em;
-  border-left: 4px solid black;
-  padding-left: 12px;
-  background-color: whitesmoke;
-  "><html:strong>Answer:</html:strong> Yes!!!</html:div>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(0, 140, 120, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(0, 140, 120, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</html:span> Yes!!!</html:div>
 <html:p><html:strong>Motivation:</html:strong> Suppose we had some <fr:tex display="inline"><![CDATA[q(z)]]></fr:tex> that we could sample realizations of <fr:tex display="inline"><![CDATA[Z]]></fr:tex> from. Then we want to find some reasonable <fr:tex display="inline"><![CDATA[\ell _{\theta }]]></fr:tex>, such that
 <fr:tex display="block"><![CDATA[\theta ^* \approx  \arg \max _{\theta } \mathbb {E}_{x, \sim  p(x; \theta ^*), z \sim  q(z)}[\ell _{\theta }(X, Z)]]]></fr:tex>
 
-    <fr:tree show-metadata="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>6</fr:month><fr:day>30</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 <fr:tex display="inline"><![CDATA[q(z)]]></fr:tex> can potentially (and will) depend on the sample <fr:tex display="inline"><![CDATA[x_i]]></fr:tex>. This is OK because we are given <fr:tex display="inline"><![CDATA[x_i]]></fr:tex>'s, which we can then just pass to <fr:tex display="inline"><![CDATA[q]]></fr:tex> to get the corresponding <fr:tex display="inline"><![CDATA[z_i]]></fr:tex>.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 Why is this the case? Because then (for well-behaved <fr:tex display="inline"><![CDATA[\ell _{\theta }]]></fr:tex>)
 <fr:tex display="block"><![CDATA[\theta _{t + 1} = \theta _{t} - \alpha  \nabla _{\theta _{t}}\ell _{\theta _{t}}(x_i, z_i) \to  \theta ^*]]></fr:tex>

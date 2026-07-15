@@ -11,47 +11,15 @@
     <fr:uri>https://kellenkanarios.com/KIT8/</fr:uri>
     <fr:display-uri>KIT8</fr:display-uri>
     <fr:route>/KIT8/</fr:route>
-    <fr:title text="Directory-based coherence">Directory-based coherence</fr:title>
+    <fr:title text="Directory-based coherence scales by replacing broadcasts with point-to-point messages">Directory-based coherence scales by replacing broadcasts with point-to-point messages</fr:title>
   </fr:frontmatter>
-  <fr:mainmatter><html:p>A scalable <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> organization for systems too large for a shared bus. Each memory address has a <html:em>home node</html:em>; the home node maintains a <html:em>directory</html:em> entry listing which caches currently hold copies and in what state. Coherence transactions are point-to-point messages routed via the directory rather than broadcasts.</html:p><html:p>Compared to <fr:link href="/8C2H/" title="Snoop-based coherence" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">Snoop-based coherence</fr:link>, directory protocols trade a level of indirection (3 hops instead of 2 for some transactions) for vastly reduced bandwidth — making them viable at hundreds of cores.</html:p><html:figure><html:img width="100%" src="/bafkrmiagqplbpjuiklwpxy5wyr42scpgq6ywmggrd3alpf5xlsyam6rvue.png" />
+  <fr:mainmatter>
+    <html:p>A scalable <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> organization for systems too large for a shared bus. Each memory address has a <html:em>home node</html:em>; the home node maintains a <html:em>directory</html:em> entry listing which caches currently hold copies and in what state. Coherence transactions are point-to-point messages routed via the directory rather than broadcasts. The directory is itself distributed — each node owns the entries for the addresses in its local DRAM, and a physical address uniquely identifies its home — so there is no central bottleneck.</html:p>
+    <html:p>Compared to <fr:link href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">snoop-based coherence</fr:link>, directory protocols trade a level of indirection (3 hops instead of 2 for some transactions) for vastly reduced bandwidth — making them viable at hundreds of cores.</html:p>
+    <html:figure><html:img width="100%" src="/bafkrmiagqplbpjuiklwpxy5wyr42scpgq6ywmggrd3alpf5xlsyam6rvue.png" />
 <html:figcaption>4-hop directory write protocol.</html:figcaption></html:figure>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="Directory organization">Directory organization</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p><html:strong>Centralized vs. distributed.</html:strong> A single central directory is a bottleneck; production systems distribute it. Each processor's local DRAM has its own directory tracking the addresses physically present in that DRAM. Every physical address uniquely identifies its home node.</html:p>
-
-<html:p><html:strong>Reducing directory size.</html:strong> The naive directory is a sharer list per cache line:</html:p>
-<html:ul><html:li>One-hot bitmap (256 nodes → 32 bytes per entry): 50% of memory consumed by metadata.</html:li>
-  <html:li>Limited-sharer encoding: most workloads have ≤4 sharers; track those exactly, fall back to broadcast for the uncommon case.</html:li>
-  <html:li><html:strong>Sparse directories.</html:strong> Cache the directory entries themselves. An entry missing from the directory cache means nobody has a copy. On eviction from the directory cache, invalidate the corresponding lines.</html:li></html:ul>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="Transient states and races">Transient states and races</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Because directory transactions take multiple hops, intermediate states are visible — <html:em>transient states</html:em> like <fr:tex display="inline"><![CDATA[\mathrm {MI}^{A}]]></fr:tex> (modified-to-invalid, waiting on acknowledgment). Concurrent transactions race; the protocol must handle every combination correctly.</html:p>
-
-
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
-L has a dirty copy and wants to write back to H. R concurrently sends a read to H. R's state <fr:tex display="inline"><![CDATA[\mathrm {S}^{D}]]></fr:tex> means "shared, waiting for data".
-<html:figure><html:img width="100%" src="/bafkrmiheg63sxr5b4oukpd7q7j3o5rat2wyswllujljbvbwhiwlqgmqly4.png" /></html:figure>
-</fr:mainmatter></fr:tree>
- 
-
-
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Never use NACKs in a directory protocol — they cause starvation.</fr:mainmatter></fr:tree>
-
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>See <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link> for a worked implementation in Murphi, including the channel-separation arguments that prevent protocol-level deadlock.</fr:mainmatter></fr:tree>
-
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="Optimizations">Optimizations</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p><html:strong>Prefetching.</html:strong> Fetch data before requested to hide coherence latency.</html:p>
-<html:p><html:strong>Upgrade-miss detection.</html:strong> In migratory sharing (read then write), a naive read-miss followed by write-miss costs two coherence transactions. Detect the pattern and transition straight to a "migratory E" state on read.</html:p>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The same optimization <html:em>hurts</html:em> producer-consumer sharing. There, the right move on read-miss is to downgrade the previous holder rather than invalidate, so subsequent readers can fetch from the prior writer.</fr:mainmatter></fr:tree>
-
-</fr:mainmatter></fr:tree>
-</fr:mainmatter>
+    <html:p>Three refinements make directory coherence practical. Its metadata is kept from scaling with memory by <fr:link href="/QSWW/" title="Sparse directories keep coherence metadata from scaling with memory" uri="https://kellenkanarios.com/QSWW/" display-uri="QSWW" type="local">sparse directories</fr:link>; its multi-hop transactions force the protocol to reason about <fr:link href="/Z32G/" title="Directory protocols expose transient states because transactions span multiple hops" uri="https://kellenkanarios.com/Z32G/" display-uri="Z32G" type="local">transient states and races</fr:link>; and workload-specific patterns like <fr:link href="/20SW/" title="Migratory-sharing optimization collapses read-then-write into one coherence transaction" uri="https://kellenkanarios.com/20SW/" display-uri="20SW" type="local">migratory sharing</fr:link> let it collapse pairs of transactions into one. See <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link> for a full worked implementation in Murphi.</html:p>
+  </fr:mainmatter>
   <fr:backmatter>
     <fr:tree show-metadata="false" hidden-when-empty="true">
       <fr:frontmatter>
@@ -75,6 +43,64 @@ L has a dirty copy and wants to write back to H. R concurrently sends a read to 
       <fr:mainmatter>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>11</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/Z32G/</fr:uri>
+            <fr:display-uri>Z32G</fr:display-uri>
+            <fr:route>/Z32G/</fr:route>
+            <fr:title text="Directory protocols expose transient states because transactions span multiple hops">Directory protocols expose transient states because transactions span multiple hops</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>Because a <fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory</fr:link> transaction takes several hops (requestor → home → owner → …), a line spends observable time in <html:em>transient states</html:em> between the stable ones — e.g. <fr:tex display="inline"><![CDATA[\mathrm {MI}^{A}]]></fr:tex> ("modified, going to invalid, waiting on an acknowledgment"). These are not an implementation detail to wave away: concurrent transactions to the same line race, and the protocol must define a correct outcome for every interleaving. That combinatorial state space is what makes directory protocols hard to get right.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(60, 90, 180, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(60, 90, 180, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> L holds a dirty copy and starts a writeback to home H. Concurrently R sends a read to H. R sits in <fr:tex display="inline"><![CDATA[\mathrm {S}^{D}]]></fr:tex> ("shared, waiting for data") until the race resolves.
+<html:figure><html:img width="100%" src="/bafkrmiheg63sxr5b4oukpd7q7j3o5rat2wyswllujljbvbwhiwlqgmqly4.png" /></html:figure>
+</html:div>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Never resolve these races with NACKs — they cause starvation. The <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link> Murphi implementation works through the channel-separation arguments that keep the transient-state space deadlock-free.</html:div>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>11</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/QSWW/</fr:uri>
+            <fr:display-uri>QSWW</fr:display-uri>
+            <fr:route>/QSWW/</fr:route>
+            <fr:title text="Sparse directories keep coherence metadata from scaling with memory">Sparse directories keep coherence metadata from scaling with memory</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>A <fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory</fr:link> must remember which caches hold each line, and the naive encoding — a sharer bitmap per cache line — does not scale: at 256 nodes that is 32 bytes of metadata per line, so roughly half of memory goes to coherence bookkeeping. Two ideas bring it back down. <html:em>Limited-sharer encoding</html:em> exploits the fact that most lines have ≤4 sharers: track those exactly and fall back to broadcast for the rare widely-shared line. <html:em>Sparse directories</html:em> go further and cache the directory entries themselves — an entry missing from the directory cache means nobody holds the line at all, and evicting an entry invalidates the corresponding lines. The directory then scales with the number of <html:em>actively cached</html:em> lines rather than with total memory.</html:p>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
             <fr:authors />
             <fr:date>
               <fr:year>2026</fr:year>
@@ -84,12 +110,18 @@ L has a dirty copy and wants to write back to H. R concurrently sends a read to 
             <fr:uri>https://kellenkanarios.com/8C2H/</fr:uri>
             <fr:display-uri>8C2H</fr:display-uri>
             <fr:route>/8C2H/</fr:route>
-            <fr:title text="Snoop-based coherence">Snoop-based coherence</fr:title>
+            <fr:title text="Snoop-based coherence keeps caches consistent by watching a shared bus">Snoop-based coherence keeps caches consistent by watching a shared bus</fr:title>
           </fr:frontmatter>
           <fr:mainmatter><html:p>A <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> family where every cache watches (<html:em>snoops</html:em>) a shared bus. When one cache issues a coherence transaction (e.g. requests permission to read or write a line), every other cache sees it and updates its local state accordingly. No central directory needed; the bus itself is the coordination mechanism.</html:p><html:p>The simplest snoop-based protocol is <html:em>valid-invalid</html:em>:</html:p><html:ul><html:li>Invalid + load → BusRd to gain read permission; transition to valid.</html:li>
   <html:li>Invalid + store → no transition (write-through assumed; the bus carries the write).</html:li>
-  <html:li>Valid + store → BusWr to notify other caches; they invalidate.</html:li></html:ul><html:p><html:strong>Write-update coherence</html:strong>, the variant where stores update other caches' copies instead of invalidating them, works for very small bus-based systems but does not scale: every write reaches everyone, and copies of data the snooper isn't using pollute its <fr:link href="/UG51/" title="Cache replacement policy" uri="https://kellenkanarios.com/UG51/" display-uri="UG51" type="local">Cache replacement policy</fr:link>.</html:p><html:p>Snoop-based coherence relies on a shared physical bus, which limits it to roughly 8 cores. Beyond that, switch to <fr:link href="/KIT8/" title="Directory-based coherence" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">Directory-based coherence</fr:link>.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Snoop-based SMPs use the <html:em><fr:link href="/4W5G/" title="Inclusion property" uri="https://kellenkanarios.com/4W5G/" display-uri="4W5G" type="local">Inclusion property</fr:link></html:em> so that snooping at L2 suffices — every L1 line is also tracked at L2.</fr:mainmatter></fr:tree>
+  <html:li>Valid + store → BusWr to notify other caches; they invalidate.</html:li></html:ul><html:p><html:strong>Write-update coherence</html:strong>, the variant where stores update other caches' copies instead of invalidating them, works for very small bus-based systems but does not scale: every write reaches everyone, and copies of data the snooper isn't using pollute its <fr:link href="/UG51/" title="Cache replacement policy" uri="https://kellenkanarios.com/UG51/" display-uri="UG51" type="local">Cache replacement policy</fr:link>.</html:p><html:p>Snoop-based coherence relies on a shared physical bus, which limits it to roughly 8 cores. Beyond that, switch to <fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory-based coherence</fr:link>.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Snoop-based SMPs use the <html:em><fr:link href="/4W5G/" title="Inclusion property" uri="https://kellenkanarios.com/4W5G/" display-uri="4W5G" type="local">Inclusion property</fr:link></html:em> so that snooping at L2 suffices — every L1 line is also tracked at L2.</html:div>
 </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -110,9 +142,10 @@ L has a dirty copy and wants to write back to H. R concurrently sends a read to 
             <html:ol><html:li><html:strong>Single-writer invariant</html:strong>: at any moment, at most one core has permission to write a given line. No other core can read or write it concurrently.</html:li>
   <html:li><html:strong>Data-value invariant</html:strong>: all cores see the same order of updates to a given line.</html:li></html:ol>
             <html:p>Two organizational families:</html:p>
-            <html:ul><html:li><fr:link href="/8C2H/" title="Snoop-based coherence" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">Snoop-based coherence</fr:link> — every cache watches a shared bus and reacts to other cores' traffic. Scales to ~8 cores.</html:li>
-  <html:li><fr:link href="/KIT8/" title="Directory-based coherence" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">Directory-based coherence</fr:link> — a structure tracks who has a copy of each line; coherence messages are point-to-point. Scales to hundreds of cores at the cost of an extra hop.</html:li></html:ul>
+            <html:ul><html:li><fr:link href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">snoop-based coherence</fr:link> — every cache watches a shared bus and reacts to other cores' traffic. Scales to ~8 cores.</html:li>
+  <html:li><fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory-based coherence</fr:link> — a structure tracks who has a copy of each line; coherence messages are point-to-point. Scales to hundreds of cores at the cost of an extra hop.</html:li></html:ul>
             <html:p>The concrete state machines are protocols like <fr:link href="/EYXU/" title="MSI protocol" uri="https://kellenkanarios.com/EYXU/" display-uri="EYXU" type="local">MSI protocol</fr:link>, <fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link>, <fr:link href="/AI2B/" title="MOESI protocol" uri="https://kellenkanarios.com/AI2B/" display-uri="AI2B" type="local">MOESI protocol</fr:link>, and DEC Firefly, each adding states to handle more cases or to optimize specific sharing patterns. A worked implementation of directory-based MESI in Murphi lives in <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link>.</html:p>
+            <html:p>Worked instance: <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link> implements directory-based MESI in Murphi.</html:p>
           </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>
@@ -125,6 +158,91 @@ L has a dirty copy and wants to write back to H. R concurrently sends a read to 
       <fr:mainmatter>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>11</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/20SW/</fr:uri>
+            <fr:display-uri>20SW</fr:display-uri>
+            <fr:route>/20SW/</fr:route>
+            <fr:title text="Migratory-sharing optimization collapses read-then-write into one coherence transaction">Migratory-sharing optimization collapses read-then-write into one coherence transaction</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>A common access pattern is <html:em>migratory</html:em>: a core reads a line and then writes it — think a lock or a hand-off variable that passes from core to core. Handled naively this costs two <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">cache-coherence</fr:link> transactions: a read miss that fetches the line shared, then a write miss that upgrades it to modified. <html:em>Upgrade-miss detection</html:em> spots the pattern and, on the read miss, transitions the line straight to a migratory-exclusive state, so the following write is silent — one transaction instead of two.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> The same optimization <html:em>hurts</html:em> producer–consumer sharing, where one core writes and several read. There the right move on a read miss is to <html:em>downgrade</html:em> the previous writer rather than invalidate it, so later readers source the line from the last writer instead of racing to own it. The lesson generalizes: coherence optimizations are workload-shaped — a win for one sharing pattern is a loss for another.</html:div>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>11</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/Z32G/</fr:uri>
+            <fr:display-uri>Z32G</fr:display-uri>
+            <fr:route>/Z32G/</fr:route>
+            <fr:title text="Directory protocols expose transient states because transactions span multiple hops">Directory protocols expose transient states because transactions span multiple hops</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>Because a <fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory</fr:link> transaction takes several hops (requestor → home → owner → …), a line spends observable time in <html:em>transient states</html:em> between the stable ones — e.g. <fr:tex display="inline"><![CDATA[\mathrm {MI}^{A}]]></fr:tex> ("modified, going to invalid, waiting on an acknowledgment"). These are not an implementation detail to wave away: concurrent transactions to the same line race, and the protocol must define a correct outcome for every interleaving. That combinatorial state space is what makes directory protocols hard to get right.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(60, 90, 180, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(60, 90, 180, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> L holds a dirty copy and starts a writeback to home H. Concurrently R sends a read to H. R sits in <fr:tex display="inline"><![CDATA[\mathrm {S}^{D}]]></fr:tex> ("shared, waiting for data") until the race resolves.
+<html:figure><html:img width="100%" src="/bafkrmiheg63sxr5b4oukpd7q7j3o5rat2wyswllujljbvbwhiwlqgmqly4.png" /></html:figure>
+</html:div>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Never resolve these races with NACKs — they cause starvation. The <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link> Murphi implementation works through the channel-separation arguments that keep the transient-state space deadlock-free.</html:div>
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>11</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/QSWW/</fr:uri>
+            <fr:display-uri>QSWW</fr:display-uri>
+            <fr:route>/QSWW/</fr:route>
+            <fr:title text="Sparse directories keep coherence metadata from scaling with memory">Sparse directories keep coherence metadata from scaling with memory</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>A <fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory</fr:link> must remember which caches hold each line, and the naive encoding — a sharer bitmap per cache line — does not scale: at 256 nodes that is 32 bytes of metadata per line, so roughly half of memory goes to coherence bookkeeping. Two ideas bring it back down. <html:em>Limited-sharer encoding</html:em> exploits the fact that most lines have ≤4 sharers: track those exactly and fall back to broadcast for the rare widely-shared line. <html:em>Sparse directories</html:em> go further and cache the directory entries themselves — an entry missing from the directory cache means nobody holds the line at all, and evicting an entry invalidates the corresponding lines. The directory then scales with the number of <html:em>actively cached</html:em> lines rather than with total memory.</html:p>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
             <fr:authors />
             <fr:date>
               <fr:year>2026</fr:year>
@@ -134,12 +252,18 @@ L has a dirty copy and wants to write back to H. R concurrently sends a read to 
             <fr:uri>https://kellenkanarios.com/8C2H/</fr:uri>
             <fr:display-uri>8C2H</fr:display-uri>
             <fr:route>/8C2H/</fr:route>
-            <fr:title text="Snoop-based coherence">Snoop-based coherence</fr:title>
+            <fr:title text="Snoop-based coherence keeps caches consistent by watching a shared bus">Snoop-based coherence keeps caches consistent by watching a shared bus</fr:title>
           </fr:frontmatter>
           <fr:mainmatter><html:p>A <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> family where every cache watches (<html:em>snoops</html:em>) a shared bus. When one cache issues a coherence transaction (e.g. requests permission to read or write a line), every other cache sees it and updates its local state accordingly. No central directory needed; the bus itself is the coordination mechanism.</html:p><html:p>The simplest snoop-based protocol is <html:em>valid-invalid</html:em>:</html:p><html:ul><html:li>Invalid + load → BusRd to gain read permission; transition to valid.</html:li>
   <html:li>Invalid + store → no transition (write-through assumed; the bus carries the write).</html:li>
-  <html:li>Valid + store → BusWr to notify other caches; they invalidate.</html:li></html:ul><html:p><html:strong>Write-update coherence</html:strong>, the variant where stores update other caches' copies instead of invalidating them, works for very small bus-based systems but does not scale: every write reaches everyone, and copies of data the snooper isn't using pollute its <fr:link href="/UG51/" title="Cache replacement policy" uri="https://kellenkanarios.com/UG51/" display-uri="UG51" type="local">Cache replacement policy</fr:link>.</html:p><html:p>Snoop-based coherence relies on a shared physical bus, which limits it to roughly 8 cores. Beyond that, switch to <fr:link href="/KIT8/" title="Directory-based coherence" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">Directory-based coherence</fr:link>.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Snoop-based SMPs use the <html:em><fr:link href="/4W5G/" title="Inclusion property" uri="https://kellenkanarios.com/4W5G/" display-uri="4W5G" type="local">Inclusion property</fr:link></html:em> so that snooping at L2 suffices — every L1 line is also tracked at L2.</fr:mainmatter></fr:tree>
+  <html:li>Valid + store → BusWr to notify other caches; they invalidate.</html:li></html:ul><html:p><html:strong>Write-update coherence</html:strong>, the variant where stores update other caches' copies instead of invalidating them, works for very small bus-based systems but does not scale: every write reaches everyone, and copies of data the snooper isn't using pollute its <fr:link href="/UG51/" title="Cache replacement policy" uri="https://kellenkanarios.com/UG51/" display-uri="UG51" type="local">Cache replacement policy</fr:link>.</html:p><html:p>Snoop-based coherence relies on a shared physical bus, which limits it to roughly 8 cores. Beyond that, switch to <fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory-based coherence</fr:link>.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Snoop-based SMPs use the <html:em><fr:link href="/4W5G/" title="Inclusion property" uri="https://kellenkanarios.com/4W5G/" display-uri="4W5G" type="local">Inclusion property</fr:link></html:em> so that snooping at L2 suffices — every L1 line is also tracked at L2.</html:div>
 </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -160,9 +284,10 @@ L has a dirty copy and wants to write back to H. R concurrently sends a read to 
             <html:ol><html:li><html:strong>Single-writer invariant</html:strong>: at any moment, at most one core has permission to write a given line. No other core can read or write it concurrently.</html:li>
   <html:li><html:strong>Data-value invariant</html:strong>: all cores see the same order of updates to a given line.</html:li></html:ol>
             <html:p>Two organizational families:</html:p>
-            <html:ul><html:li><fr:link href="/8C2H/" title="Snoop-based coherence" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">Snoop-based coherence</fr:link> — every cache watches a shared bus and reacts to other cores' traffic. Scales to ~8 cores.</html:li>
-  <html:li><fr:link href="/KIT8/" title="Directory-based coherence" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">Directory-based coherence</fr:link> — a structure tracks who has a copy of each line; coherence messages are point-to-point. Scales to hundreds of cores at the cost of an extra hop.</html:li></html:ul>
+            <html:ul><html:li><fr:link href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">snoop-based coherence</fr:link> — every cache watches a shared bus and reacts to other cores' traffic. Scales to ~8 cores.</html:li>
+  <html:li><fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory-based coherence</fr:link> — a structure tracks who has a copy of each line; coherence messages are point-to-point. Scales to hundreds of cores at the cost of an extra hop.</html:li></html:ul>
             <html:p>The concrete state machines are protocols like <fr:link href="/EYXU/" title="MSI protocol" uri="https://kellenkanarios.com/EYXU/" display-uri="EYXU" type="local">MSI protocol</fr:link>, <fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link>, <fr:link href="/AI2B/" title="MOESI protocol" uri="https://kellenkanarios.com/AI2B/" display-uri="AI2B" type="local">MOESI protocol</fr:link>, and DEC Firefly, each adding states to handle more cases or to optimize specific sharing patterns. A worked implementation of directory-based MESI in Murphi lives in <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link>.</html:p>
+            <html:p>Worked instance: <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link> implements directory-based MESI in Murphi.</html:p>
           </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -251,51 +376,87 @@ L has a dirty copy and wants to write back to H. R concurrently sends a read to 
       ack: AckCount;  -- tracks InvAck count
     End;]]></html:pre>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 The <html:code>load</html:code>, <html:code>store</html:code>, and <html:code>replacement</html:code> all only alter the states of the coherence protocol for the permanent states. Therefore, to simulate the system it is sufficient to only implement the rules that initiate these state transitions i.e. evict in modified state or load from invalid state.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 <html:strong>Directory controller.</html:strong> Now for the directory controller:
 <html:figure><html:img width="100%" src="/bafkrmiadmfswkegttky27zg2gxvkwag3pt72ur7qam2z6vufr6xlvujqca.png" />
 <html:figcaption /></html:figure>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 We actually end up adding a second transient state to the directory controller <fr:tex display="inline"><![CDATA[M^D]]></fr:tex>. This is to handle the <html:code>PutM</html:code>, <html:code>GetM</html:code> race described below.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 <html:strong>Weird Race Conditions</html:strong>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> 
 When implementing the <html:code>PutM</html:code> rule to downgrade from modified to invalid. We must <html:strong>NOT</html:strong> get rid of the data until we have been acknowledged, so that we can still service forward requests. This is a transition to <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex>. However, we can still receive the <html:code>PutAck</html:code> causing us to transition to <fr:tex display="inline"><![CDATA[I]]></fr:tex> before servicing the <html:code>Fwd-GetM</html:code> request. This is lost data.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 
- 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> 
   We must add a <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> state to the directory controller. In this state, if we get a <html:code>PutM</html:code> request from a node that is not our current owner we stall and wait for data to arrive. For <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> to transition to <fr:tex display="inline"><![CDATA[M]]></fr:tex>, we must send the data back to the directory even though we are doing a three-hop, so that the directory knows the data has also been forwarded to the new owner. It is unclear to me the best way to do this without this state.
-</fr:mainmatter></fr:tree>
- 
+</html:div>
 
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> 
  <html:p>The above solution causes a deadlock, where two processors both store miss and one load misses. The "winning processor" of the store will be the second one. The first one will get the data from the directory transitioning from <fr:tex display="inline"><![CDATA[IM^{AD} \to  IM^{A}]]></fr:tex>, but the second one will then trigger a <html:code>Fwd-GetM</html:code> overwriting the first.</html:p>
 
 <html:p>
 The load miss transitions to <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex>. However, when it receives an <html:code>Inv</html:code> it stalls according to the above figure. This blocks the <html:code>Fwd-GetM</html:code> from reaching the other winning processor because they are on the same VC. Thus, we have a deadlock where the owner never gets the data.
 </html:p>
-</fr:mainmatter></fr:tree>
+</html:div>
 
 
- 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>We need to add another transient state not included in the figure. Namely, we add <fr:tex display="inline"><![CDATA[II^{A}]]></fr:tex> that says we were in <fr:tex display="inline"><![CDATA[IS^{A}]]></fr:tex>, but we got invalidated and now we are waiting for our <html:code>PutAck</html:code> before we transition to <fr:tex display="inline"><![CDATA[I]]></fr:tex>.</fr:mainmatter></fr:tree>
- 
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> We need to add another transient state not included in the figure. Namely, we add <fr:tex display="inline"><![CDATA[II^{A}]]></fr:tex> that says we were in <fr:tex display="inline"><![CDATA[IS^{A}]]></fr:tex>, but we got invalidated and now we are waiting for our <html:code>PutAck</html:code> before we transition to <fr:tex display="inline"><![CDATA[I]]></fr:tex>.</html:div>
 
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 When the home directory is in <fr:tex display="inline"><![CDATA[M]]></fr:tex> and we get a <html:code>GetS</html:code> we cannot clear owner as directed by figure. Otherwise in <fr:tex display="inline"><![CDATA[S^D]]></fr:tex>, we will not be able to tell if the <html:code>PutM</html:code> is from the owner and stall, so we only remove the owner once we have received the data.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 </fr:mainmatter></fr:tree>
 
@@ -311,29 +472,55 @@ Notably, neither of these have to write back on <html:code>PutE</html:code>, but
 </html:p>
 <html:p><html:strong>Design Choice 2.</html:strong> In order to indicate that the directory received the first <html:code>GetS</html:code> we introduce a <html:code>ExclusiveData</html:code> message. Upon receiving, <html:code>ExclusiveData</html:code> in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> we transition to <fr:tex display="inline"><![CDATA[E]]></fr:tex>.</html:p>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 Once we have sent the <html:code>PutE</html:code>, or the <html:code>PutM</html:code> <fr:tex display="inline"><![CDATA[EI^A]]></fr:tex> and <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> are functionally the same. I include both for completeness but verified that transitioning directly to <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> from <fr:tex display="inline"><![CDATA[E]]></fr:tex> works the same.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 <html:p><html:strong>Directory controller.</html:strong> We start with the analagous table.</html:p>
 <html:figure><html:img width="100%" src="/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png" /></html:figure>
 <html:p>Similar to the cache controller, we also add a <fr:tex display="inline"><![CDATA[E^D]]></fr:tex> state for completion that can be absorbed into <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> introduced in the MSI protocol.</html:p>
 <html:p><html:strong>Weird Races.</html:strong></html:p>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>First processor does <html:code>GetS</html:code> and is in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> but the Home directory sends it exclusive data and is now in <fr:tex display="inline"><![CDATA[E]]></fr:tex>. Then second processor does <html:code>GetM</html:code> and Home issues <html:code>Fwd-GetM</html:code> to processor one, which arrives before data.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> First processor does <html:code>GetS</html:code> and is in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> but the Home directory sends it exclusive data and is now in <fr:tex display="inline"><![CDATA[E]]></fr:tex>. Then second processor does <html:code>GetM</html:code> and Home issues <html:code>Fwd-GetM</html:code> to processor one, which arrives before data.</html:div>
 
 
- 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Need to stall on <html:code>Fwd-GetM</html:code> and <html:code>Fwd-GetS</html:code> in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> until data arrives</fr:mainmatter></fr:tree>
- 
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> Need to stall on <html:code>Fwd-GetM</html:code> and <html:code>Fwd-GetS</html:code> in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> until data arrives</html:div>
 
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>An even crazier race happens when we get invalidated before the <html:code>Fwd-GetM</html:code> or <html:code>Fwd-GetS</html:code> arrive. Due to our previous design decision, we transition to <fr:tex display="inline"><![CDATA[II^A]]></fr:tex>, where if we receive a <html:code>PutAck</html:code> we transition to invalid. This then loses the needed forward data.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> An even crazier race happens when we get invalidated before the <html:code>Fwd-GetM</html:code> or <html:code>Fwd-GetS</html:code> arrive. Due to our previous design decision, we transition to <fr:tex display="inline"><![CDATA[II^A]]></fr:tex>, where if we receive a <html:code>PutAck</html:code> we transition to invalid. This then loses the needed forward data.</html:div>
 
 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(60, 90, 180, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(60, 90, 180, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
   The timeline:
   <html:ol><html:li><html:code>Proc_1</html:code> performs a load miss → <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex></html:li>
     <html:li><html:code>Home</html:code> receives first <html:code>GetS</html:code> from <html:code>Proc_1</html:code> → <fr:tex display="inline"><![CDATA[E]]></fr:tex> and sends <html:code>ExclusiveData</html:code> to <html:code>Proc_1</html:code></html:li>
@@ -343,16 +530,18 @@ Once we have sent the <html:code>PutE</html:code>, or the <html:code>PutM</html:
     <html:li><html:code>Proc_1</html:code> receives <html:code>Inv</html:code> → <fr:tex display="inline"><![CDATA[II^D]]></fr:tex></html:li>
     <html:li><html:code>Proc_1</html:code> receives <html:code>ExclusiveData</html:code> → <fr:tex display="inline"><![CDATA[I]]></fr:tex></html:li></html:ol>
   Data is lost
-</fr:mainmatter></fr:tree>
- 
+</html:div>
 
 
- 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> 
   We once again have to use the <html:code>ExclusiveData</html:code> message. We can then see that we got <html:code>ExclusiveData</html:code> in <fr:tex display="inline"><![CDATA[II^D]]></fr:tex> and transition to <fr:tex display="inline"><![CDATA[E]]></fr:tex> instead of <fr:tex display="inline"><![CDATA[I]]></fr:tex>. <fr:tex display="inline"><![CDATA[E]]></fr:tex> will then correctly handle the <html:code>Fwd-GetM</html:code> or <html:code>Fwd-GetS</html:code>.
-</fr:mainmatter></fr:tree>
- 
+</html:div>
 
 
 <html:p>We are left with the following state diagrams for the cache and directory controllers respectively</html:p>

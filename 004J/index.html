@@ -1,6 +1,264 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/004J/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>Word Embeddings</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>Word Embeddings <a class="slug" href="/004J/">[004J]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">February 3, 2025</li></ul></div></header></summary>
+    \[\mathrm {Tok}(\mathbf {x})=\begin {bmatrix} 132\\ 17 \\ 87\\ 83\\ 184\end {bmatrix}\]
+  </details></section><footer xmlns="">
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id3"><summary><header><h1>
+<span class="taxon"></span>Deepseek v1 through R1: RL is back! <a class="slug" href="/003D/">[003D]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">January 27, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">In this blog, we will aim to understand the key contributions of <span xmlns="" class="link local"><a href="/deepseek-aiDeepSeekR1IncentivizingReasoning2025/" title="DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning [deepseek-aiDeepSeekR1IncentivizingReasoning2025]">DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning</a></span>. It will serve as the complement to my group meeting presentation possibly consisting of more in-depth explanations. Time permitting, we might go over the engineering innovations introduced in <span xmlns="" class="link local"><a href="/deepseek-aiDeepSeekV3TechnicalReport2025/" title="DeepSeek-V3 Technical Report [deepseek-aiDeepSeekV3TechnicalReport2025]">DeepSeek-V3 Technical Report</a></span>.</p>
+  <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>Background  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">January 27, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    By request of my advisor, I will cover the basics of LLMs prior to the innovations in the Deepseek lineage. For those familiar with LLMs, please skip this section.
+    <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon"></span>Word Embeddings <a class="slug" href="/004J/">[004J]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">February 3, 2025</li></ul></div></header></summary>\[\mathrm {Tok}(\mathbf {x})=\begin {bmatrix} 132\\ 17 \\ 87\\ 83\\ 184\end {bmatrix}\]</details></section>
+    <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon"></span>Self-Attention <a class="slug" href="/004G/">[004G]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">February 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">
+    TLDR: Learned weighting of token embeddings. Essentially, learning which words to "attend" to in the input sequence. Have matrices
+\(\mathbf {Q} = \begin {bmatrix}
+  \begin {bmatrix}
+    \text {---} &amp; \mathbf {q}^{(1)} &amp; \text {---}
+  \end {bmatrix} \\
+  \vdots  \\
+  \begin {bmatrix}
+    \text {---} &amp; \mathbf {q}^{(n)} &amp; \text {---}
+  \end {bmatrix}
+\end {bmatrix} \in  \mathbb {R}^{n \times  d_q}\), 
+\(
+\mathbf {K} = \begin {bmatrix}
+  \begin {bmatrix}
+    \text {---} &amp; \mathbf {k}^{(1)} &amp; \text {---}
+  \end {bmatrix} \\
+  \vdots  \\
+  \begin {bmatrix}
+    \text {---} &amp; \mathbf {k}^{(n)} &amp; \text {---}
+  \end {bmatrix}
+\end {bmatrix} \in  \mathbb {R}^{n \times  d_k}
+\)
+\(
+\mathbf {V} = \begin {bmatrix}
+  \begin {bmatrix}
+    \text {---} &amp; \mathbf {v}^{(1)} &amp; \text {---}
+  \end {bmatrix} \\
+  \vdots  \\
+  \begin {bmatrix}
+    \text {---} &amp; \mathbf {v}^{(n)} &amp; \text {---}
+  \end {bmatrix}
+\end {bmatrix} \in  \mathbb {R}^{n \times  d_v}
+\)</p><p xmlns="http://www.w3.org/1999/xhtml"><strong>Intuition 1:</strong> Convex re-weighting of input tokens.
+  Note that
+\[
+\begin {align*}
+  \begin {bmatrix}
+    p_1 &amp; p_2 &amp; p_3
+  \end {bmatrix} \begin {bmatrix}
+  \begin {bmatrix}
+    \text {---} &amp; \mathbf {v}^{(1)} &amp; \text {---}
+  \end {bmatrix} \\
+  \begin {bmatrix}
+    \text {---} &amp; \mathbf {v}^{(2)} &amp; \text {---}
+  \end {bmatrix} \\
+  \begin {bmatrix}
+    \text {---} &amp; \mathbf {v}^{(3)} &amp; \text {---}
+  \end {bmatrix}
+  \end {bmatrix} = p_1 \mathbf {v}^{(1)} + p_2 \mathbf {v}^{(2)} + p_3 \mathbf {v}^{(3)}
+\end {align*}
+  \]
+\[
+\begin {align*}
+  \begin {bmatrix}
+    p_{11} &amp; 0 &amp; 0 \\
+    p_{21} &amp; p_{22} &amp; 0 \\
+    p_{31} &amp; p_{32} &amp; p_{33}
+  \end {bmatrix} \begin {bmatrix}
+  \begin {bmatrix}
+    \text {---} &amp; \mathbf {v}^{(1)} &amp; \text {---}
+  \end {bmatrix} \\
+  \begin {bmatrix}
+    \text {---} &amp; \mathbf {v}^{(2)} &amp; \text {---}
+  \end {bmatrix} \\
+  \begin {bmatrix}
+    \text {---} &amp; \mathbf {v}^{(3)} &amp; \text {---}
+  \end {bmatrix}
+  \end {bmatrix} = 
+  \begin {bmatrix}
+  p_{11} \mathbf {v}^{(1)}  \\
+  p_{21} \mathbf {v}^{(1)} + p_{22} \mathbf {v}^{(2)} \\
+  p_{31} \mathbf {v}^{(1)} + p_{32} \mathbf {v}^{(2)} + p_{33} \mathbf {v}^{(3)}
+  \end {bmatrix}
+\end {align*}
+  \]
+  <strong>Intuition 2:</strong> Context dependent re-weighting.
+      If \(\mathbf {p} = \mathbb {S}(\mathbf {Q} \mathbf {K}^T)\) then
+      \[
+        \begin {align*}
+          p_{ij} = \frac {\mathbf {q}^{(i)} \cdot  \mathbf {k}^{(j)}}{\sum _{j} \mathbf {q}^{(i)} \cdot  \mathbf {k}^{(j)}}
+        \end {align*}
+      \]</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
+    Suppose that \(\mathbf {x} = \text {I play with the ball}\). Then 
+\[
+    \begin {align*}
+      \mathbf {x}^{(5)} = \mathrm {Embed}(\text {``ball"})
+    \end {align*}
+  \]
+  A feasible query for "ball" would be a verb describing the action of the ball, so maybe
+  \[
+  \begin {align*}
+      W_q \mathbf {x}^{(5)} = \mathrm {Embed}(\text {``play"})
+  \end {align*}
+  \]
+  and a key for "play" would be what you are playing with like a ball, so 
+  \[
+  \begin {align*}
+      W_k \mathbf {x}^{(2)} = \mathrm {Embed}(\text {``ball"})
+  \end {align*}
+  \]
+  i.e.
+\[
+  \begin {align*}
+    \mathrm {Query}(\text {``quantum"}) \cdot  \mathrm {Key}(\text {``mechanics"}) \approx 
+    ||\mathrm {Query}(\text {``quantum"})|| \cdot  ||\mathrm {Key}(\text {``mechanics"})||
+  \end {align*}
+\]
+
+</div>
+<p xmlns="http://www.w3.org/1999/xhtml">\[
+  \begin {align*}
+\left [\mathbb {S}(\mathbf {Q}\mathbf {K}^T)\right ]_{4} &amp;= \mathbb {S}\left (\begin {bmatrix}
+\mathbf {q}^{(4)} \cdot  \mathbf {k}^{(1)} &amp; \mathbf {q}^{(4)} \cdot  \mathbf {k}^{(2)} &amp; \mathbf {q}^{(4)} \cdot  \mathbf {k}^{(3)} &amp; \mathbf {q}^{(4)} \cdot  \mathbf {k}^{(4)} &amp; \mathbf {q}^{(4)} \cdot  \mathbf {k}^{(5)} &amp; \mathbf {q}^{(4)} \cdot  \mathbf {k}^{(6)}
+\end {bmatrix}
+\right ) \\
+&amp;= \begin {bmatrix}
+0 &amp; 0.2 &amp; 0.3 &amp; 0.5 &amp; 0 &amp; 0
+\end {bmatrix}
+  \end {align*}
+\]
+\[
+\left [\mathbb {S}(\mathbf {Q}\mathbf {K}^T)\right ]_{4} \mathbf {V} = 0.2 \mathbf {v}^{(2)} + 0.3 \mathbf {v}^{(3)} + 0.5 \mathbf {v}^{(5)}
+\]</p></details></section>
+    
+  <section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon"></span><span class="link local"><a href="/003D/" title="Deepseek v1 through R1: RL is back! [003D]">Deepseek v1 through R1: RL is back!</a></span> › RLHF  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">January 27, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+\[\mathrm {loss}\left (\phi \right )=E_{\left (x,y\right )\sim  D_{\pi _{\phi }^{\mathrm {RL}}}}\left [r_\theta (x,y)-\beta \log \left (\pi _{\phi }^{\mathrm {RL}}(y\mid  x)/\pi ^{\mathrm {SFT}}(y\mid  x)\right )\right ] + \gamma  E_{x\sim  D_{\mathrm {pretrain}}}\left [\log (\pi _{\phi }^{\mathrm {RL}}(x))\right ]\]
+      </details></section>
+
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
+<span class="taxon"></span>Deepseek v2  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">January 27, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    Paper 
+  </details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon"></span>Deepseek v3  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">January 27, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id10" open="open"><summary><header><h1>
+<span class="taxon"></span>Deepseek R1  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">January 27, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+
+
+  <section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon"></span><span class="link local"><a href="/003D/" title="Deepseek v1 through R1: RL is back! [003D]">Deepseek v1 through R1: RL is back!</a></span> › How is R1 different then previous iterations of models?  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">January 27, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <ul xmlns="http://www.w3.org/1999/xhtml"><li>In R1-Zero, they do <strong>ZERO</strong> SFT on the base model - directly apply reinforcement learning.</li>
+    <li>Use PPO like policy optimization but do <strong>NOT</strong> learn a reward model.</li>
+    <ul><li>Use very simple reward: 
+        <ul><li>\(+1\) for correct answer</li> 
+          <li>\(-0.5\) for incorrect answer</li> 
+          <li>\(-1\) for inability to answer.</li></ul></li></ul></ul>
+</details></section>
+
+
+<section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
+<span class="taxon"></span>Group Relative Policy Optimization <a class="slug" href="/003X/">[003X]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">January 30, 2025</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Traditional actor critic RL algorithms, require training both an actor and a critic (as the name implies). Typically, these components are both of equal size. In the field of RL, this is non-problematic because models are typically rather small (at least in comparison to LLMs).
+In <span xmlns="" class="link local"><a href="/shaoDeepSeekMathPushingLimits2024/" title="DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models [shaoDeepSeekMathPushingLimits2024]">DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models</a></span></p>
+  <section lang="en" class="block hide-metadata"><details id="id13" open="open"><summary><header><h1>
+<span class="taxon"></span>Math  </h1>
+<div class="metadata"><ul><li class="meta-item">January 30, 2025</li></ul></div></header></summary>
+  \[
+    \begin {align*}
+    {\mathcal {J}}_{\mathrm {GRPO}}(\theta )&amp;= \mathbb {E}[q\sim  P(Q),\{o_{i}\}_{i=1}^{G}\sim \pi _{\theta _{o l d}}(O|q)] \\
+    &amp;= \frac {1}{G}\sum _{i=1}^{G}\left (\operatorname *{min}\left (\frac {\pi _{\theta }(o_{i}|q)}{\pi _{\theta _{o d}}(o_{i}|q)}A_{i},\operatorname *{clip}\left (\frac {\pi _{\theta }(o_{i}|q)}{\pi _{\theta _{o d d}}(o_{i}|q)},1-\varepsilon ,1+\varepsilon \right )A_{i}\right )-\beta \mathbb {D}_{K L}\left (\pi _{\theta }||\pi _{r e f}\right )\right )
+    \end {align*}
+  \]
+  where
+  \[
+        \mathbb {D}_{\mathrm {K L}}\left (\pi _{\theta }||\pi _{\mathrm {ref}}\right )=\frac {\pi _{\mathrm {ref}}(o_{i}|q)}{\pi _{\theta }(o_{i}|q)}-\log \frac {\pi _{\mathrm {ref}}(o_{i}|q)}{\pi _{\theta }(o_{i}|q)}-1
+    \]
+    The astute RL reader will notice this is essentially <span class="link local"><a href="/schulmanProximalPolicyOptimization2017/" title="Proximal Policy Optimization Algorithms [schulmanProximalPolicyOptimization2017]">PPO</a></span>.
+    The key distinction here is that the advantage \(A_i\) is not computed using a critic model. Instead, 
+\[A_{i}=\frac {r_{i}-\mathrm {mean}(\{r_{1},r_{2},\cdots ,r_{G}\})}{\mathrm {std}(\{r_{1},r_{2},\cdots ,r_{G}\})}.\]
+</details></section>
+</details></section>
+
+
+  <section lang="en" class="block hide-metadata"><details id="id14" open="open"><summary><header><h1>
+<span class="taxon"></span><span class="link local"><a href="/003D/" title="Deepseek v1 through R1: RL is back! [003D]">Deepseek v1 through R1: RL is back!</a></span> › Post-training  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">January 27, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    <ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Reinforcement Learning for all Scenarios:</em> Seems like they do RLHF after the pure RL stage.</li>
+        <ul><li>Do traditional helpfulness harmfulness RLHF with trained reward model.</li></ul></ul>
+  </details></section>
+
+
+
+  <section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
+<span class="taxon"></span><span class="link local"><a href="/003D/" title="Deepseek v1 through R1: RL is back! [003D]">Deepseek v1 through R1: RL is back!</a></span> › Distilling Models with R1  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">January 27, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <ul xmlns="http://www.w3.org/1999/xhtml"><li>To distill, they do only SFT with R1 generated COT.</li>
+      <li>They show that distillation outperforms doing pure RL approach on smaller model</li></ul>
+  </details></section>
+
+
+</details></section>
+
+  <hr xmlns="http://www.w3.org/1999/xhtml"></hr>
+<script xmlns="http://www.w3.org/1999/xhtml" src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="deepseek-r1" theme="boxy-light" crossorigin="anonymous" async=""></script></details></section>
+      </details></section>
+    
+    
+    
+  </footer></article></div></body></html>

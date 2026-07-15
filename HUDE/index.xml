@@ -179,51 +179,87 @@
       ack: AckCount;  -- tracks InvAck count
     End;]]></html:pre>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 The <html:code>load</html:code>, <html:code>store</html:code>, and <html:code>replacement</html:code> all only alter the states of the coherence protocol for the permanent states. Therefore, to simulate the system it is sufficient to only implement the rules that initiate these state transitions i.e. evict in modified state or load from invalid state.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 <html:strong>Directory controller.</html:strong> Now for the directory controller:
 <html:figure><html:img width="100%" src="/bafkrmiadmfswkegttky27zg2gxvkwag3pt72ur7qam2z6vufr6xlvujqca.png" />
 <html:figcaption /></html:figure>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 We actually end up adding a second transient state to the directory controller <fr:tex display="inline"><![CDATA[M^D]]></fr:tex>. This is to handle the <html:code>PutM</html:code>, <html:code>GetM</html:code> race described below.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 <html:strong>Weird Race Conditions</html:strong>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> 
 When implementing the <html:code>PutM</html:code> rule to downgrade from modified to invalid. We must <html:strong>NOT</html:strong> get rid of the data until we have been acknowledged, so that we can still service forward requests. This is a transition to <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex>. However, we can still receive the <html:code>PutAck</html:code> causing us to transition to <fr:tex display="inline"><![CDATA[I]]></fr:tex> before servicing the <html:code>Fwd-GetM</html:code> request. This is lost data.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 
- 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> 
   We must add a <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> state to the directory controller. In this state, if we get a <html:code>PutM</html:code> request from a node that is not our current owner we stall and wait for data to arrive. For <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> to transition to <fr:tex display="inline"><![CDATA[M]]></fr:tex>, we must send the data back to the directory even though we are doing a three-hop, so that the directory knows the data has also been forwarded to the new owner. It is unclear to me the best way to do this without this state.
-</fr:mainmatter></fr:tree>
- 
+</html:div>
 
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> 
  <html:p>The above solution causes a deadlock, where two processors both store miss and one load misses. The "winning processor" of the store will be the second one. The first one will get the data from the directory transitioning from <fr:tex display="inline"><![CDATA[IM^{AD} \to  IM^{A}]]></fr:tex>, but the second one will then trigger a <html:code>Fwd-GetM</html:code> overwriting the first.</html:p>
 
 <html:p>
 The load miss transitions to <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex>. However, when it receives an <html:code>Inv</html:code> it stalls according to the above figure. This blocks the <html:code>Fwd-GetM</html:code> from reaching the other winning processor because they are on the same VC. Thus, we have a deadlock where the owner never gets the data.
 </html:p>
-</fr:mainmatter></fr:tree>
+</html:div>
 
 
- 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>We need to add another transient state not included in the figure. Namely, we add <fr:tex display="inline"><![CDATA[II^{A}]]></fr:tex> that says we were in <fr:tex display="inline"><![CDATA[IS^{A}]]></fr:tex>, but we got invalidated and now we are waiting for our <html:code>PutAck</html:code> before we transition to <fr:tex display="inline"><![CDATA[I]]></fr:tex>.</fr:mainmatter></fr:tree>
- 
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> We need to add another transient state not included in the figure. Namely, we add <fr:tex display="inline"><![CDATA[II^{A}]]></fr:tex> that says we were in <fr:tex display="inline"><![CDATA[IS^{A}]]></fr:tex>, but we got invalidated and now we are waiting for our <html:code>PutAck</html:code> before we transition to <fr:tex display="inline"><![CDATA[I]]></fr:tex>.</html:div>
 
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 When the home directory is in <fr:tex display="inline"><![CDATA[M]]></fr:tex> and we get a <html:code>GetS</html:code> we cannot clear owner as directed by figure. Otherwise in <fr:tex display="inline"><![CDATA[S^D]]></fr:tex>, we will not be able to tell if the <html:code>PutM</html:code> is from the owner and stall, so we only remove the owner once we have received the data.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 </fr:mainmatter></fr:tree>
 
@@ -239,29 +275,55 @@ Notably, neither of these have to write back on <html:code>PutE</html:code>, but
 </html:p>
 <html:p><html:strong>Design Choice 2.</html:strong> In order to indicate that the directory received the first <html:code>GetS</html:code> we introduce a <html:code>ExclusiveData</html:code> message. Upon receiving, <html:code>ExclusiveData</html:code> in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> we transition to <fr:tex display="inline"><![CDATA[E]]></fr:tex>.</html:p>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 Once we have sent the <html:code>PutE</html:code>, or the <html:code>PutM</html:code> <fr:tex display="inline"><![CDATA[EI^A]]></fr:tex> and <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> are functionally the same. I include both for completeness but verified that transitioning directly to <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> from <fr:tex display="inline"><![CDATA[E]]></fr:tex> works the same.
-</fr:mainmatter></fr:tree>
+</html:div>
 
 <html:p><html:strong>Directory controller.</html:strong> We start with the analagous table.</html:p>
 <html:figure><html:img width="100%" src="/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png" /></html:figure>
 <html:p>Similar to the cache controller, we also add a <fr:tex display="inline"><![CDATA[E^D]]></fr:tex> state for completion that can be absorbed into <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> introduced in the MSI protocol.</html:p>
 <html:p><html:strong>Weird Races.</html:strong></html:p>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>First processor does <html:code>GetS</html:code> and is in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> but the Home directory sends it exclusive data and is now in <fr:tex display="inline"><![CDATA[E]]></fr:tex>. Then second processor does <html:code>GetM</html:code> and Home issues <html:code>Fwd-GetM</html:code> to processor one, which arrives before data.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> First processor does <html:code>GetS</html:code> and is in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> but the Home directory sends it exclusive data and is now in <fr:tex display="inline"><![CDATA[E]]></fr:tex>. Then second processor does <html:code>GetM</html:code> and Home issues <html:code>Fwd-GetM</html:code> to processor one, which arrives before data.</html:div>
 
 
- 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Need to stall on <html:code>Fwd-GetM</html:code> and <html:code>Fwd-GetS</html:code> in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> until data arrives</fr:mainmatter></fr:tree>
- 
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> Need to stall on <html:code>Fwd-GetM</html:code> and <html:code>Fwd-GetS</html:code> in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> until data arrives</html:div>
 
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>An even crazier race happens when we get invalidated before the <html:code>Fwd-GetM</html:code> or <html:code>Fwd-GetS</html:code> arrive. Due to our previous design decision, we transition to <fr:tex display="inline"><![CDATA[II^A]]></fr:tex>, where if we receive a <html:code>PutAck</html:code> we transition to invalid. This then loses the needed forward data.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> An even crazier race happens when we get invalidated before the <html:code>Fwd-GetM</html:code> or <html:code>Fwd-GetS</html:code> arrive. Due to our previous design decision, we transition to <fr:tex display="inline"><![CDATA[II^A]]></fr:tex>, where if we receive a <html:code>PutAck</html:code> we transition to invalid. This then loses the needed forward data.</html:div>
 
 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(60, 90, 180, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(60, 90, 180, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
   The timeline:
   <html:ol><html:li><html:code>Proc_1</html:code> performs a load miss → <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex></html:li>
     <html:li><html:code>Home</html:code> receives first <html:code>GetS</html:code> from <html:code>Proc_1</html:code> → <fr:tex display="inline"><![CDATA[E]]></fr:tex> and sends <html:code>ExclusiveData</html:code> to <html:code>Proc_1</html:code></html:li>
@@ -271,16 +333,18 @@ Once we have sent the <html:code>PutE</html:code>, or the <html:code>PutM</html:
     <html:li><html:code>Proc_1</html:code> receives <html:code>Inv</html:code> → <fr:tex display="inline"><![CDATA[II^D]]></fr:tex></html:li>
     <html:li><html:code>Proc_1</html:code> receives <html:code>ExclusiveData</html:code> → <fr:tex display="inline"><![CDATA[I]]></fr:tex></html:li></html:ol>
   Data is lost
-</fr:mainmatter></fr:tree>
- 
+</html:div>
 
 
- 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> 
   We once again have to use the <html:code>ExclusiveData</html:code> message. We can then see that we got <html:code>ExclusiveData</html:code> in <fr:tex display="inline"><![CDATA[II^D]]></fr:tex> and transition to <fr:tex display="inline"><![CDATA[E]]></fr:tex> instead of <fr:tex display="inline"><![CDATA[I]]></fr:tex>. <fr:tex display="inline"><![CDATA[E]]></fr:tex> will then correctly handle the <html:code>Fwd-GetM</html:code> or <html:code>Fwd-GetS</html:code>.
-</fr:mainmatter></fr:tree>
- 
+</html:div>
 
 
 <html:p>We are left with the following state diagrams for the cache and directory controllers respectively</html:p>

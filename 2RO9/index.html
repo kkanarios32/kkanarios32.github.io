@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>What false dependencies does register renaming eliminate?</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Card"><details id="id1"><summary><header><h1>
+<span class="taxon">Card. </span>What false dependencies does register renaming eliminate? <a class="slug" href="/2RO9/">[2RO9]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 11, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    <p xmlns="http://www.w3.org/1999/xhtml">Write-after-write (\(\mathrm {WAW}\)) and write-after-read (\(\mathrm {WAR}\)) hazards — the <em>false</em> dependencies that arise from reusing an architectural register, not from real data flow. Removing them exposes more <span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">Register renaming breaks false dependencies</a></span> to the scheduler.</p>
+  </details></section><footer xmlns="">
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id3"><summary><header><h1>
+<span class="taxon"></span>Register renaming breaks false dependencies <a class="slug" href="/5CT9/">[5CT9]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
+</address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Register renaming is the <span xmlns="" class="link local"><a href="/ITFA/" title="Data hazards stall when an instruction needs a not-yet-written value [ITFA]">data hazard</a></span> mitigation that makes out-of-order execution viable: the hardware dynamically remaps each architectural-register <em>write</em> to a fresh physical register from a larger pool, so two instructions that reuse the same architectural name for <em>independent</em> values never collide. The false data dependency — same architectural register, unrelated values — simply disappears, because each write lands in a different physical register.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> Consider:
+<pre>add r1, r2, r3      // r2 := r1 + r3
+add r4, r5, r2      // r2 := r4 + r5   (reuses r2 for an independent value)</pre>
+The second <code>add</code> only depends on <code>r2</code> as a <em>destination</em>, not as a source. Without renaming, it would have to wait for the first instruction's writeback to avoid clobbering. With renaming, the second write goes to a fresh physical register, and the two instructions can proceed in parallel.</div>
+<p xmlns="http://www.w3.org/1999/xhtml">The programming model exposes only the architecturally-named registers; the <span xmlns="" class="link local"><a href="/ETWN/" title="Register file [ETWN]">Register file</a></span> hides a larger pool of rename registers underneath. This is one of the central tricks that makes out-of-order execution viable.</p></details></section>
+      </details></section>
+    
+    <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id5"><summary><header><h1>
+<span class="taxon"></span>Register renaming breaks false dependencies <a class="slug" href="/5CT9/">[5CT9]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
+</address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Register renaming is the <span xmlns="" class="link local"><a href="/ITFA/" title="Data hazards stall when an instruction needs a not-yet-written value [ITFA]">data hazard</a></span> mitigation that makes out-of-order execution viable: the hardware dynamically remaps each architectural-register <em>write</em> to a fresh physical register from a larger pool, so two instructions that reuse the same architectural name for <em>independent</em> values never collide. The false data dependency — same architectural register, unrelated values — simply disappears, because each write lands in a different physical register.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> Consider:
+<pre>add r1, r2, r3      // r2 := r1 + r3
+add r4, r5, r2      // r2 := r4 + r5   (reuses r2 for an independent value)</pre>
+The second <code>add</code> only depends on <code>r2</code> as a <em>destination</em>, not as a source. Without renaming, it would have to wait for the first instruction's writeback to avoid clobbering. With renaming, the second write goes to a fresh physical register, and the two instructions can proceed in parallel.</div>
+<p xmlns="http://www.w3.org/1999/xhtml">The programming model exposes only the architecturally-named registers; the <span xmlns="" class="link local"><a href="/ETWN/" title="Register file [ETWN]">Register file</a></span> hides a larger pool of rename registers underneath. This is one of the central tricks that makes out-of-order execution viable.</p></details></section>
+      </details></section>
+    
+  </footer></article></div></body></html>

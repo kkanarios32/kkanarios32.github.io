@@ -1,6 +1,357 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/16TG/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>Concurrency Intro</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>Concurrency Intro <a class="slug" href="/16TG/">[16TG]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">August 16, 2025</li></ul></div></header></summary>
+    <p xmlns="http://www.w3.org/1999/xhtml">Concurrency comes from sharing: multiple <span xmlns="" class="link local"><a href="/63U3/" title="Thread [63U3]">Thread</a></span>s within a single process share the address space, which is what makes them cheap to spawn and to communicate between, and is also what makes them dangerous. When threads interleave on a shared variable, you get a <span xmlns="" class="link local"><a href="/VOQN/" title="Race condition [VOQN]">Race condition</a></span>. The fragile region is the <span xmlns="" class="link local"><a href="/KG2K/" title="Critical section [KG2K]">Critical section</a></span>, protected by synchronization primitives like <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span> and <span xmlns="" class="link local"><a href="/9QUX/" title="Barriers [9QUX]">Barriers</a></span>.</p>
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon">1. </span>Thread <a class="slug" href="/63U3/">[63U3]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An independent unit of execution within a <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>. Each thread has its own program counter, register set, and stack — but shares the surrounding address space, file descriptors, and other process-level resources with its siblings.</p><p xmlns="http://www.w3.org/1999/xhtml">To support a <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switch</a></span> between threads, the OS keeps a <em>thread control block</em> (TCB) per thread — the per-thread analog of <span xmlns="" class="link local"><a href="/JE53/" title="Process control block [JE53]">Process control block</a></span>. Each thread also gets its own stack within the process's address space.</p><p xmlns="http://www.w3.org/1999/xhtml">Why threads instead of processes:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><em>Intra-process parallelism</em>: parallelizable work within one program, without paying the <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switch</a></span> cost of separate processes.</li>
+  <li><em>Avoiding blocking I/O</em>: one thread blocks waiting on I/O while others keep running.</li></ol>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Sharing an <span xmlns="" class="link local"><a href="/7MH4/" title="Address space [7MH4]">address space</a></span> is exactly what makes threads cheap to communicate between and exactly what makes them dangerous — see <span xmlns="" class="link local"><a href="/VOQN/" title="Race condition [VOQN]">Race condition</a></span> and <span xmlns="" class="link local"><a href="/KG2K/" title="Critical section [KG2K]">Critical section</a></span>.</div>
+</details></section>
+    <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon">2. </span>Race condition <a class="slug" href="/VOQN/">[VOQN]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+        <p xmlns="http://www.w3.org/1999/xhtml">When the correctness of a program depends on the order in which concurrent <span xmlns="" class="link local"><a href="/63U3/" title="Thread [63U3]">Thread</a></span>s schedule, you have a race condition. The classic example: two threads each execute</p>
+        <pre xmlns="http://www.w3.org/1999/xhtml">mov addr reg     // load
+add 1 reg        // increment
+mov reg addr     // store</pre>
+        <p xmlns="http://www.w3.org/1999/xhtml">intending to increment a shared variable twice. If the OS interleaves the threads at the wrong instruction boundary:</p>
+        <ol xmlns="http://www.w3.org/1999/xhtml"><li>Thread 1 stores its incremented value.</li>
+  <li>Thread 2 stores its incremented value.</li>
+  <li>Thread 1 increments (in its register).</li>
+  <li>Thread 2 increments (in its register).</li></ol>
+        <p xmlns="http://www.w3.org/1999/xhtml">The result is a single increment, not two — both threads loaded the same starting value and the second store clobbered the first.</p>
+        <p xmlns="http://www.w3.org/1999/xhtml">The fix is to prevent interleaving inside the code region that touches shared state — the <span xmlns="" class="link local"><a href="/KG2K/" title="Critical section [KG2K]">Critical section</a></span> — using a synchronization primitive like <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span>.</p>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon">3. </span>Critical section <a class="slug" href="/KG2K/">[KG2K]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+        <p xmlns="http://www.w3.org/1999/xhtml">A region of code that accesses shared state in a way that is incorrect if more than one <span xmlns="" class="link local"><a href="/63U3/" title="Thread [63U3]">Thread</a></span> executes it concurrently. Critical sections are exactly the regions that need protection by a synchronization primitive: a <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span> excludes other threads while one is inside; a <span xmlns="" class="link local"><a href="/9QUX/" title="Barriers [9QUX]">Barriers</a></span> forces all threads to reach the same point before any may continue.</p>
+        <p xmlns="http://www.w3.org/1999/xhtml">The art of writing correct concurrent code is to identify critical sections and protect them — without making them so large that you lose all parallelism.</p>
+      </details></section>
+  </details></section><footer xmlns="">
+    
+    <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id6"><summary><header><h1>
+<span class="taxon"></span>Concurrency <a class="slug" href="/5P43/">[5P43]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">August 16, 2025</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Threads, the hazards that come with sharing state between them, and the primitives that make sharing safe.</p>
+  <section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon"></span>Threads and shared state  </h1>
+<div class="metadata"><ul><li class="meta-item">August 16, 2025</li></ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
+<span class="taxon"></span>Concurrency Intro <a class="slug" href="/16TG/">[16TG]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">August 16, 2025</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Concurrency comes from sharing: multiple <span xmlns="" class="link local"><a href="/63U3/" title="Thread [63U3]">Thread</a></span>s within a single process share the address space, which is what makes them cheap to spawn and to communicate between, and is also what makes them dangerous. When threads interleave on a shared variable, you get a <span xmlns="" class="link local"><a href="/VOQN/" title="Race condition [VOQN]">Race condition</a></span>. The fragile region is the <span xmlns="" class="link local"><a href="/KG2K/" title="Critical section [KG2K]">Critical section</a></span>, protected by synchronization primitives like <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span> and <span xmlns="" class="link local"><a href="/9QUX/" title="Barriers [9QUX]">Barriers</a></span>.</p><section lang="en" class="block hide-metadata"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon"></span>Thread <a class="slug" href="/63U3/">[63U3]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An independent unit of execution within a <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>. Each thread has its own program counter, register set, and stack — but shares the surrounding address space, file descriptors, and other process-level resources with its siblings.</p><p xmlns="http://www.w3.org/1999/xhtml">To support a <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switch</a></span> between threads, the OS keeps a <em>thread control block</em> (TCB) per thread — the per-thread analog of <span xmlns="" class="link local"><a href="/JE53/" title="Process control block [JE53]">Process control block</a></span>. Each thread also gets its own stack within the process's address space.</p><p xmlns="http://www.w3.org/1999/xhtml">Why threads instead of processes:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><em>Intra-process parallelism</em>: parallelizable work within one program, without paying the <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switch</a></span> cost of separate processes.</li>
+  <li><em>Avoiding blocking I/O</em>: one thread blocks waiting on I/O while others keep running.</li></ol>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Sharing an <span xmlns="" class="link local"><a href="/7MH4/" title="Address space [7MH4]">address space</a></span> is exactly what makes threads cheap to communicate between and exactly what makes them dangerous — see <span xmlns="" class="link local"><a href="/VOQN/" title="Race condition [VOQN]">Race condition</a></span> and <span xmlns="" class="link local"><a href="/KG2K/" title="Critical section [KG2K]">Critical section</a></span>.</div>
+</details></section><section lang="en" class="block hide-metadata"><details id="id10" open="open"><summary><header><h1>
+<span class="taxon"></span>Race condition <a class="slug" href="/VOQN/">[VOQN]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">When the correctness of a program depends on the order in which concurrent <span xmlns="" class="link local"><a href="/63U3/" title="Thread [63U3]">Thread</a></span>s schedule, you have a race condition. The classic example: two threads each execute</p><pre xmlns="http://www.w3.org/1999/xhtml">mov addr reg     // load
+add 1 reg        // increment
+mov reg addr     // store</pre><p xmlns="http://www.w3.org/1999/xhtml">intending to increment a shared variable twice. If the OS interleaves the threads at the wrong instruction boundary:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Thread 1 stores its incremented value.</li>
+  <li>Thread 2 stores its incremented value.</li>
+  <li>Thread 1 increments (in its register).</li>
+  <li>Thread 2 increments (in its register).</li></ol><p xmlns="http://www.w3.org/1999/xhtml">The result is a single increment, not two — both threads loaded the same starting value and the second store clobbered the first.</p><p xmlns="http://www.w3.org/1999/xhtml">The fix is to prevent interleaving inside the code region that touches shared state — the <span xmlns="" class="link local"><a href="/KG2K/" title="Critical section [KG2K]">Critical section</a></span> — using a synchronization primitive like <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span>.</p></details></section><section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon"></span>Critical section <a class="slug" href="/KG2K/">[KG2K]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A region of code that accesses shared state in a way that is incorrect if more than one <span xmlns="" class="link local"><a href="/63U3/" title="Thread [63U3]">Thread</a></span> executes it concurrently. Critical sections are exactly the regions that need protection by a synchronization primitive: a <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span> excludes other threads while one is inside; a <span xmlns="" class="link local"><a href="/9QUX/" title="Barriers [9QUX]">Barriers</a></span> forces all threads to reach the same point before any may continue.</p><p xmlns="http://www.w3.org/1999/xhtml">The art of writing correct concurrent code is to identify critical sections and protect them — without making them so large that you lose all parallelism.</p></details></section></details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
+<span class="taxon"></span>Synchronization primitives  </h1>
+<div class="metadata"><ul><li class="meta-item">August 16, 2025</li></ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id13" open="open"><summary><header><h1>
+<span class="taxon"></span>Locks <a class="slug" href="/Q2DT/">[Q2DT]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">March 9, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A lock is a synchronization primitive that grants mutually exclusive access to a critical section. The implementations below trade off coherence traffic, fairness, and memory in different ways. The naive locks (<span xmlns="" class="link local"><a href="/MJ5L/" title="Test-and-set lock [MJ5L]">Test-and-set lock</a></span> and <span xmlns="" class="link local"><a href="/PXY9/" title="Test-and-test-and-set lock [PXY9]">Test-and-test-and-set lock</a></span>) are simple but generate \(O(n)\) coherence traffic per release; queue-based locks (<span xmlns="" class="link local"><a href="/V7KP/" title="Ticket lock [V7KP]">Ticket lock</a></span>, <span xmlns="" class="link local"><a href="/BJ7N/" title="Array-based lock [BJ7N]">Array-based lock</a></span>, <span xmlns="" class="link local"><a href="/IN64/" title="MCS lock [IN64]">MCS lock</a></span>) scale better at the cost of extra state per waiter.</p><section lang="en" class="block hide-metadata"><details id="id14" open="open"><summary><header><h1>
+<span class="taxon"></span>Test-and-set lock <a class="slug" href="/MJ5L/">[MJ5L]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The simplest spin lock. The acquire loop spins on an atomic <code>test_and_set</code>: it writes <code>LOCKED</code> and reads the previous value in one step. If the previous value was <code>UNLOCKED</code>, the caller has the lock; otherwise it tries again.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+  while (true):
+    // Perform "test-and-set"
+    // UNLOCKED = 0, LOCKED = 1
+    test_and_set(old, lock_ptr)
+    if (old == UNLOCKED):
+      break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] &lt;- UNLOCKED</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <code>test_and_set</code>, so contention scales badly with the number of waiters.</div>
+</details></section><section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
+<span class="taxon"></span>Test-and-test-and-set lock <a class="slug" href="/PXY9/">[PXY9]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A refinement of the <span xmlns="" class="link local"><a href="/MJ5L/" title="Test-and-set lock [MJ5L]">Test-and-set lock</a></span> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <code>test_and_set</code> when it does. Spinning is then read-only, so cores can share the cache line.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+  while (true):
+    // Perform "test"
+    load [lock_ptr] -&gt; original_value
+    if (original_value == UNLOCKED):
+      // Perform "test-and-set"
+      test_and_set(old, lock_ptr)
+      if (old == UNLOCKED):
+        break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] &lt;- UNLOCKED</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Spinning is a read-only operation now.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> When the lock is released, the line must be invalidated on every waiter, and they all simultaneously read and try to write. The contention is shifted from steady state to release time but is still \(O(n)\) in the number of waiters.</div>
+</details></section><section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
+<span class="taxon"></span>Ticket lock <a class="slug" href="/V7KP/">[V7KP]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <code>next_ticket</code> and then spins until <code>now_serving</code> equals its ticket. Release simply increments <code>now_serving</code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+  my_ticket = fetch_and_increment(lock_ptr-&gt;next_ticket)
+  while (lock_ptr-&gt;now_serving != my_ticket); // spin
+
+release(lock_ptr):
+  lock_ptr-&gt;now_serving = lock_ptr-&gt;now_serving + 1</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Still \(O(n)\) coherence traffic on release: incrementing <code>now_serving</code> invalidates the line on every waiter, and they all reload it to recheck their ticket.</div>
+</details></section><section lang="en" class="block hide-metadata"><details id="id17" open="open"><summary><header><h1>
+<span class="taxon"></span>Array-based lock <a class="slug" href="/BJ7N/">[BJ7N]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Each waiter is assigned its own slot in an array and spins only on that slot. Release just flips the next slot to "go-ahead", so the cache line touched by release is the one read by exactly one other thread. Coherence traffic per release is constant rather than \(O(n)\), at the cost of one slot per waiter.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Give each waiter its own "slot" to wait on.</li>
+  <li>Only need to set the next slot to "go-ahead" on release.</li>
+  <li>Constant coherence traffic.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> \(O(n)\) memory for the lock array, and padding each slot to \(64\)b (one cache line) to avoid false sharing makes that cost real.</div>
+</details></section><section lang="en" class="block hide-metadata"><details id="id18" open="open"><summary><header><h1>
+<span class="taxon"></span>MCS lock <a class="slug" href="/IN64/">[IN64]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A scalable, list-based queue lock. The lock variable is a pointer to the tail of a linked list of per-thread nodes. Each thread enqueues its own node and spins on a flag in its own cache line. The releaser wakes only its direct successor, so coherence traffic per handoff is constant and memory cost is proportional only to threads currently waiting, not to the lock's fanout.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock):
+  I-&gt;next = null
+  predecessor = fetch_and_store(lock, I)
+  if predecessor != nil:                   // some node holds the lock
+    I-&gt;must_wait = true
+    predecessor-&gt;next = I                  // predecessor must wake us
+    repeat while I-&gt;must_wait              // spin till lock is free
+
+release(lock):
+  if (I-&gt;next == null):                    // no known successor
+    if compare_and_swap(lock, I, nil):     // make sure...
+      return                               // CAS succeeded; lock freed
+    repeat while I-&gt;next == nil            // spin to learn successor
+  I-&gt;next-&gt;must_wait = false               // wake successor</pre></details></section></details></section>
+<section lang="en" class="block hide-metadata"><details id="id19" open="open"><summary><header><h1>
+<span class="taxon"></span>Barriers <a class="slug" href="/9QUX/">[9QUX]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A barrier holds threads at a synchronization point until all \(P\) participants have arrived, then releases them simultaneously. The naive implementation uses a shared counter that each arriving thread decrements; the last arrival resets the counter and the rest spin until it returns to \(P\).</p><section lang="en" class="block hide-metadata"><details id="id20" open="open"><summary><header><h1>
+<span class="taxon"></span>Naive central barrier  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><pre xmlns="http://www.w3.org/1999/xhtml">global (shared) count : integer := P
+
+procedure central_barrier
+  if fetch_and_decrement(&amp;count) == 1
+    count := P
+  else
+    repeat until count == P</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> When <code>count == P</code>, a fast thread can reach the next barrier and decrement <code>count</code> again before the slow threads observe the reset. The slow threads then spin forever waiting for a value that has already passed.</div>
+</details></section><section lang="en" class="block hide-metadata"><details id="id21" open="open"><summary><header><h1>
+<span class="taxon"></span>Sense-reversing barrier  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The fix is to give each thread a private <code>local_sense</code> that flips on each barrier. The global <code>sense</code> flag is flipped by the last arrival, and waiters spin on <code>sense == local_sense</code>, so a fresh barrier cannot be confused with a stale one.</p><pre xmlns="http://www.w3.org/1999/xhtml">global (shared) count : integer := P
+global (shared) sense : bool := true
+global (private) local_sense : bool := false
+
+procedure central_barrier
+  local_sense = !local_sense
+  if fetch_and_decrement(&amp;count) == 1
+    count := P
+    sense = local_sense
+  else
+    repeat until sense == local_sense</pre></details></section></details></section>
+</details></section>
+</details></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id22" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id23"><summary><header><h1>
+<span class="taxon"></span>Process control block <a class="slug" href="/JE53/">[JE53]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The kernel-side data structure holding all per-process state. There is one PCB per <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>, threaded together into the <em>process list</em>. The PCB is what the OS reads and writes during a <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">Context switch</a></span>: the saved register set lives here, as does the process state, the open files, the parent pointer, and so on.</p><p xmlns="http://www.w3.org/1999/xhtml">An example from <code>xv6</code>:</p><pre xmlns="http://www.w3.org/1999/xhtml">// the registers xv6 will save and restore
+// to stop and subsequently restart a process
+struct context {
+  int eip;
+  int esp;
+  int ebx;
+  int ecx;
+  int edx;
+  int esi;
+  int edi;
+  int ebp;
+};
+// the different states a process can be in
+enum proc_state { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+// the information xv6 tracks about each process
+// including its register context and state
+struct proc {
+  char *mem;                 // Start of process memory
+  uint sz;                   // Size of process memory
+  char *kstack;              // Bottom of kernel stack for this process
+  enum proc_state state;     // Process state
+  int pid;                   // Process ID
+  struct proc *parent;       // Parent process
+  void *chan;                // If non-zero, sleeping on chan
+  int killed;                // If non-zero, have been killed
+  struct file *ofile[NOFILE]; // Open files
+  struct inode *cwd;         // Current directory
+  struct context context;    // Switch here to run process
+  struct trapframe *tf;      // Trap frame for the current interrupt
+};</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> <span xmlns="" class="link local"><a href="/63U3/" title="Thread [63U3]">Thread</a></span>s need an analogous <em>thread control block</em>; see <span xmlns="" class="link local"><a href="/16TG/" title="Concurrency Intro [16TG]">Concurrency Intro</a></span>.</div>
+</details></section>
+        <section lang="en" class="block"><details id="id24"><summary><header><h1>
+<span class="taxon"></span>Process <a class="slug" href="/FCHM/">[FCHM]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A running program, plus all the state the OS needs to pause it and resume it later. A process consists of:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>Memory</strong>: an <span xmlns="" class="link local"><a href="/7MH4/" title="Address space [7MH4]">Address space</a></span> holding the program's code, stack, and heap.</li>
+  <li><strong>Registers</strong>: general-purpose registers carrying current computation, plus special-purpose registers:</li>
+  <ul><li><strong>Program counter (PC)</strong>: the next instruction to run.</li>
+    <li><strong>Stack pointer and frame pointer</strong>: where the process sits on its stack.</li></ul></ol><p xmlns="http://www.w3.org/1999/xhtml">A process moves between three <strong>states</strong>:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>running</em>: currently on a CPU.</li>
+  <li><em>ready</em>: runnable, waiting for the <span xmlns="" class="link local"><a href="/B8GC/" title="Scheduling [B8GC]">Scheduling</a></span> to give it a CPU.</li>
+  <li><em>blocked</em>: waiting on I/O or another event, not runnable.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Threads (see <span xmlns="" class="link local"><a href="/16TG/" title="Concurrency Intro [16TG]">Concurrency Intro</a></span>) share an address space within a process but each have their own PC, register set, and stack.</div>
+</details></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id25" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id26"><summary><header><h1>
+<span class="taxon"></span>Critical section <a class="slug" href="/KG2K/">[KG2K]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">A region of code that accesses shared state in a way that is incorrect if more than one <span xmlns="" class="link local"><a href="/63U3/" title="Thread [63U3]">Thread</a></span> executes it concurrently. Critical sections are exactly the regions that need protection by a synchronization primitive: a <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span> excludes other threads while one is inside; a <span xmlns="" class="link local"><a href="/9QUX/" title="Barriers [9QUX]">Barriers</a></span> forces all threads to reach the same point before any may continue.</p>
+            <p xmlns="http://www.w3.org/1999/xhtml">The art of writing correct concurrent code is to identify critical sections and protect them — without making them so large that you lose all parallelism.</p>
+          </details></section>
+        <section lang="en" class="block"><details id="id27"><summary><header><h1>
+<span class="taxon"></span>Race condition <a class="slug" href="/VOQN/">[VOQN]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">When the correctness of a program depends on the order in which concurrent <span xmlns="" class="link local"><a href="/63U3/" title="Thread [63U3]">Thread</a></span>s schedule, you have a race condition. The classic example: two threads each execute</p>
+            <pre xmlns="http://www.w3.org/1999/xhtml">mov addr reg     // load
+add 1 reg        // increment
+mov reg addr     // store</pre>
+            <p xmlns="http://www.w3.org/1999/xhtml">intending to increment a shared variable twice. If the OS interleaves the threads at the wrong instruction boundary:</p>
+            <ol xmlns="http://www.w3.org/1999/xhtml"><li>Thread 1 stores its incremented value.</li>
+  <li>Thread 2 stores its incremented value.</li>
+  <li>Thread 1 increments (in its register).</li>
+  <li>Thread 2 increments (in its register).</li></ol>
+            <p xmlns="http://www.w3.org/1999/xhtml">The result is a single increment, not two — both threads loaded the same starting value and the second store clobbered the first.</p>
+            <p xmlns="http://www.w3.org/1999/xhtml">The fix is to prevent interleaving inside the code region that touches shared state — the <span xmlns="" class="link local"><a href="/KG2K/" title="Critical section [KG2K]">Critical section</a></span> — using a synchronization primitive like <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span>.</p>
+          </details></section>
+        <section lang="en" class="block"><details id="id28"><summary><header><h1>
+<span class="taxon"></span>Thread <a class="slug" href="/63U3/">[63U3]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An independent unit of execution within a <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>. Each thread has its own program counter, register set, and stack — but shares the surrounding address space, file descriptors, and other process-level resources with its siblings.</p><p xmlns="http://www.w3.org/1999/xhtml">To support a <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switch</a></span> between threads, the OS keeps a <em>thread control block</em> (TCB) per thread — the per-thread analog of <span xmlns="" class="link local"><a href="/JE53/" title="Process control block [JE53]">Process control block</a></span>. Each thread also gets its own stack within the process's address space.</p><p xmlns="http://www.w3.org/1999/xhtml">Why threads instead of processes:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><em>Intra-process parallelism</em>: parallelizable work within one program, without paying the <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switch</a></span> cost of separate processes.</li>
+  <li><em>Avoiding blocking I/O</em>: one thread blocks waiting on I/O while others keep running.</li></ol>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Sharing an <span xmlns="" class="link local"><a href="/7MH4/" title="Address space [7MH4]">address space</a></span> is exactly what makes threads cheap to communicate between and exactly what makes them dangerous — see <span xmlns="" class="link local"><a href="/VOQN/" title="Race condition [VOQN]">Race condition</a></span> and <span xmlns="" class="link local"><a href="/KG2K/" title="Critical section [KG2K]">Critical section</a></span>.</div>
+</details></section>
+        <section lang="en" class="block"><details id="id29"><summary><header><h1>
+<span class="taxon"></span>Barriers <a class="slug" href="/9QUX/">[9QUX]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">A barrier holds threads at a synchronization point until all \(P\) participants have arrived, then releases them simultaneously. The naive implementation uses a shared counter that each arriving thread decrements; the last arrival resets the counter and the rest spin until it returns to \(P\).</p>
+            <section lang="en" class="block hide-metadata"><details id="id30" open="open"><summary><header><h1>
+<span class="taxon"></span>Naive central barrier  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><pre xmlns="http://www.w3.org/1999/xhtml">global (shared) count : integer := P
+
+procedure central_barrier
+  if fetch_and_decrement(&amp;count) == 1
+    count := P
+  else
+    repeat until count == P</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> When <code>count == P</code>, a fast thread can reach the next barrier and decrement <code>count</code> again before the slow threads observe the reset. The slow threads then spin forever waiting for a value that has already passed.</div>
+</details></section>
+            <section lang="en" class="block hide-metadata"><details id="id31" open="open"><summary><header><h1>
+<span class="taxon"></span>Sense-reversing barrier  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+                <p xmlns="http://www.w3.org/1999/xhtml">The fix is to give each thread a private <code>local_sense</code> that flips on each barrier. The global <code>sense</code> flag is flipped by the last arrival, and waiters spin on <code>sense == local_sense</code>, so a fresh barrier cannot be confused with a stale one.</p>
+                <pre xmlns="http://www.w3.org/1999/xhtml">global (shared) count : integer := P
+global (shared) sense : bool := true
+global (private) local_sense : bool := false
+
+procedure central_barrier
+  local_sense = !local_sense
+  if fetch_and_decrement(&amp;count) == 1
+    count := P
+    sense = local_sense
+  else
+    repeat until sense == local_sense</pre>
+              </details></section>
+          </details></section>
+        <section lang="en" class="block"><details id="id32"><summary><header><h1>
+<span class="taxon"></span>Locks <a class="slug" href="/Q2DT/">[Q2DT]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">March 9, 2026</li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">A lock is a synchronization primitive that grants mutually exclusive access to a critical section. The implementations below trade off coherence traffic, fairness, and memory in different ways. The naive locks (<span xmlns="" class="link local"><a href="/MJ5L/" title="Test-and-set lock [MJ5L]">Test-and-set lock</a></span> and <span xmlns="" class="link local"><a href="/PXY9/" title="Test-and-test-and-set lock [PXY9]">Test-and-test-and-set lock</a></span>) are simple but generate \(O(n)\) coherence traffic per release; queue-based locks (<span xmlns="" class="link local"><a href="/V7KP/" title="Ticket lock [V7KP]">Ticket lock</a></span>, <span xmlns="" class="link local"><a href="/BJ7N/" title="Array-based lock [BJ7N]">Array-based lock</a></span>, <span xmlns="" class="link local"><a href="/IN64/" title="MCS lock [IN64]">MCS lock</a></span>) scale better at the cost of extra state per waiter.</p>
+            <section lang="en" class="block hide-metadata"><details id="id33" open="open"><summary><header><h1>
+<span class="taxon"></span>Test-and-set lock <a class="slug" href="/MJ5L/">[MJ5L]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The simplest spin lock. The acquire loop spins on an atomic <code>test_and_set</code>: it writes <code>LOCKED</code> and reads the previous value in one step. If the previous value was <code>UNLOCKED</code>, the caller has the lock; otherwise it tries again.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+  while (true):
+    // Perform "test-and-set"
+    // UNLOCKED = 0, LOCKED = 1
+    test_and_set(old, lock_ptr)
+    if (old == UNLOCKED):
+      break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] &lt;- UNLOCKED</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <code>test_and_set</code>, so contention scales badly with the number of waiters.</div>
+</details></section>
+            <section lang="en" class="block hide-metadata"><details id="id34" open="open"><summary><header><h1>
+<span class="taxon"></span>Test-and-test-and-set lock <a class="slug" href="/PXY9/">[PXY9]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A refinement of the <span xmlns="" class="link local"><a href="/MJ5L/" title="Test-and-set lock [MJ5L]">Test-and-set lock</a></span> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <code>test_and_set</code> when it does. Spinning is then read-only, so cores can share the cache line.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+  while (true):
+    // Perform "test"
+    load [lock_ptr] -&gt; original_value
+    if (original_value == UNLOCKED):
+      // Perform "test-and-set"
+      test_and_set(old, lock_ptr)
+      if (old == UNLOCKED):
+        break // lock acquired!
+    // keep spinning, back to top of while loop
+
+release(lock_ptr):
+  store[lock_ptr] &lt;- UNLOCKED</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Spinning is a read-only operation now.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> When the lock is released, the line must be invalidated on every waiter, and they all simultaneously read and try to write. The contention is shifted from steady state to release time but is still \(O(n)\) in the number of waiters.</div>
+</details></section>
+            <section lang="en" class="block hide-metadata"><details id="id35" open="open"><summary><header><h1>
+<span class="taxon"></span>Ticket lock <a class="slug" href="/V7KP/">[V7KP]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <code>next_ticket</code> and then spins until <code>now_serving</code> equals its ticket. Release simply increments <code>now_serving</code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+  my_ticket = fetch_and_increment(lock_ptr-&gt;next_ticket)
+  while (lock_ptr-&gt;now_serving != my_ticket); // spin
+
+release(lock_ptr):
+  lock_ptr-&gt;now_serving = lock_ptr-&gt;now_serving + 1</pre>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Still \(O(n)\) coherence traffic on release: incrementing <code>now_serving</code> invalidates the line on every waiter, and they all reload it to recheck their ticket.</div>
+</details></section>
+            <section lang="en" class="block hide-metadata"><details id="id36" open="open"><summary><header><h1>
+<span class="taxon"></span>Array-based lock <a class="slug" href="/BJ7N/">[BJ7N]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Each waiter is assigned its own slot in an array and spins only on that slot. Release just flips the next slot to "go-ahead", so the cache line touched by release is the one read by exactly one other thread. Coherence traffic per release is constant rather than \(O(n)\), at the cost of one slot per waiter.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Give each waiter its own "slot" to wait on.</li>
+  <li>Only need to set the next slot to "go-ahead" on release.</li>
+  <li>Constant coherence traffic.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> \(O(n)\) memory for the lock array, and padding each slot to \(64\)b (one cache line) to avoid false sharing makes that cost real.</div>
+</details></section>
+            <section lang="en" class="block hide-metadata"><details id="id37" open="open"><summary><header><h1>
+<span class="taxon"></span>MCS lock <a class="slug" href="/IN64/">[IN64]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+                <p xmlns="http://www.w3.org/1999/xhtml">A scalable, list-based queue lock. The lock variable is a pointer to the tail of a linked list of per-thread nodes. Each thread enqueues its own node and spins on a flag in its own cache line. The releaser wakes only its direct successor, so coherence traffic per handoff is constant and memory cost is proportional only to threads currently waiting, not to the lock's fanout.</p>
+                <pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock):
+  I-&gt;next = null
+  predecessor = fetch_and_store(lock, I)
+  if predecessor != nil:                   // some node holds the lock
+    I-&gt;must_wait = true
+    predecessor-&gt;next = I                  // predecessor must wake us
+    repeat while I-&gt;must_wait              // spin till lock is free
+
+release(lock):
+  if (I-&gt;next == null):                    // no known successor
+    if compare_and_swap(lock, I, nil):     // make sure...
+      return                               // CAS succeeded; lock freed
+    repeat while I-&gt;next == nil            // spin to learn successor
+  I-&gt;next-&gt;must_wait = false               // wake successor</pre>
+              </details></section>
+          </details></section>
+      </details></section>
+    
+  </footer></article><nav id="toc"><div class="block"><h1>Table of Contents</h1><ul xmlns="" class="block">
+<li>
+<a class="bullet" href="/63U3/" title="Thread [63U3]">■</a><span class="link local" data-target="#id2"><span class="taxon">1. </span>Thread</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/VOQN/" title="Race condition [VOQN]">■</a><span class="link local" data-target="#id3"><span class="taxon">2. </span>Race condition</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/KG2K/" title="Critical section [KG2K]">■</a><span class="link local" data-target="#id4"><span class="taxon">3. </span>Critical section</span><ul class="block"></ul>
+</li>
+</ul></div></nav></div></body></html>

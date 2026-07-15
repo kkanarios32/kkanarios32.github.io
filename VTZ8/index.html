@@ -1,6 +1,847 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/VTZ8/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>TPE Process Interlude: Exercises</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>TPE Process Interlude: Exercises <a class="slug" href="/VTZ8/">[VTZ8]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Worked coding homework for chapter 3 of <span xmlns="" class="link local"><a href="/arpaci2018operating/" title="Operating Systems: Three Easy Pieces [arpaci2018operating]">Three Easy Pieces</a></span>. The concept material from this chapter is split across <span xmlns="" class="link local"><a href="/O1S9/" title="fork() [O1S9]">fork()</a></span>, <span xmlns="" class="link local"><a href="/J6VZ/" title="wait() [J6VZ]">wait()</a></span>, <span xmlns="" class="link local"><a href="/YHJR/" title="exec() [YHJR]">exec()</a></span>, and <span xmlns="" class="link local"><a href="/9V3H/" title="Unix signals [9V3H]">Unix signals</a></span>.</p>
+  
+
+  <section lang="en" class="block hide-metadata"><details id="id2"><summary><header><h1>
+<span class="taxon"></span>Coding Homework  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/007U/" title="Deliberate-Practice [007U]">Deliberate-Practice</a></span> (6/66).</p>
+  <ol xmlns="http://www.w3.org/1999/xhtml"><li>Write a program that calls <code>fork()</code>. Before calling <code>fork()</code>, have the main process access a variable (e.g., <code>x</code>) and set its value to something (e.g., 100). What value is the variable in the child process? What happens to the variable when both the child and parent change the value of <code>x</code></li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id3"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      Both the parent and the child get a copy of the variable values i.e. \(x\). When they modify \(x\) it only affects the copy of \(x\) in their local address space.
+    </details></section>
+
+    <li>Write a program that opens a file (with the <code>open()</code> system call) and then calls <code>fork()</code> to create a new process. Can both the child and parent access the file descriptor returned by <code>open()</code>? What happens when they are writing to the file concurrently, i.e., at the same time?</li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id4"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      Both do have access to the same file descriptor. I believe that they can interleave writes if writing at the same time but for me whichever process got ran first always finished writing prior the other starting. This may be a scheduling thing, where one process is able to complete before the other is scheduled?
+    </details></section>
+
+    <li>Write another program using <code>fork()</code>. The child process should print "hello"; the parent process should print "goodbye". You should try to ensure that the child process always prints first; can you do this without calling <code>wait()</code> in the parent?</li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id5"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      Using the previous problem, in the child, we can write something to a file. Then, in the parent, we can enforce an ordering by making the parent wait in a <code xmlns="http://www.w3.org/1999/xhtml">while</code> loop until it reads the value written by the child. However, this is terribly inconvenient (and probably why <code xmlns="http://www.w3.org/1999/xhtml">wait()</code> exists).
+    </details></section>
+
+    <li>Now write a program that uses <code>wait()</code> to wait for the child process to finish in the parent. What does <code>wait()</code> return? What happens if you use <code>wait()</code> in the child?</li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id6"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      <code xmlns="http://www.w3.org/1999/xhtml">wait()</code> returns the pid of the child process that died. Using <code xmlns="http://www.w3.org/1999/xhtml">wait()</code> in the child just immediately returns \(-1\).
+    </details></section>
+
+    <li>Write a program that calls <code>fork()</code> and then calls some form of <code>exec()</code> to run the program <code>/bin/ls</code>. See if you can try all of the variants of <code>exec()</code>, including <code>execl()</code>, <code>execle()</code>, <code>execlp()</code>, <code>execv()</code>, <code>execvp()</code>, and <code>execvP()</code>. Why do you think there are so many variants of the same basic call?</li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id7"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      It seems that some of them support different types of arguments i.e. <code xmlns="http://www.w3.org/1999/xhtml">execv</code> family allows variable size argument list. Additionally, there is a distinction in the <em xmlns="http://www.w3.org/1999/xhtml">environment</em>. This seems to be a list of environment variable values that <code xmlns="http://www.w3.org/1999/xhtml">exec{l,v}e()</code> will search over. The \(p\) family use the same search as the shell i.e. the <code xmlns="http://www.w3.org/1999/xhtml">PATH</code>.
+    </details></section>
+
+    <li>Write a slight modification of the previous program, this time using <code>waitpid()</code> instead of <code>wait()</code>. When would <code>waitpid()</code> be useful?</li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id8"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      If a parent process has multiple children, then <code xmlns="http://www.w3.org/1999/xhtml">wait()</code> will only wait until the first one dies. <code xmlns="http://www.w3.org/1999/xhtml">waitpid()</code> lets you specify waiting on a specific child process.
+    </details></section>
+
+    <li>Write a program that creates a child process, and then in the child closes standard output (<code>STDOUT_FILENO</code>). What happens if the child calls <code>printf()</code> to print some output after closing the descriptor?</li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id9"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      Nothing prints in the child process. However, stdout is still open in the parent process and able to print.
+    </details></section>
+
+    <li>Write a program that creates two children, and connects the standard output of one to the standard input of the other, using the <code>pipe()</code> system call</li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id10"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      This required <code xmlns="http://www.w3.org/1999/xhtml">fflush()</code> for me. I am not sure if this is true in general?
+    </details></section></ol>
+</details></section>
+
+</details></section><footer xmlns="">
+    <section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon"></span>References  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block" data-taxon="Reference"><details id="id12"><summary><header><h1>
+<span class="taxon">Reference. </span>Operating Systems: Three Easy Pieces <a class="slug" href="/arpaci2018operating/">[arpaci2018operating]</a> </h1>
+<div class="metadata"><ul><li class="meta-item"><a class="link external" href="https://pages.cs.wisc.edu/~remzi/OSTEP/">https://pages.cs.wisc.edu/~remzi/OSTEP/</a></li></ul></div></header></summary><pre>@article{arpaci2018operating,
+  title={Operating systems: Three easy pieces},
+  author={Arpaci-Dusseau, Remzi H and Arpaci-Dusseau, Andrea C},
+  year={2018},
+  publisher={Arpaci-Dusseau Books, LLC Madison, WI, USA}
+}</pre></details></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id13" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id14"><summary><header><h1>
+<span class="taxon"></span>Processes <a class="slug" href="/SE66/">[SE66]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 16, 2025</li>
+<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
+</address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The process abstraction, the syscalls for working with processes on Unix, the hardware-software contract that makes time-sharing safe, and the scheduling policies that decide who runs when.</p>
+  <section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
+<span class="taxon"></span>The abstraction  </h1>
+<div class="metadata"><ul><li class="meta-item">August 16, 2025</li></ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
+<span class="taxon"></span>Process <a class="slug" href="/FCHM/">[FCHM]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A running program, plus all the state the OS needs to pause it and resume it later. A process consists of:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>Memory</strong>: an <span xmlns="" class="link local"><a href="/7MH4/" title="Address space [7MH4]">Address space</a></span> holding the program's code, stack, and heap.</li>
+  <li><strong>Registers</strong>: general-purpose registers carrying current computation, plus special-purpose registers:</li>
+  <ul><li><strong>Program counter (PC)</strong>: the next instruction to run.</li>
+    <li><strong>Stack pointer and frame pointer</strong>: where the process sits on its stack.</li></ul></ol><p xmlns="http://www.w3.org/1999/xhtml">A process moves between three <strong>states</strong>:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>running</em>: currently on a CPU.</li>
+  <li><em>ready</em>: runnable, waiting for the <span xmlns="" class="link local"><a href="/B8GC/" title="Scheduling [B8GC]">Scheduling</a></span> to give it a CPU.</li>
+  <li><em>blocked</em>: waiting on I/O or another event, not runnable.</li></ul>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id17" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Threads (see <span class="link local"><a href="/16TG/" title="Concurrency Intro [16TG]">Concurrency Intro</a></span>) share an address space within a process but each have their own PC, register set, and stack.</details></section>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id18" open="open"><summary><header><h1>
+<span class="taxon"></span>Process API <a class="slug" href="/JJ45/">[JJ45]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The minimum operations any OS must expose for working with <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>es:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>Create</strong>: load a program from disk, set up its address space (stack, heap, code), and jump to <code>main</code>. The OS also initializes <code>argc</code>/<code>argv</code>.</li>
+  <li><strong>Destroy</strong>: kill a misbehaving or unwanted process.</li>
+  <li><strong>Wait</strong>: block until another process completes — useful for ordering dependent work.</li>
+  <li><strong>Miscellaneous control</strong>: e.g. suspend / resume.</li>
+  <li><strong>Status</strong>: report on running processes.</li></ol>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id19" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>The stack is allocated up front. The heap starts small and grows via <code xmlns="http://www.w3.org/1999/xhtml">malloc</code>, which calls into the OS (<code xmlns="http://www.w3.org/1999/xhtml">brk</code>/<code xmlns="http://www.w3.org/1999/xhtml">sbrk</code>) when it runs out of headroom.</details></section>
+<p xmlns="http://www.w3.org/1999/xhtml">On Unix, the concrete realization of this API uses <code>fork()</code>, <code>wait()</code>, and <code>exec()</code> — covered separately.</p></details></section>
+<section lang="en" class="block hide-metadata"><details id="id20" open="open"><summary><header><h1>
+<span class="taxon"></span>Process control block <a class="slug" href="/JE53/">[JE53]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The kernel-side data structure holding all per-process state. There is one PCB per <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>, threaded together into the <em>process list</em>. The PCB is what the OS reads and writes during a <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">Context switch</a></span>: the saved register set lives here, as does the process state, the open files, the parent pointer, and so on.</p><p xmlns="http://www.w3.org/1999/xhtml">An example from <code>xv6</code>:</p><pre xmlns="http://www.w3.org/1999/xhtml">// the registers xv6 will save and restore
+// to stop and subsequently restart a process
+struct context {
+  int eip;
+  int esp;
+  int ebx;
+  int ecx;
+  int edx;
+  int esi;
+  int edi;
+  int ebp;
+};
+// the different states a process can be in
+enum proc_state { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+// the information xv6 tracks about each process
+// including its register context and state
+struct proc {
+  char *mem;                 // Start of process memory
+  uint sz;                   // Size of process memory
+  char *kstack;              // Bottom of kernel stack for this process
+  enum proc_state state;     // Process state
+  int pid;                   // Process ID
+  struct proc *parent;       // Parent process
+  void *chan;                // If non-zero, sleeping on chan
+  int killed;                // If non-zero, have been killed
+  struct file *ofile[NOFILE]; // Open files
+  struct inode *cwd;         // Current directory
+  struct context context;    // Switch here to run process
+  struct trapframe *tf;      // Trap frame for the current interrupt
+};</pre>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id21" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><span class="link local"><a href="/63U3/" title="Thread [63U3]">Thread</a></span>s need an analogous <em xmlns="http://www.w3.org/1999/xhtml">thread control block</em>; see <span class="link local"><a href="/16TG/" title="Concurrency Intro [16TG]">Concurrency Intro</a></span>.</details></section>
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id22" open="open"><summary><header><h1>
+<span class="taxon"></span>Unix process syscalls  </h1>
+<div class="metadata"><ul><li class="meta-item">August 16, 2025</li></ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id23" open="open"><summary><header><h1>
+<span class="taxon"></span>fork() <a class="slug" href="/O1S9/">[O1S9]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The Unix system call that duplicates the calling <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>. After <code>fork()</code> returns, two processes exist where there was one. The child gets its own copy of:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Address space.</li>
+  <li>General-purpose registers.</li>
+  <li>Program counter — the child returns from <code>fork()</code> at the same instruction the parent does.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">The two processes are distinguished by <code>fork()</code>'s return value:</p><pre xmlns="http://www.w3.org/1999/xhtml">int main()
+  int rc = fork();
+  if (rc &lt; 0)
+    printf("error with fork");
+  else if (rc == 0)
+    printf("in child");
+  else
+    printf("in parent");        // rc holds child PID</pre>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id24" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Which process is scheduled first after <code xmlns="http://www.w3.org/1999/xhtml">fork()</code> is non-deterministic. Use <span class="link local"><a href="/J6VZ/" title="wait() [J6VZ]">wait()</a></span> if you need ordering.</details></section>
+
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id25" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>The copy is logical, not physical: real implementations use <span class="link local"><a href="/DEJB/" title="Copy-on-write [DEJB]">Copy-on-write</a></span> so the duplicated address space only allocates fresh pages when one side writes to them.</details></section>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id26" open="open"><summary><header><h1>
+<span class="taxon"></span>wait() <a class="slug" href="/J6VZ/">[J6VZ]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Blocks the calling <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span> until one of its children terminates. The OS marks the child's PCB <code>ZOMBIE</code> on exit, keeping enough state (exit status, resource usage) for the parent to retrieve via <code>wait()</code>; only when the parent collects it is the child fully reaped.</p><p xmlns="http://www.w3.org/1999/xhtml"><code>wait()</code> returns the PID of the child that died. Variant <code>waitpid(pid, ...)</code> blocks on a specific child — useful when a parent has multiple children and only one is interesting.</p><p xmlns="http://www.w3.org/1999/xhtml">Used to enforce ordering between parent and child code paths after <span xmlns="" class="link local"><a href="/O1S9/" title="fork() [O1S9]">fork()</a></span>, or to know when an <span xmlns="" class="link local"><a href="/YHJR/" title="exec() [YHJR]">exec()</a></span>'d program finishes.</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id27" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Calling <code xmlns="http://www.w3.org/1999/xhtml">wait()</code> with no children to wait on returns <code xmlns="http://www.w3.org/1999/xhtml">-1</code>.</details></section>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id28" open="open"><summary><header><h1>
+<span class="taxon"></span>exec() <a class="slug" href="/YHJR/">[YHJR]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Replaces the calling <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>'s program with a new executable. <code>exec()</code> does not return on success — the original code, data, stack, and heap are discarded and the new program runs in their place. The PID is unchanged.</p><p xmlns="http://www.w3.org/1999/xhtml">What <code>exec()</code> does internally:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Loads the new executable's code and static data, overwriting the current.</li>
+  <li>Re-initializes stack and heap.</li>
+  <li>Jumps to the new program's entry point with arguments passed as <code>argv</code>.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">The canonical Unix pattern is <code>fork()</code> then <code>exec()</code> — the shell uses this to launch a command without becoming that command:</p><pre xmlns="http://www.w3.org/1999/xhtml">int main()
+  while (true) {
+    command = getcommand();
+    int rc = fork();
+    if (rc &lt; 0)
+      printf("error with fork");
+    else if (rc == 0)
+      exec(command);            // child becomes the command
+    else
+      int rc = wait(NULL);      // parent waits for it
+  }</pre><p xmlns="http://www.w3.org/1999/xhtml">Redirection is implemented by opening a file in the child between <code>fork()</code> and <code>exec()</code>, attached to <code>STDOUT_FILENO</code>:</p><pre xmlns="http://www.w3.org/1999/xhtml">if (rc == 0)
+  close(STDOUT_FILENO);
+  open("output.txt");
+  exec(command);</pre>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id29" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>The many variants — <code xmlns="http://www.w3.org/1999/xhtml">execl</code>, <code xmlns="http://www.w3.org/1999/xhtml">execle</code>, <code xmlns="http://www.w3.org/1999/xhtml">execlp</code>, <code xmlns="http://www.w3.org/1999/xhtml">execv</code>, <code xmlns="http://www.w3.org/1999/xhtml">execvp</code>, <code xmlns="http://www.w3.org/1999/xhtml">execvP</code> — differ in how they take arguments (list vs. vector), whether they use the <code xmlns="http://www.w3.org/1999/xhtml">PATH</code> environment variable, and whether they take an explicit environment.</details></section>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id30" open="open"><summary><header><h1>
+<span class="taxon"></span>Unix signals <a class="slug" href="/9V3H/">[9V3H]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An asynchronous notification delivered to a <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>. A process sends a signal with <code>kill(pid, signum)</code> (the name is misleading — most signals don't kill); the recipient can install a handler with <code>signal(signum, handler)</code> to "catch" it, otherwise the default action runs (often termination).</p><p xmlns="http://www.w3.org/1999/xhtml">Signals are the OS's mechanism for events the recipient didn't ask to be told about: <code>SIGINT</code> from Ctrl-C, <code>SIGSEGV</code> from a <span xmlns="" class="link local"><a href="/CXFM/" title="Page fault and swap space [CXFM]">Page fault and swap space</a></span> on an invalid page, <code>SIGCHLD</code> when a child exits, <code>SIGTERM</code> from an administrative kill.</p><p xmlns="http://www.w3.org/1999/xhtml">Who can signal whom depends on the <em>user</em> owning the process — a user can signal their own processes; the <em>superuser</em> can signal any process.</p></details></section>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id31" open="open"><summary><header><h1>
+<span class="taxon"></span>Limited Direct Execution <a class="slug" href="/VE8C/">[VE8C]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 19, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The OS lets user code run directly on the CPU for speed, but with hardware-enforced limits that prevent a buggy or malicious program from compromising the rest of the system. Two questions motivate the mechanism:</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-indent-block" style="   margin-left: 1em;   margin-bottom: 1em;   border-left: 4px solid black;   padding-left: 12px;   background-color: whitesmoke;   ">
+  <ol><li><em>How do we make sure a program doesn't do what we don't want it to do?</em></li>
+    <li><em>How do we enable time-sharing?</em></li></ol>
+</div>
+<p xmlns="http://www.w3.org/1999/xhtml">The first question is answered by hardware <span xmlns="" class="link local"><a href="/QUQC/" title="User mode vs kernel mode [QUQC]">User mode vs kernel mode</a></span> enforced via the <span xmlns="" class="link local"><a href="/0NVY/" title="Trap table [0NVY]">Trap table</a></span>, with a controlled <span xmlns="" class="link local"><a href="/A5S6/" title="Syscall mechanism [A5S6]">Syscall mechanism</a></span> as the only path from one to the other. The second is answered by periodic timer interrupts that trap to the OS, which performs a <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">Context switch</a></span> and runs the <span xmlns="" class="link local"><a href="/B8GC/" title="Scheduling [B8GC]">scheduler</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml">The whole stack is bootstrapped during the <span xmlns="" class="link local"><a href="/XSFO/" title="Boot sequence [XSFO]">Boot sequence</a></span>, when the kernel installs the trap table and starts the timer before handing control to user space.</p><section lang="en" class="block hide-metadata"><details id="id32" open="open"><summary><header><h1>
+<span class="taxon"></span>User mode vs kernel mode <a class="slug" href="/QUQC/">[QUQC]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Two privilege levels supported by the CPU. <em>User mode</em> restricts the running process to a limited set of instructions and a limited view of memory — usually just its own <span xmlns="" class="link local"><a href="/7MH4/" title="Address space [7MH4]">address space</a></span>. <em>Kernel mode</em> runs the OS with full access to all instructions and all of physical memory.</p><p xmlns="http://www.w3.org/1999/xhtml">Switching between modes is mediated by hardware via a <span xmlns="" class="link local"><a href="/0NVY/" title="Trap table [0NVY]">Trap table</a></span> populated at boot. The OS sets up the table; the CPU enforces it. A process cannot promote itself to kernel mode arbitrarily — it must invoke a <span xmlns="" class="link local"><a href="/A5S6/" title="Syscall mechanism [A5S6]">Syscall mechanism</a></span>, which traps to a fixed entry point in the OS.</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id33" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Kernel mode is dangerous because the address space is effectively the entire machine. The mode bit + the trap table together are what makes it safe to time-share a CPU between mutually distrusting programs.</details></section>
+</details></section><section lang="en" class="block hide-metadata"><details id="id34" open="open"><summary><header><h1>
+<span class="taxon"></span>Trap table <a class="slug" href="/0NVY/">[0NVY]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A hardware-readable table installed by the OS at boot that maps each kind of exceptional control-flow event (<span xmlns="" class="link local"><a href="/A5S6/" title="Syscall mechanism [A5S6]">syscall</a></span>, interrupt, <span xmlns="" class="link local"><a href="/CXFM/" title="Page fault and swap space [CXFM]">page fault</a></span>, illegal instruction, ...) to the address of an OS handler. When the CPU takes a trap, it consults this table to decide where to jump, switches into kernel mode, and runs the handler.</p><p xmlns="http://www.w3.org/1999/xhtml">The table is what makes it safe to expose privileged operations to user mode: user code never gets to pick the destination of a mode-switch, only the trap number. The OS controls every entry point, the CPU enforces the indirection.</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id35" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Installing the trap table is itself a privileged operation. It happens once, early in boot, before any user process exists.</details></section>
+</details></section><section lang="en" class="block hide-metadata"><details id="id36" open="open"><summary><header><h1>
+<span class="taxon"></span>Syscall mechanism <a class="slug" href="/A5S6/">[A5S6]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A syscall is a user-mode-initiated request for a privileged service from the kernel. Because user code cannot jump into kernel code directly, the mechanism is built around a single trap instruction plus a pre-agreed register convention identifying which service to perform.</p><p xmlns="http://www.w3.org/1999/xhtml">The end-to-end sequence:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>User code places the syscall number in a pre-defined register and invokes the trap instruction.</li>
+  <li>Hardware saves enough state to resume the process and switches to kernel mode.</li>
+  <li>Hardware jumps to the OS-installed handler via the <span xmlns="" class="link local"><a href="/0NVY/" title="Trap table [0NVY]">Trap table</a></span>.</li>
+  <li>The handler reads the syscall number from the agreed register and dispatches to the corresponding OS routine.</li>
+  <li>The OS validates the request, performs the work, and arranges return values per the calling convention.</li>
+  <li>The OS restores user state and returns the process to user mode.</li></ol>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id37" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Because the register convention is fixed by ABI, the user-mode side of a syscall is typically hand-written in assembly within libc.</details></section>
+
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id38" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Interrupts work via a similar trap-handler mechanism, but are initiated by hardware (timer, device) rather than user code.</details></section>
+
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id39" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>The kernel must validate any pointers or arguments the user supplies — user code cannot be trusted not to ask the kernel to read kernel memory on its behalf.</details></section>
+</details></section><section lang="en" class="block hide-metadata"><details id="id40" open="open"><summary><header><h1>
+<span class="taxon"></span>Context switch <a class="slug" href="/OKCI/">[OKCI]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The operation of saving the full execution state of one process (or <span xmlns="" class="link local"><a href="/63U3/" title="Thread [63U3]">thread</a></span>) and restoring another's so the CPU can resume it as if it had never been interrupted. On a trap into the kernel, the hardware stashes the user-visible state (PC, condition codes, stack pointer) into a known location, and the OS saves the remaining general-purpose registers as part of the switching code.</p><p xmlns="http://www.w3.org/1999/xhtml">Two flavors of state are involved:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>User registers</strong>: the current program's context (general-purpose registers, stack vars).</li>
+  <li><strong>Kernel registers</strong>: meta-information used to resume the trap correctly (PC at trap, syscall number, etc.).</li></ol><p xmlns="http://www.w3.org/1999/xhtml">Context switches are not free — they incur the cost of cache and <span xmlns="" class="link local"><a href="/FGOK/" title="Translation lookaside buffer [FGOK]">TLB</a></span> pollution in addition to the direct cost of saving/restoring state. This is the cost amortized by larger <span xmlns="" class="link local"><a href="/B8GC/" title="Scheduling [B8GC]">scheduling</a></span> quanta and a recurring concern for any <span xmlns="" class="link local"><a href="/5P43/" title="Concurrency [5P43]">Concurrency</a></span> system.</p></details></section><section lang="en" class="block hide-metadata"><details id="id41" open="open"><summary><header><h1>
+<span class="taxon"></span>Boot sequence <a class="slug" href="/XSFO/">[XSFO]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The fixed series of steps a machine performs from power-on until a usable operating system is running. Each stage runs from a known location and hands off control to the next.</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Power signal resets the CPU to a known state.</li>
+  <li>The CPU fetches from a hard-wired address — the BIOS (or UEFI firmware). The BIOS runs basic hardware checks (POST).</li>
+  <li>The BIOS loads and jumps to the bootloader (e.g. GRUB) from a known location on disk.</li>
+  <li>The bootloader places the kernel image at the correct address and jumps to its entry point.</li>
+  <li>The kernel performs early setup: installs the <span xmlns="" class="link local"><a href="/0NVY/" title="Trap table [0NVY]">Trap table</a></span> (a special privileged instruction), starts the timer interrupt, sets up memory management, and finally enters user space.</li></ol>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id42" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>The hardware is hard-wired only to find the BIOS. Everything past that is software the user can replace, which is why dual-booting and custom bootloaders work.</details></section>
+</details></section></details></section><section lang="en" class="block hide-metadata"><details id="id43" open="open"><summary><header><h1>
+<span class="taxon"></span>Scheduling <a class="slug" href="/B8GC/">[B8GC]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">July 26, 2025</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The scheduler decides which runnable <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span> to put on the CPU at each moment. There is no single right answer because the metrics conflict:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>Turnaround time</strong>: time from arrival to completion, \(T_{\text {completion}} - T_{\text {arrival}}\). Minimized by running short jobs first.</li>
+  <li><strong>Response time</strong>: time from arrival to first scheduling. Minimized by frequent rotation.</li>
+  <li><strong>Fairness</strong>: every job makes progress; nobody starves.</li></ol><section lang="en" class="block hide-metadata"><details id="id44" open="open"><summary><header><h1>
+<span class="taxon"></span>FIFO scheduling <a class="slug" href="/JA6Z/">[JA6Z]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">First-in, first-out. Jobs are run to completion in the order they arrive. Trivially fair under any reasonable notion of fairness, but suffers from the <em>convoy effect</em>: a single long-running job at the head delays every shorter job behind it, inflating average turnaround time.</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Problem"><details id="id45" open="open"><summary><header><h1>
+<span class="taxon">Problem. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>If the first arriving job is much longer than the rest, all subsequent jobs wait at least its full duration before getting any CPU.</details></section>
+</details></section><section lang="en" class="block hide-metadata"><details id="id46" open="open"><summary><header><h1>
+<span class="taxon"></span>SJF scheduling <a class="slug" href="/VJ4F/">[VJ4F]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Shortest job first</em>. Run the job with the smallest total work first, run-to-completion. If all jobs arrive at the same time, SJF provably minimizes average turnaround time.</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Problem"><details id="id47" open="open"><summary><header><h1>
+<span class="taxon">Problem. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Real workloads don't all arrive at \(t = 0\). A long job that arrives slightly before a short one still gets to monopolize the CPU until it finishes — SJF degenerates to <span class="link local"><a href="/JA6Z/" title="FIFO scheduling [JA6Z]">FIFO scheduling</a></span> under sequential arrivals.</details></section>
+<p xmlns="http://www.w3.org/1999/xhtml">Removing the run-to-completion constraint and allowing preemption gives <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>.</p></details></section><section lang="en" class="block hide-metadata"><details id="id48" open="open"><summary><header><h1>
+<span class="taxon"></span>STCF scheduling <a class="slug" href="/7R07/">[7R07]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Shortest time-to-completion first</em>. A preemptive refinement of <span xmlns="" class="link local"><a href="/VJ4F/" title="SJF scheduling [VJ4F]">SJF scheduling</a></span>: whenever the scheduler is invoked, it picks the job with the least <em>remaining</em> work. A short job arriving mid-execution can preempt a long one.</p><p xmlns="http://www.w3.org/1999/xhtml">STCF is provably optimal for minimizing average turnaround time over all preemptive schedulers.</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Problem"><details id="id49" open="open"><summary><header><h1>
+<span class="taxon">Problem. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Long jobs starve in response time. The lowest-priority work might not get a CPU slice for a very long time, which is unacceptable for interactive workloads.</details></section>
+</details></section><section lang="en" class="block hide-metadata"><details id="id50" open="open"><summary><header><h1>
+<span class="taxon"></span>Round-robin scheduling <a class="slug" href="/NEL8/">[NEL8]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Cycle through all runnable jobs, giving each a fixed time slice — the <em>stride</em>, <em>time slice</em>, or <em>quantum length</em> — before preempting and moving to the next. The best you can do at minimizing <em>response time</em>: every job sees the CPU within at most \(N\) quanta where \(N\) is the runnable-job count.</p><p xmlns="http://www.w3.org/1999/xhtml">The quantum length is a tradeoff:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Short quantum: better response time, more frequent <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switches</a></span>, worse cache locality.</li>
+  <li>Long quantum: amortizes context-switch cost, worse response time.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Worst-case response time for \(N\) jobs at quantum \(S\) is \(S(N-1)\).</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id51" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Round-robin minimizes response time but is poor for turnaround time relative to <span class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>. A scheduler that wants both has to combine ideas — see <span class="link local"><a href="/4WG5/" title="Multi-level feedback queue [4WG5]">Multi-level feedback queue</a></span>.</details></section>
+</details></section><section lang="en" class="block hide-metadata"><details id="id52" open="open"><summary><header><h1>
+<span class="taxon"></span>Multi-level feedback queue <a class="slug" href="/4WG5/">[4WG5]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A practical scheduler that approximates <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>'s turnaround properties and <span xmlns="" class="link local"><a href="/NEL8/" title="Round-robin scheduling [NEL8]">Round-robin scheduling</a></span>'s response properties without requiring foreknowledge of job lengths. Maintain multiple priority queues; within a queue, schedule round-robin. Never service a lower-priority queue while a higher-priority queue has a runnable job.</p><p xmlns="http://www.w3.org/1999/xhtml">The priority of a job is not assigned by the user — it is <em>learned</em> from behavior:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>New jobs enter at the top priority.</li>
+  <li>Each priority level has an <em>allotment</em> — the total CPU time a job may consume before being demoted.</li>
+  <li>Once a job exhausts its allotment at a level, it drops to the next level.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Short jobs that finish quickly never leave the top queue (good turnaround). Interactive jobs that yield often stay at the top (good response time). CPU-bound jobs sink to the bottom and get scheduled when nothing better is runnable.</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Problem"><details id="id53" open="open"><summary><header><h1>
+<span class="taxon">Problem. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Gaming the allotment: a job can issue I/O just before its allotment expires to avoid demotion, since I/O time doesn't count.</details></section>
+
+ 
+   
+   <section lang="en" class="block hide-metadata" data-taxon="Solution"><details id="id54" open="open"><summary><header><h1>
+<span class="taxon">Solution. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Charge the job's allotment for total time at the priority level, including time spent blocked.</details></section>
+ 
+
+    <section lang="en" class="block hide-metadata" data-taxon="Problem"><details id="id55" open="open"><summary><header><h1>
+<span class="taxon">Problem. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Starvation of low-priority queues if higher queues never empty.</details></section>
+
+ 
+   
+   <section lang="en" class="block hide-metadata" data-taxon="Solution"><details id="id56" open="open"><summary><header><h1>
+<span class="taxon">Solution. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Periodically reset all jobs to the top priority. Cheap and effective.</details></section>
+ 
+</details></section><section lang="en" class="block hide-metadata"><details id="id57" open="open"><summary><header><h1>
+<span class="taxon"></span>Lottery scheduling <a class="slug" href="/AM8U/">[AM8U]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A proportional-share scheduler. Each runnable job holds some number of <em>tickets</em>, drawn from a fixed total. On each scheduling decision, the scheduler picks a random ticket and runs the job that owns it. Over time, a job receives CPU time proportional to its share of the tickets.</p><p xmlns="http://www.w3.org/1999/xhtml">The implementation is trivial: one random number per decision, plus a sum table. No global state about historical CPU usage is needed.</p><p xmlns="http://www.w3.org/1999/xhtml">Mechanisms layered on top:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Ticket currency</em> — give each user a fixed number of tickets to split among their processes however they like.</li>
+  <li><em>Ticket transfer</em> — a client process can hand tickets to a server to boost its priority while servicing the request.</li>
+  <li><em>Ticket inflation</em> — a process can grow its share temporarily, with bounds set by trust.</li></ul>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id58" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>The unsolved problem is <em xmlns="http://www.w3.org/1999/xhtml">how</em> to assign tickets in the first place. The mechanism is simple; the policy is not.</details></section>
+<p xmlns="http://www.w3.org/1999/xhtml">A deterministic version of the same idea is <span xmlns="" class="link local"><a href="/HCJ7/" title="Stride scheduling [HCJ7]">Stride scheduling</a></span>, which avoids the variance of random sampling at the cost of needing global state.</p></details></section><section lang="en" class="block hide-metadata"><details id="id59" open="open"><summary><header><h1>
+<span class="taxon"></span>Stride scheduling <a class="slug" href="/HCJ7/">[HCJ7]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A deterministic proportional-share scheduler. Each job has a <em>stride</em> inversely proportional to its ticket count (the more tickets, the smaller the stride) and a running <em>pass</em> counter that accumulates its stride every time it's scheduled.</p><p xmlns="http://www.w3.org/1999/xhtml">The decision is:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Pick the job with the lowest <em>pass</em>.</li>
+  <li>Run it for one quantum.</li>
+  <li>Increment its pass by its stride.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">A job with twice as many tickets has half the stride, so its pass grows half as fast, so it gets scheduled twice as often. Same long-run behavior as <span xmlns="" class="link local"><a href="/AM8U/" title="Lottery scheduling [AM8U]">Lottery scheduling</a></span>, but with zero variance.</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Problem"><details id="id60" open="open"><summary><header><h1>
+<span class="taxon">Problem. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>New jobs need an initial pass value. Setting it to 0 lets them dominate; setting it to the global minimum lets them merge in cleanly but requires tracking that minimum.</details></section>
+</details></section>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id61" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">July 26, 2025</li></ul></div></header></summary>Each <span class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switch</a></span> is not free. Choosing a longer time slice amortizes that cost at the price of response time.</details></section>
+
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id62" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">July 26, 2025</li></ul></div></header></summary>I/O-bound jobs are commonly handled by splitting a job into its non-I/O segments and scheduling them individually — turning one long-but-mostly-blocked job into many short, runnable ones.</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id63" open="open"><summary><header><h1>
+<span class="taxon"></span>Partial homework solutions  </h1>
+<div class="metadata"><ul><li class="meta-item">July 26, 2025</li></ul></div></header></summary>
+<ol xmlns="http://www.w3.org/1999/xhtml"><li>For what types of workloads does <span xmlns="" class="link local"><a href="/VJ4F/" title="SJF scheduling [VJ4F]">SJF scheduling</a></span> deliver the same turnaround as <span xmlns="" class="link local"><a href="/JA6Z/" title="FIFO scheduling [JA6Z]">FIFO scheduling</a></span>?</li>
+  
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id64" open="open"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">July 26, 2025</li></ul></div></header></summary>For workloads that arrive in increasing order of total job time.</details></section>
+
+  <li>For what types of workloads and quantum lengths does SJF deliver the same response times as <span xmlns="" class="link local"><a href="/NEL8/" title="Round-robin scheduling [NEL8]">Round-robin scheduling</a></span>?</li>
+  
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id65" open="open"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">July 26, 2025</li></ul></div></header></summary>For shorter jobs and longer quantum lengths, RR and SJF should deliver similar response times.</details></section>
+
+  <li>What happens to response time with SJF as job lengths increase?</li>
+  
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id66" open="open"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">July 26, 2025</li></ul></div></header></summary>Response time degrades because the longest jobs have to wait for each of the shorter jobs to finish. If these shorter jobs become longer than the response time grows linearly.</details></section>
+
+  <li>What happens to response time with RR as quantum lengths increase? Can you write an equation that gives the worst-case response time, given \(N\) jobs?</li>
+  
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id67" open="open"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">July 26, 2025</li></ul></div></header></summary>The response time is the average over stride length number of preceding jobs. The formula can be written as
+    \[\mathrm {RT} = \frac {1}{N} \sum _{i = 1}^{N} (i - 1)S = \frac {S(N - 1) N}{N} = S(N - 1)\]</details></section></ol>
+</details></section>
+</details></section>
+  <section lang="en" class="block hide-metadata"><details id="id68" open="open"><summary><header><h1>
+<span class="taxon"></span>Exercises  </h1>
+<div class="metadata"><ul><li class="meta-item">August 16, 2025</li></ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id69" open="open"><summary><header><h1>
+<span class="taxon"></span>TPE Processes Intro: Exercises <a class="slug" href="/CDF3/">[CDF3]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Worked homework for chapter 1 of <span xmlns="" class="link local"><a href="/arpaci2018operating/" title="Operating Systems: Three Easy Pieces [arpaci2018operating]">Three Easy Pieces</a></span>. The concept material from this chapter is split across <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>, <span xmlns="" class="link local"><a href="/JJ45/" title="Process API [JJ45]">Process API</a></span>, and <span xmlns="" class="link local"><a href="/JE53/" title="Process control block [JE53]">Process control block</a></span>.</p>
+  
+
+  <section lang="en" class="block hide-metadata"><details id="id70"><summary><header><h1>
+<span class="taxon"></span>Homework  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <ol xmlns="http://www.w3.org/1999/xhtml"><li>Run <code>process.py</code> with the flags <code>-l 5:100, 5:100</code>. What should the CPU utilization be?
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id71"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>The flags correspond to running two processes each with \(5\) instructions where each instruction has probability one of using the CPU. The output from the program is
+    <pre xmlns="http://www.w3.org/1999/xhtml">  Process 0
+    cpu
+    cpu
+    cpu
+    cpu
+    cpu
+
+  Process 1
+    cpu
+    cpu
+    cpu
+    cpu
+    cpu</pre>
+    with this, we can conclude that the utilization is 100%. We will execute one instruction for the first process until it completes, then the five instructions of the next process. If both are waiting on IO, then I do not think this would be the case?
+    </details></section>
+
+    
+ 
+   
+   <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Solution"><details id="id72"><summary><header><h1>
+<span class="taxon">Solution. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    Using the solution flags <code xmlns="http://www.w3.org/1999/xhtml">-cp</code>, there is 100% utilization.
+    </details></section></li>
+    <li>Run <code>process.py</code> with the flags <code>-l 4:100, 1:0</code>. How long does it take to complete both processes?
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id73"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>The flags correspond to running one process with \(4\) instructions with each instruction having probability one of using the CPU and one process with one instruction that uses the IO. The output from the program is
+    <pre xmlns="http://www.w3.org/1999/xhtml">Process 0
+  cpu
+  cpu
+  cpu
+  cpu
+
+Process 1
+  io
+  io_done</pre>
+It will take \(4 + \text {time of IO}\). Since the process with \(4\) non-IO-dependent instructions will run each of those instructions and then the next process will begin which must wait for the entire duration of IO.
+    </details></section>
+
+    
+ 
+   
+   <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Solution"><details id="id74"><summary><header><h1>
+<span class="taxon">Solution. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>Using the <code xmlns="http://www.w3.org/1999/xhtml">-cp</code> flags it takes \(11\) timesteps to complete which is \(\approx  4 + \text {time of IO}\).
+  </details></section></li>
+<li>
+Now switch the order of the processes: <code>./process-run.py -l
+1:0,4:100</code>. What happens now? Does switching the order mat-
+ter? Why?
+  
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id75"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+The output of the code is
+    <pre xmlns="http://www.w3.org/1999/xhtml">Process 0
+  io
+  io_done
+
+Process 1
+  cpu
+  cpu
+  cpu
+  cpu</pre>
+    Depending on the time of IO (<code xmlns="http://www.w3.org/1999/xhtml">the -L flag</code>), it should take \(\max (5, 1 + \text {time IO})\). Switching the order does matter because we can run the CPU instructions while waiting for non-blocking IO. This motivates the idea of scheduling.
+  </details></section>
+
+  
+ 
+   
+   <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Solution"><details id="id76"><summary><header><h1>
+<span class="taxon">Solution. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    It only takes \(7\) timesteps because we are able to perform the IO operations off the CPU as expected.
+  </details></section></li>
+  <li>
+We'll now explore some of the other flags. One important flag is <code>-S</code>, which determines how the system reacts when a process issues an I/O. With the flag set to <code>SWITCH_ON_END</code>, the system will NOT switch to another process while one is doing I/O, instead waiting until the process is completely finished. What happens when you run the following two processes, one doing I/O and the other doing CPU work? (<code>-l 1:0,4:100 -c -S SWITCH_ON_END</code>)
+
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id77"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  The output of the code is:
+<pre xmlns="http://www.w3.org/1999/xhtml">Time        PID: 0        PID: 1           CPU           IOs
+  1         RUN:io         READY             1
+  2        BLOCKED         READY                           1
+  3        BLOCKED         READY                           1
+  4        BLOCKED         READY                           1
+  5        BLOCKED         READY                           1
+  6        BLOCKED         READY                           1
+  7*   RUN:io_done         READY             1
+  8           DONE       RUN:cpu             1
+  9           DONE       RUN:cpu             1
+ 10           DONE       RUN:cpu             1
+ 11           DONE       RUN:cpu             1</pre>
+As expected, it runs the IO process, blocking the CPU process until it is completed.
+</details></section></li>
+    <li>Now, run the same processes, but with the switching behavior set
+to switch to another process whenever one is <code>WAITING</code> for I/O (<code>-l 1:0,4:100 -c -S SWITCH ON IO</code>). What happens now? Use <code>-c</code>
+and <code>-p</code> to confirm that you are right</li>
+
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id78"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  I assume that at timestep \(1\) we will still <code xmlns="http://www.w3.org/1999/xhtml">RUN:io</code>. However, we will then switch the <code xmlns="http://www.w3.org/1999/xhtml">PID: 1</code> for the next \(4\) timesteps until it is completed. After one additional <code xmlns="http://www.w3.org/1999/xhtml">BLOCKED</code> timestep, we will run <code xmlns="http://www.w3.org/1999/xhtml">RUN:io_done</code> and complete both processes.
+</details></section>
+
+
+ 
+   
+   <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Solution"><details id="id79"><summary><header><h1>
+<span class="taxon">Solution. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  The output of the code is:
+  <pre xmlns="http://www.w3.org/1999/xhtml">Time        PID: 0        PID: 1           CPU           IOs
+  1         RUN:io         READY             1
+  2        BLOCKED       RUN:cpu             1             1
+  3        BLOCKED       RUN:cpu             1             1
+  4        BLOCKED       RUN:cpu             1             1
+  5        BLOCKED       RUN:cpu             1             1
+  6        BLOCKED          DONE                           1
+  7*   RUN:io_done          DONE             1</pre>
+</details></section>
+ 
+
+<li>
+One other important behavior is what to do when an I/O completes. With -I IO RUN LATER, when an I/O completes, the process that issued it is not necessarily run right away; rather, whatever was running at the time keeps running. What happens when you run this combination of processes? (<code>./process-run.py -l 3:0,5:100,5:100,5:100 -S SWITCH ON IO -I IO RUN LATER -c -p</code>) Are system resources being effectively utilized?
+
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id80"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  The resources are not efficiently utilized because we end up waiting until all of our CPU-bound processes finish before returning to the IO-bound process, which calls another <code xmlns="http://www.w3.org/1999/xhtml">IO:run</code> and we do not get any concurrency benefit.
+</details></section>
+
+
+ 
+   
+   <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Solution"><details id="id81"><summary><header><h1>
+<span class="taxon">Solution. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  The code output is pretty long but the end output is
+  <pre xmlns="http://www.w3.org/1999/xhtml">Stats: Total Time 31
+Stats: CPU Busy 21 (67.74%)
+Stats: IO Busy  15 (48.39%)</pre>
+</details></section></li>
+<li>
+Now run the same processes, but with <code>-I IO RUN IMMEDIATE</code> set, which immediately runs the process that issued the I/O. How does this behavior differ? Why might running a process that just completed an I/O again be a good idea?
+
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id82"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  The behavior differs by returning to the IO-bound process, which can then immediately call the next <code xmlns="http://www.w3.org/1999/xhtml">IO:run</code> before returning access to the CPU-bound processes, improving concurrency. In an attempt to predict the next IO call, it might be a good idea to run the process that just completed IO because it is more likely to make another IO call.
+</details></section>
+
+
+ 
+   
+   <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Solution"><details id="id83"><summary><header><h1>
+<span class="taxon">Solution. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  The corresponding statistics are
+  <pre xmlns="http://www.w3.org/1999/xhtml">Stats: Total Time 21
+Stats: CPU Busy 21 (100.00%)
+Stats: IO Busy  15 (71.43%)</pre>
+</details></section></li>
+<li>
+Now run with some randomly generated processes, e.g., <code>-s 1 -l
+3:50,3:50, -s 2 -l 3:50,3:50, -s 3 -l 3:50,3:50</code>. See
+if you can predict how the trace will turn out. What happens when
+you use <code>-I IO RUN IMMEDIATE</code> vs. <code>-I IO RUN LATER</code>? What hap-
+pens when you use <code>-S SWITCH ON IO</code> vs. <code>-S SWITCH ON END</code>?
+
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id84"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  Since each instruction has a 50% chance of being CPU or I/O, I do not think there will be much benefit to <code xmlns="http://www.w3.org/1999/xhtml">IO_RUN_LATER</code> vs. <code xmlns="http://www.w3.org/1999/xhtml">IO_RUN_IMMEDIATE</code>. However, I believe it will be crucial to enable <code xmlns="http://www.w3.org/1999/xhtml">-S SWITCH_ON_IO</code> over <code xmlns="http://www.w3.org/1999/xhtml">-S SWITCH_ON_END</code> as the number of processes grow because we should always have waiting CPU instructions to run. In the case of two processes, we still may not improve that much because they will likely both be IO-bound at some point.
+</details></section>
+
+
+ 
+   
+   <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Solution"><details id="id85"><summary><header><h1>
+<span class="taxon">Solution. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  For <code xmlns="http://www.w3.org/1999/xhtml">-s 1</code> (aka the seed), the observed performance between <code xmlns="http://www.w3.org/1999/xhtml">IO_RUN_IMMEDIATE</code> and <code xmlns="http://www.w3.org/1999/xhtml">IO_RUN_LATER</code> is the same. However, we do observe an improvement on both IO and CPU usage when we enable <code xmlns="http://www.w3.org/1999/xhtml">SWITCH_ON_IO</code>.
+</details></section></li></ol>
+  </details></section>
+
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id86" open="open"><summary><header><h1>
+<span class="taxon"></span>TPE Process Interlude: Exercises <a class="slug" href="/VTZ8/">[VTZ8]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Worked coding homework for chapter 3 of <span xmlns="" class="link local"><a href="/arpaci2018operating/" title="Operating Systems: Three Easy Pieces [arpaci2018operating]">Three Easy Pieces</a></span>. The concept material from this chapter is split across <span xmlns="" class="link local"><a href="/O1S9/" title="fork() [O1S9]">fork()</a></span>, <span xmlns="" class="link local"><a href="/J6VZ/" title="wait() [J6VZ]">wait()</a></span>, <span xmlns="" class="link local"><a href="/YHJR/" title="exec() [YHJR]">exec()</a></span>, and <span xmlns="" class="link local"><a href="/9V3H/" title="Unix signals [9V3H]">Unix signals</a></span>.</p>
+  
+
+  <section lang="en" class="block hide-metadata"><details id="id87"><summary><header><h1>
+<span class="taxon"></span>Coding Homework  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/007U/" title="Deliberate-Practice [007U]">Deliberate-Practice</a></span> (6/66).</p>
+  <ol xmlns="http://www.w3.org/1999/xhtml"><li>Write a program that calls <code>fork()</code>. Before calling <code>fork()</code>, have the main process access a variable (e.g., <code>x</code>) and set its value to something (e.g., 100). What value is the variable in the child process? What happens to the variable when both the child and parent change the value of <code>x</code></li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id88"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      Both the parent and the child get a copy of the variable values i.e. \(x\). When they modify \(x\) it only affects the copy of \(x\) in their local address space.
+    </details></section>
+
+    <li>Write a program that opens a file (with the <code>open()</code> system call) and then calls <code>fork()</code> to create a new process. Can both the child and parent access the file descriptor returned by <code>open()</code>? What happens when they are writing to the file concurrently, i.e., at the same time?</li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id89"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      Both do have access to the same file descriptor. I believe that they can interleave writes if writing at the same time but for me whichever process got ran first always finished writing prior the other starting. This may be a scheduling thing, where one process is able to complete before the other is scheduled?
+    </details></section>
+
+    <li>Write another program using <code>fork()</code>. The child process should print "hello"; the parent process should print "goodbye". You should try to ensure that the child process always prints first; can you do this without calling <code>wait()</code> in the parent?</li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id90"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      Using the previous problem, in the child, we can write something to a file. Then, in the parent, we can enforce an ordering by making the parent wait in a <code xmlns="http://www.w3.org/1999/xhtml">while</code> loop until it reads the value written by the child. However, this is terribly inconvenient (and probably why <code xmlns="http://www.w3.org/1999/xhtml">wait()</code> exists).
+    </details></section>
+
+    <li>Now write a program that uses <code>wait()</code> to wait for the child process to finish in the parent. What does <code>wait()</code> return? What happens if you use <code>wait()</code> in the child?</li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id91"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      <code xmlns="http://www.w3.org/1999/xhtml">wait()</code> returns the pid of the child process that died. Using <code xmlns="http://www.w3.org/1999/xhtml">wait()</code> in the child just immediately returns \(-1\).
+    </details></section>
+
+    <li>Write a program that calls <code>fork()</code> and then calls some form of <code>exec()</code> to run the program <code>/bin/ls</code>. See if you can try all of the variants of <code>exec()</code>, including <code>execl()</code>, <code>execle()</code>, <code>execlp()</code>, <code>execv()</code>, <code>execvp()</code>, and <code>execvP()</code>. Why do you think there are so many variants of the same basic call?</li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id92"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      It seems that some of them support different types of arguments i.e. <code xmlns="http://www.w3.org/1999/xhtml">execv</code> family allows variable size argument list. Additionally, there is a distinction in the <em xmlns="http://www.w3.org/1999/xhtml">environment</em>. This seems to be a list of environment variable values that <code xmlns="http://www.w3.org/1999/xhtml">exec{l,v}e()</code> will search over. The \(p\) family use the same search as the shell i.e. the <code xmlns="http://www.w3.org/1999/xhtml">PATH</code>.
+    </details></section>
+
+    <li>Write a slight modification of the previous program, this time using <code>waitpid()</code> instead of <code>wait()</code>. When would <code>waitpid()</code> be useful?</li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id93"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      If a parent process has multiple children, then <code xmlns="http://www.w3.org/1999/xhtml">wait()</code> will only wait until the first one dies. <code xmlns="http://www.w3.org/1999/xhtml">waitpid()</code> lets you specify waiting on a specific child process.
+    </details></section>
+
+    <li>Write a program that creates a child process, and then in the child closes standard output (<code>STDOUT_FILENO</code>). What happens if the child calls <code>printf()</code> to print some output after closing the descriptor?</li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id94"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      Nothing prints in the child process. However, stdout is still open in the parent process and able to print.
+    </details></section>
+
+    <li>Write a program that creates two children, and connects the standard output of one to the standard input of the other, using the <code>pipe()</code> system call</li>
+    
+    <section xmlns="" lang="en" class="block hide-metadata" data-taxon="Answer"><details id="id95"><summary><header><h1>
+<span class="taxon">Answer. </span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+      This required <code xmlns="http://www.w3.org/1999/xhtml">fflush()</code> for me. I am not sure if this is true in general?
+    </details></section></ol>
+</details></section>
+
+</details></section>
+</details></section>
+</details></section>
+      </details></section>
+    
+    <section lang="en" class="block hide-metadata"><details id="id96" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id97"><summary><header><h1>
+<span class="taxon"></span>Unix signals <a class="slug" href="/9V3H/">[9V3H]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">An asynchronous notification delivered to a <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>. A process sends a signal with <code>kill(pid, signum)</code> (the name is misleading — most signals don't kill); the recipient can install a handler with <code>signal(signum, handler)</code> to "catch" it, otherwise the default action runs (often termination).</p>
+            <p xmlns="http://www.w3.org/1999/xhtml">Signals are the OS's mechanism for events the recipient didn't ask to be told about: <code>SIGINT</code> from Ctrl-C, <code>SIGSEGV</code> from a <span xmlns="" class="link local"><a href="/CXFM/" title="Page fault and swap space [CXFM]">Page fault and swap space</a></span> on an invalid page, <code>SIGCHLD</code> when a child exits, <code>SIGTERM</code> from an administrative kill.</p>
+            <p xmlns="http://www.w3.org/1999/xhtml">Who can signal whom depends on the <em>user</em> owning the process — a user can signal their own processes; the <em>superuser</em> can signal any process.</p>
+          </details></section>
+        <section lang="en" class="block"><details id="id98"><summary><header><h1>
+<span class="taxon"></span>exec() <a class="slug" href="/YHJR/">[YHJR]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Replaces the calling <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>'s program with a new executable. <code>exec()</code> does not return on success — the original code, data, stack, and heap are discarded and the new program runs in their place. The PID is unchanged.</p><p xmlns="http://www.w3.org/1999/xhtml">What <code>exec()</code> does internally:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Loads the new executable's code and static data, overwriting the current.</li>
+  <li>Re-initializes stack and heap.</li>
+  <li>Jumps to the new program's entry point with arguments passed as <code>argv</code>.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">The canonical Unix pattern is <code>fork()</code> then <code>exec()</code> — the shell uses this to launch a command without becoming that command:</p><pre xmlns="http://www.w3.org/1999/xhtml">int main()
+  while (true) {
+    command = getcommand();
+    int rc = fork();
+    if (rc &lt; 0)
+      printf("error with fork");
+    else if (rc == 0)
+      exec(command);            // child becomes the command
+    else
+      int rc = wait(NULL);      // parent waits for it
+  }</pre><p xmlns="http://www.w3.org/1999/xhtml">Redirection is implemented by opening a file in the child between <code>fork()</code> and <code>exec()</code>, attached to <code>STDOUT_FILENO</code>:</p><pre xmlns="http://www.w3.org/1999/xhtml">if (rc == 0)
+  close(STDOUT_FILENO);
+  open("output.txt");
+  exec(command);</pre>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id99" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>The many variants — <code xmlns="http://www.w3.org/1999/xhtml">execl</code>, <code xmlns="http://www.w3.org/1999/xhtml">execle</code>, <code xmlns="http://www.w3.org/1999/xhtml">execlp</code>, <code xmlns="http://www.w3.org/1999/xhtml">execv</code>, <code xmlns="http://www.w3.org/1999/xhtml">execvp</code>, <code xmlns="http://www.w3.org/1999/xhtml">execvP</code> — differ in how they take arguments (list vs. vector), whether they use the <code xmlns="http://www.w3.org/1999/xhtml">PATH</code> environment variable, and whether they take an explicit environment.</details></section>
+</details></section>
+        <section lang="en" class="block"><details id="id100"><summary><header><h1>
+<span class="taxon"></span>wait() <a class="slug" href="/J6VZ/">[J6VZ]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Blocks the calling <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span> until one of its children terminates. The OS marks the child's PCB <code>ZOMBIE</code> on exit, keeping enough state (exit status, resource usage) for the parent to retrieve via <code>wait()</code>; only when the parent collects it is the child fully reaped.</p><p xmlns="http://www.w3.org/1999/xhtml"><code>wait()</code> returns the PID of the child that died. Variant <code>waitpid(pid, ...)</code> blocks on a specific child — useful when a parent has multiple children and only one is interesting.</p><p xmlns="http://www.w3.org/1999/xhtml">Used to enforce ordering between parent and child code paths after <span xmlns="" class="link local"><a href="/O1S9/" title="fork() [O1S9]">fork()</a></span>, or to know when an <span xmlns="" class="link local"><a href="/YHJR/" title="exec() [YHJR]">exec()</a></span>'d program finishes.</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id101" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Calling <code xmlns="http://www.w3.org/1999/xhtml">wait()</code> with no children to wait on returns <code xmlns="http://www.w3.org/1999/xhtml">-1</code>.</details></section>
+</details></section>
+        <section lang="en" class="block"><details id="id102"><summary><header><h1>
+<span class="taxon"></span>fork() <a class="slug" href="/O1S9/">[O1S9]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The Unix system call that duplicates the calling <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>. After <code>fork()</code> returns, two processes exist where there was one. The child gets its own copy of:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Address space.</li>
+  <li>General-purpose registers.</li>
+  <li>Program counter — the child returns from <code>fork()</code> at the same instruction the parent does.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">The two processes are distinguished by <code>fork()</code>'s return value:</p><pre xmlns="http://www.w3.org/1999/xhtml">int main()
+  int rc = fork();
+  if (rc &lt; 0)
+    printf("error with fork");
+  else if (rc == 0)
+    printf("in child");
+  else
+    printf("in parent");        // rc holds child PID</pre>
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id103" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>Which process is scheduled first after <code xmlns="http://www.w3.org/1999/xhtml">fork()</code> is non-deterministic. Use <span class="link local"><a href="/J6VZ/" title="wait() [J6VZ]">wait()</a></span> if you need ordering.</details></section>
+
+    <section lang="en" class="block hide-metadata" data-taxon="Remark"><details id="id104" open="open"><summary><header><h1>
+<span class="taxon">Remark. </span>  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>The copy is logical, not physical: real implementations use <span class="link local"><a href="/DEJB/" title="Copy-on-write [DEJB]">Copy-on-write</a></span> so the duplicated address space only allocates fresh pages when one side writes to them.</details></section>
+</details></section>
+        <section lang="en" class="block"><details id="id105"><summary><header><h1>
+<span class="taxon"></span>Deliberate-Practice <a class="slug" href="/007U/">[007U]</a> </h1>
+<div class="metadata"><ul><li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">This is a backlink storage for my daily self-study endeavors. The name is an homage to <span xmlns="" class="link local"><a href="/calnewport/" title="Cal Newport [calnewport]">Cal Newport</a></span>'s book <span xmlns="" class="link external"><a href="https://www.amazon.com/Good-They-Cant-Ignore-You/dp/1455509124" title="">So Good They Can't Ignore You</a></span>.</p>
+          </details></section>
+      </details></section>
+    
+  </footer></article><nav id="toc"><div class="block"><h1>Table of Contents</h1><ul xmlns="" class="block"><li>
+<a class="bullet" href="#id2" title="Coding Homework">■</a><span class="link local" data-target="#id2"><span class="taxon"></span>Coding Homework</span><ul class="block"></ul>
+</li></ul></div></nav></div></body></html>

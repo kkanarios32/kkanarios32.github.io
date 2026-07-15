@@ -1,6 +1,60 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/AI2B/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>MOESI protocol</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>MOESI protocol <a class="slug" href="/AI2B/">[AI2B]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/30XT/" title="MESI protocol [30XT]">MESI protocol</a></span> extended with an <em>Owned</em> state — shared but dirty. The owning cache holds a writable-by-only-it copy, while other caches may hold clean read-only copies. The owner is responsible for writing back on eviction.</p><p xmlns="http://www.w3.org/1999/xhtml">The point: if a dataset is heavily shared but rarely changes, MESI would require write-back to memory each time it transitions out of M to S. MOESI lets a dirty line stay dirty in the cache while other caches read clean copies of it, deferring the writeback until the owner actually evicts.</p><p xmlns="http://www.w3.org/1999/xhtml">This is most useful when you have producer-consumer or migratory sharing patterns where one core repeatedly writes and others repeatedly read.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmifclvn2y2qimjwqk4f3bfwm6cxsxyaiqt4csfc33y2apyabag6joe.png"></img>
+<figcaption>MOESI venn diagram.</figcaption></figure>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> <em>DEC Firefly</em> is a contemporary alternative that uses write-update for the Shared state — every write broadcasts to all sharers via wired-OR signaling — and write-back for Exclusive and Dirty. Good for small bus systems with high update frequency; bad for large systems where the broadcast cost dominates.</div>
+</details></section><footer xmlns="">
+    
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id3"><summary><header><h1>
+<span class="taxon"></span>MESI protocol <a class="slug" href="/30XT/">[30XT]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/EYXU/" title="MSI protocol [EYXU]">MSI protocol</a></span> augmented with an <em>Exclusive</em> state. The four states:</p>
+            <ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>Modified (M)</strong> — only copy, dirty, writable.</li>
+  <li><strong>Exclusive (E)</strong> — only copy, clean, writable.</li>
+  <li><strong>Shared (S)</strong> — clean, possibly held by other caches, read-only.</li>
+  <li><strong>Invalid (I)</strong> — no valid copy.</li></ol>
+            <p xmlns="http://www.w3.org/1999/xhtml">The crucial addition is that a line transitioning S → M needs a bus transaction (other sharers must invalidate), but a line transitioning E → M is <em>silent</em>: nobody else has a copy, so nobody needs to be told. Eviction from E also skips the writeback (E is clean), saving memory traffic.</p>
+            <p xmlns="http://www.w3.org/1999/xhtml">MESI is dramatically better than MSI for thread-private data: a thread that reads then writes its private variable goes I → E → M with only one bus transaction, instead of I → S → M with two.</p>
+            <figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmide7oflk7mbmslmrpoigr2jirpy2hu36ct2sixptvpbb2foxvmdte.png"></img>
+<figcaption>MESI state machine.</figcaption></figure>
+            <p xmlns="http://www.w3.org/1999/xhtml">The next refinement is <span xmlns="" class="link local"><a href="/AI2B/" title="MOESI protocol [AI2B]">MOESI protocol</a></span>, which adds an <em>Owned</em> state for shared-but-dirty lines.</p>
+          </details></section>
+        <section lang="en" class="block"><details id="id4"><summary><header><h1>
+<span class="taxon"></span>Cache coherence <a class="slug" href="/GA7N/">[GA7N]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">In a <span xmlns="" class="link local"><a href="/JRP0/" title="Multicore [JRP0]">Multicore</a></span> system where every core has its own <span xmlns="" class="link local"><a href="/KBYI/" title="Cache hierarchy [KBYI]">Cache hierarchy</a></span>, the same memory address can live in multiple caches simultaneously. A <em>cache coherence</em> protocol is the mechanism that keeps those copies consistent — propagating writes, invalidating stale copies, and preserving two invariants:</p>
+            <ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>Single-writer invariant</strong>: at any moment, at most one core has permission to write a given line. No other core can read or write it concurrently.</li>
+  <li><strong>Data-value invariant</strong>: all cores see the same order of updates to a given line.</li></ol>
+            <p xmlns="http://www.w3.org/1999/xhtml">Two organizational families:</p>
+            <ul xmlns="http://www.w3.org/1999/xhtml"><li><span xmlns="" class="link local"><a href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus [8C2H]">snoop-based coherence</a></span> — every cache watches a shared bus and reacts to other cores' traffic. Scales to ~8 cores.</li>
+  <li><span xmlns="" class="link local"><a href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages [KIT8]">directory-based coherence</a></span> — a structure tracks who has a copy of each line; coherence messages are point-to-point. Scales to hundreds of cores at the cost of an extra hop.</li></ul>
+            <p xmlns="http://www.w3.org/1999/xhtml">The concrete state machines are protocols like <span xmlns="" class="link local"><a href="/EYXU/" title="MSI protocol [EYXU]">MSI protocol</a></span>, <span xmlns="" class="link local"><a href="/30XT/" title="MESI protocol [30XT]">MESI protocol</a></span>, <span xmlns="" class="link local"><a href="/AI2B/" title="MOESI protocol [AI2B]">MOESI protocol</a></span>, and DEC Firefly, each adding states to handle more cases or to optimize specific sharing patterns. A worked implementation of directory-based MESI in Murphi lives in <span xmlns="" class="link local"><a href="/HHZO/" title="Implementing Directory-based MESI in Murphi [HHZO]">Implementing Directory-based MESI in Murphi</a></span>.</p>
+            <p xmlns="http://www.w3.org/1999/xhtml">Worked instance: <span xmlns="" class="link local"><a href="/HHZO/" title="Implementing Directory-based MESI in Murphi [HHZO]">Implementing Directory-based MESI in Murphi</a></span> implements directory-based MESI in Murphi.</p>
+          </details></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id6"><summary><header><h1>
+<span class="taxon"></span>MESI protocol <a class="slug" href="/30XT/">[30XT]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/EYXU/" title="MSI protocol [EYXU]">MSI protocol</a></span> augmented with an <em>Exclusive</em> state. The four states:</p>
+            <ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>Modified (M)</strong> — only copy, dirty, writable.</li>
+  <li><strong>Exclusive (E)</strong> — only copy, clean, writable.</li>
+  <li><strong>Shared (S)</strong> — clean, possibly held by other caches, read-only.</li>
+  <li><strong>Invalid (I)</strong> — no valid copy.</li></ol>
+            <p xmlns="http://www.w3.org/1999/xhtml">The crucial addition is that a line transitioning S → M needs a bus transaction (other sharers must invalidate), but a line transitioning E → M is <em>silent</em>: nobody else has a copy, so nobody needs to be told. Eviction from E also skips the writeback (E is clean), saving memory traffic.</p>
+            <p xmlns="http://www.w3.org/1999/xhtml">MESI is dramatically better than MSI for thread-private data: a thread that reads then writes its private variable goes I → E → M with only one bus transaction, instead of I → S → M with two.</p>
+            <figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmide7oflk7mbmslmrpoigr2jirpy2hu36ct2sixptvpbb2foxvmdte.png"></img>
+<figcaption>MESI state machine.</figcaption></figure>
+            <p xmlns="http://www.w3.org/1999/xhtml">The next refinement is <span xmlns="" class="link local"><a href="/AI2B/" title="MOESI protocol [AI2B]">MOESI protocol</a></span>, which adds an <em>Owned</em> state for shared-but-dirty lines.</p>
+          </details></section>
+      </details></section>
+    
+  </footer></article></div></body></html>

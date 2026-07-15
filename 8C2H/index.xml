@@ -11,12 +11,18 @@
     <fr:uri>https://kellenkanarios.com/8C2H/</fr:uri>
     <fr:display-uri>8C2H</fr:display-uri>
     <fr:route>/8C2H/</fr:route>
-    <fr:title text="Snoop-based coherence">Snoop-based coherence</fr:title>
+    <fr:title text="Snoop-based coherence keeps caches consistent by watching a shared bus">Snoop-based coherence keeps caches consistent by watching a shared bus</fr:title>
   </fr:frontmatter>
   <fr:mainmatter><html:p>A <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> family where every cache watches (<html:em>snoops</html:em>) a shared bus. When one cache issues a coherence transaction (e.g. requests permission to read or write a line), every other cache sees it and updates its local state accordingly. No central directory needed; the bus itself is the coordination mechanism.</html:p><html:p>The simplest snoop-based protocol is <html:em>valid-invalid</html:em>:</html:p><html:ul><html:li>Invalid + load → BusRd to gain read permission; transition to valid.</html:li>
   <html:li>Invalid + store → no transition (write-through assumed; the bus carries the write).</html:li>
-  <html:li>Valid + store → BusWr to notify other caches; they invalidate.</html:li></html:ul><html:p><html:strong>Write-update coherence</html:strong>, the variant where stores update other caches' copies instead of invalidating them, works for very small bus-based systems but does not scale: every write reaches everyone, and copies of data the snooper isn't using pollute its <fr:link href="/UG51/" title="Cache replacement policy" uri="https://kellenkanarios.com/UG51/" display-uri="UG51" type="local">Cache replacement policy</fr:link>.</html:p><html:p>Snoop-based coherence relies on a shared physical bus, which limits it to roughly 8 cores. Beyond that, switch to <fr:link href="/KIT8/" title="Directory-based coherence" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">Directory-based coherence</fr:link>.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Snoop-based SMPs use the <html:em><fr:link href="/4W5G/" title="Inclusion property" uri="https://kellenkanarios.com/4W5G/" display-uri="4W5G" type="local">Inclusion property</fr:link></html:em> so that snooping at L2 suffices — every L1 line is also tracked at L2.</fr:mainmatter></fr:tree>
+  <html:li>Valid + store → BusWr to notify other caches; they invalidate.</html:li></html:ul><html:p><html:strong>Write-update coherence</html:strong>, the variant where stores update other caches' copies instead of invalidating them, works for very small bus-based systems but does not scale: every write reaches everyone, and copies of data the snooper isn't using pollute its <fr:link href="/UG51/" title="Cache replacement policy" uri="https://kellenkanarios.com/UG51/" display-uri="UG51" type="local">Cache replacement policy</fr:link>.</html:p><html:p>Snoop-based coherence relies on a shared physical bus, which limits it to roughly 8 cores. Beyond that, switch to <fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory-based coherence</fr:link>.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Snoop-based SMPs use the <html:em><fr:link href="/4W5G/" title="Inclusion property" uri="https://kellenkanarios.com/4W5G/" display-uri="4W5G" type="local">Inclusion property</fr:link></html:em> so that snooping at L2 suffices — every L1 line is also tracked at L2.</html:div>
 </fr:mainmatter>
   <fr:backmatter>
     <fr:tree show-metadata="false" hidden-when-empty="true">
@@ -50,47 +56,15 @@
             <fr:uri>https://kellenkanarios.com/KIT8/</fr:uri>
             <fr:display-uri>KIT8</fr:display-uri>
             <fr:route>/KIT8/</fr:route>
-            <fr:title text="Directory-based coherence">Directory-based coherence</fr:title>
+            <fr:title text="Directory-based coherence scales by replacing broadcasts with point-to-point messages">Directory-based coherence scales by replacing broadcasts with point-to-point messages</fr:title>
           </fr:frontmatter>
-          <fr:mainmatter><html:p>A scalable <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> organization for systems too large for a shared bus. Each memory address has a <html:em>home node</html:em>; the home node maintains a <html:em>directory</html:em> entry listing which caches currently hold copies and in what state. Coherence transactions are point-to-point messages routed via the directory rather than broadcasts.</html:p><html:p>Compared to <fr:link href="/8C2H/" title="Snoop-based coherence" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">Snoop-based coherence</fr:link>, directory protocols trade a level of indirection (3 hops instead of 2 for some transactions) for vastly reduced bandwidth — making them viable at hundreds of cores.</html:p><html:figure><html:img width="100%" src="/bafkrmiagqplbpjuiklwpxy5wyr42scpgq6ywmggrd3alpf5xlsyam6rvue.png" />
+          <fr:mainmatter>
+            <html:p>A scalable <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> organization for systems too large for a shared bus. Each memory address has a <html:em>home node</html:em>; the home node maintains a <html:em>directory</html:em> entry listing which caches currently hold copies and in what state. Coherence transactions are point-to-point messages routed via the directory rather than broadcasts. The directory is itself distributed — each node owns the entries for the addresses in its local DRAM, and a physical address uniquely identifies its home — so there is no central bottleneck.</html:p>
+            <html:p>Compared to <fr:link href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">snoop-based coherence</fr:link>, directory protocols trade a level of indirection (3 hops instead of 2 for some transactions) for vastly reduced bandwidth — making them viable at hundreds of cores.</html:p>
+            <html:figure><html:img width="100%" src="/bafkrmiagqplbpjuiklwpxy5wyr42scpgq6ywmggrd3alpf5xlsyam6rvue.png" />
 <html:figcaption>4-hop directory write protocol.</html:figcaption></html:figure>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="Directory organization">Directory organization</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p><html:strong>Centralized vs. distributed.</html:strong> A single central directory is a bottleneck; production systems distribute it. Each processor's local DRAM has its own directory tracking the addresses physically present in that DRAM. Every physical address uniquely identifies its home node.</html:p>
-
-<html:p><html:strong>Reducing directory size.</html:strong> The naive directory is a sharer list per cache line:</html:p>
-<html:ul><html:li>One-hot bitmap (256 nodes → 32 bytes per entry): 50% of memory consumed by metadata.</html:li>
-  <html:li>Limited-sharer encoding: most workloads have ≤4 sharers; track those exactly, fall back to broadcast for the uncommon case.</html:li>
-  <html:li><html:strong>Sparse directories.</html:strong> Cache the directory entries themselves. An entry missing from the directory cache means nobody has a copy. On eviction from the directory cache, invalidate the corresponding lines.</html:li></html:ul>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="Transient states and races">Transient states and races</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Because directory transactions take multiple hops, intermediate states are visible — <html:em>transient states</html:em> like <fr:tex display="inline"><![CDATA[\mathrm {MI}^{A}]]></fr:tex> (modified-to-invalid, waiting on acknowledgment). Concurrent transactions race; the protocol must handle every combination correctly.</html:p>
-
-
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
-L has a dirty copy and wants to write back to H. R concurrently sends a read to H. R's state <fr:tex display="inline"><![CDATA[\mathrm {S}^{D}]]></fr:tex> means "shared, waiting for data".
-<html:figure><html:img width="100%" src="/bafkrmiheg63sxr5b4oukpd7q7j3o5rat2wyswllujljbvbwhiwlqgmqly4.png" /></html:figure>
-</fr:mainmatter></fr:tree>
- 
-
-
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Never use NACKs in a directory protocol — they cause starvation.</fr:mainmatter></fr:tree>
-
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>See <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link> for a worked implementation in Murphi, including the channel-separation arguments that prevent protocol-level deadlock.</fr:mainmatter></fr:tree>
-
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="Optimizations">Optimizations</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p><html:strong>Prefetching.</html:strong> Fetch data before requested to hide coherence latency.</html:p>
-<html:p><html:strong>Upgrade-miss detection.</html:strong> In migratory sharing (read then write), a naive read-miss followed by write-miss costs two coherence transactions. Detect the pattern and transition straight to a "migratory E" state on read.</html:p>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The same optimization <html:em>hurts</html:em> producer-consumer sharing. There, the right move on read-miss is to downgrade the previous holder rather than invalidate, so subsequent readers can fetch from the prior writer.</fr:mainmatter></fr:tree>
-
-</fr:mainmatter></fr:tree>
-</fr:mainmatter>
+            <html:p>Three refinements make directory coherence practical. Its metadata is kept from scaling with memory by <fr:link href="/QSWW/" title="Sparse directories keep coherence metadata from scaling with memory" uri="https://kellenkanarios.com/QSWW/" display-uri="QSWW" type="local">sparse directories</fr:link>; its multi-hop transactions force the protocol to reason about <fr:link href="/Z32G/" title="Directory protocols expose transient states because transactions span multiple hops" uri="https://kellenkanarios.com/Z32G/" display-uri="Z32G" type="local">transient states and races</fr:link>; and workload-specific patterns like <fr:link href="/20SW/" title="Migratory-sharing optimization collapses read-then-write into one coherence transaction" uri="https://kellenkanarios.com/20SW/" display-uri="20SW" type="local">migratory sharing</fr:link> let it collapse pairs of transactions into one. See <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link> for a full worked implementation in Murphi.</html:p>
+          </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
@@ -105,15 +79,30 @@ L has a dirty copy and wants to write back to H. R concurrently sends a read to 
             <fr:route>/4W5G/</fr:route>
             <fr:title text="Inclusion property">Inclusion property</fr:title>
           </fr:frontmatter>
-          <fr:mainmatter><html:p>A cache hierarchy property: every line held in a higher-level cache (closer to the core, e.g. L1) must also be present in the next-level cache (L2). The hierarchy contains its own contents at every level — L2 ⊇ L1.</html:p><html:p>Why it matters for <fr:link href="/8C2H/" title="Snoop-based coherence" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">Snoop-based coherence</fr:link>: with inclusion, a snoop only needs to consult L2. If a snoop hits in L2, then either the line is also in L1 (and L2 forwards the snoop) or it's not (and L1 doesn't need to look). This means L1 doesn't need a snoop port.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>L1 hits don't update LRU metadata at L2 — so L2 might evict a line that L1 is actively using, violating inclusion.</fr:mainmatter></fr:tree>
+          <fr:mainmatter><html:p>A cache hierarchy property: every line held in a higher-level cache (closer to the core, e.g. L1) must also be present in the next-level cache (L2). The hierarchy contains its own contents at every level — L2 ⊇ L1.</html:p><html:p>Why it matters for <fr:link href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">snoop-based coherence</fr:link>: with inclusion, a snoop only needs to consult L2. If a snoop hits in L2, then either the line is also in L1 (and L2 forwards the snoop) or it's not (and L1 doesn't need to look). This means L1 doesn't need a snoop port.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> L1 hits don't update LRU metadata at L2 — so L2 might evict a line that L1 is actively using, violating inclusion.</html:div>
 
- 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Either (a) refuse to evict an L2 line that's still in L1, or (b) when evicting from L2, also evict from L1.</fr:mainmatter></fr:tree>
- 
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> Either (a) refuse to evict an L2 line that's still in L1, or (b) when evicting from L2, also evict from L1.</html:div>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Inclusive caches waste capacity (every line is duplicated). Non-inclusive and exclusive variants trade some snoop simplicity for better effective capacity.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Inclusive caches waste capacity (every line is duplicated). Non-inclusive and exclusive variants trade some snoop simplicity for better effective capacity.</html:div>
 </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -134,9 +123,10 @@ L has a dirty copy and wants to write back to H. R concurrently sends a read to 
             <html:ol><html:li><html:strong>Single-writer invariant</html:strong>: at any moment, at most one core has permission to write a given line. No other core can read or write it concurrently.</html:li>
   <html:li><html:strong>Data-value invariant</html:strong>: all cores see the same order of updates to a given line.</html:li></html:ol>
             <html:p>Two organizational families:</html:p>
-            <html:ul><html:li><fr:link href="/8C2H/" title="Snoop-based coherence" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">Snoop-based coherence</fr:link> — every cache watches a shared bus and reacts to other cores' traffic. Scales to ~8 cores.</html:li>
-  <html:li><fr:link href="/KIT8/" title="Directory-based coherence" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">Directory-based coherence</fr:link> — a structure tracks who has a copy of each line; coherence messages are point-to-point. Scales to hundreds of cores at the cost of an extra hop.</html:li></html:ul>
+            <html:ul><html:li><fr:link href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">snoop-based coherence</fr:link> — every cache watches a shared bus and reacts to other cores' traffic. Scales to ~8 cores.</html:li>
+  <html:li><fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory-based coherence</fr:link> — a structure tracks who has a copy of each line; coherence messages are point-to-point. Scales to hundreds of cores at the cost of an extra hop.</html:li></html:ul>
             <html:p>The concrete state machines are protocols like <fr:link href="/EYXU/" title="MSI protocol" uri="https://kellenkanarios.com/EYXU/" display-uri="EYXU" type="local">MSI protocol</fr:link>, <fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link>, <fr:link href="/AI2B/" title="MOESI protocol" uri="https://kellenkanarios.com/AI2B/" display-uri="AI2B" type="local">MOESI protocol</fr:link>, and DEC Firefly, each adding states to handle more cases or to optimize specific sharing patterns. A worked implementation of directory-based MESI in Murphi lives in <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link>.</html:p>
+            <html:p>Worked instance: <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link> implements directory-based MESI in Murphi.</html:p>
           </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>
@@ -158,47 +148,15 @@ L has a dirty copy and wants to write back to H. R concurrently sends a read to 
             <fr:uri>https://kellenkanarios.com/KIT8/</fr:uri>
             <fr:display-uri>KIT8</fr:display-uri>
             <fr:route>/KIT8/</fr:route>
-            <fr:title text="Directory-based coherence">Directory-based coherence</fr:title>
+            <fr:title text="Directory-based coherence scales by replacing broadcasts with point-to-point messages">Directory-based coherence scales by replacing broadcasts with point-to-point messages</fr:title>
           </fr:frontmatter>
-          <fr:mainmatter><html:p>A scalable <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> organization for systems too large for a shared bus. Each memory address has a <html:em>home node</html:em>; the home node maintains a <html:em>directory</html:em> entry listing which caches currently hold copies and in what state. Coherence transactions are point-to-point messages routed via the directory rather than broadcasts.</html:p><html:p>Compared to <fr:link href="/8C2H/" title="Snoop-based coherence" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">Snoop-based coherence</fr:link>, directory protocols trade a level of indirection (3 hops instead of 2 for some transactions) for vastly reduced bandwidth — making them viable at hundreds of cores.</html:p><html:figure><html:img width="100%" src="/bafkrmiagqplbpjuiklwpxy5wyr42scpgq6ywmggrd3alpf5xlsyam6rvue.png" />
+          <fr:mainmatter>
+            <html:p>A scalable <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> organization for systems too large for a shared bus. Each memory address has a <html:em>home node</html:em>; the home node maintains a <html:em>directory</html:em> entry listing which caches currently hold copies and in what state. Coherence transactions are point-to-point messages routed via the directory rather than broadcasts. The directory is itself distributed — each node owns the entries for the addresses in its local DRAM, and a physical address uniquely identifies its home — so there is no central bottleneck.</html:p>
+            <html:p>Compared to <fr:link href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">snoop-based coherence</fr:link>, directory protocols trade a level of indirection (3 hops instead of 2 for some transactions) for vastly reduced bandwidth — making them viable at hundreds of cores.</html:p>
+            <html:figure><html:img width="100%" src="/bafkrmiagqplbpjuiklwpxy5wyr42scpgq6ywmggrd3alpf5xlsyam6rvue.png" />
 <html:figcaption>4-hop directory write protocol.</html:figcaption></html:figure>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="Directory organization">Directory organization</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p><html:strong>Centralized vs. distributed.</html:strong> A single central directory is a bottleneck; production systems distribute it. Each processor's local DRAM has its own directory tracking the addresses physically present in that DRAM. Every physical address uniquely identifies its home node.</html:p>
-
-<html:p><html:strong>Reducing directory size.</html:strong> The naive directory is a sharer list per cache line:</html:p>
-<html:ul><html:li>One-hot bitmap (256 nodes → 32 bytes per entry): 50% of memory consumed by metadata.</html:li>
-  <html:li>Limited-sharer encoding: most workloads have ≤4 sharers; track those exactly, fall back to broadcast for the uncommon case.</html:li>
-  <html:li><html:strong>Sparse directories.</html:strong> Cache the directory entries themselves. An entry missing from the directory cache means nobody has a copy. On eviction from the directory cache, invalidate the corresponding lines.</html:li></html:ul>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="Transient states and races">Transient states and races</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Because directory transactions take multiple hops, intermediate states are visible — <html:em>transient states</html:em> like <fr:tex display="inline"><![CDATA[\mathrm {MI}^{A}]]></fr:tex> (modified-to-invalid, waiting on acknowledgment). Concurrent transactions race; the protocol must handle every combination correctly.</html:p>
-
-
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Example</fr:taxon></fr:frontmatter><fr:mainmatter>
-L has a dirty copy and wants to write back to H. R concurrently sends a read to H. R's state <fr:tex display="inline"><![CDATA[\mathrm {S}^{D}]]></fr:tex> means "shared, waiting for data".
-<html:figure><html:img width="100%" src="/bafkrmiheg63sxr5b4oukpd7q7j3o5rat2wyswllujljbvbwhiwlqgmqly4.png" /></html:figure>
-</fr:mainmatter></fr:tree>
- 
-
-
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Never use NACKs in a directory protocol — they cause starvation.</fr:mainmatter></fr:tree>
-
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>See <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link> for a worked implementation in Murphi, including the channel-separation arguments that prevent protocol-level deadlock.</fr:mainmatter></fr:tree>
-
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:title text="Optimizations">Optimizations</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p><html:strong>Prefetching.</html:strong> Fetch data before requested to hide coherence latency.</html:p>
-<html:p><html:strong>Upgrade-miss detection.</html:strong> In migratory sharing (read then write), a naive read-miss followed by write-miss costs two coherence transactions. Detect the pattern and transition straight to a "migratory E" state on read.</html:p>
-
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>The same optimization <html:em>hurts</html:em> producer-consumer sharing. There, the right move on read-miss is to downgrade the previous holder rather than invalidate, so subsequent readers can fetch from the prior writer.</fr:mainmatter></fr:tree>
-
-</fr:mainmatter></fr:tree>
-</fr:mainmatter>
+            <html:p>Three refinements make directory coherence practical. Its metadata is kept from scaling with memory by <fr:link href="/QSWW/" title="Sparse directories keep coherence metadata from scaling with memory" uri="https://kellenkanarios.com/QSWW/" display-uri="QSWW" type="local">sparse directories</fr:link>; its multi-hop transactions force the protocol to reason about <fr:link href="/Z32G/" title="Directory protocols expose transient states because transactions span multiple hops" uri="https://kellenkanarios.com/Z32G/" display-uri="Z32G" type="local">transient states and races</fr:link>; and workload-specific patterns like <fr:link href="/20SW/" title="Migratory-sharing optimization collapses read-then-write into one coherence transaction" uri="https://kellenkanarios.com/20SW/" display-uri="20SW" type="local">migratory sharing</fr:link> let it collapse pairs of transactions into one. See <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link> for a full worked implementation in Murphi.</html:p>
+          </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
@@ -213,15 +171,30 @@ L has a dirty copy and wants to write back to H. R concurrently sends a read to 
             <fr:route>/4W5G/</fr:route>
             <fr:title text="Inclusion property">Inclusion property</fr:title>
           </fr:frontmatter>
-          <fr:mainmatter><html:p>A cache hierarchy property: every line held in a higher-level cache (closer to the core, e.g. L1) must also be present in the next-level cache (L2). The hierarchy contains its own contents at every level — L2 ⊇ L1.</html:p><html:p>Why it matters for <fr:link href="/8C2H/" title="Snoop-based coherence" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">Snoop-based coherence</fr:link>: with inclusion, a snoop only needs to consult L2. If a snoop hits in L2, then either the line is also in L1 (and L2 forwards the snoop) or it's not (and L1 doesn't need to look). This means L1 doesn't need a snoop port.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>L1 hits don't update LRU metadata at L2 — so L2 might evict a line that L1 is actively using, violating inclusion.</fr:mainmatter></fr:tree>
+          <fr:mainmatter><html:p>A cache hierarchy property: every line held in a higher-level cache (closer to the core, e.g. L1) must also be present in the next-level cache (L2). The hierarchy contains its own contents at every level — L2 ⊇ L1.</html:p><html:p>Why it matters for <fr:link href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">snoop-based coherence</fr:link>: with inclusion, a snoop only needs to consult L2. If a snoop hits in L2, then either the line is also in L1 (and L2 forwards the snoop) or it's not (and L1 doesn't need to look). This means L1 doesn't need a snoop port.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> L1 hits don't update LRU metadata at L2 — so L2 might evict a line that L1 is actively using, violating inclusion.</html:div>
 
- 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Either (a) refuse to evict an L2 line that's still in L1, or (b) when evicting from L2, also evict from L1.</fr:mainmatter></fr:tree>
- 
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> Either (a) refuse to evict an L2 line that's still in L1, or (b) when evicting from L2, also evict from L1.</html:div>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Inclusive caches waste capacity (every line is duplicated). Non-inclusive and exclusive variants trade some snoop simplicity for better effective capacity.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Inclusive caches waste capacity (every line is duplicated). Non-inclusive and exclusive variants trade some snoop simplicity for better effective capacity.</html:div>
 </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -242,9 +215,10 @@ L has a dirty copy and wants to write back to H. R concurrently sends a read to 
             <html:ol><html:li><html:strong>Single-writer invariant</html:strong>: at any moment, at most one core has permission to write a given line. No other core can read or write it concurrently.</html:li>
   <html:li><html:strong>Data-value invariant</html:strong>: all cores see the same order of updates to a given line.</html:li></html:ol>
             <html:p>Two organizational families:</html:p>
-            <html:ul><html:li><fr:link href="/8C2H/" title="Snoop-based coherence" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">Snoop-based coherence</fr:link> — every cache watches a shared bus and reacts to other cores' traffic. Scales to ~8 cores.</html:li>
-  <html:li><fr:link href="/KIT8/" title="Directory-based coherence" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">Directory-based coherence</fr:link> — a structure tracks who has a copy of each line; coherence messages are point-to-point. Scales to hundreds of cores at the cost of an extra hop.</html:li></html:ul>
+            <html:ul><html:li><fr:link href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">snoop-based coherence</fr:link> — every cache watches a shared bus and reacts to other cores' traffic. Scales to ~8 cores.</html:li>
+  <html:li><fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory-based coherence</fr:link> — a structure tracks who has a copy of each line; coherence messages are point-to-point. Scales to hundreds of cores at the cost of an extra hop.</html:li></html:ul>
             <html:p>The concrete state machines are protocols like <fr:link href="/EYXU/" title="MSI protocol" uri="https://kellenkanarios.com/EYXU/" display-uri="EYXU" type="local">MSI protocol</fr:link>, <fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link>, <fr:link href="/AI2B/" title="MOESI protocol" uri="https://kellenkanarios.com/AI2B/" display-uri="AI2B" type="local">MOESI protocol</fr:link>, and DEC Firefly, each adding states to handle more cases or to optimize specific sharing patterns. A worked implementation of directory-based MESI in Murphi lives in <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link>.</html:p>
+            <html:p>Worked instance: <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link> implements directory-based MESI in Murphi.</html:p>
           </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -261,7 +235,13 @@ L has a dirty copy and wants to write back to H. R concurrently sends a read to 
             <fr:title text="Cache replacement policy">Cache replacement policy</fr:title>
           </fr:frontmatter>
           <fr:mainmatter><html:p>Within a <fr:link href="/C74U/" title="Cache associativity" uri="https://kellenkanarios.com/C74U/" display-uri="C74U" type="local">Cache associativity</fr:link> set, when a new line arrives and the set is full, which existing line gets evicted? Same question as <fr:link href="/7WG2/" title="LRU and the clock algorithm" uri="https://kellenkanarios.com/7WG2/" display-uri="7WG2" type="local">LRU and the clock algorithm</fr:link> for pages, different timescales.</html:p><html:p>The hot policy is <html:em>least recently used</html:em> — but pure LRU requires tracking a per-line ordering and updating it on every hit, which is too expensive at L1 latencies. Real caches use <html:em>pseudo-LRU</html:em> — a tree of single bits per set that approximates LRU with a fraction of the bookkeeping. The clock algorithm is one well-known pseudo-LRU scheme.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Block (cache line) size is part of the same tradeoff. Larger blocks improve <fr:link href="/PMP9/" title="Spatial locality" uri="https://kellenkanarios.com/PMP9/" display-uri="PMP9" type="local">Spatial locality</fr:link> but cause cache pollution (you fetch bytes you don't use) and eat memory bandwidth. The sweet spot is around 64 bytes on modern x86.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Block (cache line) size is part of the same tradeoff. Larger blocks improve <fr:link href="/PMP9/" title="Spatial locality" uri="https://kellenkanarios.com/PMP9/" display-uri="PMP9" type="local">Spatial locality</fr:link> but cause cache pollution (you fetch bytes you don't use) and eat memory bandwidth. The sweet spot is around 64 bytes on modern x86.</html:div>
 </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>

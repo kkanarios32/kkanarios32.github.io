@@ -1,6 +1,110 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/richardsutton/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>Richard Sutton</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Person"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon">Person. </span>Richard Sutton <a class="slug" href="/richardsutton/">[richardsutton]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">Professor</li>
+<li class="meta-item">
+      <span class="link external"><a href="https://www.ualberta.ca/en/index.html" title="">University of Alberta</a></span>
+    </li>
+<li class="meta-item"><a class="link external" href="http://incompleteideas.net">http://incompleteideas.net</a></li>
+</ul></div></header></summary></details></section><footer xmlns="">
+    
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id3"><summary><header><h1>
+<span class="taxon"></span>Notebook: <span class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">Reinforcement learning: An introduction</a></span> <a class="slug" href="/0012/">[0012]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This won't really be notes, my lab has begun taking a few undergrads who are not familiar with RL. I will be onboarding them by going through <span xmlns="" class="link local"><a href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction [suttonReinforcementLearningIntroduction2018]">Reinforcement learning: An introduction</a></span>. Specifically, I will be following the <span xmlns="" class="link local"><a href="/richardsutton/" title="Richard Sutton [richardsutton]">Richard Sutton</a></span> flavor of RL through his <span xmlns="" class="link external"><a href="https://drive.google.com/drive/folders/0B3w765rOKuKANmxNbXdwaE1YU1k?resourcekey=0-JZz-noRuJgogNsg1ljgV8w" title="">CMPUT 609</a></span> course. You know what the say: the best way to learn is to teach! Here, I will try to solve all the problems as we go and prepare some questions for the undergrads for when we meet. Additionally, I will document my foray into more advanced exploration of topics introduced in the textbook.</p><p xmlns="http://www.w3.org/1999/xhtml">The worked exercises are collected separately in <span xmlns="" class="link local"><a href="/P86P/" title="Sutton &amp; Barto: Exercises [P86P]">Sutton &amp; Barto: Exercises</a></span>. What stays here are the conceptual asides and the open questions I want to raise with the undergrads.</p>
+  <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>Dynamic Programming  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> <strong>Value Iteration as Linear Algebra:</strong> During my brief stint at <span xmlns="" class="link external"><a href="https://www.ipam.ucla.edu/" title="">IPAM</a></span>, I spent a lot of time focused on <span xmlns="" class="link local"><a href="/kanariosParallelAMG2023/" title="Parallel Algebraic Multigrid for Higher Order PDEs [kanariosParallelAMG2023]">solving large systems for discretized PDEs</a></span>. From this, I learned about iterative methods, such as Gauss-Jacobi and Gauss-Seidel. Interestingly, these methods can be used to interpret some of RL's most fundamental algorithms. If we define the following matrices,
+\[
+  \begin {align*}
+        R &amp;= \begin {bmatrix}
+        \mathbb {E}[r(s = 1)]\\
+        \vdots  \\
+        \mathbb {E}[r(s = n)]
+        \end {bmatrix}, \quad  P = \begin {bmatrix}
+        P_{\pi }(s'=1 | s=1) &amp; \cdots  &amp; P_{\pi }(s'=n | s=1) \\
+        \vdots  &amp; \ddots  &amp; \vdots  \\
+        P_{\pi }(s'=1 | s=n) &amp; \cdots  &amp; P_{\pi }(s'=n | s=n)
+        \end {bmatrix}, \\
+        V_k &amp;= \begin {bmatrix}
+        V_k(s = 1)\\
+        \vdots  \\
+        V_k(s = n)
+        \end {bmatrix}
+  \end {align*}
+      \]
+      Then we can write the value function \(V_{\pi }\) as the solution to the linear system
+      \[
+          V_{\pi } = R + PV_{\pi } \iff  V_{\pi } = (1 - P)^{-1} R
+        \]
+    This is just inverting a matrix! Updating one state with the canonical update
+\[
+    \begin {align*}
+      v_{k + 1}(s) = \sum _{a}\pi (a|s)\sum _{s^{\prime },r}p(s^{\prime },r\,|\,s,a)\Big [r+\gamma  v_{k}(s^{\prime })\Big ]
+    \end {align*}
+\]
+Is actually just one iteration of Gauss-Seidel!
+    </div>
+
+    
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> (Number of updates as pseudo discount factor). </div>
+
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon"></span>On-policy Prediction with Approximation  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 24, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">
+In my opinion, the most important part of this chapter is now that when we update say a \(Q\) function for a specific state action pair \((s,a)\), then this update can affect the value of the \(Q(s', a')\) due to the reuse of the internal parameters.
+  </p>
+
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> 
+  <ol><li>In section 9.5.2, what do they mean when they say you can select \(n\) so all the fourier features can be used?
+    <ol><li>Pick \(n\) so that \((n + 1)^k &lt; mk^2\).</li>
+        <li>Pick \(n\) so that \((n + 1)^k\) is reasonable.</li></ol></li>
+    <p>
+    In the tabular case, I think (a) is correct. My initial understanding of state representation is as a representation learning i.e. compression type objective. If we assume that \(s_i \in  [m]\), then we do not gain anything in the tabular setting if our value function vector is the same size as the underlying transition kernel. When in the continuous state space regime i.e. \(s_i \in  [0,1]\), there is no amount of features that would overfit the transition kernel. Therefore, it is just about trying to learn as much as possible about the underlying relations of the state dimensions.
+    </p>
+    <p>
+    In the \(2\)-dimensional case, the feature vector \(c_i = [1,1]\) would provide information on how \(s_1\) and \(s_2\) relate not just their specific values. You want the learning algorithm to understand the relationships, so that it can make better use of the internal parameters when learning something like a \(Q\) function. This is basically just SVD but instead of classification you are learning a \(Q\) function. The compression
+    </p></ol>
+  </div>
+
+
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> 
+  <ol><li>In Figure 9.5, why do fourier features outperform polynomial features?
+    <ol><li>The fourier features got lucky on the seeds (lol).</li>
+        <li>The choice of \(\boldsymbol {c}\) is not specified. A good choice can provide improvement specific to the problem?</li>
+        <li>Polynomial features range is very large. Can suffer from blowup or vanishing of features.</li></ol></li>
+    One of the advantages of fourier features mentioned previously is the ability to select which features to serve as your basis. However, for this setup I assume they just use all of the fourier features. This likely means it is more of an issue with the polynomial features and (c). If you have a large polynomial then even relative similar states \(s_1 = 1.1\), \(s_2 = 0.9\), \(\ldots \) can blow up or vanish making them likely more unstable when using gradient-based methods.
+  </ol>
+  </div>
+
+
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> I think that RBF as a continuous generalization coarse-coding is a nice intuition I want to remember here. Essentially, you just weight a state by how close it is to the center of the receptive field. This weighting is done via a Gaussian kernel, which I believe is arbitrary and can be any distance measure of choice.</div>
+
+</details></section>
+</details></section>
+      </details></section>
+    
+    
+  </footer></article></div></body></html>

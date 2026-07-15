@@ -1,6 +1,117 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/S5D0/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>Half fence</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Definition"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Half fence <a class="slug" href="/S5D0/">[S5D0]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    <p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> that constrains motion in only one direction, splitting the symmetric guarantee of a <span xmlns="" class="link local"><a href="/S80U/" title="Full fence [S80U]">Full fence</a></span> into two cheaper primitives:</p>
+    <ul xmlns="http://www.w3.org/1999/xhtml"><li><strong>Acquire</strong> — operations after the fence may not move above it. Used at the entry to a critical section: subsequent reads and writes cannot be hoisted before the lock is held.</li>
+  <li><strong>Release</strong> — operations before the fence may not move below it. Used at the exit of a critical section: prior writes cannot be deferred past the unlock.</li></ul>
+    <p xmlns="http://www.w3.org/1999/xhtml">The asymmetry is exactly the freedom one wants around a critical section: <em>expanding</em> the section is fine — work may sink into it (past acquire) or rise into it (before release) — but work may not leak out of it. This is the basis of <span xmlns="" class="link local"><a href="/ZWHV/" title="Release consistency [ZWHV]">Release consistency</a></span> and the reason C++ <code>std::atomic</code> exposes <code>memory_order_acquire</code> / <code>memory_order_release</code> as its core primitives.</p>
+  </details></section><footer xmlns="">
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id3"><summary><header><h1>
+<span class="taxon">Definition. </span>Release consistency <a class="slug" href="/ZWHV/">[ZWHV]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/BCFG/" title="Relaxed consistency [BCFG]">Relaxed consistency</a></span> discipline that recovers data-race freedom (see <span xmlns="" class="link local"><a href="/P0NQ/" title="Data race [P0NQ]">Data race</a></span>) under <span xmlns="" class="link local"><a href="/WT44/" title="Relaxed memory order [WT44]">Relaxed memory order</a></span> not by issuing fewer fences, but by issuing <em>weaker</em> ones. The full-fence cost of <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span> is replaced by a pair of half-fences placed exactly at the boundaries of critical sections — acquire on entry, release on exit.</p>
+            <p xmlns="http://www.w3.org/1999/xhtml">The intuition is that correctness around a critical section only requires that work cannot <em>leak out</em> of it; work is free to <em>sink into</em> it. Half-fences encode exactly this asymmetry, which is why they are the right primitive for lock-based and lock-free synchronization alike.</p>
+            <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Full fence <a class="slug" href="/S80U/">[S80U]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+                <p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> across which no memory operation may move in either direction. Prior accesses must become globally visible before any subsequent access may issue. x86's <code>mfence</code> is the canonical example — the hammer that drains the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> and serializes all prior memory operations against all subsequent ones.</p>
+                <p xmlns="http://www.w3.org/1999/xhtml">Full fences are the default ordering primitive under <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span> — every memory operation behaves as if a full fence sat on either side. They are also the only fence one needs to reason about correctness, which is why they are the building block for the half-fences of <span xmlns="" class="link local"><a href="/ZWHV/" title="Release consistency [ZWHV]">Release consistency</a></span>.</p>
+              </details></section>
+            <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Half fence <a class="slug" href="/S5D0/">[S5D0]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+                <p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> that constrains motion in only one direction, splitting the symmetric guarantee of a <span xmlns="" class="link local"><a href="/S80U/" title="Full fence [S80U]">Full fence</a></span> into two cheaper primitives:</p>
+                <ul xmlns="http://www.w3.org/1999/xhtml"><li><strong>Acquire</strong> — operations after the fence may not move above it. Used at the entry to a critical section: subsequent reads and writes cannot be hoisted before the lock is held.</li>
+  <li><strong>Release</strong> — operations before the fence may not move below it. Used at the exit of a critical section: prior writes cannot be deferred past the unlock.</li></ul>
+                <p xmlns="http://www.w3.org/1999/xhtml">The asymmetry is exactly the freedom one wants around a critical section: <em>expanding</em> the section is fine — work may sink into it (past acquire) or rise into it (before release) — but work may not leak out of it. This is the basis of <span xmlns="" class="link local"><a href="/ZWHV/" title="Release consistency [ZWHV]">Release consistency</a></span> and the reason C++ <code>std::atomic</code> exposes <code>memory_order_acquire</code> / <code>memory_order_release</code> as its core primitives.</p>
+              </details></section>
+            <p xmlns="http://www.w3.org/1999/xhtml">C++ <code>std::atomic</code> compiles to half-fences in the right places, which is why it is the standard primitive for portable lock-free code.</p>
+          </details></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id7"><summary><header><h1>
+<span class="taxon">Definition. </span>Memory fence <a class="slug" href="/R03A/">[R03A]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 13, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An instruction that forces an ordering constraint between memory operations on either side of it. Fences exist because <span xmlns="" class="link local"><a href="/BCFG/" title="Relaxed consistency [BCFG]">Relaxed consistency</a></span> hardware reorders accesses aggressively for performance, and the programmer occasionally needs a point in the instruction stream past which prior accesses must be globally visible before subsequent ones may issue. A fence is the explicit knob for "wait until the world catches up here."</p><p xmlns="http://www.w3.org/1999/xhtml">The x86 family carries three:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><strong><code>sfence</code></strong> — store fence. All prior stores must drain from the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> before any later store may issue. Used to publish a buffer whose writes must be visible to consumers in order.</li>
+  <li><strong><code>lfence</code></strong> — load fence. All prior loads must complete before any later load issues. Less commonly needed under TSO, but useful as a speculation barrier (Spectre mitigation cases) and on architectures with load-load reordering.</li>
+  <li><strong><code>mfence</code></strong> — full fence. Drains the entire store buffer and serializes all prior memory operations against all subsequent ones. The hammer.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">What a fence actually does in hardware is force the store buffer to drain (or wait for it to drain) rather than just waiting for <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span> commit. This is the distinction worth keeping straight: ROB commit makes a store architecturally real but invisible to other cores; the fence is what makes it visible. The cost is whatever latency the cache hierarchy adds — fences are expensive precisely because they undo the latency-hiding the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> exists to provide.</p><p xmlns="http://www.w3.org/1999/xhtml">Under <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span> every memory operation behaves as if a full fence sat on either side of it, which is why SC is fast to reason about and slow to implement. Real-world consistency models pick relaxations and require fences only at the points the programmer marks as ordering-sensitive — <em>acquire</em> and <em>release</em> <span xmlns="" class="link local"><a href="/S5D0/" title="Half fence [S5D0]">Half fence</a></span>s (see <span xmlns="" class="link local"><a href="/ZWHV/" title="Release consistency [ZWHV]">Release consistency</a></span>) are the common compromise.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> A fence does not flush caches or invalidate anything — coherence traffic does that. A fence only constrains the issue order observed by the rest of the system.</div>
+</details></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id9"><summary><header><h1>
+<span class="taxon">Definition. </span>Full fence <a class="slug" href="/S80U/">[S80U]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> across which no memory operation may move in either direction. Prior accesses must become globally visible before any subsequent access may issue. x86's <code>mfence</code> is the canonical example — the hammer that drains the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> and serializes all prior memory operations against all subsequent ones.</p>
+            <p xmlns="http://www.w3.org/1999/xhtml">Full fences are the default ordering primitive under <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span> — every memory operation behaves as if a full fence sat on either side. They are also the only fence one needs to reason about correctness, which is why they are the building block for the half-fences of <span xmlns="" class="link local"><a href="/ZWHV/" title="Release consistency [ZWHV]">Release consistency</a></span>.</p>
+          </details></section>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id10"><summary><header><h1>
+<span class="taxon">Definition. </span>Release consistency <a class="slug" href="/ZWHV/">[ZWHV]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/BCFG/" title="Relaxed consistency [BCFG]">Relaxed consistency</a></span> discipline that recovers data-race freedom (see <span xmlns="" class="link local"><a href="/P0NQ/" title="Data race [P0NQ]">Data race</a></span>) under <span xmlns="" class="link local"><a href="/WT44/" title="Relaxed memory order [WT44]">Relaxed memory order</a></span> not by issuing fewer fences, but by issuing <em>weaker</em> ones. The full-fence cost of <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span> is replaced by a pair of half-fences placed exactly at the boundaries of critical sections — acquire on entry, release on exit.</p>
+            <p xmlns="http://www.w3.org/1999/xhtml">The intuition is that correctness around a critical section only requires that work cannot <em>leak out</em> of it; work is free to <em>sink into</em> it. Half-fences encode exactly this asymmetry, which is why they are the right primitive for lock-based and lock-free synchronization alike.</p>
+            <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Full fence <a class="slug" href="/S80U/">[S80U]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+                <p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> across which no memory operation may move in either direction. Prior accesses must become globally visible before any subsequent access may issue. x86's <code>mfence</code> is the canonical example — the hammer that drains the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> and serializes all prior memory operations against all subsequent ones.</p>
+                <p xmlns="http://www.w3.org/1999/xhtml">Full fences are the default ordering primitive under <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span> — every memory operation behaves as if a full fence sat on either side. They are also the only fence one needs to reason about correctness, which is why they are the building block for the half-fences of <span xmlns="" class="link local"><a href="/ZWHV/" title="Release consistency [ZWHV]">Release consistency</a></span>.</p>
+              </details></section>
+            <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id12" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Half fence <a class="slug" href="/S5D0/">[S5D0]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+                <p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> that constrains motion in only one direction, splitting the symmetric guarantee of a <span xmlns="" class="link local"><a href="/S80U/" title="Full fence [S80U]">Full fence</a></span> into two cheaper primitives:</p>
+                <ul xmlns="http://www.w3.org/1999/xhtml"><li><strong>Acquire</strong> — operations after the fence may not move above it. Used at the entry to a critical section: subsequent reads and writes cannot be hoisted before the lock is held.</li>
+  <li><strong>Release</strong> — operations before the fence may not move below it. Used at the exit of a critical section: prior writes cannot be deferred past the unlock.</li></ul>
+                <p xmlns="http://www.w3.org/1999/xhtml">The asymmetry is exactly the freedom one wants around a critical section: <em>expanding</em> the section is fine — work may sink into it (past acquire) or rise into it (before release) — but work may not leak out of it. This is the basis of <span xmlns="" class="link local"><a href="/ZWHV/" title="Release consistency [ZWHV]">Release consistency</a></span> and the reason C++ <code>std::atomic</code> exposes <code>memory_order_acquire</code> / <code>memory_order_release</code> as its core primitives.</p>
+              </details></section>
+            <p xmlns="http://www.w3.org/1999/xhtml">C++ <code>std::atomic</code> compiles to half-fences in the right places, which is why it is the standard primitive for portable lock-free code.</p>
+          </details></section>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id13"><summary><header><h1>
+<span class="taxon">Definition. </span>Memory fence <a class="slug" href="/R03A/">[R03A]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 13, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An instruction that forces an ordering constraint between memory operations on either side of it. Fences exist because <span xmlns="" class="link local"><a href="/BCFG/" title="Relaxed consistency [BCFG]">Relaxed consistency</a></span> hardware reorders accesses aggressively for performance, and the programmer occasionally needs a point in the instruction stream past which prior accesses must be globally visible before subsequent ones may issue. A fence is the explicit knob for "wait until the world catches up here."</p><p xmlns="http://www.w3.org/1999/xhtml">The x86 family carries three:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><strong><code>sfence</code></strong> — store fence. All prior stores must drain from the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> before any later store may issue. Used to publish a buffer whose writes must be visible to consumers in order.</li>
+  <li><strong><code>lfence</code></strong> — load fence. All prior loads must complete before any later load issues. Less commonly needed under TSO, but useful as a speculation barrier (Spectre mitigation cases) and on architectures with load-load reordering.</li>
+  <li><strong><code>mfence</code></strong> — full fence. Drains the entire store buffer and serializes all prior memory operations against all subsequent ones. The hammer.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">What a fence actually does in hardware is force the store buffer to drain (or wait for it to drain) rather than just waiting for <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span> commit. This is the distinction worth keeping straight: ROB commit makes a store architecturally real but invisible to other cores; the fence is what makes it visible. The cost is whatever latency the cache hierarchy adds — fences are expensive precisely because they undo the latency-hiding the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> exists to provide.</p><p xmlns="http://www.w3.org/1999/xhtml">Under <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span> every memory operation behaves as if a full fence sat on either side of it, which is why SC is fast to reason about and slow to implement. Real-world consistency models pick relaxations and require fences only at the points the programmer marks as ordering-sensitive — <em>acquire</em> and <em>release</em> <span xmlns="" class="link local"><a href="/S5D0/" title="Half fence [S5D0]">Half fence</a></span>s (see <span xmlns="" class="link local"><a href="/ZWHV/" title="Release consistency [ZWHV]">Release consistency</a></span>) are the common compromise.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> A fence does not flush caches or invalidate anything — coherence traffic does that. A fence only constrains the issue order observed by the rest of the system.</div>
+</details></section>
+      </details></section>
+    
+  </footer></article></div></body></html>

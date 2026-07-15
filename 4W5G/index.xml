@@ -13,15 +13,30 @@
     <fr:route>/4W5G/</fr:route>
     <fr:title text="Inclusion property">Inclusion property</fr:title>
   </fr:frontmatter>
-  <fr:mainmatter><html:p>A cache hierarchy property: every line held in a higher-level cache (closer to the core, e.g. L1) must also be present in the next-level cache (L2). The hierarchy contains its own contents at every level — L2 ⊇ L1.</html:p><html:p>Why it matters for <fr:link href="/8C2H/" title="Snoop-based coherence" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">Snoop-based coherence</fr:link>: with inclusion, a snoop only needs to consult L2. If a snoop hits in L2, then either the line is also in L1 (and L2 forwards the snoop) or it's not (and L1 doesn't need to look). This means L1 doesn't need a snoop port.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Problem</fr:taxon></fr:frontmatter><fr:mainmatter>L1 hits don't update LRU metadata at L2 — so L2 might evict a line that L1 is actively using, violating inclusion.</fr:mainmatter></fr:tree>
+  <fr:mainmatter><html:p>A cache hierarchy property: every line held in a higher-level cache (closer to the core, e.g. L1) must also be present in the next-level cache (L2). The hierarchy contains its own contents at every level — L2 ⊇ L1.</html:p><html:p>Why it matters for <fr:link href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">snoop-based coherence</fr:link>: with inclusion, a snoop only needs to consult L2. If a snoop hits in L2, then either the line is also in L1 (and L2 forwards the snoop) or it's not (and L1 doesn't need to look). This means L1 doesn't need a snoop port.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> L1 hits don't update LRU metadata at L2 — so L2 might evict a line that L1 is actively using, violating inclusion.</html:div>
 
- 
-   
-   <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Solution</fr:taxon></fr:frontmatter><fr:mainmatter>Either (a) refuse to evict an L2 line that's still in L1, or (b) when evicting from L2, also evict from L1.</fr:mainmatter></fr:tree>
- 
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> Either (a) refuse to evict an L2 line that's still in L1, or (b) when evicting from L2, also evict from L1.</html:div>
 
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Inclusive caches waste capacity (every line is duplicated). Non-inclusive and exclusive variants trade some snoop simplicity for better effective capacity.</fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Inclusive caches waste capacity (every line is duplicated). Non-inclusive and exclusive variants trade some snoop simplicity for better effective capacity.</html:div>
 </fr:mainmatter>
   <fr:backmatter>
     <fr:tree show-metadata="false" hidden-when-empty="true">
@@ -55,12 +70,18 @@
             <fr:uri>https://kellenkanarios.com/8C2H/</fr:uri>
             <fr:display-uri>8C2H</fr:display-uri>
             <fr:route>/8C2H/</fr:route>
-            <fr:title text="Snoop-based coherence">Snoop-based coherence</fr:title>
+            <fr:title text="Snoop-based coherence keeps caches consistent by watching a shared bus">Snoop-based coherence keeps caches consistent by watching a shared bus</fr:title>
           </fr:frontmatter>
           <fr:mainmatter><html:p>A <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> family where every cache watches (<html:em>snoops</html:em>) a shared bus. When one cache issues a coherence transaction (e.g. requests permission to read or write a line), every other cache sees it and updates its local state accordingly. No central directory needed; the bus itself is the coordination mechanism.</html:p><html:p>The simplest snoop-based protocol is <html:em>valid-invalid</html:em>:</html:p><html:ul><html:li>Invalid + load → BusRd to gain read permission; transition to valid.</html:li>
   <html:li>Invalid + store → no transition (write-through assumed; the bus carries the write).</html:li>
-  <html:li>Valid + store → BusWr to notify other caches; they invalidate.</html:li></html:ul><html:p><html:strong>Write-update coherence</html:strong>, the variant where stores update other caches' copies instead of invalidating them, works for very small bus-based systems but does not scale: every write reaches everyone, and copies of data the snooper isn't using pollute its <fr:link href="/UG51/" title="Cache replacement policy" uri="https://kellenkanarios.com/UG51/" display-uri="UG51" type="local">Cache replacement policy</fr:link>.</html:p><html:p>Snoop-based coherence relies on a shared physical bus, which limits it to roughly 8 cores. Beyond that, switch to <fr:link href="/KIT8/" title="Directory-based coherence" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">Directory-based coherence</fr:link>.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Snoop-based SMPs use the <html:em><fr:link href="/4W5G/" title="Inclusion property" uri="https://kellenkanarios.com/4W5G/" display-uri="4W5G" type="local">Inclusion property</fr:link></html:em> so that snooping at L2 suffices — every L1 line is also tracked at L2.</fr:mainmatter></fr:tree>
+  <html:li>Valid + store → BusWr to notify other caches; they invalidate.</html:li></html:ul><html:p><html:strong>Write-update coherence</html:strong>, the variant where stores update other caches' copies instead of invalidating them, works for very small bus-based systems but does not scale: every write reaches everyone, and copies of data the snooper isn't using pollute its <fr:link href="/UG51/" title="Cache replacement policy" uri="https://kellenkanarios.com/UG51/" display-uri="UG51" type="local">Cache replacement policy</fr:link>.</html:p><html:p>Snoop-based coherence relies on a shared physical bus, which limits it to roughly 8 cores. Beyond that, switch to <fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory-based coherence</fr:link>.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Snoop-based SMPs use the <html:em><fr:link href="/4W5G/" title="Inclusion property" uri="https://kellenkanarios.com/4W5G/" display-uri="4W5G" type="local">Inclusion property</fr:link></html:em> so that snooping at L2 suffices — every L1 line is also tracked at L2.</html:div>
 </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>
@@ -82,12 +103,18 @@
             <fr:uri>https://kellenkanarios.com/8C2H/</fr:uri>
             <fr:display-uri>8C2H</fr:display-uri>
             <fr:route>/8C2H/</fr:route>
-            <fr:title text="Snoop-based coherence">Snoop-based coherence</fr:title>
+            <fr:title text="Snoop-based coherence keeps caches consistent by watching a shared bus">Snoop-based coherence keeps caches consistent by watching a shared bus</fr:title>
           </fr:frontmatter>
           <fr:mainmatter><html:p>A <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> family where every cache watches (<html:em>snoops</html:em>) a shared bus. When one cache issues a coherence transaction (e.g. requests permission to read or write a line), every other cache sees it and updates its local state accordingly. No central directory needed; the bus itself is the coordination mechanism.</html:p><html:p>The simplest snoop-based protocol is <html:em>valid-invalid</html:em>:</html:p><html:ul><html:li>Invalid + load → BusRd to gain read permission; transition to valid.</html:li>
   <html:li>Invalid + store → no transition (write-through assumed; the bus carries the write).</html:li>
-  <html:li>Valid + store → BusWr to notify other caches; they invalidate.</html:li></html:ul><html:p><html:strong>Write-update coherence</html:strong>, the variant where stores update other caches' copies instead of invalidating them, works for very small bus-based systems but does not scale: every write reaches everyone, and copies of data the snooper isn't using pollute its <fr:link href="/UG51/" title="Cache replacement policy" uri="https://kellenkanarios.com/UG51/" display-uri="UG51" type="local">Cache replacement policy</fr:link>.</html:p><html:p>Snoop-based coherence relies on a shared physical bus, which limits it to roughly 8 cores. Beyond that, switch to <fr:link href="/KIT8/" title="Directory-based coherence" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">Directory-based coherence</fr:link>.</html:p>
-    <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors /><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:taxon>Remark</fr:taxon></fr:frontmatter><fr:mainmatter>Snoop-based SMPs use the <html:em><fr:link href="/4W5G/" title="Inclusion property" uri="https://kellenkanarios.com/4W5G/" display-uri="4W5G" type="local">Inclusion property</fr:link></html:em> so that snooping at L2 suffices — every L1 line is also tracked at L2.</fr:mainmatter></fr:tree>
+  <html:li>Valid + store → BusWr to notify other caches; they invalidate.</html:li></html:ul><html:p><html:strong>Write-update coherence</html:strong>, the variant where stores update other caches' copies instead of invalidating them, works for very small bus-based systems but does not scale: every write reaches everyone, and copies of data the snooper isn't using pollute its <fr:link href="/UG51/" title="Cache replacement policy" uri="https://kellenkanarios.com/UG51/" display-uri="UG51" type="local">Cache replacement policy</fr:link>.</html:p><html:p>Snoop-based coherence relies on a shared physical bus, which limits it to roughly 8 cores. Beyond that, switch to <fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory-based coherence</fr:link>.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Snoop-based SMPs use the <html:em><fr:link href="/4W5G/" title="Inclusion property" uri="https://kellenkanarios.com/4W5G/" display-uri="4W5G" type="local">Inclusion property</fr:link></html:em> so that snooping at L2 suffices — every L1 line is also tracked at L2.</html:div>
 </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>

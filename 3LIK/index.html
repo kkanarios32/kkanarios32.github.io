@@ -1,6 +1,765 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0;url=/3LIK/index.xml" />
-  </head>
-</html>
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>PowerPC chip family</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>PowerPC chip family <a class="slug" href="/3LIK/">[3LIK]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Machine-instance notes for the PowerPC line — a RISC implementation of the same concepts covered in <span xmlns="" class="link local"><a href="/6JU6/" title="Superscalar CPUs issue multiple instructions per cycle [6JU6]">superscalar</a></span> and <span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span>, with a few innovations specific to this family.</p>
+  <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon">1. </span>PowerPC 601  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>Front-end:</strong> standard 4-stage pipeline. Instruction queue dispatches 3 instructions per cycle.</p>
+  <ul xmlns="http://www.w3.org/1999/xhtml"><li>Identifies unconditional branches (and resolved conditional ones) in the queue; if taken, deletes the branch instruction and starts fetching from the target — <em>branch folding</em>.</li>
+    <li>Untaken branches "fall out" — <em>fall through</em>.</li>
+    <li>No <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span>-equivalent. Static scheduling.</li></ul>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>Back-end:</strong> one integer ALU (also handles addresses), one floating-point ALU with single-cycle fused multiply-add. For FP-heavy code the integer ALU just does addresses.</p>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Competed with two-integer-ALU designs because simpler logic left room for 4× the L1 cache (32KB vs 8KB).</div>
+
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon">2. </span>PowerPC 603 and 603e  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+ <p xmlns="http://www.w3.org/1999/xhtml"><strong>Front-end:</strong></p>
+ <ul xmlns="http://www.w3.org/1999/xhtml"><li>Branch dispatch on a separate bus, so branches don't compete with non-branch dispatch.</li>
+   <li>Up to 2 non-branch instructions dispatched per cycle.</li>
+   <li>Adds a <em>commit unit</em> and <em>completion queue</em> — the PowerPC names for <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span>. Dynamic scheduling with an instruction window.</li></ul>
+ <p xmlns="http://www.w3.org/1999/xhtml"><strong>Back-end:</strong></p>
+ <ul xmlns="http://www.w3.org/1999/xhtml"><li>Two added execution units: a system unit for misc integer ops and a load/store unit. Lighter load on the integer ALU.</li>
+   <li>FPU took hits: 3 instructions every 4 cycles (mandatory bubble); double precision (including <code>fmadd</code>) takes 2 cycles in execute.</li></ul>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon">3. </span>PowerPC 604  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>Front-end:</strong></p>
+  <ul xmlns="http://www.w3.org/1999/xhtml"><li>Splits decode/dispatch and writeback into two stages — enables shorter clock cycles.</li>
+   <li>Up to 6 instructions dispatched per cycle.</li>
+   <li>Dynamic <span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span> with a 512-entry BHT (2 bits per entry) and a 64-entry branch address cache (BTB).</li>
+   <li>Adds a condition-register unit sharing dispatch bus with the branch unit.</li></ul>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>Back-end:</strong> two simple integer units + one complex; fully pipelined FPU.</p>
+
+  <p xmlns="http://www.w3.org/1999/xhtml">Dispatch obeys <span xmlns="" class="link local"><a href="/FQ9N/" title="Reservation station [FQ9N]">Reservation station</a></span> rules: in-order dispatch, execution-unit availability, ROB availability, and rename-register availability.</p>
+
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Shallow pipeline → small ROB and few reservation stations are acceptable. Tradeoff: lower clock speed.</div>
+
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The 604e doubled L1 to 64KB and added a condition-register unit, freeing the integer and branch units from condition computations.</div>
+
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon">4. </span>PowerPC 750  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Same 4-stage pipeline as the 603e. Two integer units instead of one; 3-cycle single-precision FP; 6-entry instruction queue, up to 4 fetched per cycle.</p>
+  <p xmlns="http://www.w3.org/1999/xhtml">The 750's signature trick: a <em>branch target instruction cache</em> (BTIC). A traditional BTB stores the <em>address</em> of the branch target — you still have to re-fetch that instruction. The BTIC caches the actual first instructions at the target, eliminating the re-fetch latency. This makes <span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span> dramatically more useful.</p>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Did not support a <span xmlns="" class="link local"><a href="/Q7ZD/" title="Vector ISA / SIMD [Q7ZD]">SIMD</a></span> instruction set.</div>
+
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon">5. </span>PowerPC 7400  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Added a <em>vector permute unit</em> (VPU) and <em>vector ALU</em> (VALU) for SIMD; full double-precision FPU; 8-entry instruction queue.</p>
+</details></section>
+</details></section><footer xmlns="">
+    
+    <section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id8"><summary><header><h1>
+<span class="taxon"></span>Notebook: Inside the Machine <a class="slug" href="/P3GB/">[P3GB]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Notes on the book <em>Inside the Machine</em> by Jon Stokes, restructured as a concept hierarchy.</p>
+  <section lang="en" class="block hide-metadata"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon"></span>CPU basics  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id10" open="open"><summary><header><h1>
+<span class="taxon"></span>Register file <a class="slug" href="/ETWN/">[ETWN]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The CPU's nearest tier of storage — the first NUMA level. Registers sit physically next to the ALUs and are addressed by name in the instruction encoding rather than by memory address. Their count is limited by the chip's surface area, which is why main memory exists at all.</p><p xmlns="http://www.w3.org/1999/xhtml">The register file is the structure that holds the architecturally-visible registers. To support a superscalar machine, the file needs enough read and write ports to feed every ALU simultaneously: for an \(n\)-ALU chip with two operands per op, that's \(2n\) read ports and \(n\) write ports.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Die area for a register file scales <em>quadratically</em> in the number of ports.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Split it. Different execution units (integer, floating-point, vector) get their own smaller register files. Fewer ports per file, faster access, less area.</div>
+<p xmlns="http://www.w3.org/1999/xhtml">Beyond the architecturally-named registers, modern chips keep many extra <em>rename</em> registers used by <span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">register renaming</a></span> to break false data dependencies.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Instructions distinguish "immediate types" from "register types" so the decoder knows whether a field encodes a register name or a literal value.</div>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon"></span>Fetch-execute loop <a class="slug" href="/VZDH/">[VZDH]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The classical model of CPU operation: each instruction goes through three phases.</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><em>Fetch</em>: read the instruction from memory into the <em>instruction register</em>; increment the program counter.</li>
+  <li><em>Decode</em>: extract the opcode, the operand register names, and the destination from the instruction register.</li>
+  <li><em>Execute</em>: route to the appropriate functional unit — ALU for arithmetic, load/store unit for memory ops, branch unit for branches.</li></ol>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Instructions don't take arbitrary time. The motherboard's <em>clock cycle</em> bounds when latched values become visible to the next stage.</div>
+<p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/COV5/" title="Pipelining overlaps instruction stages to retire one per cycle [COV5]">pipeline</a></span> decomposes this loop into independently-running pipeline stages so multiple instructions are in flight at once. Superscalar machines run multiple instructions per stage. Both are extensions of this same three-phase model.</p></details></section>
+<section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
+<span class="taxon"></span>Branch instruction <a class="slug" href="/IJ7Q/">[IJ7Q]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An instruction that potentially changes the program counter to something other than "the next sequential instruction." Two flavors:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><em>Unconditional</em>: the PC is set to the destination address, period.</li>
+  <li><em>Conditional</em>: the PC is set to the destination only if some condition holds.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">Conditional branches require the hardware to remember the outcome of recent arithmetic — typically in a <em>processor status word</em> (PSW) register, with one bit per condition (zero, sign, carry, overflow). Each conditional-branch variant tests a particular PSW bit.</p><p xmlns="http://www.w3.org/1999/xhtml">In a pipelined CPU, branches stall the front-end: until the branch resolves, the fetcher doesn't know what to fetch next. This is the <span xmlns="" class="link local"><a href="/I2B5/" title="Control hazards stall fetch until the branch resolves [I2B5]">control hazard</a></span>, and modern machines mitigate it with <span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span> driven by <span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span>.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> If the program uses relative addressing, the OS supplies a code-segment base to add to the branch destination.</div>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id13" open="open"><summary><header><h1>
+<span class="taxon"></span>Boot sequence <a class="slug" href="/XSFO/">[XSFO]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The fixed series of steps a machine performs from power-on until a usable operating system is running. Each stage runs from a known location and hands off control to the next.</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Power signal resets the CPU to a known state.</li>
+  <li>The CPU fetches from a hard-wired address — the BIOS (or UEFI firmware). The BIOS runs basic hardware checks (POST).</li>
+  <li>The BIOS loads and jumps to the bootloader (e.g. GRUB) from a known location on disk.</li>
+  <li>The bootloader places the kernel image at the correct address and jumps to its entry point.</li>
+  <li>The kernel performs early setup: installs the <span xmlns="" class="link local"><a href="/0NVY/" title="Trap table [0NVY]">Trap table</a></span> (a special privileged instruction), starts the timer interrupt, sets up memory management, and finally enters user space.</li></ol>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The hardware is hard-wired only to find the BIOS. Everything past that is software the user can replace, which is why dual-booting and custom bootloaders work.</div>
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id14" open="open"><summary><header><h1>
+<span class="taxon"></span>Pipelining and superscalar execution  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
+<span class="taxon"></span>Pipelining overlaps instruction stages to retire one per cycle <a class="slug" href="/COV5/">[COV5]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Decomposing the <span xmlns="" class="link local"><a href="/VZDH/" title="Fetch-execute loop [VZDH]">Fetch-execute loop</a></span> into independently-running stages so that multiple instructions are in flight simultaneously. A classical four-stage pipeline:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><em>Fetch</em> from memory.</li>
+  <li><em>Decode</em>.</li>
+  <li><em>Execute</em> (the original execute phase, minus the write).</li>
+  <li><em>Write</em> the result back to register or memory.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">Each stage runs concurrently on different instructions. The clock cycle is bounded by the <em>slowest stage</em>, not the whole loop — so dividing the work into roughly-equal-length stages is essential. With \(n\) stages running in steady state, the machine retires one instruction per cycle even though each instruction takes \(n\) cycles to traverse.</p>
+  <section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
+<span class="taxon"></span>Metrics  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+<ol xmlns="http://www.w3.org/1999/xhtml"><li><em>Completion rate</em>: instructions completed per nanosecond. Program time is \(\frac {\text {instructions per program}}{\text {avg completion rate}}\).</li>
+  <li><em>Instruction throughput</em>: instructions retired per clock cycle.</li>
+  <li><em>Instruction latency</em>: cycles to complete one instruction (\(\geq \) the number of stages, often more in practice).</li></ol>
+</details></section>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Pipelining doesn't make any one instruction faster — it raises throughput. Pushing this further (deeper pipelines, more stages) shrinks the clock cycle but increases per-instruction latency and the cost of pipeline stalls or flushes.</div>
+<p xmlns="http://www.w3.org/1999/xhtml">What stops the steady-state throughput of one instruction per cycle is <em>hazards</em>: <span xmlns="" class="link local"><a href="/ITFA/" title="Data hazards stall when an instruction needs a not-yet-written value [ITFA]">data hazard</a></span>, <span xmlns="" class="link local"><a href="/7WV1/" title="Structural hazards stall when instructions contend for one resource [7WV1]">structural hazard</a></span>, and <span xmlns="" class="link local"><a href="/I2B5/" title="Control hazards stall fetch until the branch resolves [I2B5]">control hazard</a></span>. The next layer of complication is going superscalar — multiple instructions per stage — which is covered in <span xmlns="" class="link local"><a href="/6JU6/" title="Superscalar CPUs issue multiple instructions per cycle [6JU6]">superscalar</a></span>.</p></details></section>
+<section lang="en" class="block hide-metadata"><details id="id17" open="open"><summary><header><h1>
+<span class="taxon"></span>Superscalar CPUs issue multiple instructions per cycle <a class="slug" href="/6JU6/">[6JU6]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">April 3, 2026</li>
+<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
+</address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Multiple <span xmlns="" class="link local"><a href="/DA6Q/" title="Execution units [DA6Q]">Execution units</a></span>s on the same chip running in parallel during the same pipeline stage. Decode becomes <em>decode/dispatch</em>: the front-end must decide which instructions can issue in parallel and route them to the right units. Going superscalar amplifies the cost of every pipeline <span xmlns="" class="link local"><a href="/ITFA/" title="Data hazards stall when an instruction needs a not-yet-written value [ITFA]">data hazard</a></span> and <span xmlns="" class="link local"><a href="/I2B5/" title="Control hazards stall fetch until the branch resolves [I2B5]">control hazard</a></span>, which is why the rest of this chapter's machinery — <span xmlns="" class="link local"><a href="/USSP/" title="Forwarding [USSP]">Forwarding</a></span>, <span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">register renaming</a></span>, <span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span> — exists.</p><section lang="en" class="block hide-metadata"><details id="id18" open="open"><summary><header><h1>
+<span class="taxon"></span>Execution units <a class="slug" href="/DA6Q/">[DA6Q]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The functional circuitry that actually performs an instruction. A superscalar CPU contains several, dispatched to in parallel during the execute stage of the <span xmlns="" class="link local"><a href="/COV5/" title="Pipelining overlaps instruction stages to retire one per cycle [COV5]">pipeline</a></span>. The common families:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><strong>ALU</strong> — <em>arithmetic logic unit</em>, performs arithmetic (add, sub, mul, div) and logical (AND, OR, NOT) operations on integers and on special registers like the PSW. Typically split into integer logic units (ILU) and floating-point units (FPU).</li>
+  <li><strong>Load-store unit</strong> — performs memory loads and stores. Carries a small address-calculation adder for address-mode resolution.</li>
+  <li><strong>Branch execution unit</strong> — evaluates branch conditions (often by reading the PSW) and signals whether the branch is taken.</li>
+  <li><strong>Vector / <span xmlns="" class="link local"><a href="/Q7ZD/" title="Vector ISA / SIMD [Q7ZD]">SIMD</a></span> units</strong> — operate on wide registers (SSE, AVX, AltiVec) for data-parallel work.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Per the convention in <em>Inside the Machine</em>, "ALU" often refers to any execution unit for arithmetic or logical operations — including integer logic units (ILU) and floating-point units (FPU).</div>
+<p xmlns="http://www.w3.org/1999/xhtml">Each unit's reads and writes flow through a <span xmlns="" class="link local"><a href="/ETWN/" title="Register file [ETWN]">Register file</a></span>. Splitting the register file per-unit reduces port count and access time.</p></details></section><section lang="en" class="block hide-metadata"><details id="id19" open="open"><summary><header><h1>
+<span class="taxon"></span>Microarchitecture <a class="slug" href="/87GH/">[87GH]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The internal organization of a CPU that implements a given <em>instruction set architecture</em> (ISA). Two chips can present identical ISAs to software while having radically different microarchitectures — e.g. Intel and AMD both implement x86, but their pipelines, branch predictors, and execution units differ.</p><p xmlns="http://www.w3.org/1999/xhtml">The bridge between the two is the <em>microcode engine</em>: a mini-CPU inside the CPU. It holds small programs in a microcode ROM and runs them when a complex instruction needs to be translated into the simpler primitives the hardware actually executes. Conceptually, it's an emulator.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> <span xmlns="" class="link local"><a href="/L896/" title="CISC vs RISC [L896]">CISC vs RISC</a></span>-style ISAs need large microcode engines to implement their complex instructions. RISC designs minimize the microcode engine, pushing translation to the compiler instead.</div>
+<p xmlns="http://www.w3.org/1999/xhtml">The translated primitives are <em><span xmlns="" class="link local"><a href="/WEW2/" title="Micro-operations [WEW2]">Micro-operations</a></span></em> — a finer-grained, more uniform instruction stream that the actual hardware schedules. The translation step is the main reason an x86 chip's pipeline starts with such complex decode logic.</p></details></section>
+  <section lang="en" class="block hide-metadata"><details id="id20" open="open"><summary><header><h1>
+<span class="taxon"></span>Hazards in a superscalar machine  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id21" open="open"><summary><header><h1>
+<span class="taxon"></span>Data hazards stall when an instruction needs a not-yet-written value <a class="slug" href="/ITFA/">[ITFA]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">When one instruction's result is the next instruction's input, a naive <span xmlns="" class="link local"><a href="/COV5/" title="Pipelining overlaps instruction stages to retire one per cycle [COV5]">pipeline</a></span> would have to stall: the second instruction can't execute until the first has written back. Data hazards are the most pervasive source of stalls in a CPU.</p><p xmlns="http://www.w3.org/1999/xhtml">Two standard mitigations:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><span xmlns="" class="link local"><a href="/USSP/" title="Forwarding [USSP]">Forwarding</a></span> — route the producer's output directly into the consumer's input, before the writeback stage commits it. The consumer sees the result one cycle earlier.</li>
+  <li><span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">register renaming</a></span> — false dependencies, where two instructions write to the same architectural register but operate on independent values, can be broken by mapping the architectural register to two different physical registers.</li></ul></details></section>
+<section lang="en" class="block hide-metadata"><details id="id22" open="open"><summary><header><h1>
+<span class="taxon"></span>Forwarding <a class="slug" href="/USSP/">[USSP]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/ITFA/" title="Data hazards stall when an instruction needs a not-yet-written value [ITFA]">data hazard</a></span> mitigation: the producing instruction's result is routed from the output of the execute stage directly to the input of the next instruction's execute stage, bypassing the register-file write and read. The dependent consumer can execute one cycle later instead of waiting for writeback.</p><p xmlns="http://www.w3.org/1999/xhtml">Conceptually, the pipeline grows wiring rather than stages. The result is "forwarded" from where it appears to where it's needed.</p></details></section>
+<section lang="en" class="block hide-metadata"><details id="id23" open="open"><summary><header><h1>
+<span class="taxon"></span>Register renaming breaks false dependencies <a class="slug" href="/5CT9/">[5CT9]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
+</address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Register renaming is the <span xmlns="" class="link local"><a href="/ITFA/" title="Data hazards stall when an instruction needs a not-yet-written value [ITFA]">data hazard</a></span> mitigation that makes out-of-order execution viable: the hardware dynamically remaps each architectural-register <em>write</em> to a fresh physical register from a larger pool, so two instructions that reuse the same architectural name for <em>independent</em> values never collide. The false data dependency — same architectural register, unrelated values — simply disappears, because each write lands in a different physical register.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> Consider:
+<pre>add r1, r2, r3      // r2 := r1 + r3
+add r4, r5, r2      // r2 := r4 + r5   (reuses r2 for an independent value)</pre>
+The second <code>add</code> only depends on <code>r2</code> as a <em>destination</em>, not as a source. Without renaming, it would have to wait for the first instruction's writeback to avoid clobbering. With renaming, the second write goes to a fresh physical register, and the two instructions can proceed in parallel.</div>
+<p xmlns="http://www.w3.org/1999/xhtml">The programming model exposes only the architecturally-named registers; the <span xmlns="" class="link local"><a href="/ETWN/" title="Register file [ETWN]">Register file</a></span> hides a larger pool of rename registers underneath. This is one of the central tricks that makes out-of-order execution viable.</p></details></section>
+<section lang="en" class="block hide-metadata"><details id="id24" open="open"><summary><header><h1>
+<span class="taxon"></span>Structural hazards stall when instructions contend for one resource <a class="slug" href="/7WV1/">[7WV1]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Two simultaneous instructions need the same hardware resource, and there's only one of it. The classic example is a single-port <span xmlns="" class="link local"><a href="/ETWN/" title="Register file [ETWN]">Register file</a></span> facing two writes in one cycle, or two memory-accessing instructions facing a single load-store unit.</p><p xmlns="http://www.w3.org/1999/xhtml">Mitigations cost area:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Duplicate the resource (extra ALU, more register-file write ports).</li>
+  <li>Pipeline the resource (multi-cycle dividers that accept a new input each cycle).</li>
+  <li>Stall — accept the cost in throughput.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Register file area scales <em>quadratically</em> in port count, so duplicating ports for many ALUs gets expensive quickly.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Per-unit register files (one for integer, one for FP, one for vector) with fewer ports each. Discussed under <span xmlns="" class="link local"><a href="/ETWN/" title="Register file [ETWN]">Register file</a></span>.</div>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id25" open="open"><summary><header><h1>
+<span class="taxon"></span>Control hazards stall fetch until the branch resolves <a class="slug" href="/I2B5/">[I2B5]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">When the CPU reaches a <span xmlns="" class="link local"><a href="/IJ7Q/" title="Branch instruction [IJ7Q]">Branch instruction</a></span> in the <span xmlns="" class="link local"><a href="/COV5/" title="Pipelining overlaps instruction stages to retire one per cycle [COV5]">pipeline</a></span>, it doesn't yet know what to fetch next. Until the branch's condition resolves and its target is computed — several stages later — fetch is stuck.</p><p xmlns="http://www.w3.org/1999/xhtml">Mitigations:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span> — guess where control flow is going.</li>
+  <li><span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span> — actually run instructions down the predicted path, ready to throw the work away if the guess was wrong.</li>
+  <li><em>Instruction caching</em> — keep recently-fetched instructions handy so the cost of restarting fetch on a mispredict is at least bounded by cache latency, not DRAM latency.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The cost of a mispredicted branch is roughly the pipeline depth — every speculatively-issued instruction has to be squashed and the pipeline refilled. Deeper pipelines amplify this cost, which is one reason <span xmlns="" class="link local"><a href="/037I/" title="Pentium 4 vs G4e: design philosophies [037I]">Pentium 4 vs G4e: design philosophies</a></span> (deep pipeline, narrow &amp; deep) and <span xmlns="" class="link local"><a href="/6JU6/" title="Superscalar CPUs issue multiple instructions per cycle [6JU6]">superscalar</a></span>-style designs (wider, shallower) make different tradeoffs.</div>
+</details></section>
+</details></section>
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id26" open="open"><summary><header><h1>
+<span class="taxon"></span>Branch prediction and speculation  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id27" open="open"><summary><header><h1>
+<span class="taxon"></span>Branch prediction <a class="slug" href="/1LCS/">[1LCS]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The mechanism that lets the front-end of a pipelined CPU keep fetching past a <span xmlns="" class="link local"><a href="/IJ7Q/" title="Branch instruction [IJ7Q]">Branch instruction</a></span> before the branch has actually resolved. The fetcher consults a predictor; if the prediction is right, the <span xmlns="" class="link local"><a href="/COV5/" title="Pipelining overlaps instruction stages to retire one per cycle [COV5]">pipeline</a></span> runs at full throughput; if wrong, the speculatively-issued instructions are squashed.</p>
+  <section lang="en" class="block hide-metadata"><details id="id28" open="open"><summary><header><h1>
+<span class="taxon"></span>Static prediction  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Program-agnostic rules: e.g. "always predict taken", "always predict not-taken", or "predict backward branches taken, forward branches not-taken". Cheap, but accuracy is poor outside of loop-heavy code.</p>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id29" open="open"><summary><header><h1>
+<span class="taxon"></span>Dynamic prediction  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Driven by per-branch history kept in two hardware tables:</p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Branch history table</em> (BHT) — indexed by branch address, holds a small counter (typically 2-bit saturating) tracking how often the branch was taken.</li>
+  <li><em>Branch target buffer</em> (BTB) — holds the target address each branch was observed to jump to. A BTB miss is expensive: even if you correctly predict "taken", you still don't know where to fetch from.</li></ul>
+
+<p xmlns="http://www.w3.org/1999/xhtml">Per-branch prediction allows a counter to learn pattern-specific behavior — e.g. a loop counter takes the back-edge \(N - 1\) times then falls through.</p>
+</details></section>
+<p xmlns="http://www.w3.org/1999/xhtml">The Pentium famously combined the two: static prediction on a BHT miss, dynamic prediction otherwise. Later machines added refinements — PowerPC 750 added a <span xmlns="" class="link local"><a href="/3DIC/" title="Trace cache [3DIC]">Trace cache</a></span>-like <em>branch target instruction cache</em> (BTIC) that stores the first few instructions at the target, eliminating the re-fetch latency. The Pentium M added a <em>loop detector</em> for loops that always iterate the same number of times.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> See <span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span> for what happens once a prediction has been made.</div>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id30" open="open"><summary><header><h1>
+<span class="taxon"></span>Speculative execution <a class="slug" href="/IIF9/">[IIF9]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Run instructions before knowing whether they should actually be run, on the assumption that you'll usually be right. Used after <span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span> to keep the pipeline busy past a <span xmlns="" class="link local"><a href="/IJ7Q/" title="Branch instruction [IJ7Q]">Branch instruction</a></span>: instructions on the predicted path enter the pipeline, execute, and stash their results in non-architectural state. Only when the branch resolves are speculated results "committed" to architectural state — or, if the prediction was wrong, discarded.</p><p xmlns="http://www.w3.org/1999/xhtml">Speculative state lives in the <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span> (and the <span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">register renaming</a></span> rename registers). Entries are tagged as speculative; on misprediction the speculative entries are flushed.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Modern speculative execution drives a lot of CPU complexity — and a lot of CPU security work. Spectre-class side channels exploit the fact that speculative execution can leave traces in caches even after the speculative results are discarded.</div>
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id31" open="open"><summary><header><h1>
+<span class="taxon"></span>Out-of-order execution  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id32" open="open"><summary><header><h1>
+<span class="taxon"></span>Out-of-order execution runs ready instructions past a stalled one, committing in program order <a class="slug" href="/U0NY/">[U0NY]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Execute instructions in whatever order their operands become available, then commit them back in program order. The programmer's model still sees sequential execution; the hardware reorders aggressively underneath to keep <span xmlns="" class="link local"><a href="/DA6Q/" title="Execution units [DA6Q]">Execution units</a></span> busy across <span xmlns="" class="link local"><a href="/ITFA/" title="Data hazards stall when an instruction needs a not-yet-written value [ITFA]">data hazard</a></span>s and memory latency.</p><p xmlns="http://www.w3.org/1999/xhtml">Two structures make this work:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><span xmlns="" class="link local"><a href="/FQ9N/" title="Reservation station [FQ9N]">Reservation station</a></span>s — hold instructions waiting on operands, so a stalled instruction doesn't block independent ones behind it.</li>
+  <li><span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span> — preserves program order so commits look sequential and mispredicted <span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span> paths can be unwound.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Combined with <span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">register renaming</a></span> to break false dependencies, the back-end of a modern CPU is essentially a dynamic scheduler that uses the program order only as a hint about what to retire next.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> An out-of-order pipeline can issue a load early (because its address operands are ready), execute several unrelated ALU ops while waiting for the memory, then have all four instructions ready to commit in program order. The illusion of sequential execution is preserved; the parallelism is real.</div>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id33" open="open"><summary><header><h1>
+<span class="taxon"></span>Reorder buffer <a class="slug" href="/BI4H/">[BI4H]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 13, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The structure that lets an <span xmlns="" class="link local"><a href="/U0NY/" title="Out-of-order execution runs ready instructions past a stalled one, committing in program order [U0NY]">out-of-order execution</a></span> CPU look in-order to the programmer. The ROB holds every in-flight instruction in original program order, regardless of the order they actually executed. When the oldest entry has its result ready and all earlier entries have already committed, the ROB <em>commits</em> it — writing its result to architectural state and freeing the slot.</p><p xmlns="http://www.w3.org/1999/xhtml">For stores, commit is only half the story. The ROB entry is freed and the instruction is architecturally real, but the value has not yet reached the cache — it is handed off to the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> for asynchronous drain. This is what keeps the ROB from stalling behind every cache miss: once a store is known to be non-speculative, the front-end can move on.</p><p xmlns="http://www.w3.org/1999/xhtml">Each ROB entry typically tracks:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Instruction identity and program order position.</li>
+  <li>Operand register names (and renamed sources).</li>
+  <li>Status — pending, executing, complete, speculated.</li>
+  <li>The instruction's result, held in a data field that doubles as a <span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">register renaming</a></span> register.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Speculatively-issued instructions also enter the ROB but are tagged. On a branch misprediction, all speculative entries past the mispredicted branch are squashed.</p><p xmlns="http://www.w3.org/1999/xhtml">The Pentium Pro introduced this design with a 40-entry ROB. The ROB sits at both ends of the pipeline — dispatch enters it, retirement leaves it — which is what makes the rest of the back-end free to issue and execute out of order.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> ROB size, <span xmlns="" class="link local"><a href="/FQ9N/" title="Reservation station [FQ9N]">Reservation station</a></span> count, and pipeline depth set each other's bounds. A shallow pipeline can afford a small ROB; a deep one (Pentium 4 had 126) needs a large one to keep the back-end fed.</div>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id34" open="open"><summary><header><h1>
+<span class="taxon"></span>Reservation station <a class="slug" href="/FQ9N/">[FQ9N]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A buffer in front of an <span xmlns="" class="link local"><a href="/DA6Q/" title="Execution units [DA6Q]">Execution units</a></span> (or group of them) that holds dispatched instructions waiting on their operands. Once all operands arrive — either by writeback or by <span xmlns="" class="link local"><a href="/USSP/" title="Forwarding [USSP]">Forwarding</a></span> — the instruction is <em>issued</em> to its execution unit. Reservation stations exist so that an instruction waiting on a slow operand doesn't block dispatch of unrelated instructions behind it.</p><p xmlns="http://www.w3.org/1999/xhtml">Two organizational choices:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>One reservation station per execution unit (Pentium Pro). Smaller, simpler.</li>
+  <li>One shared station feeding multiple units (also seen on Pentium Pro, where it issues up to five micro-ops per cycle).</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Within a single station, instructions issue in FIFO order. Across stations, there is no guarantee — that's what <em>out-of-order</em> execution actually means.</p><p xmlns="http://www.w3.org/1999/xhtml">Dispatching an instruction into a reservation station has four prerequisites:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>In-order rule: instructions dispatch in program order (they execute out of order, not dispatch).</li>
+  <li>Execution unit availability: the matching reservation station has room.</li>
+  <li>Completion buffer availability: the <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span> has room to track the new in-flight instruction.</li>
+  <li>Register-rename availability: enough rename registers exist to hold the new instruction's destination.</li></ol></details></section>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id35" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Issue queue wakeup-select <a class="slug" href="/UJPD/">[UJPD]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 13, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The mechanism by which a modern out-of-order CPU notices that a previously-stalled instruction now has all its operands ready. The issue queue holds the N in-flight instructions whose operands are not yet available; each entry watches a small set of physical register tags (the operands it is waiting for). When a producer finishes, it broadcasts "tag T is ready" to every entry, and each entry compares that tag against its own waiting tags through a content-addressable memory (CAM). Entries whose last operand arrives become eligible to issue this cycle; a separate <em>select</em> stage picks which of the now-ready entries actually fires.</p><p xmlns="http://www.w3.org/1999/xhtml">The cost is the reason CPU issue queues are small. Each entry runs a CAM lookup against each broadcast tag, so an N-entry queue with N producers per cycle scales as \(O(N^2)\) in comparators, wires, and power. The select stage compounds this — priority encoders across N entries are themselves a quadratic-area structure on the critical timing path. The cumulative wakeup-select latency is what bounds clock frequency once N grows past a few tens.</p><p xmlns="http://www.w3.org/1999/xhtml">This is the structural reason CPU out-of-order windows stay in the tens-to-low-hundreds of entries even as transistor budgets grow. Wider doesn't help: timing closure on the CAM degrades faster than the additional ILP repays. GPUs sidestep the whole problem by leaning on <span xmlns="" class="link local"><a href="/G4ML/" title="Thread-level parallelism [G4ML]">Thread-level parallelism</a></span> — a cheap per-register <span xmlns="" class="link local"><a href="/XPAA/" title="GPU register scoreboard [XPAA]">scoreboard</a></span> plus a warp scheduler covers stalls without any broadcast/compare structure.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Wakeup-select sits at the boundary between <span xmlns="" class="link local"><a href="/FQ9N/" title="Reservation station [FQ9N]">Reservation station</a></span> (which holds the instruction) and <span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">register renaming</a></span> (which named the tags being broadcast). All three structures together are what people mean by "the out-of-order back-end."</div>
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id36" open="open"><summary><header><h1>
+<span class="taxon"></span>Instruction set architecture  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id37" open="open"><summary><header><h1>
+<span class="taxon"></span>CISC vs RISC <a class="slug" href="/L896/">[L896]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Two design philosophies for an instruction set architecture.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Complex instruction set computing</em> (CISC) — many specialized instructions, including ones that combine memory access with arithmetic or operate on complex types (strings, decimal numbers). One instruction often does the work of several. x86 is the canonical example.</li>
+  <li><em>Reduced instruction set computing</em> (RISC) — a small set of simple, uniform instructions; explicit load and store; arithmetic only on registers. Each instruction does little but maps cleanly to hardware. PowerPC, MIPS, ARM are RISC.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> CISC needs a fat <span xmlns="" class="link local"><a href="/87GH/" title="Microarchitecture [87GH]">Microarchitecture</a></span> engine to translate its complex instructions into hardware-executable primitives. That's silicon area, power, and design complexity that doesn't directly add throughput.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Once RISC clearly won as a hardware model, x86 vendors adopted <em>instruction translation</em>: a CISC front-end decodes x86 into RISC-like <span xmlns="" class="link local"><a href="/WEW2/" title="Micro-operations [WEW2]">Micro-operations</a></span> internally. The chip is RISC on the inside, CISC on the outside.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The cost of legacy is real. The original Pentium spent roughly 30% of its transistors on legacy support (mostly the microcode ROM). The Pentium Pro spent 40% on backward compatibility. Modern x86 chips have absorbed this overhead because they can — transistor budgets grew faster than the legacy tax.</div>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id38" open="open"><summary><header><h1>
+<span class="taxon"></span>Micro-operations <a class="slug" href="/WEW2/">[WEW2]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The hardware-internal instruction stream that an x86 chip actually schedules. Each user-visible x86 instruction is decoded into one or more micro-ops, which are simpler, more uniform, RISC-like primitives that the back-end can execute, reorder, and rename freely.</p><p xmlns="http://www.w3.org/1999/xhtml">Many common x86 instructions translate to just one or two micro-ops, so decoders are split into <em>simple</em> and <em>complex</em> variants — the simple decoders are specific to single-micro-op instructions and run in parallel with the complex one.</p><p xmlns="http://www.w3.org/1999/xhtml">Optimizations that operate on the micro-op stream:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Micro-op fusion</em> (Pentium M) — two related micro-ops that the back-end tracks together while sharing a slot in the issue queue. A store decomposes into a store-address and store-data pair, which are fused; a read-modify decomposes into a load + ALU op that fuse and execute serially.</li>
+  <li><em>Macro fusion</em> (Core 2 Duo) — fuse a pair of <em>x86 instructions</em> (e.g. compare + branch) before decode, so a single micro-op represents both. Increases peak decode bandwidth without growing ROB or RS pressure.</li>
+  <li><em><span xmlns="" class="link local"><a href="/3DIC/" title="Trace cache [3DIC]">Trace cache</a></span></em> (Pentium 4) — cache decoded micro-op sequences for hot code so decoding doesn't have to happen on every iteration.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Micro-ops exist because <span xmlns="" class="link local"><a href="/L896/" title="CISC vs RISC [L896]">CISC vs RISC</a></span>-style ISAs need to be translated to something the hardware can schedule cleanly. Pure RISC chips don't need them.</div>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id39" open="open"><summary><header><h1>
+<span class="taxon"></span>Trace cache <a class="slug" href="/3DIC/">[3DIC]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An L1-level cache of <em>decoded</em> <span xmlns="" class="link local"><a href="/WEW2/" title="Micro-operations [WEW2]">Micro-operations</a></span> sequences. Instead of caching raw x86 instructions that have to be decoded on every fetch, a trace cache stores micro-op traces ready for the back-end. Introduced in the Pentium 4 to keep its very deep pipeline fed when normal x86 decoding couldn't run fast enough.</p><p xmlns="http://www.w3.org/1999/xhtml">The trace cache operates in two modes:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Execution mode</em>: on a trace hit, feed the cached micro-ops directly to the back-end. Decode is bypassed entirely.</li>
+  <li><em>Build mode</em>: on a trace miss, fetch the instructions from L2, decode them, and assemble a new trace while feeding it forward.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">The trace cache is indexed during <span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span>, so speculative paths beyond a branch can be stored in the same trace and fed forward without restarting fetch. This lets a single cache line hold six micro-ops that may include a speculated branch target.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Long x86 instructions that decode to hundreds of micro-ops would blow out the trace cache.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Tag those instructions. When the trace cache encounters a tag, it stores a pointer to the microcode ROM rather than the micro-ops themselves, and the ROM streams them on demand.</div>
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id40" open="open"><summary><header><h1>
+<span class="taxon"></span>Caches  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id41" open="open"><summary><header><h1>
+<span class="taxon"></span>Caches <a class="slug" href="/M91V/">[M91V]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The CPU clock is decreasing much faster than main-memory latency, so without a cache hierarchy a fast CPU spends most of its time stalled on memory.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> If you are a really fast factory, the size of the truck doesn't matter — you must still wait the full duration of the first delivery.</div>
+<section lang="en" class="block hide-metadata"><details id="id42" open="open"><summary><header><h1>
+<span class="taxon"></span>Cache hierarchy <a class="slug" href="/KBYI/">[KBYI]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Multiple tiers of progressively-larger, progressively-slower storage between the CPU's registers and main memory. Each tier holds the most-recently-used contents of the next slower tier, exploiting <span xmlns="" class="link local"><a href="/PMP9/" title="Spatial locality [PMP9]">Spatial locality</a></span> and <span xmlns="" class="link local"><a href="/9RWN/" title="Temporal locality [9RWN]">Temporal locality</a></span> in the workload.</p><p xmlns="http://www.w3.org/1999/xhtml">Approximate tiers on a modern x86 chip:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Registers</em> — ns, dozens of bytes per core.</li>
+  <li><em>L1 cache</em> — 2–8 ns, 8–128 KB per core. Often split into instruction and data L1s.</li>
+  <ul><li>Built from static RAM (4–6 transistors per cell), which is fast but area-expensive vs. DRAM's single-transistor cell.</li></ul>
+  <li><em>L2 cache</em> — 5–12 ns, 0.5–8 MB. Closes the latency gap between L1 and DRAM.</li>
+  <li><em>L3 cache</em> — slower, shared across cores.</li>
+  <li><em>Main memory</em> — 10–60 ns, GBs.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> <strong>A byte's journey.</strong> L1 checked first; on miss, L2; on miss, main memory; on miss in main memory, <span xmlns="" class="link local"><a href="/CXFM/" title="Page fault [CXFM]">Page fault</a></span> to disk.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> L1 is split into instruction and data caches because the locality profiles of code and data are very different — re-running the same code over different data has high temporal locality for code but low for data.</div>
+</details></section><section lang="en" class="block hide-metadata"><details id="id43" open="open"><summary><header><h1>
+<span class="taxon"></span>Cache miss types <a class="slug" href="/8CGB/">[8CGB]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A cache miss happens when the requested data isn't in cache and has to be fetched from a slower tier. Misses fall into four categories — the "four Cs" of cache misses:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><em>Compulsory miss</em> — the data was never in cache. Cold-start misses are unavoidable for a given cache size and working set.</li>
+  <li><em>Conflict miss</em> — the data was evicted because of an associativity collision. A different access mapped to the same set kicked it out. Reduced by higher <span xmlns="" class="link local"><a href="/C74U/" title="Cache associativity [C74U]">Cache associativity</a></span>.</li>
+  <li><em>Coherence miss</em> — the data was invalidated because another core wrote to it. Specific to shared-memory multicore systems.</li>
+  <li><em>Capacity miss</em> — the cache filled up and the data was evicted by <span xmlns="" class="link local"><a href="/UG51/" title="Cache replacement policy [UG51]">Cache replacement policy</a></span>. The working set doesn't fit.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">Distinguishing them matters because they have different mitigations: conflict misses respond to associativity changes, capacity misses respond to size, coherence misses respond to <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">cache-coherence protocol</a></span> design, and compulsory misses respond to prefetching.</p></details></section>
+  <section lang="en" class="block hide-metadata"><details id="id44" open="open"><summary><header><h1>
+<span class="taxon"></span>Locality, the reason caches work  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id45" open="open"><summary><header><h1>
+<span class="taxon"></span>Spatial locality <a class="slug" href="/PMP9/">[PMP9]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The empirical observation that if a program accesses memory address \(x\), it is likely to access addresses near \(x\) soon. Sequential array traversal, struct field access, and instruction fetch all exhibit it.</p><p xmlns="http://www.w3.org/1999/xhtml">Caches exploit spatial locality by loading whole <em>cache lines</em> (typically 64 bytes) on every miss, not just the single requested byte. The byte that triggered the load is the <em>critical word</em>; the surrounding bytes come along for free under the assumption you'll want them.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> RAM and caches are organized in cache-line granularity throughout. Bandwidth is sized for whole-line transfers; tags are per-line, not per-byte.</div>
+<p xmlns="http://www.w3.org/1999/xhtml">The complement is <span xmlns="" class="link local"><a href="/9RWN/" title="Temporal locality [9RWN]">Temporal locality</a></span> — repeated access to the same data over time. Temporal locality implies spatial locality (you re-touch nearby bytes when you re-touch the original), but not vice versa.</p></details></section>
+<section lang="en" class="block hide-metadata"><details id="id46" open="open"><summary><header><h1>
+<span class="taxon"></span>Temporal locality <a class="slug" href="/9RWN/">[9RWN]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">If a program accesses memory address \(x\), it is likely to access \(x\) again soon. Loop variables, frequently-called functions, and re-used data structures all exhibit it.</p><p xmlns="http://www.w3.org/1999/xhtml">Caches exploit temporal locality by retaining recently-accessed lines until something more important takes their slot. The <span xmlns="" class="link local"><a href="/UG51/" title="Cache replacement policy [UG51]">Cache replacement policy</a></span> is what decides "more important" — typically <span xmlns="" class="link local"><a href="/7WG2/" title="LRU and the clock algorithm [7WG2]">LRU and the clock algorithm</a></span>-ish.</p><p xmlns="http://www.w3.org/1999/xhtml">Temporal locality implies spatial locality (re-touching a byte tends to re-touch its neighbors) but not vice versa: a sequential scan has spatial locality with no temporal locality.</p></details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id47" open="open"><summary><header><h1>
+<span class="taxon"></span>Cache structure  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id48" open="open"><summary><header><h1>
+<span class="taxon"></span>Cache associativity <a class="slug" href="/C74U/">[C74U]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The rule that decides which slots in the cache an address is allowed to occupy. Three points on the spectrum:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Direct mapped</em> — every address maps to exactly one slot. Fast (only one tag to check) but suffers <em>conflict misses</em>: two hot addresses that map to the same slot evict each other.</li>
+  <li><em>Fully associative</em> — any address can live in any slot. No conflict misses but tag check is expensive (compare against every entry in parallel).</li>
+  <li><em>\(n\)-way set associative</em> — middle ground. The cache is divided into <em>sets</em> of \(n\) slots; an address maps to a specific set but can occupy any of its \(n\) slots. The hot setting on real caches is somewhere between 4-way and 16-way.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Higher associativity reduces conflict misses but increases tag-check hardware and power. The <em>cache tag</em> of an address is the bits that aren't used to pick the set — they're stored alongside the data and compared on every access.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The tag array is stored separately from the data array (<em>tag RAM</em>) so the tag comparison can happen in parallel with the data lookup. Tags are small, allowing many in-flight comparisons.</div>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id49" open="open"><summary><header><h1>
+<span class="taxon"></span>Cache replacement policy <a class="slug" href="/UG51/">[UG51]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Within a <span xmlns="" class="link local"><a href="/C74U/" title="Cache associativity [C74U]">Cache associativity</a></span> set, when a new line arrives and the set is full, which existing line gets evicted? Same question as <span xmlns="" class="link local"><a href="/7WG2/" title="LRU and the clock algorithm [7WG2]">LRU and the clock algorithm</a></span> for pages, different timescales.</p><p xmlns="http://www.w3.org/1999/xhtml">The hot policy is <em>least recently used</em> — but pure LRU requires tracking a per-line ordering and updating it on every hit, which is too expensive at L1 latencies. Real caches use <em>pseudo-LRU</em> — a tree of single bits per set that approximates LRU with a fraction of the bookkeeping. The clock algorithm is one well-known pseudo-LRU scheme.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Block (cache line) size is part of the same tradeoff. Larger blocks improve <span xmlns="" class="link local"><a href="/PMP9/" title="Spatial locality [PMP9]">Spatial locality</a></span> but cause cache pollution (you fetch bytes you don't use) and eat memory bandwidth. The sweet spot is around 64 bytes on modern x86.</div>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id50" open="open"><summary><header><h1>
+<span class="taxon"></span>Write-through vs write-back <a class="slug" href="/54BZ/">[54BZ]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">When a cached line is modified, when do you propagate the change to the next tier?</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Write-through</em> — every store updates both the cache and main memory. Simple, but generates memory traffic on every write.</li>
+  <li><em>Write-back</em> — stores update only the cache. The line is marked <em>dirty</em> via a per-line bit; the next-tier copy is updated only when the line is evicted. Less memory traffic but the cache is now the sole authoritative source until eviction, which complicates correctness.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Real CPUs run write-back at L1 and L2. Write-through is occasionally used for specific lines (e.g. memory-mapped device registers where every write must hit the device immediately).</div>
+<p xmlns="http://www.w3.org/1999/xhtml">Write-back is one of the constraints behind <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">cache-coherence protocols</a></span> on multicore chips: every core must agree on which one currently owns a dirty line.</p></details></section>
+</details></section>
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id51" open="open"><summary><header><h1>
+<span class="taxon"></span>Power and multicore  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id52" open="open"><summary><header><h1>
+<span class="taxon"></span>Power wall <a class="slug" href="/XQMQ/">[XQMQ]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The hard limit on per-core clock speed that emerged in the early 2000s, ending the era of frequency scaling. Power dissipation has two components on a chip:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Dynamic power density</em> — watts per unit area dissipated by transistor switching. Scales with clock frequency: faster switching, more energy per second. You can also drive it up by cramming more transistors into the same area.</li>
+  <li><em>Static power density</em> — watts per unit area dissipated by leakage current through "off" transistors. Smaller transistors leak more, so denser chips leak more even when idle.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">By the mid-2000s, single-core frequency scaling was thermally unsustainable. The industry pivoted to <em>low-power design</em> and <em><span xmlns="" class="link local"><a href="/JRP0/" title="Multicore [JRP0]">Multicore</a></span></em> — get more throughput from many slower cores instead of one faster one. Pentium M and the Core series were the first generations explicitly designed under this constraint.</p></details></section>
+<section lang="en" class="block hide-metadata"><details id="id53" open="open"><summary><header><h1>
+<span class="taxon"></span>Multicore <a class="slug" href="/JRP0/">[JRP0]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Multiple independent CPU cores on the same chip. A core, for this purpose, is the bundle of front-end, back-end, <span xmlns="" class="link local"><a href="/DA6Q/" title="Execution units [DA6Q]">Execution units</a></span>s, and L1 <span xmlns="" class="link local"><a href="/KBYI/" title="Cache hierarchy [KBYI]">Cache hierarchy</a></span> that runs one architectural thread of execution.</p><p xmlns="http://www.w3.org/1999/xhtml">Traditional multiprocessor systems put each core on its own physical chip; <em>chip multiprocessing</em> (CMP) puts multiple cores on the same die. The key advantage is shared lower-level caches — typically an L2 or L3 shared across all cores on the chip — which speeds up inter-core communication and amortizes silicon.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The shift to multicore was forced by the <span xmlns="" class="link local"><a href="/XQMQ/" title="Power wall [XQMQ]">Power wall</a></span> more than chosen for its own merits. The software cost is real: shared-memory parallelism requires correctness work that single-threaded code didn't.</div>
+<p xmlns="http://www.w3.org/1999/xhtml">Multicore is what makes <span xmlns="" class="link local"><a href="/5P43/" title="Concurrency [5P43]">Concurrency</a></span> a hardware problem, not just a scheduling problem: real simultaneous execution on different physical cores means software has to handle <span xmlns="" class="link local"><a href="/VOQN/" title="Race condition [VOQN]">Race condition</a></span>s with real synchronization primitives like <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span>.</p></details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id54" open="open"><summary><header><h1>
+<span class="taxon"></span>Interrupts and exceptions  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id55" open="open"><summary><header><h1>
+<span class="taxon"></span>Hardware interrupt path <a class="slug" href="/K325/">[K325]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">What the CPU does, entirely in hardware, the moment an interrupt arrives — whether a device IRQ, a fault like a <span xmlns="" class="link local"><a href="/CXFM/" title="Page fault [CXFM]">Page fault</a></span>, or a software <code>int N</code>. The point of the hardware path is to land in the kernel at a clean instruction boundary with enough saved state that user execution can resume later as if nothing happened.</p><p xmlns="http://www.w3.org/1999/xhtml">Four things happen, in order, with no software involvement:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>Reach a clean instruction boundary.</strong> The CPU cannot pause halfway through, say, a memory write — architectural state would be inconsistent. So the current instruction either <em>finishes</em> normally (typical for asynchronous interrupts like a timer) or is <em>rolled back</em> as if it never started (faults, where the instruction couldn't complete anyway and needs to be retried). A page-fault handler maps in the missing page and <span xmlns="" class="link external"><a href="https://kellenkanarios.com/UHNL/" title="">UHNL</a></span> returns to re-execute the faulting instruction; a timer handler returns to the next instruction.</li>
+
+  <li><strong>Save the minimum resume state to the kernel stack.</strong> The CPU pushes RIP (where to resume), RSP (the user stack pointer it's about to abandon), the privilege level (CS — were we in ring 3 or ring 0?), and RFLAGS. The save target is the <em>kernel</em> stack, whose address the CPU reads from the <span xmlns="" class="link local"><a href="/ZAAT/" title="Task state segment [ZAAT]">Task state segment</a></span> that the OS set up at boot. This is a security boundary: the kernel never trusts the user stack, since user code could have corrupted it or pointed RSP at something malicious. Note what is <em>not</em> saved: general-purpose registers. The handler itself pushes RAX, RBX, ... if it uses them, which keeps the hardware path fast.</li>
+
+  <li><strong>Jump to the handler via the <span xmlns="" class="link local"><a href="/YK46/" title="Interrupt descriptor table [YK46]">Interrupt descriptor table</a></span>.</strong> The CPU takes the interrupt number \(N\), indexes entry \(N\) of the IDT (found via the IDTR register), loads the handler address into RIP, and loads the new code segment, which switches the CPU from ring 3 to ring 0. After this step, the CPU is running kernel code on the kernel stack at the right privilege level — all set up automatically.</li>
+
+  <li><strong>Flush the <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span> of work past the interrupt point.</strong> In an <span xmlns="" class="link local"><a href="/U0NY/" title="Out-of-order execution runs ready instructions past a stalled one, committing in program order [U0NY]">out-of-order execution</a></span> CPU the ROB may already contain instructions from after the interrupt — they've been issued speculatively because the front-end ran ahead. Those entries are discarded so the handler sees clean architectural state, as if execution had stopped exactly at the interrupt point. When <span xmlns="" class="link external"><a href="https://kellenkanarios.com/UHNL/" title="">UHNL</a></span> returns, those instructions re-execute normally. This is the same squash machinery used for branch mispredictions in <span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span> — and, famously, the reason Spectre-class side channels exist: speculative work leaves observable traces in caches even after the ROB is flushed.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">Once the hardware path finishes, the OS's interrupt handler is running. Its first job is typically to save the remaining registers before doing real work — the rest is software.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Steps 2 and 3 are why an OS needs to set up the IDT and TSS before enabling interrupts. Until both structures point somewhere valid, the first interrupt would either jump to garbage or push to a user-controlled stack — both fatal.</div>
+</details></section>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id56" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Interrupt descriptor table <a class="slug" href="/YK46/">[YK46]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The CPU's lookup table from <em>interrupt number</em> to <em>handler</em>. The OS allocates the IDT in memory, fills entry \(N\) with the address of the handler for interrupt \(N\), and points the IDTR register at the table's base. From then on the <span xmlns="" class="link local"><a href="/K325/" title="Hardware interrupt path [K325]">Hardware interrupt path</a></span> uses the IDT to dispatch every interrupt without any further software help.</p><p xmlns="http://www.w3.org/1999/xhtml">Each entry — a <em>gate descriptor</em> on x86 — carries enough information for the CPU to switch into the handler safely: the handler's linear address, the code segment to load (which sets the new privilege level, typically ring 0), and a type byte distinguishing interrupt gates (which mask further interrupts on entry) from trap gates (which don't). Entries 0–31 are reserved for CPU-defined exceptions (divide-by-zero, <span xmlns="" class="link local"><a href="/CXFM/" title="Page fault [CXFM]">Page fault</a></span>, double fault, ...); 32–255 are available for device IRQs and software interrupts.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The IDT is one of three OS-installed tables that the CPU consults transparently — the others are the GDT (segment descriptors) and the page tables. Each is a hardware contract: the OS lays bytes out in a format the silicon understands, then hands over a pointer.</div>
+</details></section>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id57" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Task state segment <a class="slug" href="/ZAAT/">[ZAAT]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A small OS-allocated structure that the CPU reads to find the <em>kernel stack pointer</em> when it raises privilege. Its historical purpose — full task switching in hardware — is dead on modern x86-64; what survives is one essential field: <code>RSP0</code>, the address of the kernel stack to switch to on entry from ring 3.</p><p xmlns="http://www.w3.org/1999/xhtml">During the <span xmlns="" class="link local"><a href="/K325/" title="Hardware interrupt path [K325]">Hardware interrupt path</a></span>, the moment the CPU decides to push RIP/RSP/CS/RFLAGS, it reads <code>RSP0</code> from the current TSS (located via the GDT entry pointed at by the TR register) and switches RSP to that value <em>before</em> pushing. If the TSS were missing or pointed at user memory, the very first interrupt would either fault while trying to push, or push the user's registers onto attacker-controlled memory. So the TSS is set up at boot, before interrupts are enabled.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> This is why a kernel needs a per-CPU TSS, not a per-process one: <code>RSP0</code> is consulted on every transition into the kernel, and each CPU needs its own kernel stack to land on.</div>
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id58" open="open"><summary><header><h1>
+<span class="taxon"></span>Machine implementations  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id59" open="open"><summary><header><h1>
+<span class="taxon"></span>Pentium and Pentium Pro <a class="slug" href="/7XOX/">[7XOX]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Machine-instance notes — concepts these chips introduced live in their own atomic notes; this tree records what was novel about each implementation.</p>
+  <section lang="en" class="block hide-metadata"><details id="id60" open="open"><summary><header><h1>
+<span class="taxon"></span>The original Pentium  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Concepts in play:</p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li><span xmlns="" class="link local"><a href="/KBYI/" title="Cache hierarchy [KBYI]">Cache hierarchy</a></span> — Pentium adopted L1/L2 caching and split the L1 into separate instruction and data caches.</li>
+  <li><span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span> — branch history table (BHT) and branch target buffer (BTB) combined with static prediction as a fallback on BHT miss.</li>
+  <li><span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span> — execute past a predicted branch, write back only after the prediction is confirmed.</li></ul>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Pipeline:</strong></p>
+<ol xmlns="http://www.w3.org/1999/xhtml"><li><em>Fetch / Prefetch</em>: read from instruction cache.</li>
+  <li><em>Decode 1</em>: decode to internal format; branch prediction.</li>
+  <li><em>Decode 2</em>: convert complex instructions via <span xmlns="" class="link local"><a href="/87GH/" title="Microarchitecture [87GH]">Microarchitecture</a></span> to <span xmlns="" class="link local"><a href="/WEW2/" title="Micro-operations [WEW2]">Micro-operations</a></span>.</li>
+  <li><em>Execute</em>.</li>
+  <li><em>Write</em>.</li></ol>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Back-end</strong>: two integer ALUs (also doing address calculations) and one floating-point ALU. The FP register file was arranged as a <em>stack</em>, with most FP ops operating on the top — zero-cycle stack swaps existed but still occupied a decode slot.</p>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Estimated 30% of Pentium transistors went to legacy support, mostly the microcode ROM.</div>
+
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id61" open="open"><summary><header><h1>
+<span class="taxon"></span>The Pentium Pro  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Concepts introduced:</p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li><span xmlns="" class="link local"><a href="/U0NY/" title="Out-of-order execution runs ready instructions past a stalled one, committing in program order [U0NY]">out-of-order execution</a></span> — instructions execute in dataflow order, commit in program order.</li>
+  <li><span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span> — 40-entry ROB tracks all in-flight instructions and assists <span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">register renaming</a></span>.</li>
+  <li><span xmlns="" class="link local"><a href="/FQ9N/" title="Reservation station [FQ9N]">Reservation station</a></span> — three-instruction dispatch, up to five-issue per cycle.</li>
+  <li><span xmlns="" class="link local"><a href="/L896/" title="CISC vs RISC [L896]">CISC vs RISC</a></span> decoupling — x86 in front, <span xmlns="" class="link local"><a href="/WEW2/" title="Micro-operations [WEW2]">Micro-operations</a></span> internally.</li></ul>
+<figure xmlns="http://www.w3.org/1999/xhtml"><img width="70%" src="/bafkrmihuv5vybyb5cvylg24dd5ujybaegxaunut6xxm5a7tducja3ljudm.png"></img></figure>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Simple and complex decoders are split because many CISC instructions translate to one or two micro-ops — the simple decoders handle those in parallel with the slow complex decoder.</div>
+
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 40% of Pentium Pro transistors went to backward-compatibility support.</div>
+
+</details></section>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id62" open="open"><summary><header><h1>
+<span class="taxon"></span>PowerPC chip family <a class="slug" href="/3LIK/">[3LIK]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Machine-instance notes for the PowerPC line — a RISC implementation of the same concepts covered in <span xmlns="" class="link local"><a href="/6JU6/" title="Superscalar CPUs issue multiple instructions per cycle [6JU6]">superscalar</a></span> and <span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span>, with a few innovations specific to this family.</p>
+  <section lang="en" class="block hide-metadata"><details id="id63" open="open"><summary><header><h1>
+<span class="taxon"></span>PowerPC 601  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>Front-end:</strong> standard 4-stage pipeline. Instruction queue dispatches 3 instructions per cycle.</p>
+  <ul xmlns="http://www.w3.org/1999/xhtml"><li>Identifies unconditional branches (and resolved conditional ones) in the queue; if taken, deletes the branch instruction and starts fetching from the target — <em>branch folding</em>.</li>
+    <li>Untaken branches "fall out" — <em>fall through</em>.</li>
+    <li>No <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span>-equivalent. Static scheduling.</li></ul>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>Back-end:</strong> one integer ALU (also handles addresses), one floating-point ALU with single-cycle fused multiply-add. For FP-heavy code the integer ALU just does addresses.</p>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Competed with two-integer-ALU designs because simpler logic left room for 4× the L1 cache (32KB vs 8KB).</div>
+
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id64" open="open"><summary><header><h1>
+<span class="taxon"></span>PowerPC 603 and 603e  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+ <p xmlns="http://www.w3.org/1999/xhtml"><strong>Front-end:</strong></p>
+ <ul xmlns="http://www.w3.org/1999/xhtml"><li>Branch dispatch on a separate bus, so branches don't compete with non-branch dispatch.</li>
+   <li>Up to 2 non-branch instructions dispatched per cycle.</li>
+   <li>Adds a <em>commit unit</em> and <em>completion queue</em> — the PowerPC names for <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span>. Dynamic scheduling with an instruction window.</li></ul>
+ <p xmlns="http://www.w3.org/1999/xhtml"><strong>Back-end:</strong></p>
+ <ul xmlns="http://www.w3.org/1999/xhtml"><li>Two added execution units: a system unit for misc integer ops and a load/store unit. Lighter load on the integer ALU.</li>
+   <li>FPU took hits: 3 instructions every 4 cycles (mandatory bubble); double precision (including <code>fmadd</code>) takes 2 cycles in execute.</li></ul>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id65" open="open"><summary><header><h1>
+<span class="taxon"></span>PowerPC 604  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>Front-end:</strong></p>
+  <ul xmlns="http://www.w3.org/1999/xhtml"><li>Splits decode/dispatch and writeback into two stages — enables shorter clock cycles.</li>
+   <li>Up to 6 instructions dispatched per cycle.</li>
+   <li>Dynamic <span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span> with a 512-entry BHT (2 bits per entry) and a 64-entry branch address cache (BTB).</li>
+   <li>Adds a condition-register unit sharing dispatch bus with the branch unit.</li></ul>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong>Back-end:</strong> two simple integer units + one complex; fully pipelined FPU.</p>
+
+  <p xmlns="http://www.w3.org/1999/xhtml">Dispatch obeys <span xmlns="" class="link local"><a href="/FQ9N/" title="Reservation station [FQ9N]">Reservation station</a></span> rules: in-order dispatch, execution-unit availability, ROB availability, and rename-register availability.</p>
+
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Shallow pipeline → small ROB and few reservation stations are acceptable. Tradeoff: lower clock speed.</div>
+
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The 604e doubled L1 to 64KB and added a condition-register unit, freeing the integer and branch units from condition computations.</div>
+
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id66" open="open"><summary><header><h1>
+<span class="taxon"></span>PowerPC 750  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Same 4-stage pipeline as the 603e. Two integer units instead of one; 3-cycle single-precision FP; 6-entry instruction queue, up to 4 fetched per cycle.</p>
+  <p xmlns="http://www.w3.org/1999/xhtml">The 750's signature trick: a <em>branch target instruction cache</em> (BTIC). A traditional BTB stores the <em>address</em> of the branch target — you still have to re-fetch that instruction. The BTIC caches the actual first instructions at the target, eliminating the re-fetch latency. This makes <span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span> dramatically more useful.</p>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Did not support a <span xmlns="" class="link local"><a href="/Q7ZD/" title="Vector ISA / SIMD [Q7ZD]">SIMD</a></span> instruction set.</div>
+
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id67" open="open"><summary><header><h1>
+<span class="taxon"></span>PowerPC 7400  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Added a <em>vector permute unit</em> (VPU) and <em>vector ALU</em> (VALU) for SIMD; full double-precision FPU; 8-entry instruction queue.</p>
+</details></section>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id68" open="open"><summary><header><h1>
+<span class="taxon"></span>Pentium 4 vs G4e: design philosophies <a class="slug" href="/037I/">[037I]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Two contrasting approaches to using a transistor budget, well-paired as instance studies because they target the same constraints from opposite directions.</p>
+  <section lang="en" class="block hide-metadata"><details id="id69" open="open"><summary><header><h1>
+<span class="taxon"></span>The G4e: wide and shallow  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Optimizes for instruction-level parallelism. Seven-stage pipeline.</p>
+  <ol xmlns="http://www.w3.org/1999/xhtml"><li>Additional second fetching stage.</li>
+    <li>Issue stage. To avoid in-order issue stalls, the G4e uses <em>issue queues</em> (general / vector / float) that issue 3, 2, and 1 instruction per cycle respectively. Issue queues differ from <span xmlns="" class="link local"><a href="/FQ9N/" title="Reservation station [FQ9N]">Reservation station</a></span>s in that each queue feeds a <em>group</em> of execution units, not a single one.</li>
+    <li>Complete stage.</li></ol>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id70" open="open"><summary><header><h1>
+<span class="taxon"></span>The Pentium 4: narrow and deep  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Optimizes for clock speed. 20-stage pipeline — extreme depth for fast clock, with the obvious downside that mispredicted branches are very expensive.</p>
+
+  <ul xmlns="http://www.w3.org/1999/xhtml"><li>Needs deep buffers (126-entry <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span>) to keep the fast back-end fed.</li></ul>
+
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong><span xmlns="" class="link local"><a href="/3DIC/" title="Trace cache [3DIC]">Trace cache</a></span>:</strong></p>
+  <ul xmlns="http://www.w3.org/1999/xhtml"><li>x86 decoding was too slow to keep a 20-stage pipeline fed.</li>
+    <li>The trace cache moves to L1, storing already-decoded <span xmlns="" class="link local"><a href="/WEW2/" title="Micro-operations [WEW2]">Micro-operations</a></span> traces; the raw instruction cache moves to L2.</li>
+    <li>Trace cache is indexed during <span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span>, so speculative paths past a branch can be stored in the same trace.</li>
+    <li>Operates in two modes — execution mode (trace hit, feed micro-ops directly) and build mode (trace miss, decode and assemble while feeding forward).</li></ul>
+</details></section>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id71" open="open"><summary><header><h1>
+<span class="taxon"></span>Pentium M, Core Duo, Core 2 Duo <a class="slug" href="/DKZ3/">[DKZ3]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The post-Pentium-4 generations, designed under the <span xmlns="" class="link local"><a href="/XQMQ/" title="Power wall [XQMQ]">Power wall</a></span>. Each generation contributed an innovation to the concept stack.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> A processor often has three names: a <em>brand name</em>, a <em>microarchitecture brand name</em>, and a <em>microarchitecture code name</em>.</div>
+
+  <section lang="en" class="block hide-metadata"><details id="id72" open="open"><summary><header><h1>
+<span class="taxon"></span>The Pentium M  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">First chip explicitly designed for low power. Innovations:</p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>Widened fetch buffer to 64 bytes — decodes up to 4 16-byte x86 instructions at a time.</li>
+  <li><em>Micro-op fusion</em> — pairs of <span xmlns="" class="link local"><a href="/WEW2/" title="Micro-operations [WEW2]">Micro-operations</a></span> from the same x86 instruction (e.g. store-address + store-data, or load + ALU op for a read-modify) are tracked together as one queue entry until issue. See <span xmlns="" class="link local"><a href="/WEW2/" title="Micro-operations [WEW2]">Micro-operations</a></span>.</li>
+  <li><em>Loop detector</em> in <span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span> — counters watch loop trip counts; loops that iterate the same number of times each invocation can be predicted with 100% accuracy.</li>
+  <li><em>Indirect predictor</em> — like a BHT but stores each branch's favorite target address.</li>
+  <li><em>Stack execution unit</em> — dedicated unit with its own adder to handle <code>push</code>/<code>pop</code> ESP updates without going through the integer ALU. Stack micro-ops never reach the back-end.</li></ul>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id73" open="open"><summary><header><h1>
+<span class="taxon"></span>The Core Duo  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">The first true <span xmlns="" class="link local"><a href="/JRP0/" title="Multicore [JRP0]">Multicore</a></span> x86: two cores on the same die, sharing L2. Innovations relative to Pentium M:</p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>Every decoder is capable of micro-op fusion (up to 3 fused entries into the micro-op queue per cycle).</li>
+  <li>Fuses vector SSE instructions in addition to scalars.</li>
+  <li>Improved loop detector for short loops.</li></ul>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Until this point, the "core" was an abstraction — front-end + back-end + L1. The Core Duo is when "core" became a thing chips have more than one of.</div>
+
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id74" open="open"><summary><header><h1>
+<span class="taxon"></span>The Core 2 Duo  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Theme: "more is always better" — wider decode/dispatch/issue, bigger <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span>, more <span xmlns="" class="link local"><a href="/FQ9N/" title="Reservation station [FQ9N]">Reservation station</a></span>s, more decode logic. Two innovations made the extra resources pay off:</p>
+
+<ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Macro fusion</em> (front-end) — fuse pairs of x86 instructions (e.g. compare + branch) before decode. Max decode bandwidth grows to 5 x86 instructions per cycle without burning ROB or RS entries.</li>
+  <li><em>Memory disambiguation</em> (back-end) — apply <span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span> to memory aliasing. Loads can speculatively execute ahead of stores with unknown target addresses; on actual alias detected at commit time, the load and dependent ops are squashed and re-executed.</li></ul>
+
+<p xmlns="http://www.w3.org/1999/xhtml">The point of memory disambiguation: stores must commit in program order relative to other stores, and no load can commit ahead of an aliased store. But the rule "no load past a store-data with unknown target" forced a lot of unnecessary stalls — most unknowns aren't actually aliases. Speculate and verify.</p>
+
+<p xmlns="http://www.w3.org/1999/xhtml">Back-end also gained single-cycle vector ops: a 128-bit data bus to the vector ALU replaced the previous 80-bit bus, so 128-bit SSE instructions decode as a single micro-op.</p>
+
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> A load is one micro-op because address computation and memory access are inherently serial. A store is two micro-ops (store-address + store-data) because address computation and reading the register file can happen in parallel.</div>
+
+</details></section>
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id75" open="open"><summary><header><h1>
+<span class="taxon"></span>64-bit computing  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">\(n\)-bit computing refers to how many bits a register can hold. 64-bit means registers hold 64 bits, 64-bit instructions means their operands are 64 bits wide.</p>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Instruction encoding size hasn't actually changed — the PC widened because the virtual address space did.</div>
+
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Only integer and addressing units widened. Floating point and vector units already operated on wider registers.</div>
+
+
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>Benefits:</strong></p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>Increased <em>dynamic range</em> — values can range over \(2^{64}\) instead of \(2^{32}\). Overflow/underflow happens at the extremes of the representable range.</li>
+  <li>64-bit address space. x86-64 currently implements 40-bit virtual addresses but the architecture allows far more.</li>
+  <ul><li>Drawback: pointers now take up twice the cache space.</li></ul></ul>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> It is not always beneficial to use 64-bit integers. If you don't need the range, the wider type wastes cache space. The default integer size on x86-64 is still 32 bits; widening requires a one-byte prefix, adding less than 10% to code size.</div>
+
+</details></section>
+</details></section>
+      </details></section>
+    
+    <section lang="en" class="block hide-metadata"><details id="id76" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id77"><summary><header><h1>
+<span class="taxon"></span>Reorder buffer <a class="slug" href="/BI4H/">[BI4H]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 13, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The structure that lets an <span xmlns="" class="link local"><a href="/U0NY/" title="Out-of-order execution runs ready instructions past a stalled one, committing in program order [U0NY]">out-of-order execution</a></span> CPU look in-order to the programmer. The ROB holds every in-flight instruction in original program order, regardless of the order they actually executed. When the oldest entry has its result ready and all earlier entries have already committed, the ROB <em>commits</em> it — writing its result to architectural state and freeing the slot.</p><p xmlns="http://www.w3.org/1999/xhtml">For stores, commit is only half the story. The ROB entry is freed and the instruction is architecturally real, but the value has not yet reached the cache — it is handed off to the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> for asynchronous drain. This is what keeps the ROB from stalling behind every cache miss: once a store is known to be non-speculative, the front-end can move on.</p><p xmlns="http://www.w3.org/1999/xhtml">Each ROB entry typically tracks:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Instruction identity and program order position.</li>
+  <li>Operand register names (and renamed sources).</li>
+  <li>Status — pending, executing, complete, speculated.</li>
+  <li>The instruction's result, held in a data field that doubles as a <span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">register renaming</a></span> register.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Speculatively-issued instructions also enter the ROB but are tagged. On a branch misprediction, all speculative entries past the mispredicted branch are squashed.</p><p xmlns="http://www.w3.org/1999/xhtml">The Pentium Pro introduced this design with a 40-entry ROB. The ROB sits at both ends of the pipeline — dispatch enters it, retirement leaves it — which is what makes the rest of the back-end free to issue and execute out of order.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> ROB size, <span xmlns="" class="link local"><a href="/FQ9N/" title="Reservation station [FQ9N]">Reservation station</a></span> count, and pipeline depth set each other's bounds. A shallow pipeline can afford a small ROB; a deep one (Pentium 4 had 126) needs a large one to keep the back-end fed.</div>
+</details></section>
+        <section lang="en" class="block"><details id="id78"><summary><header><h1>
+<span class="taxon"></span>Vector ISA / SIMD <a class="slug" href="/Q7ZD/">[Q7ZD]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Single instruction, multiple data</em>. Extend the <span xmlns="" class="link local"><a href="/VZDH/" title="Fetch-execute loop [VZDH]">Fetch-execute loop</a></span> so that one fetch+decode applies the same operation to a vector of operands. The fetch-decode overhead amortizes over the vector width; loop bookkeeping (increment, compare, branch) is replaced by a single vector op.</p><p xmlns="http://www.w3.org/1999/xhtml">Concretely, a vector ISA adds:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>A <em>vector register file</em> — wider than scalar registers; specify the data width per element and total bits per register.</li>
+  <li>Vector load/store instructions for moving contiguous chunks of memory to/from vector registers efficiently.</li>
+  <li><em>Vector predication</em> (masking) — apply the op only where the mask is true, allowing data-dependent control flow without scalar branches.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Trade-offs:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Need the array length to be divisible by the vector width for perfect speedup; tail handling is annoying.</li>
+  <li>Vector pipelines cannot do <span xmlns="" class="link local"><a href="/USSP/" title="Forwarding [USSP]">Forwarding</a></span> cheaply — would need \(O(n^2)\) connections to every ALU.</li>
+  <li>Wider hardware vectors can be supported on narrower hardware by <span xmlns="" class="link local"><a href="/87GH/" title="Microarchitecture [87GH]">microcoded</a></span> decomposition; backward compatibility falls out for free.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">In practice, vector code is generated by:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Intrinsic functions (architecture-specific C builtins).</li>
+  <li>Vector data types in a language extension.</li>
+  <li>External libraries (BLAS, etc.).</li>
+  <li>Compiler auto-vectorization.</li></ol>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Aliasing: modifying a vector you're also reading from causes a race within the operation.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> SIMD is hardware-driven data parallelism. The GPU descendant is <span xmlns="" class="link local"><a href="/7F19/" title="SIMT [7F19]">SIMT</a></span>, which softens many of SIMD's rigidities by giving each lane its own program counter and active mask.</div>
+</details></section>
+        <section lang="en" class="block"><details id="id79"><summary><header><h1>
+<span class="taxon"></span>Reservation station <a class="slug" href="/FQ9N/">[FQ9N]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">A buffer in front of an <span xmlns="" class="link local"><a href="/DA6Q/" title="Execution units [DA6Q]">Execution units</a></span> (or group of them) that holds dispatched instructions waiting on their operands. Once all operands arrive — either by writeback or by <span xmlns="" class="link local"><a href="/USSP/" title="Forwarding [USSP]">Forwarding</a></span> — the instruction is <em>issued</em> to its execution unit. Reservation stations exist so that an instruction waiting on a slow operand doesn't block dispatch of unrelated instructions behind it.</p>
+            <p xmlns="http://www.w3.org/1999/xhtml">Two organizational choices:</p>
+            <ul xmlns="http://www.w3.org/1999/xhtml"><li>One reservation station per execution unit (Pentium Pro). Smaller, simpler.</li>
+  <li>One shared station feeding multiple units (also seen on Pentium Pro, where it issues up to five micro-ops per cycle).</li></ul>
+            <p xmlns="http://www.w3.org/1999/xhtml">Within a single station, instructions issue in FIFO order. Across stations, there is no guarantee — that's what <em>out-of-order</em> execution actually means.</p>
+            <p xmlns="http://www.w3.org/1999/xhtml">Dispatching an instruction into a reservation station has four prerequisites:</p>
+            <ol xmlns="http://www.w3.org/1999/xhtml"><li>In-order rule: instructions dispatch in program order (they execute out of order, not dispatch).</li>
+  <li>Execution unit availability: the matching reservation station has room.</li>
+  <li>Completion buffer availability: the <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span> has room to track the new in-flight instruction.</li>
+  <li>Register-rename availability: enough rename registers exist to hold the new instruction's destination.</li></ol>
+          </details></section>
+        <section lang="en" class="block"><details id="id80"><summary><header><h1>
+<span class="taxon"></span>Branch prediction <a class="slug" href="/1LCS/">[1LCS]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The mechanism that lets the front-end of a pipelined CPU keep fetching past a <span xmlns="" class="link local"><a href="/IJ7Q/" title="Branch instruction [IJ7Q]">Branch instruction</a></span> before the branch has actually resolved. The fetcher consults a predictor; if the prediction is right, the <span xmlns="" class="link local"><a href="/COV5/" title="Pipelining overlaps instruction stages to retire one per cycle [COV5]">pipeline</a></span> runs at full throughput; if wrong, the speculatively-issued instructions are squashed.</p>
+  <section lang="en" class="block hide-metadata"><details id="id81" open="open"><summary><header><h1>
+<span class="taxon"></span>Static prediction  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Program-agnostic rules: e.g. "always predict taken", "always predict not-taken", or "predict backward branches taken, forward branches not-taken". Cheap, but accuracy is poor outside of loop-heavy code.</p>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id82" open="open"><summary><header><h1>
+<span class="taxon"></span>Dynamic prediction  </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Driven by per-branch history kept in two hardware tables:</p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Branch history table</em> (BHT) — indexed by branch address, holds a small counter (typically 2-bit saturating) tracking how often the branch was taken.</li>
+  <li><em>Branch target buffer</em> (BTB) — holds the target address each branch was observed to jump to. A BTB miss is expensive: even if you correctly predict "taken", you still don't know where to fetch from.</li></ul>
+
+<p xmlns="http://www.w3.org/1999/xhtml">Per-branch prediction allows a counter to learn pattern-specific behavior — e.g. a loop counter takes the back-edge \(N - 1\) times then falls through.</p>
+</details></section>
+<p xmlns="http://www.w3.org/1999/xhtml">The Pentium famously combined the two: static prediction on a BHT miss, dynamic prediction otherwise. Later machines added refinements — PowerPC 750 added a <span xmlns="" class="link local"><a href="/3DIC/" title="Trace cache [3DIC]">Trace cache</a></span>-like <em>branch target instruction cache</em> (BTIC) that stores the first few instructions at the target, eliminating the re-fetch latency. The Pentium M added a <em>loop detector</em> for loops that always iterate the same number of times.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> See <span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span> for what happens once a prediction has been made.</div>
+</details></section>
+        <section lang="en" class="block"><details id="id83"><summary><header><h1>
+<span class="taxon"></span>Superscalar CPUs issue multiple instructions per cycle <a class="slug" href="/6JU6/">[6JU6]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">April 3, 2026</li>
+<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
+</address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Multiple <span xmlns="" class="link local"><a href="/DA6Q/" title="Execution units [DA6Q]">Execution units</a></span>s on the same chip running in parallel during the same pipeline stage. Decode becomes <em>decode/dispatch</em>: the front-end must decide which instructions can issue in parallel and route them to the right units. Going superscalar amplifies the cost of every pipeline <span xmlns="" class="link local"><a href="/ITFA/" title="Data hazards stall when an instruction needs a not-yet-written value [ITFA]">data hazard</a></span> and <span xmlns="" class="link local"><a href="/I2B5/" title="Control hazards stall fetch until the branch resolves [I2B5]">control hazard</a></span>, which is why the rest of this chapter's machinery — <span xmlns="" class="link local"><a href="/USSP/" title="Forwarding [USSP]">Forwarding</a></span>, <span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">register renaming</a></span>, <span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span> — exists.</p><section lang="en" class="block hide-metadata"><details id="id84" open="open"><summary><header><h1>
+<span class="taxon"></span>Execution units <a class="slug" href="/DA6Q/">[DA6Q]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The functional circuitry that actually performs an instruction. A superscalar CPU contains several, dispatched to in parallel during the execute stage of the <span xmlns="" class="link local"><a href="/COV5/" title="Pipelining overlaps instruction stages to retire one per cycle [COV5]">pipeline</a></span>. The common families:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><strong>ALU</strong> — <em>arithmetic logic unit</em>, performs arithmetic (add, sub, mul, div) and logical (AND, OR, NOT) operations on integers and on special registers like the PSW. Typically split into integer logic units (ILU) and floating-point units (FPU).</li>
+  <li><strong>Load-store unit</strong> — performs memory loads and stores. Carries a small address-calculation adder for address-mode resolution.</li>
+  <li><strong>Branch execution unit</strong> — evaluates branch conditions (often by reading the PSW) and signals whether the branch is taken.</li>
+  <li><strong>Vector / <span xmlns="" class="link local"><a href="/Q7ZD/" title="Vector ISA / SIMD [Q7ZD]">SIMD</a></span> units</strong> — operate on wide registers (SSE, AVX, AltiVec) for data-parallel work.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Per the convention in <em>Inside the Machine</em>, "ALU" often refers to any execution unit for arithmetic or logical operations — including integer logic units (ILU) and floating-point units (FPU).</div>
+<p xmlns="http://www.w3.org/1999/xhtml">Each unit's reads and writes flow through a <span xmlns="" class="link local"><a href="/ETWN/" title="Register file [ETWN]">Register file</a></span>. Splitting the register file per-unit reduces port count and access time.</p></details></section><section lang="en" class="block hide-metadata"><details id="id85" open="open"><summary><header><h1>
+<span class="taxon"></span>Microarchitecture <a class="slug" href="/87GH/">[87GH]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The internal organization of a CPU that implements a given <em>instruction set architecture</em> (ISA). Two chips can present identical ISAs to software while having radically different microarchitectures — e.g. Intel and AMD both implement x86, but their pipelines, branch predictors, and execution units differ.</p><p xmlns="http://www.w3.org/1999/xhtml">The bridge between the two is the <em>microcode engine</em>: a mini-CPU inside the CPU. It holds small programs in a microcode ROM and runs them when a complex instruction needs to be translated into the simpler primitives the hardware actually executes. Conceptually, it's an emulator.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> <span xmlns="" class="link local"><a href="/L896/" title="CISC vs RISC [L896]">CISC vs RISC</a></span>-style ISAs need large microcode engines to implement their complex instructions. RISC designs minimize the microcode engine, pushing translation to the compiler instead.</div>
+<p xmlns="http://www.w3.org/1999/xhtml">The translated primitives are <em><span xmlns="" class="link local"><a href="/WEW2/" title="Micro-operations [WEW2]">Micro-operations</a></span></em> — a finer-grained, more uniform instruction stream that the actual hardware schedules. The translation step is the main reason an x86 chip's pipeline starts with such complex decode logic.</p></details></section>
+  <section lang="en" class="block hide-metadata"><details id="id86" open="open"><summary><header><h1>
+<span class="taxon"></span>Hazards in a superscalar machine  </h1>
+<div class="metadata"><ul><li class="meta-item">April 3, 2026</li></ul></div></header></summary>
+<section lang="en" class="block hide-metadata"><details id="id87" open="open"><summary><header><h1>
+<span class="taxon"></span>Data hazards stall when an instruction needs a not-yet-written value <a class="slug" href="/ITFA/">[ITFA]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">When one instruction's result is the next instruction's input, a naive <span xmlns="" class="link local"><a href="/COV5/" title="Pipelining overlaps instruction stages to retire one per cycle [COV5]">pipeline</a></span> would have to stall: the second instruction can't execute until the first has written back. Data hazards are the most pervasive source of stalls in a CPU.</p><p xmlns="http://www.w3.org/1999/xhtml">Two standard mitigations:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><span xmlns="" class="link local"><a href="/USSP/" title="Forwarding [USSP]">Forwarding</a></span> — route the producer's output directly into the consumer's input, before the writeback stage commits it. The consumer sees the result one cycle earlier.</li>
+  <li><span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">register renaming</a></span> — false dependencies, where two instructions write to the same architectural register but operate on independent values, can be broken by mapping the architectural register to two different physical registers.</li></ul></details></section>
+<section lang="en" class="block hide-metadata"><details id="id88" open="open"><summary><header><h1>
+<span class="taxon"></span>Forwarding <a class="slug" href="/USSP/">[USSP]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/ITFA/" title="Data hazards stall when an instruction needs a not-yet-written value [ITFA]">data hazard</a></span> mitigation: the producing instruction's result is routed from the output of the execute stage directly to the input of the next instruction's execute stage, bypassing the register-file write and read. The dependent consumer can execute one cycle later instead of waiting for writeback.</p><p xmlns="http://www.w3.org/1999/xhtml">Conceptually, the pipeline grows wiring rather than stages. The result is "forwarded" from where it appears to where it's needed.</p></details></section>
+<section lang="en" class="block hide-metadata"><details id="id89" open="open"><summary><header><h1>
+<span class="taxon"></span>Register renaming breaks false dependencies <a class="slug" href="/5CT9/">[5CT9]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
+</address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Register renaming is the <span xmlns="" class="link local"><a href="/ITFA/" title="Data hazards stall when an instruction needs a not-yet-written value [ITFA]">data hazard</a></span> mitigation that makes out-of-order execution viable: the hardware dynamically remaps each architectural-register <em>write</em> to a fresh physical register from a larger pool, so two instructions that reuse the same architectural name for <em>independent</em> values never collide. The false data dependency — same architectural register, unrelated values — simply disappears, because each write lands in a different physical register.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> Consider:
+<pre>add r1, r2, r3      // r2 := r1 + r3
+add r4, r5, r2      // r2 := r4 + r5   (reuses r2 for an independent value)</pre>
+The second <code>add</code> only depends on <code>r2</code> as a <em>destination</em>, not as a source. Without renaming, it would have to wait for the first instruction's writeback to avoid clobbering. With renaming, the second write goes to a fresh physical register, and the two instructions can proceed in parallel.</div>
+<p xmlns="http://www.w3.org/1999/xhtml">The programming model exposes only the architecturally-named registers; the <span xmlns="" class="link local"><a href="/ETWN/" title="Register file [ETWN]">Register file</a></span> hides a larger pool of rename registers underneath. This is one of the central tricks that makes out-of-order execution viable.</p></details></section>
+<section lang="en" class="block hide-metadata"><details id="id90" open="open"><summary><header><h1>
+<span class="taxon"></span>Structural hazards stall when instructions contend for one resource <a class="slug" href="/7WV1/">[7WV1]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Two simultaneous instructions need the same hardware resource, and there's only one of it. The classic example is a single-port <span xmlns="" class="link local"><a href="/ETWN/" title="Register file [ETWN]">Register file</a></span> facing two writes in one cycle, or two memory-accessing instructions facing a single load-store unit.</p><p xmlns="http://www.w3.org/1999/xhtml">Mitigations cost area:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Duplicate the resource (extra ALU, more register-file write ports).</li>
+  <li>Pipeline the resource (multi-cycle dividers that accept a new input each cycle).</li>
+  <li>Stall — accept the cost in throughput.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Register file area scales <em>quadratically</em> in port count, so duplicating ports for many ALUs gets expensive quickly.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Per-unit register files (one for integer, one for FP, one for vector) with fewer ports each. Discussed under <span xmlns="" class="link local"><a href="/ETWN/" title="Register file [ETWN]">Register file</a></span>.</div>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id91" open="open"><summary><header><h1>
+<span class="taxon"></span>Control hazards stall fetch until the branch resolves <a class="slug" href="/I2B5/">[I2B5]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">When the CPU reaches a <span xmlns="" class="link local"><a href="/IJ7Q/" title="Branch instruction [IJ7Q]">Branch instruction</a></span> in the <span xmlns="" class="link local"><a href="/COV5/" title="Pipelining overlaps instruction stages to retire one per cycle [COV5]">pipeline</a></span>, it doesn't yet know what to fetch next. Until the branch's condition resolves and its target is computed — several stages later — fetch is stuck.</p><p xmlns="http://www.w3.org/1999/xhtml">Mitigations:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span> — guess where control flow is going.</li>
+  <li><span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span> — actually run instructions down the predicted path, ready to throw the work away if the guess was wrong.</li>
+  <li><em>Instruction caching</em> — keep recently-fetched instructions handy so the cost of restarting fetch on a mispredict is at least bounded by cache latency, not DRAM latency.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The cost of a mispredicted branch is roughly the pipeline depth — every speculatively-issued instruction has to be squashed and the pipeline refilled. Deeper pipelines amplify this cost, which is one reason <span xmlns="" class="link local"><a href="/037I/" title="Pentium 4 vs G4e: design philosophies [037I]">Pentium 4 vs G4e: design philosophies</a></span> (deep pipeline, narrow &amp; deep) and <span xmlns="" class="link local"><a href="/6JU6/" title="Superscalar CPUs issue multiple instructions per cycle [6JU6]">superscalar</a></span>-style designs (wider, shallower) make different tradeoffs.</div>
+</details></section>
+</details></section>
+</details></section>
+      </details></section>
+    
+  </footer></article><nav id="toc"><div class="block"><h1>Table of Contents</h1><ul xmlns="" class="block">
+<li>
+<a class="bullet" href="#id2" title="PowerPC 601">■</a><span class="link local" data-target="#id2"><span class="taxon">1. </span>PowerPC 601</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id3" title="PowerPC 603 and 603e">■</a><span class="link local" data-target="#id3"><span class="taxon">2. </span>PowerPC 603 and 603e</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id4" title="PowerPC 604">■</a><span class="link local" data-target="#id4"><span class="taxon">3. </span>PowerPC 604</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id5" title="PowerPC 750">■</a><span class="link local" data-target="#id5"><span class="taxon">4. </span>PowerPC 750</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id6" title="PowerPC 7400">■</a><span class="link local" data-target="#id6"><span class="taxon">5. </span>PowerPC 7400</span><ul class="block"></ul>
+</li>
+</ul></div></nav></div></body></html>
