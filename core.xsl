@@ -27,6 +27,20 @@
     </xsl:element>
   </xsl:template>
 
+  <!-- Utterances comments (the .comments div emitted by \comments in
+       base-macros) belong to a post's own page, not to any page that
+       transcludes it. Render the block only when its containing tree is the
+       top-level document tree; when the tree is expanded on an index or the
+       home page it is nested under another tree, so drop the whole block —
+       divider, loader script, and the injected comment thread. -->
+  <xsl:template match="html:div[@class = 'comments']">
+    <xsl:if test="not(ancestor::f:tree[1]/parent::*)">
+      <xsl:element namespace="http://www.w3.org/1999/xhtml" name="div">
+        <xsl:apply-templates select="@* | node()" />
+      </xsl:element>
+    </xsl:if>
+  </xsl:template>
+
   <xsl:template match="mml:*">
     <xsl:element namespace="http://www.w3.org/1998/Math/MathML" name="{local-name()}">
       <xsl:apply-templates select="@* | node()" />
