@@ -2,7 +2,11 @@
 <?xml-stylesheet type="text/xsl" href="/default.xsl"?>
 <fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
   <fr:frontmatter>
-    <fr:authors />
+    <fr:authors>
+      <fr:author>
+        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+      </fr:author>
+    </fr:authors>
     <fr:date>
       <fr:year>2025</fr:year>
       <fr:month>7</fr:month>
@@ -43,7 +47,11 @@
       <fr:mainmatter>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
-            <fr:authors />
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
             <fr:date>
               <fr:year>2025</fr:year>
               <fr:month>7</fr:month>
@@ -54,12 +62,28 @@
             <fr:route>/TOD6/</fr:route>
             <fr:title text="Rotary Position Embeddings (ROPE)">Rotary Position Embeddings (ROPE)</fr:title>
           </fr:frontmatter>
-          <fr:mainmatter><html:p><html:strong>Notation</html:strong>:
+          <fr:mainmatter>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(70, 100, 150, 0.75);
+  border-radius: var(--radius);
+  background-color: rgba(70, 100, 150, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</html:span> 
 For this section, our notion of an <html:em>embedding</html:em> is a function <fr:tex display="inline"><![CDATA[f]]></fr:tex> that takes a token and a position i.e. <fr:tex display="inline"><![CDATA[f(x, i)]]></fr:tex> is the embedding of token <fr:tex display="inline"><![CDATA[x]]></fr:tex>, occurring at position <fr:tex display="inline"><![CDATA[i]]></fr:tex>.
-</html:p><html:p><html:strong style="font-family: var(--sans);">Idea.</html:strong> the <fr:link href="/B1RI/" title="Inner Product" uri="https://kellenkanarios.com/B1RI/" display-uri="B1RI" type="local">inner product</fr:link> of two embeddings should only need relative positioning i.e. for any two <fr:tex display="inline"><![CDATA[\mathbf {x}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {y}]]></fr:tex> with positions <fr:tex display="inline"><![CDATA[i]]></fr:tex> and <fr:tex display="inline"><![CDATA[j]]></fr:tex> respectively, there should exist some <fr:tex display="inline"><![CDATA[g]]></fr:tex>, such that
+</html:div>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(0, 160, 175, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(0, 160, 175, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</html:span> The <fr:link href="/B1RI/" title="Inner Product" uri="https://kellenkanarios.com/B1RI/" display-uri="B1RI" type="local">inner product</fr:link> of two embeddings should only need relative positioning i.e. for any two <fr:tex display="inline"><![CDATA[\mathbf {x}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {y}]]></fr:tex> with positions <fr:tex display="inline"><![CDATA[i]]></fr:tex> and <fr:tex display="inline"><![CDATA[j]]></fr:tex> respectively, there should exist some <fr:tex display="inline"><![CDATA[g]]></fr:tex>, such that
 <fr:tex display="block"><![CDATA[\langle  f(\mathbf {x}, i), f(\mathbf {y}, j) \rangle  = g(\mathbf {x}, \mathbf {y}, i - j)]]></fr:tex>
 Namely, this can be written as a function of just the relative positioning between the embeddings.
-</html:p><html:p>The simplest transformation that only preserves this relative information are <fr:link href="/10H9/" title="Rotation matrix" uri="https://kellenkanarios.com/10H9/" display-uri="10H9" type="local">rotations</fr:link>.</html:p><html:figure><html:img width="50%" src="/bafkrmiba4muc7qqk2agccjalqpm24hxw7u4gkfpozmnhz7if6ncagxpsgi.png" />
+</html:div>
+<html:p>The simplest transformation that only preserves this relative information are <fr:link href="/10H9/" title="Rotation matrix" uri="https://kellenkanarios.com/10H9/" display-uri="10H9" type="local">rotations</fr:link>.</html:p><html:figure><html:img width="50%" src="/bafkrmiba4muc7qqk2agccjalqpm24hxw7u4gkfpozmnhz7if6ncagxpsgi.png" />
 <html:figcaption>Rotating embeddings does not change relative position.</html:figcaption></html:figure><html:p>However, <fr:link href="/10H9/" title="Rotation matrix" uri="https://kellenkanarios.com/10H9/" display-uri="10H9" type="local">rotations</fr:link> are only easily defined for <fr:tex display="inline"><![CDATA[\mathbb {R}^2]]></fr:tex>. To get around this, they simply partition their input 2d slices and apply the rotation via
 <fr:tex display="block"><![CDATA[\mathrm {ROT} = \begin {bmatrix} \cos  m \theta _{1} & - \sin  m \theta _{1} & & & \\
 \sin  m \theta _{1} & \cos  m \theta _{1} & & & \\

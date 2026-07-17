@@ -10,6 +10,11 @@
     <html xmlns="http://www.w3.org/1999/xhtml" data-base-url="{/f:tree/@base-url}">
       <head>
         <meta name="viewport" content="width=device-width" />
+        <link rel="icon" href="{/f:tree/@base-url}favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" sizes="32x32" href="{/f:tree/@base-url}favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="{/f:tree/@base-url}favicon-16x16.png" />
+        <link rel="apple-touch-icon" href="{/f:tree/@base-url}apple-touch-icon.png" />
+        <link rel="alternate" type="application/atom+xml" title="Blog" href="{/f:tree/@base-url}0002/atom.xml" />
         <link rel="stylesheet" href="{/f:tree/@base-url}style.css" />
         <link rel="stylesheet" href="{/f:tree/@base-url}katex.min.css" />
         <script type="text/javascript">
@@ -288,7 +293,7 @@ document.addEventListener('keydown', function(e) {
             </ul>
             <br></br>
           </xsl:if>
-          <xsl:if test="not(f:meta[@name = 'author']/.='false') and f:author[string-length(normalize-space(.)) > 0]">
+          <xsl:if test="not(f:meta[@name = 'author']/.='false') and f:authors/f:author[string-length(normalize-space(.)) > 0]">
             <ul>
             <xsl:apply-templates select="f:authors" />
             </ul>

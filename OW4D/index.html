@@ -1,8 +1,11 @@
 <!DOCTYPE html PUBLIC "" "">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<meta name="viewport" content="width=device-width"></meta><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>Sequential consistency</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<meta name="viewport" content="width=device-width"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>Sequential consistency</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon"></span>Sequential consistency <a class="slug" href="/OW4D/">[OW4D]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The strongest practical memory model. The result of any execution is the same as if the operations of all threads were executed in some <em>single sequential order</em>, and the operations of each thread appear in that order in the same sequence as the program specifies.</p><p xmlns="http://www.w3.org/1999/xhtml">Equivalent operational definition: imagine a single switch that, at each step, selects one thread to run its next operation. Any valid execution is the result of some sequence of such selections. There is no reordering across threads, no reordering within a thread, and no buffering that becomes visible to other threads.</p><p xmlns="http://www.w3.org/1999/xhtml">Sequential consistency is what most programmers reason about by default — and what real hardware does not provide, because it forbids almost every optimization that makes a CPU fast. <span xmlns="" class="link local"><a href="/BCFG/" title="Relaxed consistency [BCFG]">Relaxed consistency</a></span> is what we get in exchange.</p>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The strongest practical memory model. The result of any execution is the same as if the operations of all threads were executed in some <em>single sequential order</em>, and the operations of each thread appear in that order in the same sequence as the program specifies.</p><p xmlns="http://www.w3.org/1999/xhtml">Equivalent operational definition: imagine a single switch that, at each step, selects one thread to run its next operation. Any valid execution is the result of some sequence of such selections. There is no reordering across threads, no reordering within a thread, and no buffering that becomes visible to other threads.</p><p xmlns="http://www.w3.org/1999/xhtml">Sequential consistency is what most programmers reason about by default — and what real hardware does not provide, because it forbids almost every optimization that makes a CPU fast. <span xmlns="" class="link local"><a href="/BCFG/" title="Relaxed consistency [BCFG]">Relaxed consistency</a></span> is what we get in exchange.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> SC does not provide guarantees <em>between</em> threads beyond ordering. Two threads racing on the same variable are still racing — SC just promises a consistent global timeline.</div>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Enforcing SC purely in hardware requires loads to wait for the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> to drain and stores to retire strictly in order. Both kill performance. <em>SC-preserving compilers</em> try to push the constraint to compile time by refusing to reorder shared accesses.</div>
@@ -25,25 +28,37 @@
 </ul></div></header></summary>
 <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
 <span class="taxon"></span>Dennard scaling <a class="slug" href="/S0TN/">[S0TN]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The observation that as transistor dimensions shrink by a factor \(\alpha \), you can also drop voltage by \(\alpha \), keeping power per transistor constant:</p>\[P = C \left (\frac {V}{\alpha }\right )^2 f\]<p xmlns="http://www.w3.org/1999/xhtml">In the Dennard era, every process shrink got more transistors at the same power budget — the foundation of decades of frequency scaling.</p><p xmlns="http://www.w3.org/1999/xhtml"><strong>Post-Dennard.</strong> Below ~65nm, voltage can no longer be scaled because the supply-to-threshold ratio \(V_{dd}/V_{th}\) must stay above ~3 for transistors to switch reliably. The consequences:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Power per transistor scales only as \(1/\alpha \), not \(1/\alpha ^2\).</li>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The observation that as transistor dimensions shrink by a factor \(\alpha \), you can also drop voltage by \(\alpha \), keeping power per transistor constant:</p>\[P = C \left (\frac {V}{\alpha }\right )^2 f\]<p xmlns="http://www.w3.org/1999/xhtml">In the Dennard era, every process shrink got more transistors at the same power budget — the foundation of decades of frequency scaling.</p><p xmlns="http://www.w3.org/1999/xhtml"><strong>Post-Dennard.</strong> Below ~65nm, voltage can no longer be scaled because the supply-to-threshold ratio \(V_{dd}/V_{th}\) must stay above ~3 for transistors to switch reliably. The consequences:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Power per transistor scales only as \(1/\alpha \), not \(1/\alpha ^2\).</li>
   <li>Power density therefore scales as \(\alpha \) — denser chips dissipate more per unit area.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">This is the same constraint that drove the <span xmlns="" class="link local"><a href="/XQMQ/" title="Power wall [XQMQ]">Power wall</a></span> in commercial CPUs: single-core frequency scaling stopped working, and the industry pivoted to multicore and energy-efficient architectures.</p></details></section>
 <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
 <span class="taxon"></span>Transactional memory <a class="slug" href="/Y8JE/">[Y8JE]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An alternative to fine-grained <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span>: mark code regions as <em>transactions</em> that should appear atomic, execute them speculatively in parallel, and detect conflicts after the fact. Aims at the performance of fine-grained locking with the programming ergonomics of coarse-grained locking.</p>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An alternative to fine-grained <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span>: mark code regions as <em>transactions</em> that should appear atomic, execute them speculatively in parallel, and detect conflicts after the fact. Aims at the performance of fine-grained locking with the programming ergonomics of coarse-grained locking.</p>
   <section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
 <span class="taxon"></span>Conflict detection  </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">Two transactions <em>conflict</em> if they access the same memory location and at least one of them is a write. The implementation tracks per-transaction read and write sets.</p>
 
-<ul xmlns="http://www.w3.org/1999/xhtml"><li><strong>Lazy detection.</strong> Build the entire read/write set as the transaction runs; check for conflicts only at commit time. If conflict, roll back.</li>
-  <li><strong>Eager detection.</strong> Check on every access against other transactions' sets; abort immediately on conflict.</li></ul>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li><strong style="font-family: var(--sans);">Lazy detection.</strong> Build the entire read/write set as the transaction runs; check for conflicts only at commit time. If conflict, roll back.</li>
+  <li><strong style="font-family: var(--sans);">Eager detection.</strong> Check on every access against other transactions' sets; abort immediately on conflict.</li></ul>
 
 <p xmlns="http://www.w3.org/1999/xhtml">Eager detection can piggyback on the cache coherence protocol: add read/write bits to each cache line, set them during a transaction, and let a coherence invalidation signal a conflict.</p>
 </details></section>
 
   <section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
 <span class="taxon"></span>Version management (rollback)  </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">Two operations: <em>commit</em> and <em>abort</em>. Implementations:</p>
 <ol xmlns="http://www.w3.org/1999/xhtml"><li><strong style="font-family: var(--sans);">Lazy.</strong> stores go to a "write table" rather than memory; loads check the table first, falling back to memory. Commit writes the table back (slow); abort just clears the table (fast).</li>
   <li><strong style="font-family: var(--sans);">Eager (coherence-backed).</strong> stores write through but track read/write sets per cache line. Commit clears the sets (fast); abort clears the sets (also fast — work already on overwrite if not aborted before commit).</li></ol>
@@ -63,9 +78,15 @@
 </ul></div></header></summary>
 <section lang="en" class="block hide-metadata"><details id="id10" open="open"><summary><header><h1>
 <span class="taxon"></span>Locks <a class="slug" href="/Q2DT/">[Q2DT]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">March 9, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A lock is a synchronization primitive that grants mutually exclusive access to a critical section. The implementations below trade off coherence traffic, fairness, and memory in different ways. The naive locks (<span xmlns="" class="link local"><a href="/MJ5L/" title="Test-and-set lock [MJ5L]">Test-and-set lock</a></span> and <span xmlns="" class="link local"><a href="/PXY9/" title="Test-and-test-and-set lock [PXY9]">Test-and-test-and-set lock</a></span>) are simple but generate \(O(n)\) coherence traffic per release; queue-based locks (<span xmlns="" class="link local"><a href="/V7KP/" title="Ticket lock [V7KP]">Ticket lock</a></span>, <span xmlns="" class="link local"><a href="/BJ7N/" title="Array-based lock [BJ7N]">Array-based lock</a></span>, <span xmlns="" class="link local"><a href="/IN64/" title="MCS lock [IN64]">MCS lock</a></span>) scale better at the cost of extra state per waiter.</p><section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 9, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A lock is a synchronization primitive that grants mutually exclusive access to a critical section. The implementations below trade off coherence traffic, fairness, and memory in different ways. The naive locks (<span xmlns="" class="link local"><a href="/MJ5L/" title="Test-and-set lock [MJ5L]">Test-and-set lock</a></span> and <span xmlns="" class="link local"><a href="/PXY9/" title="Test-and-test-and-set lock [PXY9]">Test-and-test-and-set lock</a></span>) are simple but generate \(O(n)\) coherence traffic per release; queue-based locks (<span xmlns="" class="link local"><a href="/V7KP/" title="Ticket lock [V7KP]">Ticket lock</a></span>, <span xmlns="" class="link local"><a href="/BJ7N/" title="Array-based lock [BJ7N]">Array-based lock</a></span>, <span xmlns="" class="link local"><a href="/IN64/" title="MCS lock [IN64]">MCS lock</a></span>) scale better at the cost of extra state per waiter.</p><section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
 <span class="taxon"></span>Test-and-set lock <a class="slug" href="/MJ5L/">[MJ5L]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The simplest spin lock. The acquire loop spins on an atomic <code>test_and_set</code>: it writes <code>LOCKED</code> and reads the previous value in one step. If the previous value was <code>UNLOCKED</code>, the caller has the lock; otherwise it tries again.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The simplest spin lock. The acquire loop spins on an atomic <code>test_and_set</code>: it writes <code>LOCKED</code> and reads the previous value in one step. If the previous value was <code>UNLOCKED</code>, the caller has the lock; otherwise it tries again.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
   while (true):
     // Perform "test-and-set"
     // UNLOCKED = 0, LOCKED = 1
@@ -79,7 +100,10 @@ release(lock_ptr):
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <code>test_and_set</code>, so contention scales badly with the number of waiters.</div>
 </details></section><section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
 <span class="taxon"></span>Test-and-test-and-set lock <a class="slug" href="/PXY9/">[PXY9]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A refinement of the <span xmlns="" class="link local"><a href="/MJ5L/" title="Test-and-set lock [MJ5L]">Test-and-set lock</a></span> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <code>test_and_set</code> when it does. Spinning is then read-only, so cores can share the cache line.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A refinement of the <span xmlns="" class="link local"><a href="/MJ5L/" title="Test-and-set lock [MJ5L]">Test-and-set lock</a></span> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <code>test_and_set</code> when it does. Spinning is then read-only, so cores can share the cache line.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
   while (true):
     // Perform "test"
     load [lock_ptr] -&gt; original_value
@@ -97,7 +121,10 @@ release(lock_ptr):
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> When the lock is released, the line must be invalidated on every waiter, and they all simultaneously read and try to write. The contention is shifted from steady state to release time but is still \(O(n)\) in the number of waiters.</div>
 </details></section><section lang="en" class="block hide-metadata"><details id="id13" open="open"><summary><header><h1>
 <span class="taxon"></span>Ticket lock <a class="slug" href="/V7KP/">[V7KP]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <code>next_ticket</code> and then spins until <code>now_serving</code> equals its ticket. Release simply increments <code>now_serving</code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <code>next_ticket</code> and then spins until <code>now_serving</code> equals its ticket. Release simply increments <code>now_serving</code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
   my_ticket = fetch_and_increment(lock_ptr-&gt;next_ticket)
   while (lock_ptr-&gt;now_serving != my_ticket); // spin
 
@@ -106,13 +133,19 @@ release(lock_ptr):
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Still \(O(n)\) coherence traffic on release: incrementing <code>now_serving</code> invalidates the line on every waiter, and they all reload it to recheck their ticket.</div>
 </details></section><section lang="en" class="block hide-metadata"><details id="id14" open="open"><summary><header><h1>
 <span class="taxon"></span>Array-based lock <a class="slug" href="/BJ7N/">[BJ7N]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Each waiter is assigned its own slot in an array and spins only on that slot. Release just flips the next slot to "go-ahead", so the cache line touched by release is the one read by exactly one other thread. Coherence traffic per release is constant rather than \(O(n)\), at the cost of one slot per waiter.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Give each waiter its own "slot" to wait on.</li>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Each waiter is assigned its own slot in an array and spins only on that slot. Release just flips the next slot to "go-ahead", so the cache line touched by release is the one read by exactly one other thread. Coherence traffic per release is constant rather than \(O(n)\), at the cost of one slot per waiter.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Give each waiter its own "slot" to wait on.</li>
   <li>Only need to set the next slot to "go-ahead" on release.</li>
   <li>Constant coherence traffic.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> \(O(n)\) memory for the lock array, and padding each slot to \(64\)b (one cache line) to avoid false sharing makes that cost real.</div>
 </details></section><section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
 <span class="taxon"></span>MCS lock <a class="slug" href="/IN64/">[IN64]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A scalable, list-based queue lock. The lock variable is a pointer to the tail of a linked list of per-thread nodes. Each thread enqueues its own node and spins on a flag in its own cache line. The releaser wakes only its direct successor, so coherence traffic per handoff is constant and memory cost is proportional only to threads currently waiting, not to the lock's fanout.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock):
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A scalable, list-based queue lock. The lock variable is a pointer to the tail of a linked list of per-thread nodes. Each thread enqueues its own node and spins on a flag in its own cache line. The releaser wakes only its direct successor, so coherence traffic per handoff is constant and memory cost is proportional only to threads currently waiting, not to the lock's fanout.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock):
   I-&gt;next = null
   predecessor = fetch_and_store(lock, I)
   if predecessor != nil:                   // some node holds the lock
@@ -129,7 +162,10 @@ release(lock):
 </details></section>
 <section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
 <span class="taxon"></span>Cache coherence <a class="slug" href="/GA7N/">[GA7N]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">In a <span xmlns="" class="link local"><a href="/JRP0/" title="Multicore [JRP0]">Multicore</a></span> system where every core has its own <span xmlns="" class="link local"><a href="/KBYI/" title="Cache hierarchy [KBYI]">Cache hierarchy</a></span>, the same memory address can live in multiple caches simultaneously. A <em>cache coherence</em> protocol is the mechanism that keeps those copies consistent — propagating writes, invalidating stale copies, and preserving two invariants:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>Single-writer invariant</strong>: at any moment, at most one core has permission to write a given line. No other core can read or write it concurrently.</li>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">In a <span xmlns="" class="link local"><a href="/JRP0/" title="Multicore [JRP0]">Multicore</a></span> system where every core has its own <span xmlns="" class="link local"><a href="/KBYI/" title="Cache hierarchy [KBYI]">Cache hierarchy</a></span>, the same memory address can live in multiple caches simultaneously. A <em>cache coherence</em> protocol is the mechanism that keeps those copies consistent — propagating writes, invalidating stale copies, and preserving two invariants:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>Single-writer invariant</strong>: at any moment, at most one core has permission to write a given line. No other core can read or write it concurrently.</li>
   <li><strong>Data-value invariant</strong>: all cores see the same order of updates to a given line.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">Two organizational families:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><span xmlns="" class="link local"><a href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus [8C2H]">snoop-based coherence</a></span> — every cache watches a shared bus and reacts to other cores' traffic. Scales to ~8 cores.</li>
   <li><span xmlns="" class="link local"><a href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages [KIT8]">directory-based coherence</a></span> — a structure tracks who has a copy of each line; coherence messages are point-to-point. Scales to hundreds of cores at the cost of an extra hop.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">The concrete state machines are protocols like <span xmlns="" class="link local"><a href="/EYXU/" title="MSI protocol [EYXU]">MSI protocol</a></span>, <span xmlns="" class="link local"><a href="/30XT/" title="MESI protocol [30XT]">MESI protocol</a></span>, <span xmlns="" class="link local"><a href="/AI2B/" title="MOESI protocol [AI2B]">MOESI protocol</a></span>, and DEC Firefly, each adding states to handle more cases or to optimize specific sharing patterns. A worked implementation of directory-based MESI in Murphi lives in <span xmlns="" class="link local"><a href="/HHZO/" title="Implementing Directory-based MESI in Murphi [HHZO]">Implementing Directory-based MESI in Murphi</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml">Worked instance: <span xmlns="" class="link local"><a href="/HHZO/" title="Implementing Directory-based MESI in Murphi [HHZO]">Implementing Directory-based MESI in Murphi</a></span> implements directory-based MESI in Murphi.</p></details></section>
   <section lang="en" class="block hide-metadata"><details id="id17" open="open"><summary><header><h1>
@@ -140,7 +176,10 @@ release(lock):
 </ul></div></header></summary>
 <section lang="en" class="block hide-metadata"><details id="id18" open="open"><summary><header><h1>
 <span class="taxon"></span>Sequential consistency <a class="slug" href="/OW4D/">[OW4D]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The strongest practical memory model. The result of any execution is the same as if the operations of all threads were executed in some <em>single sequential order</em>, and the operations of each thread appear in that order in the same sequence as the program specifies.</p><p xmlns="http://www.w3.org/1999/xhtml">Equivalent operational definition: imagine a single switch that, at each step, selects one thread to run its next operation. Any valid execution is the result of some sequence of such selections. There is no reordering across threads, no reordering within a thread, and no buffering that becomes visible to other threads.</p><p xmlns="http://www.w3.org/1999/xhtml">Sequential consistency is what most programmers reason about by default — and what real hardware does not provide, because it forbids almost every optimization that makes a CPU fast. <span xmlns="" class="link local"><a href="/BCFG/" title="Relaxed consistency [BCFG]">Relaxed consistency</a></span> is what we get in exchange.</p>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The strongest practical memory model. The result of any execution is the same as if the operations of all threads were executed in some <em>single sequential order</em>, and the operations of each thread appear in that order in the same sequence as the program specifies.</p><p xmlns="http://www.w3.org/1999/xhtml">Equivalent operational definition: imagine a single switch that, at each step, selects one thread to run its next operation. Any valid execution is the result of some sequence of such selections. There is no reordering across threads, no reordering within a thread, and no buffering that becomes visible to other threads.</p><p xmlns="http://www.w3.org/1999/xhtml">Sequential consistency is what most programmers reason about by default — and what real hardware does not provide, because it forbids almost every optimization that makes a CPU fast. <span xmlns="" class="link local"><a href="/BCFG/" title="Relaxed consistency [BCFG]">Relaxed consistency</a></span> is what we get in exchange.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> SC does not provide guarantees <em>between</em> threads beyond ordering. Two threads racing on the same variable are still racing — SC just promises a consistent global timeline.</div>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Enforcing SC purely in hardware requires loads to wait for the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> to drain and stores to retire strictly in order. Both kill performance. <em>SC-preserving compilers</em> try to push the constraint to compile time by refusing to reorder shared accesses.</div>
@@ -149,8 +188,7 @@ release(lock):
 <span class="taxon"></span>Relaxed consistency <a class="slug" href="/BCFG/">[BCFG]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
-<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
-</address></li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A memory model weaker than <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span> that allows the hardware (and compiler) to reorder memory operations for performance, with explicit <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> instructions where the programmer wants to forbid reordering.</p><p xmlns="http://www.w3.org/1999/xhtml">A fence is implemented with a counter — incremented on issue of each memory op, decremented on completion. The fence stalls dispatch until the counter reaches zero, which forces the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> to drain before later accesses may proceed.</p><p xmlns="http://www.w3.org/1999/xhtml">Real machines pick a relaxation along a spectrum: <span xmlns="" class="link local"><a href="/VH8Y/" title="Total store order [VH8Y]">Total store order</a></span> permits only store-load reordering and is what x86 ships; <span xmlns="" class="link local"><a href="/WT44/" title="Relaxed memory order [WT44]">Relaxed memory order</a></span> permits anything and pushes the ordering burden onto the programmer. Either way, the next move is to make the fences themselves cheaper, which is what <span xmlns="" class="link local"><a href="/ZWHV/" title="Release consistency [ZWHV]">Release consistency</a></span> does.</p><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id20" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Total store order <a class="slug" href="/VH8Y/">[VH8Y]</a> </h1>
 <div class="metadata"><ul>
@@ -213,7 +251,10 @@ release(lock):
 </details></section>
 <section lang="en" class="block hide-metadata"><details id="id28" open="open"><summary><header><h1>
 <span class="taxon"></span>Data race <a class="slug" href="/P0NQ/">[P0NQ]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Two accesses to the same memory location, from different threads, where at least one is a write and there is no <em>happens-before</em> relationship between them. The happens-before relation is what synchronization primitives like <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span> and atomics induce — when one access happens before another, they are not racing.</p>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Two accesses to the same memory location, from different threads, where at least one is a write and there is no <em>happens-before</em> relationship between them. The happens-before relation is what synchronization primitives like <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span> and atomics induce — when one access happens before another, they are not racing.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Competing for the same lock is <em>not</em> a data race. Whichever thread acquires first <em>happens before</em> the next; the access inside each critical section is sequentially ordered.</div>
 <p xmlns="http://www.w3.org/1999/xhtml">Data-race freedom (DRF) is the implicit contract behind every relaxed memory model: if your program has no data races, <span xmlns="" class="link local"><a href="/BCFG/" title="Relaxed consistency [BCFG]">Relaxed consistency</a></span> hardware behaves as if it were <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span>. Conversely, in the presence of a data race, the result is undefined by the language and the model.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Writing data-race-free programs is hard. Treating every shared access as a synchronization point destroys performance.</div>
@@ -263,7 +304,10 @@ release(lock):
 </ul></div></header></summary>
 <section lang="en" class="block hide-metadata"><details id="id34" open="open"><summary><header><h1>
 <span class="taxon"></span>Vector ISA / SIMD <a class="slug" href="/Q7ZD/">[Q7ZD]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Single instruction, multiple data</em>. Extend the <span xmlns="" class="link local"><a href="/VZDH/" title="Fetch-execute loop [VZDH]">Fetch-execute loop</a></span> so that one fetch+decode applies the same operation to a vector of operands. The fetch-decode overhead amortizes over the vector width; loop bookkeeping (increment, compare, branch) is replaced by a single vector op.</p><p xmlns="http://www.w3.org/1999/xhtml">Concretely, a vector ISA adds:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>A <em>vector register file</em> — wider than scalar registers; specify the data width per element and total bits per register.</li>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Single instruction, multiple data</em>. Extend the <span xmlns="" class="link local"><a href="/VZDH/" title="Fetch-execute loop [VZDH]">Fetch-execute loop</a></span> so that one fetch+decode applies the same operation to a vector of operands. The fetch-decode overhead amortizes over the vector width; loop bookkeeping (increment, compare, branch) is replaced by a single vector op.</p><p xmlns="http://www.w3.org/1999/xhtml">Concretely, a vector ISA adds:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>A <em>vector register file</em> — wider than scalar registers; specify the data width per element and total bits per register.</li>
   <li>Vector load/store instructions for moving contiguous chunks of memory to/from vector registers efficiently.</li>
   <li><em>Vector predication</em> (masking) — apply the op only where the mask is true, allowing data-dependent control flow without scalar branches.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Trade-offs:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Need the array length to be divisible by the vector width for perfect speedup; tail handling is annoying.</li>
   <li>Vector pipelines cannot do <span xmlns="" class="link local"><a href="/USSP/" title="Forwarding [USSP]">Forwarding</a></span> cheaply — would need \(O(n^2)\) connections to every ALU.</li>
@@ -279,8 +323,7 @@ release(lock):
 <span class="taxon"></span>GPU architecture <a class="slug" href="/82U4/">[82U4]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 13, 2026</li>
-<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
-</address></li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A GPU sacrifices single-thread latency for aggregate throughput. The whole machine is built around the <span xmlns="" class="link local"><a href="/G4ML/" title="Thread-level parallelism [G4ML]">Thread-level parallelism</a></span> design point — keep many threads resident, switch on every stall, spend almost no silicon on per-instruction control. The opposite end of the axis from a CPU:</p>
   <table xmlns="http://www.w3.org/1999/xhtml">
 
@@ -364,7 +407,10 @@ release(lock):
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The scoreboard's simplicity is what lets GPUs spend their transistor budget on ALUs and the <span xmlns="" class="link local"><a href="/ETWN/" title="Register file [ETWN]">Register file</a></span> instead of control logic. It is one of the most visible places where the <span xmlns="" class="link local"><a href="/G4ML/" title="Thread-level parallelism [G4ML]">Thread-level parallelism</a></span> design choice cashes out as silicon savings.</div>
 </details></section><section lang="en" class="block hide-metadata"><details id="id41" open="open"><summary><header><h1>
 <span class="taxon"></span>Warp <a class="slug" href="/X9VZ/">[X9VZ]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>warp</em> is the unit of scheduling on an NVIDIA GPU: a group of ~32 threads that issue one instruction per cycle in lockstep. Each functional unit in the <span xmlns="" class="link local"><a href="/OGCS6/" title="Streaming Multiprocessor (SM) [OGCS6]">SM</a></span> has as many lanes as a warp has threads, so a single fetched instruction fans out across all 32 lanes at once. The warp — not the thread — is what the hardware fetches, schedules, and tracks; the per-thread <span xmlns="" class="link local"><a href="/7F19/" title="SIMT [7F19]">SIMT</a></span> programming model is an illusion built on top of it.</p><p xmlns="http://www.w3.org/1999/xhtml">Because the warp is the atom of execution, the two facts that dominate GPU performance are both properties of the warp: it <span xmlns="" class="link local"><a href="/1PWL/" title="Warp scheduling hides memory latency by switching among resident warps [1PWL]">hides memory latency by switching among resident warps</a></span> instead of stalling, and it <span xmlns="" class="link local"><a href="/OGCSM/" title="Warp divergence serializes both sides of a branch [OGCSM]">serializes both sides of a branch</a></span> when its threads diverge.</p></details></section><section lang="en" class="block hide-metadata"><details id="id42" open="open"><summary><header><h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>warp</em> is the unit of scheduling on an NVIDIA GPU: a group of ~32 threads that issue one instruction per cycle in lockstep. Each functional unit in the <span xmlns="" class="link local"><a href="/OGCS6/" title="Streaming Multiprocessor (SM) [OGCS6]">SM</a></span> has as many lanes as a warp has threads, so a single fetched instruction fans out across all 32 lanes at once. The warp — not the thread — is what the hardware fetches, schedules, and tracks; the per-thread <span xmlns="" class="link local"><a href="/7F19/" title="SIMT [7F19]">SIMT</a></span> programming model is an illusion built on top of it.</p><p xmlns="http://www.w3.org/1999/xhtml">Because the warp is the atom of execution, the two facts that dominate GPU performance are both properties of the warp: it <span xmlns="" class="link local"><a href="/1PWL/" title="Warp scheduling hides memory latency by switching among resident warps [1PWL]">hides memory latency by switching among resident warps</a></span> instead of stalling, and it <span xmlns="" class="link local"><a href="/OGCSM/" title="Warp divergence serializes both sides of a branch [OGCSM]">serializes both sides of a branch</a></span> when its threads diverge.</p></details></section><section lang="en" class="block hide-metadata"><details id="id42" open="open"><summary><header><h1>
 <span class="taxon"></span>CUDA Hierarchy <a class="slug" href="/OGCS4/">[OGCS4]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">June 1, 2026</li>
@@ -374,8 +420,7 @@ release(lock):
 <span class="taxon"></span>Shared memory (GPU) <a class="slug" href="/8GZN/">[8GZN]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
-<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
-</address></li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Shared memory</em> on a GPU is a small (per-block) on-chip scratchpad with latency comparable to L1. Software-managed — the programmer explicitly stages data through it, the hardware does not cache for them. Used to:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Avoid non-coalesced global accesses by reorganizing data layouts on the fly.</li>
   <li>Reuse loaded data across threads within a block.</li>
   <li>Communicate between threads within a block.</li></ul><section lang="en" class="block hide-metadata"><details id="id44" open="open"><summary><header><h1>
@@ -393,7 +438,10 @@ release(lock):
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The GPU memory hierarchy is software-managed at L1 (shared memory) and coherent only at L2 — by restricting L1 to local-to-block scope, the architecture sidesteps the cost of a global <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">Cache coherence</a></span> protocol on a thousand-way-parallel chip.</div>
 <section lang="en" class="block hide-metadata"><details id="id45" open="open"><summary><header><h1>
 <span class="taxon"></span>Memory coalescing merges a warp's accesses into one transaction per cache line <a class="slug" href="/U1FO/">[U1FO]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The hardware optimization on GPUs that combines simultaneous memory accesses by threads in a <span xmlns="" class="link local"><a href="/X9VZ/" title="Warp [X9VZ]">warp</a></span> into a single transaction — when the accessed addresses fall in the same cache line.</p><p xmlns="http://www.w3.org/1999/xhtml">Global memory latency on a GPU is 400–800 cycles. Coalescing is the primary way to keep the SM fed:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>If all 32 threads in a warp access addresses within one cache line: one memory transaction, full bandwidth.</li>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The hardware optimization on GPUs that combines simultaneous memory accesses by threads in a <span xmlns="" class="link local"><a href="/X9VZ/" title="Warp [X9VZ]">warp</a></span> into a single transaction — when the accessed addresses fall in the same cache line.</p><p xmlns="http://www.w3.org/1999/xhtml">Global memory latency on a GPU is 400–800 cycles. Coalescing is the primary way to keep the SM fed:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>If all 32 threads in a warp access addresses within one cache line: one memory transaction, full bandwidth.</li>
   <li>If addresses span multiple cache lines: the hardware serializes into multiple transactions; bandwidth drops proportionally.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Address permutations within a cache line don't hurt utilization — coalescing is about which lines are touched, not which exact bytes.</div>
 <p xmlns="http://www.w3.org/1999/xhtml">Coalescing is why memory layout matters so much for GPU code. The standard idiom is <em>structure-of-arrays</em> (SoA) instead of <em>array-of-structures</em> (AoS): threads accessing the same field of consecutive records hit consecutive bytes, which coalesce; threads accessing the same struct don't.</p>
@@ -427,36 +475,38 @@ release(lock):
 <span class="taxon"></span>TPU Architecture <a class="slug" href="/NZZ7/">[NZZ7]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">March 24, 2026</li>
-<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
-</address></li>
-</ul></div></header></summary><section lang="en" class="block hide-metadata"><details id="id51" open="open"><summary><header><h1>
-<span class="taxon"></span>TensorCore (TPU) <a class="slug" href="/OGCRQ/">[OGCRQ]</a> </h1>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id51" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>TensorCore (TPU) <a class="slug" href="/OGCRQ/">[OGCRQ]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 22, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmiawkeiezeyt4tj2lm6rbqjnjsupiyppuiwgebgqwrq2yx22ui2bcq.png"></img>
-<figcaption>The TensorCore architecture</figcaption></figure><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Vector register file</em> each register is 8x128 <span xmlns="" class="link external"><a href="https://kellenkanarios.com/OGCRO/" title="">vector registers</a></span> with 8 horizontal lanes and 128 vertical lanes. There are typically 64 of these registers.</li></ul></details></section><section lang="en" class="block hide-metadata"><details id="id52" open="open"><summary><header><h1>
-<span class="taxon"></span>Vector Processing Unit <a class="slug" href="/OGCRN/">[OGCRN]</a> </h1>
+<figcaption>The TensorCore architecture</figcaption></figure><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Vector register file</em> each register is 8x128 <span xmlns="" class="link external"><a href="https://kellenkanarios.com/OGCRO/" title="">vector registers</a></span> with 8 horizontal lanes and 128 vertical lanes. There are typically 64 of these registers.</li></ul></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id52" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Vector Processing Unit <a class="slug" href="/OGCRN/">[OGCRN]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 22, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A core component of the <span xmlns="" class="link local"><a href="/NZZ7/" title="TPU Architecture [NZZ7]">TPU architecture</a></span> responsible for elementwise operations.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>2D <span xmlns="" class="link local"><a href="/Q7ZD/" title="Vector ISA / SIMD [Q7ZD]">SIMD</a></span> execution, where each of 1024 <em>sites</em> execute same program in lockstep.</li>
   <li>Each site contains 4 ALUs, enabling 4096 FLOPs.</li>
-  <li>Fed a 8x128 <span xmlns="" class="link external"><a href="https://kellenkanarios.com/OGCRO/" title="">Vector Register</a></span> in one cycle.</li></ul></details></section><section lang="en" class="block hide-metadata"><details id="id53" open="open"><summary><header><h1>
-<span class="taxon"></span>Matrix Multiply Unit (MXU) <a class="slug" href="/OGCRP/">[OGCRP]</a> </h1>
+  <li>Fed a 8x128 <span xmlns="" class="link external"><a href="https://kellenkanarios.com/OGCRO/" title="">Vector Register</a></span> in one cycle.</li></ul></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id53" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Matrix Multiply Unit (MXU) <a class="slug" href="/OGCRP/">[OGCRP]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 22, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A core component of the <span xmlns="" class="link local"><a href="/NZZ7/" title="TPU Architecture [NZZ7]">TPU architecture</a></span> responsible for performing matrix multiplication via a <em>systolic array</em>.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>256x256 totaling 65,536 <em>multiply accumulate</em> units i.e. each unit can multiply and add in one cycle.</li>
-  
- <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-  Can only do 256x256 matrix multiplication, so the order is 
-  <ol><li>Tiling the matrix to load from HBM to VMEM</li>
-    <li>Compiler tiles from VMEM to 256x256 tiles to load into MXU.</li></ol>
-  </div></ul><figure xmlns="http://www.w3.org/1999/xhtml"><img width="30%" src="/bafkrmickrnx5efnigkyxbpwks6lud2meikoqmsfy2llhy6lvb2y2bccpia.png"></img>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A core component of the <span xmlns="" class="link local"><a href="/NZZ7/" title="TPU Architecture [NZZ7]">TPU architecture</a></span> responsible for performing matrix multiplication via a <em>systolic array</em>.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>256x256 totaling 65,536 <em>multiply accumulate</em> units i.e. each unit can multiply and add in one cycle.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+Can only do 256x256 matrix multiplication, so the order is 
+<ol><li>Tiling the matrix to load from HBM to VMEM</li>
+  <li>Compiler tiles from VMEM to 256x256 tiles to load into MXU.</li></ol>
+</div>
+<figure xmlns="http://www.w3.org/1999/xhtml"><img width="30%" src="/bafkrmickrnx5efnigkyxbpwks6lud2meikoqmsfy2llhy6lvb2y2bccpia.png"></img>
 <figcaption>Note the input are offset so that the result from the first column can be accumulated int the second column. Can compute matmul in \(2n - 1\) cycles.</figcaption></figure></details></section></details></section><section lang="en" class="block hide-metadata"><details id="id54" open="open"><summary><header><h1>
 <span class="taxon"></span>Processing in Memory for ML <a class="slug" href="/2BGU/">[2BGU]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">April 6, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Notes on guest lecture by Yufeng Gu titled <em>Architecture and System Co-Design for Scalable Large Language Model Inference</em></p><p xmlns="http://www.w3.org/1999/xhtml">TFLOPs increasing much faster than DRAM bandwidth -&gt; Hardware scaling is hitting the <em>memory wall</em>.</p><p xmlns="http://www.w3.org/1999/xhtml">Data center power consumption also increasing \(\approx \) 10% a year.</p><p xmlns="http://www.w3.org/1999/xhtml"><strong>GPUs are under low utilization for LLM inference</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Prefix stage: parallel</li>
+<div class="metadata"><ul>
+<li class="meta-item">April 6, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Notes on guest lecture by Yufeng Gu titled <em>Architecture and System Co-Design for Scalable Large Language Model Inference</em></p><p xmlns="http://www.w3.org/1999/xhtml">TFLOPs increasing much faster than DRAM bandwidth -&gt; Hardware scaling is hitting the <em>memory wall</em>.</p><p xmlns="http://www.w3.org/1999/xhtml">Data center power consumption also increasing \(\approx \) 10% a year.</p><p xmlns="http://www.w3.org/1999/xhtml"><strong>GPUs are under low utilization for LLM inference</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Prefix stage: parallel</li>
   <li>Decoding stage: sequential -&gt; bottleneck!</li></ul><p xmlns="http://www.w3.org/1999/xhtml">As batch size increases, the <span xmlns="" class="link local"><a href="/TJLA/" title="KV-cache [TJLA]">KV-cache</a></span> dominates memory usage.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>KV cache size grows with context length.</li>
   <li>Tradeoff between context length and batch size.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
@@ -488,12 +538,21 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 </div>
 </details></section></details></section><section lang="en" class="block hide-metadata"><details id="id55" open="open"><summary><header><h1>
 <span class="taxon"></span>On-chip interconnection networks <a class="slug" href="/667T/">[667T]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">April 8, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The network connecting cores, L2/L3 banks, and memory controllers on a <span xmlns="" class="link local"><a href="/JRP0/" title="Multicore [JRP0]">Multicore</a></span> chip. The same abstractions that govern off-chip networks (topology, routing, flow control) apply, but the constraints are different: wires are abundant but die area is scarce, latency is dominated by hops rather than propagation, and the network is part of the <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">Cache coherence</a></span> critical path.</p><section lang="en" class="block hide-metadata"><details id="id56" open="open"><summary><header><h1>
+<div class="metadata"><ul>
+<li class="meta-item">April 8, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The network connecting cores, L2/L3 banks, and memory controllers on a <span xmlns="" class="link local"><a href="/JRP0/" title="Multicore [JRP0]">Multicore</a></span> chip. The same abstractions that govern off-chip networks (topology, routing, flow control) apply, but the constraints are different: wires are abundant but die area is scarce, latency is dominated by hops rather than propagation, and the network is part of the <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">Cache coherence</a></span> critical path.</p><section lang="en" class="block hide-metadata"><details id="id56" open="open"><summary><header><h1>
 <span class="taxon"></span>On-chip network metrics <a class="slug" href="/OMZU/">[OMZU]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The measurements used to compare network topologies and traffic patterns.</p>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The measurements used to compare network topologies and traffic patterns.</p>
   <section lang="en" class="block hide-metadata"><details id="id57" open="open"><summary><header><h1>
 <span class="taxon"></span>Traffic-independent  </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
 <ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Degree</em>: number of links at each node. A proxy for router complexity — each port costs a buffer, crossbar input, state machine.</li>
   <li><em>Bisection bandwidth</em>: bandwidth across a cut that splits the network into two equal-sized halves. The minimum over all such cuts. A proxy for peak achievable throughput, especially for uniformly random traffic.</li>
   <li><em>Diameter</em>: maximum hop distance between any two nodes. The worst-case hop count.</li></ul>
@@ -507,7 +566,10 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 
   <section lang="en" class="block hide-metadata"><details id="id58" open="open"><summary><header><h1>
 <span class="taxon"></span>Traffic-dependent  </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
 <ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Hop count</em>: hops between two specific nodes. The average over a traffic distribution is a useful proxy for latency.</li>
   <li><em>Maximum channel load</em>: the most-loaded link's load relative to per-node injection bandwidth, for a given traffic pattern. The proxy for sustained throughput.</li>
   <li><em>Path diversity</em>: number of distinct shortest paths between two nodes. Higher path diversity allows adaptive routing to spread load.</li></ul>
@@ -515,7 +577,10 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 
   <section lang="en" class="block hide-metadata"><details id="id59" open="open"><summary><header><h1>
 <span class="taxon"></span>Performance regimes  </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
 <ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Zero-load latency</em>: average hop count with no contention.</li>
   <li><em>Saturation throughput</em>: the injection rate at which latency curves upward exponentially.</li></ul>
 </details></section>
@@ -523,23 +588,35 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Hop count is not the same as latency. Per-hop pipeline depth and link propagation matter — more short hops can beat fewer slow ones. Router pipeline depth isn't always known in advance.</div>
 </details></section><section lang="en" class="block hide-metadata"><details id="id60" open="open"><summary><header><h1>
 <span class="taxon"></span>Direct vs indirect networks <a class="slug" href="/95AC/">[95AC]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Two organizational families for on-chip networks.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Direct</em> — every terminal node (core, memory controller) is associated with a router. Most on-chip designs are direct because area is precious and there's no point spending a router with no compute attached. The "\(k\)-ary \(n\)-cube" family (<span xmlns="" class="link local"><a href="/UEA0/" title="Ring topology [UEA0]">Ring topology</a></span>, <span xmlns="" class="link local"><a href="/9SA2/" title="Mesh topology [9SA2]">Mesh topology</a></span>, <span xmlns="" class="link local"><a href="/DDKT/" title="Torus topology [DDKT]">Torus topology</a></span>) is direct.</li>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Two organizational families for on-chip networks.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Direct</em> — every terminal node (core, memory controller) is associated with a router. Most on-chip designs are direct because area is precious and there's no point spending a router with no compute attached. The "\(k\)-ary \(n\)-cube" family (<span xmlns="" class="link local"><a href="/UEA0/" title="Ring topology [UEA0]">Ring topology</a></span>, <span xmlns="" class="link local"><a href="/9SA2/" title="Mesh topology [9SA2]">Mesh topology</a></span>, <span xmlns="" class="link local"><a href="/DDKT/" title="Torus topology [DDKT]">Torus topology</a></span>) is direct.</li>
   <li><em>Indirect</em> — routers may exist that connect only to other routers, with no terminal attached. <span xmlns="" class="link local"><a href="/5WX9/" title="Butterfly network [5WX9]">Butterfly network</a></span> and <span xmlns="" class="link local"><a href="/YKAN/" title="Clos network [YKAN]">Clos network</a></span> are indirect; a router in their middle stages just shuffles bits between input and output stages.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Indirect networks can shorten the diameter for the same node count, but they pay for extra silicon area for routers that don't serve traffic locally. Often the right call off-chip; usually the wrong call on-chip.</div>
 </details></section>
   <section lang="en" class="block hide-metadata"><details id="id61" open="open"><summary><header><h1>
 <span class="taxon"></span>Topologies  </h1>
-<div class="metadata"><ul><li class="meta-item">April 8, 2026</li></ul></div></header></summary>
+<div class="metadata"><ul>
+<li class="meta-item">April 8, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
 <section lang="en" class="block hide-metadata"><details id="id62" open="open"><summary><header><h1>
 <span class="taxon"></span>Crossbar <a class="slug" href="/YV5J/">[YV5J]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The simplest <span xmlns="" class="link local"><a href="/95AC/" title="Direct vs indirect networks [95AC]">indirect network</a></span>: an \(n \times  m\) grid of switch points connecting \(n\) inputs to \(m\) outputs. Any input can be connected to any free output simultaneously — <em>non-blocking</em>.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>One hop per transit (minimum possible).</li>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The simplest <span xmlns="" class="link local"><a href="/95AC/" title="Direct vs indirect networks [95AC]">indirect network</a></span>: an \(n \times  m\) grid of switch points connecting \(n\) inputs to \(m\) outputs. Any input can be connected to any free output simultaneously — <em>non-blocking</em>.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>One hop per transit (minimum possible).</li>
   <li>Serializes if multiple senders target the same receiver.</li>
   <li>Switch area grows as \(O(n \cdot  m)\) — the dominant cost as systems grow.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Crossbar router area scales as the <em>square</em> of the port count, which is why high-radix routers are dramatically more expensive than low-radix ones.</div>
 <p xmlns="http://www.w3.org/1999/xhtml">Crossbars are common as the inner switch of larger structured networks (<span xmlns="" class="link local"><a href="/YKAN/" title="Clos network [YKAN]">Clos network</a></span>, <span xmlns="" class="link local"><a href="/DFC7/" title="Fat tree [DFC7]">Fat tree</a></span>) — large flat crossbars are impractical at scale, but small crossbars are cheap.</p></details></section>
 <section lang="en" class="block hide-metadata"><details id="id63" open="open"><summary><header><h1>
 <span class="taxon"></span>Ring topology <a class="slug" href="/UEA0/">[UEA0]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/95AC/" title="Direct vs indirect networks [95AC]">direct network</a></span> where each node connects to two neighbors, forming a closed loop. Bidirectional rings allow either direction of travel; unidirectional rings allow only one. The simplest topology to implement and reason about.</p><p xmlns="http://www.w3.org/1999/xhtml">In the \(k\)-ary \(n\)-cube family, a ring is a \(k\)-ary 1-cube.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Degree 2 (every node).</li>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/95AC/" title="Direct vs indirect networks [95AC]">direct network</a></span> where each node connects to two neighbors, forming a closed loop. Bidirectional rings allow either direction of travel; unidirectional rings allow only one. The simplest topology to implement and reason about.</p><p xmlns="http://www.w3.org/1999/xhtml">In the \(k\)-ary \(n\)-cube family, a ring is a \(k\)-ary 1-cube.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Degree 2 (every node).</li>
   <li>Diameter \(\lfloor  k/2 \rfloor \) for a bidirectional \(k\)-node ring.</li>
   <li>Bisection bandwidth 2 — cut the ring at exactly two links.</li>
   <li>Hardware overhead very low: routers have two ports.</li></ul>
@@ -549,7 +626,10 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 </details></section>
 <section lang="en" class="block hide-metadata"><details id="id64" open="open"><summary><header><h1>
 <span class="taxon"></span>Mesh topology <a class="slug" href="/9SA2/">[9SA2]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A 2D grid of nodes with neighbors connected on the four compass directions, no wrap-around. The dominant on-chip topology in commercial designs (Xeon Phi, recent server x86 chips) because it lays out naturally on a 2D die.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Interior nodes degree 4; edge nodes degree 3; corners degree 2.</li>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A 2D grid of nodes with neighbors connected on the four compass directions, no wrap-around. The dominant on-chip topology in commercial designs (Xeon Phi, recent server x86 chips) because it lays out naturally on a 2D die.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Interior nodes degree 4; edge nodes degree 3; corners degree 2.</li>
   <li>Average hop count for an even-\(k\) mesh: \[H_{avg} = \frac {nk}{3}\]</li>
   <li>Maximum channel load for uniform random traffic: \(k/4\) — twice that of a <span xmlns="" class="link local"><a href="/DDKT/" title="Torus topology [DDKT]">Torus topology</a></span>.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Non-uniform node degree. Edge nodes carry less traffic than they could, while interior nodes bottleneck on traffic flowing through them.</div>
@@ -558,7 +638,10 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 </details></section>
 <section lang="en" class="block hide-metadata"><details id="id65" open="open"><summary><header><h1>
 <span class="taxon"></span>Torus topology <a class="slug" href="/DDKT/">[DDKT]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/9SA2/" title="Mesh topology [9SA2]">Mesh topology</a></span> with wrap-around links connecting the ends of each dimension. In the \(k\)-ary \(n\)-cube classification, a \(k\)-ary \(n\)-cube. Uniform node degree (every node has degree \(2n\)), uniform load distribution, half the hop count of a mesh.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Every node has degree \(2n\).</li>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/9SA2/" title="Mesh topology [9SA2]">Mesh topology</a></span> with wrap-around links connecting the ends of each dimension. In the \(k\)-ary \(n\)-cube classification, a \(k\)-ary \(n\)-cube. Uniform node degree (every node has degree \(2n\)), uniform load distribution, half the hop count of a mesh.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Every node has degree \(2n\).</li>
   <li>Average hop count for even \(k\): \[H_{avg} = \frac {nk}{4}\]</li>
   <li>Maximum channel load for uniform random traffic: \(k/8\) — half that of a <span xmlns="" class="link local"><a href="/9SA2/" title="Mesh topology [9SA2]">Mesh topology</a></span>.</li>
   <li>Good <em>path diversity</em>: many shortest paths between any two nodes.</li></ul>
@@ -571,7 +654,10 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
   <li><em>Ring</em>: \(k\)-ary 1-cube.</li></ul></details></section>
 <section lang="en" class="block hide-metadata"><details id="id66" open="open"><summary><header><h1>
 <span class="taxon"></span>Butterfly network <a class="slug" href="/5WX9/">[5WX9]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A multistage <span xmlns="" class="link local"><a href="/95AC/" title="Direct vs indirect networks [95AC]">indirect network</a></span>. A \(k\)-ary \(n\)-fly has \(k^n\) terminal nodes connected through \(n\) stages of \(k \times  k\) crossbar switches. At each stage, the routing decision selects which of \(k\) sub-groups to enter; after \(n\) stages, every terminal can reach every other.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="70%" src="/bafkrmidehllcuvii3yjedkk6t4xhe54vtocjk6sjp7rtottofkxopxnqsu.png"></img>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A multistage <span xmlns="" class="link local"><a href="/95AC/" title="Direct vs indirect networks [95AC]">indirect network</a></span>. A \(k\)-ary \(n\)-fly has \(k^n\) terminal nodes connected through \(n\) stages of \(k \times  k\) crossbar switches. At each stage, the routing decision selects which of \(k\) sub-groups to enter; after \(n\) stages, every terminal can reach every other.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="70%" src="/bafkrmidehllcuvii3yjedkk6t4xhe54vtocjk6sjp7rtottofkxopxnqsu.png"></img>
 <figcaption>Routing 0 to 2 on a 2-ary 3-fly.</figcaption></figure><ul xmlns="http://www.w3.org/1999/xhtml"><li>Hop count \(n - 1\).</li>
   <li>Under uniform random traffic, maximum channel load is 1 (perfectly balanced).</li>
   <li>Channel load drops further for non-uniform traffic that respects the natural partitioning.</li></ul>
@@ -581,7 +667,10 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 </details></section>
 <section lang="en" class="block hide-metadata"><details id="id67" open="open"><summary><header><h1>
 <span class="taxon"></span>Clos network <a class="slug" href="/YKAN/">[YKAN]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A three-stage <span xmlns="" class="link local"><a href="/95AC/" title="Direct vs indirect networks [95AC]">indirect network</a></span> parameterized by \((m, n, r)\): \(r\) input switches and \(r\) output switches each of size \(n \times  m\), with \(m\) middle-stage switches each \(r \times  r\). Total terminal nodes \(N = nr\). Non-blocking when \(m \geq  2n - 1\).</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Number of total switching elements scales as \(N^{1.5}\) versus \(N^2\) for a flat <span xmlns="" class="link local"><a href="/YV5J/" title="Crossbar [YV5J]">Crossbar</a></span> while preserving non-blocking.</li>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A three-stage <span xmlns="" class="link local"><a href="/95AC/" title="Direct vs indirect networks [95AC]">indirect network</a></span> parameterized by \((m, n, r)\): \(r\) input switches and \(r\) output switches each of size \(n \times  m\), with \(m\) middle-stage switches each \(r \times  r\). Total terminal nodes \(N = nr\). Non-blocking when \(m \geq  2n - 1\).</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Number of total switching elements scales as \(N^{1.5}\) versus \(N^2\) for a flat <span xmlns="" class="link local"><a href="/YV5J/" title="Crossbar [YV5J]">Crossbar</a></span> while preserving non-blocking.</li>
   <li>Path diversity is \(m\) — multiple distinct paths between any source and destination.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> 
 There are \(rmn\) input-switch elements, \(mr^2\) middle-switch elements, and \(rmn\) output-switch elements:
@@ -596,7 +685,10 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 </details></section>
 <section lang="en" class="block hide-metadata"><details id="id68" open="open"><summary><header><h1>
 <span class="taxon"></span>Fat tree <a class="slug" href="/DFC7/">[DFC7]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A tree topology with bandwidth that doubles at every level toward the root. Each interior switch has logical degree 4, but as you climb the tree, link width doubles to absorb the combined traffic of its subtree — preserving bisection bandwidth.</p><p xmlns="http://www.w3.org/1999/xhtml">Structurally, a fat tree is a folded <span xmlns="" class="link local"><a href="/YKAN/" title="Clos network [YKAN]">Clos network</a></span>: the input and output stages of a Clos are merged into a single bidirectional stage at each level of the tree, and the middle stage becomes the higher levels of the tree.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Each switch has logical degree 4 (2 down, 2 up — with link doubling).</li>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A tree topology with bandwidth that doubles at every level toward the root. Each interior switch has logical degree 4, but as you climb the tree, link width doubles to absorb the combined traffic of its subtree — preserving bisection bandwidth.</p><p xmlns="http://www.w3.org/1999/xhtml">Structurally, a fat tree is a folded <span xmlns="" class="link local"><a href="/YKAN/" title="Clos network [YKAN]">Clos network</a></span>: the input and output stages of a Clos are merged into a single bidirectional stage at each level of the tree, and the middle stage becomes the higher levels of the tree.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Each switch has logical degree 4 (2 down, 2 up — with link doubling).</li>
   <li>Bisection bandwidth scales linearly with the number of leaves.</li>
   <li>Path diversity grows toward the root.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Fat trees are the dominant topology for off-chip HPC interconnects (InfiniBand fat-tree clusters). Less common on-chip because the doubling links are hard to lay out on a 2D die.</div>
@@ -605,10 +697,16 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 
   <section lang="en" class="block hide-metadata"><details id="id69" open="open"><summary><header><h1>
 <span class="taxon"></span>Routing  </h1>
-<div class="metadata"><ul><li class="meta-item">April 8, 2026</li></ul></div></header></summary>
+<div class="metadata"><ul>
+<li class="meta-item">April 8, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
 <section lang="en" class="block hide-metadata"><details id="id70" open="open"><summary><header><h1>
 <span class="taxon"></span>Network routing strategies <a class="slug" href="/VTS4/">[VTS4]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Given a <span xmlns="" class="link local"><a href="/OMZU/" title="On-chip network metrics [OMZU]">topology</a></span> and a packet's source and destination, which path through the network does it take? Three classes of answer:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Greedy</em> (shortest-path) — always pick the shortest available route.
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Given a <span xmlns="" class="link local"><a href="/OMZU/" title="On-chip network metrics [OMZU]">topology</a></span> and a packet's source and destination, which path through the network does it take? Three classes of answer:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Greedy</em> (shortest-path) — always pick the shortest available route.
     <ul><li>(+) Minimizes latency under light load.</li>
       <li>(-) Overloads central links; worst-case throughput poor.</li></ul></li>
   <li><em>Uniform / oblivious random</em> — pick a direction at random.
@@ -630,12 +728,18 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 </details></section>
 <section lang="en" class="block hide-metadata"><details id="id71" open="open"><summary><header><h1>
 <span class="taxon"></span>Dimension-order routing <a class="slug" href="/83P2/">[83P2]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An oblivious <span xmlns="" class="link local"><a href="/VTS4/" title="Network routing strategies [VTS4]">Network routing strategies</a></span> for \(k\)-ary \(n\)-cube networks (<span xmlns="" class="link local"><a href="/9SA2/" title="Mesh topology [9SA2]">Mesh topology</a></span>, <span xmlns="" class="link local"><a href="/DDKT/" title="Torus topology [DDKT]">Torus topology</a></span>): always exhaust the offset in one dimension completely before changing to the next. E.g. in 2D mesh routing, route X-then-Y — never turn back to X after starting Y.</p><p xmlns="http://www.w3.org/1999/xhtml">The dimension order prevents <em>routing deadlock</em>: cycles in the channel dependency graph are impossible because no packet ever requests a channel in a "lower" dimension once it has started using a higher one. The dependency graph is therefore acyclic, and the standard cycle-equals-deadlock argument applies.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>(+) Provably deadlock-free without <span xmlns="" class="link local"><a href="/HUDE/" title="Virtual Channels [HUDE]">virtual channels</a></span>.</li>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An oblivious <span xmlns="" class="link local"><a href="/VTS4/" title="Network routing strategies [VTS4]">Network routing strategies</a></span> for \(k\)-ary \(n\)-cube networks (<span xmlns="" class="link local"><a href="/9SA2/" title="Mesh topology [9SA2]">Mesh topology</a></span>, <span xmlns="" class="link local"><a href="/DDKT/" title="Torus topology [DDKT]">Torus topology</a></span>): always exhaust the offset in one dimension completely before changing to the next. E.g. in 2D mesh routing, route X-then-Y — never turn back to X after starting Y.</p><p xmlns="http://www.w3.org/1999/xhtml">The dimension order prevents <em>routing deadlock</em>: cycles in the channel dependency graph are impossible because no packet ever requests a channel in a "lower" dimension once it has started using a higher one. The dependency graph is therefore acyclic, and the standard cycle-equals-deadlock argument applies.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>(+) Provably deadlock-free without <span xmlns="" class="link local"><a href="/HUDE/" title="Virtual Channels [HUDE]">virtual channels</a></span>.</li>
   <li>(-) Zero path diversity. Hot spots can't be routed around.</li>
   <li>(-) Unaware of current network state — <em>oblivious</em>.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">The standard remedy for the path-diversity problem is <span xmlns="" class="link local"><a href="/XLDA/" title="Valiant's routing algorithm [XLDA]">Valiant's routing algorithm</a></span>, which keeps the deadlock-freedom of dimension-order routing while spreading load with a randomized intermediate hop.</p></details></section>
 <section lang="en" class="block hide-metadata"><details id="id72" open="open"><summary><header><h1>
 <span class="taxon"></span>Valiant's routing algorithm <a class="slug" href="/XLDA/">[XLDA]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An oblivious <span xmlns="" class="link local"><a href="/VTS4/" title="Network routing strategies [VTS4]">Network routing strategies</a></span> that achieves provably optimal worst-case throughput by introducing randomness in path selection:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>For a packet going from \(s\) to \(d\), randomly pick an intermediate node \(w\).</li>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An oblivious <span xmlns="" class="link local"><a href="/VTS4/" title="Network routing strategies [VTS4]">Network routing strategies</a></span> that achieves provably optimal worst-case throughput by introducing randomness in path selection:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>For a packet going from \(s\) to \(d\), randomly pick an intermediate node \(w\).</li>
   <li>Route \(s \to  w\) using <span xmlns="" class="link local"><a href="/83P2/" title="Dimension-order routing [83P2]">Dimension-order routing</a></span>.</li>
   <li>Eject the packet at \(w\), then re-inject it.</li>
   <li>Route \(w \to  d\) using <span xmlns="" class="link local"><a href="/83P2/" title="Dimension-order routing [83P2]">Dimension-order routing</a></span>.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">To preserve deadlock-freedom, the intermediate node must remove the packet from the network before re-injecting — otherwise the channel dependencies of the two halves could interlock.</p>
@@ -647,15 +751,24 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 
   <section lang="en" class="block hide-metadata"><details id="id73" open="open"><summary><header><h1>
 <span class="taxon"></span>Flow control  </h1>
-<div class="metadata"><ul><li class="meta-item">April 8, 2026</li></ul></div></header></summary>
+<div class="metadata"><ul>
+<li class="meta-item">April 8, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
 <section lang="en" class="block hide-metadata"><details id="id74" open="open"><summary><header><h1>
 <span class="taxon"></span>Routing deadlock <a class="slug" href="/DWV1/">[DWV1]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Routing deadlock occurs when a packet cannot make progress because the buffer at its next link is full, and the packet holding that buffer is itself blocked waiting on a buffer this packet holds — a cycle in the channel dependency graph.</p><p xmlns="http://www.w3.org/1999/xhtml">Two structural responses:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><em>Avoid</em> deadlock by construction. <span xmlns="" class="link local"><a href="/83P2/" title="Dimension-order routing [83P2]">Dimension-order routing</a></span> enforces an ordering on dimension transitions so the dependency graph is acyclic by design.</li>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Routing deadlock occurs when a packet cannot make progress because the buffer at its next link is full, and the packet holding that buffer is itself blocked waiting on a buffer this packet holds — a cycle in the channel dependency graph.</p><p xmlns="http://www.w3.org/1999/xhtml">Two structural responses:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><em>Avoid</em> deadlock by construction. <span xmlns="" class="link local"><a href="/83P2/" title="Dimension-order routing [83P2]">Dimension-order routing</a></span> enforces an ordering on dimension transitions so the dependency graph is acyclic by design.</li>
   <li><em>Detect and recover</em> from deadlock. Allow all turns. Detect cycles via timeouts. Drain stuck packets onto a backup network (a "slow channel" — physical, or more commonly an <em>escape <span xmlns="" class="link local"><a href="/HUDE/" title="Virtual Channels [HUDE]">virtual channel</a></span></em>) that uses dimension-order routing.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">The relationship to other related concepts:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Backpressure</em> (<span xmlns="" class="link local"><a href="/EZDD/" title="Network backpressure [EZDD]">Network backpressure</a></span>) is the signaling mechanism that lets a router downstream tell upstream it is congested, before the upstream actually fills the link.</li>
   <li>Adaptive routing avoids deadlock locally; backpressure lets adaptive routing react to remote congestion.</li></ul></details></section>
 <section lang="en" class="block hide-metadata"><details id="id75" open="open"><summary><header><h1>
 <span class="taxon"></span>Network backpressure <a class="slug" href="/EZDD/">[EZDD]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A signaling mechanism that lets a downstream router tell upstream "I am congested — slow down" before its buffers actually overflow. With backpressure information, <span xmlns="" class="link local"><a href="/VTS4/" title="Network routing strategies [VTS4]">adaptive routing</a></span> can route around remote congestion, not just local.</p><p xmlns="http://www.w3.org/1999/xhtml">The mechanism propagates: a congested link signals back to its sender, which then knows its next link will fill, which signals further back. Useful information flows in the opposite direction of the data.</p>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A signaling mechanism that lets a downstream router tell upstream "I am congested — slow down" before its buffers actually overflow. With backpressure information, <span xmlns="" class="link local"><a href="/VTS4/" title="Network routing strategies [VTS4]">adaptive routing</a></span> can route around remote congestion, not just local.</p><p xmlns="http://www.w3.org/1999/xhtml">The mechanism propagates: a congested link signals back to its sender, which then knows its next link will fill, which signals further back. Useful information flows in the opposite direction of the data.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Acting only on local state can cause livelock — packets bounce between hotspots, never converging.</div>
 <p xmlns="http://www.w3.org/1999/xhtml">Backpressure breaks the livelock by giving local routers global-ish information without an actual global view.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Backpressure is mechanism; <span xmlns="" class="link local"><a href="/VTS4/" title="Network routing strategies [VTS4]">adaptive routing</a></span> is policy. The two together are what real high-radix on-chip networks use.</div>
@@ -664,7 +777,10 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 
   <section lang="en" class="block hide-metadata"><details id="id76" open="open"><summary><header><h1>
 <span class="taxon"></span>Interface with the cache hierarchy  </h1>
-<div class="metadata"><ul><li class="meta-item">April 8, 2026</li></ul></div></header></summary>
+<div class="metadata"><ul>
+<li class="meta-item">April 8, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The on-chip network connects each core (with its L1) and the L2 cache banks (which may be shared or private). Each L2 bank has a <em>cache controller</em> (manages <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">Cache coherence</a></span>) and, at memory boundaries, a <em>memory controller</em> (talks to DRAM).</p>
 
 <p xmlns="http://www.w3.org/1999/xhtml">Two cache-organization choices interact with the network design:</p>
@@ -685,7 +801,10 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 
   <section lang="en" class="block hide-metadata"><details id="id77" open="open"><summary><header><h1>
 <span class="taxon"></span>Implementation considerations  </h1>
-<div class="metadata"><ul><li class="meta-item">April 8, 2026</li></ul></div></header></summary>
+<div class="metadata"><ul>
+<li class="meta-item">April 8, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml"><strong>Links</strong>. Thicker wires with larger spacing → lower resistance, higher speed, better energy efficiency. The wire budget determines how many ports you can afford per router.</p>
 
 <p xmlns="http://www.w3.org/1999/xhtml"><strong>Routers</strong>. Each port costs a buffer, a crossbar input, state logic, and a link to its neighbor. <span xmlns="" class="link local"><a href="/YV5J/" title="Crossbar [YV5J]">Crossbar</a></span> area scales as the square of port count, so high-radix routers are dramatically expensive. Rings have very simple routers but poor performance.</p>
@@ -699,7 +818,10 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 
   <section lang="en" class="block hide-metadata"><details id="id78" open="open"><summary><header><h1>
 <span class="taxon"></span>Custom and hierarchical topologies  </h1>
-<div class="metadata"><ul><li class="meta-item">April 8, 2026</li></ul></div></header></summary>
+<div class="metadata"><ul>
+<li class="meta-item">April 8, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">General topologies aren't always optimal. Two construction strategies:</p>
 <ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Splitting</em>: start with a large crossbar; split into smaller switches until constraints are met.</li>
   <li><em>Merging</em>: start with many small switches and combine.</li></ul>
@@ -761,7 +883,10 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 </details></section>
         <section lang="en" class="block"><details id="id85"><summary><header><h1>
 <span class="taxon"></span>Data race <a class="slug" href="/P0NQ/">[P0NQ]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">May 12, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Two accesses to the same memory location, from different threads, where at least one is a write and there is no <em>happens-before</em> relationship between them. The happens-before relation is what synchronization primitives like <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span> and atomics induce — when one access happens before another, they are not racing.</p>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Two accesses to the same memory location, from different threads, where at least one is a write and there is no <em>happens-before</em> relationship between them. The happens-before relation is what synchronization primitives like <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span> and atomics induce — when one access happens before another, they are not racing.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Competing for the same lock is <em>not</em> a data race. Whichever thread acquires first <em>happens before</em> the next; the access inside each critical section is sequentially ordered.</div>
 <p xmlns="http://www.w3.org/1999/xhtml">Data-race freedom (DRF) is the implicit contract behind every relaxed memory model: if your program has no data races, <span xmlns="" class="link local"><a href="/BCFG/" title="Relaxed consistency [BCFG]">Relaxed consistency</a></span> hardware behaves as if it were <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span>. Conversely, in the presence of a data race, the result is undefined by the language and the model.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Writing data-race-free programs is hard. Treating every shared access as a synchronization point destroys performance.</div>
@@ -770,8 +895,7 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 <span class="taxon"></span>Relaxed consistency <a class="slug" href="/BCFG/">[BCFG]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
-<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
-</address></li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
             <p xmlns="http://www.w3.org/1999/xhtml">A memory model weaker than <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span> that allows the hardware (and compiler) to reorder memory operations for performance, with explicit <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> instructions where the programmer wants to forbid reordering.</p>
             <p xmlns="http://www.w3.org/1999/xhtml">A fence is implemented with a counter — incremented on issue of each memory op, decremented on completion. The fence stalls dispatch until the counter reaches zero, which forces the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> to drain before later accesses may proceed.</p>
@@ -847,8 +971,7 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 <span class="taxon"></span>Relaxed consistency <a class="slug" href="/BCFG/">[BCFG]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
-<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
-</address></li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
             <p xmlns="http://www.w3.org/1999/xhtml">A memory model weaker than <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span> that allows the hardware (and compiler) to reorder memory operations for performance, with explicit <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> instructions where the programmer wants to forbid reordering.</p>
             <p xmlns="http://www.w3.org/1999/xhtml">A fence is implemented with a counter — incremented on issue of each memory op, decremented on completion. The fence stalls dispatch until the counter reaches zero, which forces the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> to drain before later accesses may proceed.</p>
