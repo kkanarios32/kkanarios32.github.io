@@ -58,10 +58,10 @@
   background-color: rgba(200, 55, 45, 0.06);
   "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> 
   You can only read the active member of a union.
-<html:pre><![CDATA[union U { int i; float f; };
+<html:pre><html:code class="language-cpp"><![CDATA[union U { int i; float f; };
 U u;
 u.i = 42;
-float x = u.f;  // UB — reading the inactive member]]></html:pre>
+float x = u.f;  // UB — reading the inactive member]]></html:code></html:pre>
 </html:div>
 
  <html:div class="jms-callout" style="
@@ -72,7 +72,7 @@ float x = u.f;  // UB — reading the inactive member]]></html:pre>
   background-color: rgba(200, 55, 45, 0.06);
   "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> 
 <html:em>No automatic lifetime management for non-trivial types.</html:em> If a union holds an object with a non-trivial constructor/destructor (like <html:code>std::string</html:code>), the compiler won't call them for you. You must manually placement-new and explicitly call the destructor, and getting this wrong causes leaks or corruption.
-<html:pre><![CDATA[union U { std::string s; int i; };  // destructor not called automatically]]></html:pre>
+<html:pre><html:code class="language-cpp"><![CDATA[union U { std::string s; int i; };  // destructor not called automatically]]></html:code></html:pre>
 </html:div>
 
  <html:div class="jms-callout" style="
@@ -83,14 +83,14 @@ float x = u.f;  // UB — reading the inactive member]]></html:pre>
   background-color: rgba(90, 90, 110, 0.05);
   "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 Avoid "naked" unions; opt for "tagged" unions.
-<html:pre><![CDATA[struct Value {
+<html:pre><html:code class="language-cpp"><![CDATA[struct Value {
     enum class Type { Int, Float, Str } tag;
     union {
         int   i;
         float f;
         char  s[32];
     };
-};]]></html:pre>
+};]]></html:code></html:pre>
 This along with lifetime management is the basis of <fr:link href="https://en.cppreference.com/cpp/utility/variant" type="external"><html:code>std::variant</html:code></fr:link>.
 </html:div>
 </fr:mainmatter></fr:tree>
@@ -102,9 +102,9 @@ This along with lifetime management is the basis of <fr:link href="https://en.cp
   border-radius: var(--radius);
   background-color: rgba(60, 90, 180, 0.05);
   "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
-<html:pre><![CDATA[enum class Color { red, green, blue };
+<html:pre><html:code class="language-cpp"><![CDATA[enum class Color { red, green, blue };
 
-Color c = Color::red;]]></html:pre>
+Color c = Color::red;]]></html:code></html:pre>
 </html:div>
 <html:p>If you want enumerator values to be <html:code>int</html:code>, you can use <html:code>enum</html:code>.</html:p>
  <html:div class="jms-callout" style="
@@ -114,9 +114,9 @@ Color c = Color::red;]]></html:pre>
   border-radius: var(--radius);
   background-color: rgba(60, 90, 180, 0.05);
   "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
-<html:pre><![CDATA[enum Color { red, green, blue };
+<html:pre><html:code class="language-cpp"><![CDATA[enum Color { red, green, blue };
 
-int color = green     // color = 1]]></html:pre>
+int color = green     // color = 1]]></html:code></html:pre>
 Note that this is an error if <html:code>Color</html:code> is <html:code>enum class</html:code>.
 </html:div>
 
@@ -180,12 +180,12 @@ We call <html:code>vector</html:code> a container.
   background-color: rgba(60, 90, 180, 0.05);
   "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
   Below is an abstract implementation of a <fr:link href="/OGCSE/" title="Container (C++)" uri="https://kellenkanarios.com/OGCSE/" display-uri="OGCSE" type="local">container class</fr:link>.
-  <html:pre><![CDATA[  class Container {
+  <html:pre><html:code class="language-cpp"><![CDATA[  class Container {
   public:
     virtual double& operator[](int) = 0; // pure virtual function
     virtual int size() const = 0; // const member function
     virtual ˜Container() {} // destructor
-  };]]></html:pre>
+  };]]></html:code></html:pre>
 </html:div>
 </fr:mainmatter></fr:tree>
 </fr:mainmatter></fr:tree>
@@ -215,7 +215,7 @@ The <html:code>type_info</html:code> pointer is needed to support runtime type-c
   border-radius: var(--radius);
   background-color: rgba(60, 90, 180, 0.05);
   "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
-<html:pre><![CDATA[struct A {
+<html:pre><html:code class="language-cpp"><![CDATA[struct A {
     virtual void f();
     int a;
 };
@@ -228,7 +228,7 @@ struct B {
 struct D : A, B {
     void g() override;   // overrides B::g
     int d;
-};]]></html:pre>
+};]]></html:code></html:pre>
 <html:pre><![CDATA[offset 0:   [ vptr_A ]   ← D's primary vtable (A subobject)
 offset 8:   [ a      ]
 offset 16:  [ vptr_B ]   ← D's secondary vtable (B subobject)
@@ -244,7 +244,7 @@ offset 32:  [ d      ]]]></html:pre>
   background-color: rgba(60, 90, 180, 0.05);
   "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
 Consider the following class hierarchy:
-<html:pre><![CDATA[struct Base {
+<html:pre><html:code class="language-cpp"><![CDATA[struct Base {
     virtual void f();
     virtual void g();
     int x;
@@ -254,7 +254,7 @@ struct Derived : Base {
     void f() override;   // overrides Base::f
     void h();            // non-virtual, not in vtable
     int y;
-};]]></html:pre>
+};]]></html:code></html:pre>
 This yields the following components for each type of object:
 <html:pre><![CDATA[Base object:        Derived object:
 [ vptr ]            [ vptr ]      → points to Derived's vtable
@@ -576,15 +576,14 @@ The second <html:code>add</html:code> only depends on <html:code>r2</html:code> 
 </fr:mainmatter></fr:tree>
 
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>15</fr:day></fr:date><fr:title text="Instruction set architecture">Instruction set architecture</fr:title></fr:frontmatter><fr:mainmatter>
-<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/L896/</fr:uri><fr:display-uri>L896</fr:display-uri><fr:route>/L896/</fr:route><fr:title text="CISC vs RISC">CISC vs RISC</fr:title></fr:frontmatter><fr:mainmatter><html:p>Two design philosophies for an instruction set architecture.</html:p><html:ul><html:li><html:em>Complex instruction set computing</html:em> (CISC) — many specialized instructions, including ones that combine memory access with arithmetic or operate on complex types (strings, decimal numbers). One instruction often does the work of several. x86 is the canonical example.</html:li>
-  <html:li><html:em>Reduced instruction set computing</html:em> (RISC) — a small set of simple, uniform instructions; explicit load and store; arithmetic only on registers. Each instruction does little but maps cleanly to hardware. PowerPC, MIPS, ARM are RISC.</html:li></html:ul>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/L896/</fr:uri><fr:display-uri>L896</fr:display-uri><fr:route>/L896/</fr:route><fr:title text="CISC vs RISC">CISC vs RISC</fr:title></fr:frontmatter><fr:mainmatter><html:p>Two design philosophies for an instruction set architecture.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>17</fr:day></fr:date><fr:uri>https://kellenkanarios.com/RIS1/</fr:uri><fr:display-uri>RIS1</fr:display-uri><fr:route>/RIS1/</fr:route><fr:title text="Complex instruction set computing (CISC)">Complex instruction set computing (CISC)</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>An ISA with many specialized instructions, including ones that combine memory access with arithmetic or operate on complex types (strings, decimal numbers). One instruction often does the work of several. x86 is the canonical example.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>17</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XJQO/</fr:uri><fr:display-uri>XJQO</fr:display-uri><fr:route>/XJQO/</fr:route><fr:title text="Reduced instruction set computing (RISC)">Reduced instruction set computing (RISC)</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>An ISA with a small set of simple, uniform instructions; explicit load and store; arithmetic only on registers. Each instruction does little but maps cleanly to hardware. PowerPC, MIPS, ARM are RISC.</html:p></fr:mainmatter></fr:tree>
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
   padding: 0.5em 1.1em 0.5em 1.2em;
   border-left: 4px solid rgba(200, 55, 45, 0.85);
   border-radius: var(--radius);
   background-color: rgba(200, 55, 45, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> CISC needs a fat <fr:link href="/87GH/" title="Microarchitecture" uri="https://kellenkanarios.com/87GH/" display-uri="87GH" type="local">Microarchitecture</fr:link> engine to translate its complex instructions into hardware-executable primitives. That's silicon area, power, and design complexity that doesn't directly add throughput.</html:div>
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> <fr:link href="/RIS1/" title="Complex instruction set computing (CISC)" uri="https://kellenkanarios.com/RIS1/" display-uri="RIS1" type="local">CISC</fr:link> needs a fat <fr:link href="/87GH/" title="Microarchitecture" uri="https://kellenkanarios.com/87GH/" display-uri="87GH" type="local">Microarchitecture</fr:link> engine to translate its complex instructions into hardware-executable primitives. That's silicon area, power, and design complexity that doesn't directly add throughput.</html:div>
 
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
@@ -592,7 +591,7 @@ The second <html:code>add</html:code> only depends on <html:code>r2</html:code> 
   border-left: 4px solid rgba(40, 150, 80, 0.9);
   border-radius: var(--radius);
   background-color: rgba(40, 150, 80, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> Once RISC clearly won as a hardware model, x86 vendors adopted <html:em>instruction translation</html:em>: a CISC front-end decodes x86 into RISC-like <fr:link href="/WEW2/" title="Micro-operations" uri="https://kellenkanarios.com/WEW2/" display-uri="WEW2" type="local">Micro-operations</fr:link> internally. The chip is RISC on the inside, CISC on the outside.</html:div>
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> Once <fr:link href="/XJQO/" title="Reduced instruction set computing (RISC)" uri="https://kellenkanarios.com/XJQO/" display-uri="XJQO" type="local">RISC</fr:link> clearly won as a hardware model, x86 vendors adopted <html:em>instruction translation</html:em>: a <fr:link href="/RIS1/" title="Complex instruction set computing (CISC)" uri="https://kellenkanarios.com/RIS1/" display-uri="RIS1" type="local">CISC</fr:link> front-end decodes x86 into RISC-like <fr:link href="/WEW2/" title="Micro-operations" uri="https://kellenkanarios.com/WEW2/" display-uri="WEW2" type="local">Micro-operations</fr:link> internally. The chip is <fr:link href="/XJQO/" title="Reduced instruction set computing (RISC)" uri="https://kellenkanarios.com/XJQO/" display-uri="XJQO" type="local">RISC</fr:link> on the inside, <fr:link href="/RIS1/" title="Complex instruction set computing (CISC)" uri="https://kellenkanarios.com/RIS1/" display-uri="RIS1" type="local">CISC</fr:link> on the outside.</html:div>
 
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
@@ -2049,9 +2048,9 @@ In practice, we must also consider the <html:em>model flop utilization</html:em>
   background-color: rgba(0, 140, 120, 0.06);
   "><html:span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</html:span> 
   An H100 has 80gb of shared memory i.e. <html:code>h100_bytes = 80e9</html:code>. The calculation then proceeds as
-  <html:pre><![CDATA[# parameters, gradients, optimizer state
+  <html:pre><html:code class="language-python"> # parameters, gradients, optimizer state
 bytest_per_param = 4 + 4 + (4 + 4)
-num_parameters = (h100_bytes * 8) / bytes_per_parameter]]></html:pre>
+num_parameters = (h100_bytes * 8) / bytes_per_parameter</html:code></html:pre>
   what we need each of parameters, gradients, optimizer state will become clear later.
 </html:div>
 
@@ -2296,14 +2295,7 @@ Similar to the <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanari
 </html:div>
 <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XUVV/</fr:uri><fr:display-uri>XUVV</fr:display-uri><fr:route>/XUVV/</fr:route><fr:title text="Group Query Attention">Group Query Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:em>Group query attention</html:em> is the same idea as <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">MQA</fr:link> but instead of using one <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> for every head, they use a <html:em>group</html:em> of them. Where obviously the number of groups needs to be less than the number of heads.</html:p><html:figure><html:img width="80%" src="/bafkrmicmjlgi2o3oetsssjdwk6y2pqce4vrdwiw2ah4wwe3ulnt74upkiu.png" />
 <html:figcaption>Grouped query uses subset of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrices.</html:figcaption></html:figure></fr:mainmatter></fr:tree><html:p>Also inspired by this idea of reducing the dependence of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> on the sequence length is sliding window attention.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/WM3M/</fr:uri><fr:display-uri>WM3M</fr:display-uri><fr:route>/WM3M/</fr:route><fr:title text="Sliding Window Attention">Sliding Window Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p>The idea behind <html:em>sliding window attention</html:em> is to ensure the number of weight matrices needed for the keys <fr:tex display="inline"><![CDATA[K]]></fr:tex> and values <fr:tex display="inline"><![CDATA[V]]></fr:tex> does not scale with the sequence length. Intuitively, this means allowing each word to "attend" to only some fixed number of previous words rather than the whole sequence</html:p><html:figure><html:img width="80%" src="/bafkrmidqeoo6wx6s4ry6u74fcelfzxvwreyf7d44whnql4ffnnyd2dwcha.png" />
-<html:figcaption>"the" only sees "on" and "sat" rather than the full sentence.</html:figcaption></html:figure></fr:mainmatter></fr:tree>
-  <html:div class="comments">
-    
-  <html:hr />
-
-    <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
-  </html:div>
-</fr:mainmatter></fr:tree></fr:mainmatter>
+<html:figcaption>"the" only sees "on" and "sat" rather than the full sentence.</html:figcaption></html:figure></fr:mainmatter></fr:tree></fr:mainmatter></fr:tree></fr:mainmatter>
     </fr:tree>
     <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
       <fr:frontmatter>
@@ -2370,7 +2362,7 @@ Similar to the <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanari
   background-color: rgba(90, 90, 110, 0.05);
   "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> The stack is allocated up front. The heap starts small and grows via <html:code>malloc</html:code>, which calls into the OS (<html:code>brk</html:code>/<html:code>sbrk</html:code>) when it runs out of headroom.</html:div>
 <html:p>On Unix, the concrete realization of this API uses <html:code>fork()</html:code>, <html:code>wait()</html:code>, and <html:code>exec()</html:code> — covered separately.</html:p></fr:mainmatter></fr:tree>
-<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/JE53/</fr:uri><fr:display-uri>JE53</fr:display-uri><fr:route>/JE53/</fr:route><fr:title text="Process control block">Process control block</fr:title></fr:frontmatter><fr:mainmatter><html:p>The kernel-side data structure holding all per-process state. There is one PCB per <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>, threaded together into the <html:em>process list</html:em>. The PCB is what the OS reads and writes during a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">Context switch</fr:link>: the saved register set lives here, as does the process state, the open files, the parent pointer, and so on.</html:p><html:p>An example from <html:code>xv6</html:code>:</html:p><html:pre><![CDATA[// the registers xv6 will save and restore
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/JE53/</fr:uri><fr:display-uri>JE53</fr:display-uri><fr:route>/JE53/</fr:route><fr:title text="Process control block">Process control block</fr:title></fr:frontmatter><fr:mainmatter><html:p>The kernel-side data structure holding all per-process state. There is one PCB per <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>, threaded together into the <html:em>process list</html:em>. The PCB is what the OS reads and writes during a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">Context switch</fr:link>: the saved register set lives here, as does the process state, the open files, the parent pointer, and so on.</html:p><html:p>An example from <html:code>xv6</html:code>:</html:p><html:pre><html:code class="language-c"><![CDATA[// the registers xv6 will save and restore
 // to stop and subsequently restart a process
 struct context {
   int eip;
@@ -2399,7 +2391,7 @@ struct proc {
   struct inode *cwd;         // Current directory
   struct context context;    // Switch here to run process
   struct trapframe *tf;      // Trap frame for the current interrupt
-};]]></html:pre>
+};]]></html:code></html:pre>
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
   padding: 0.5em 1.1em 0.5em 1.2em;
@@ -2413,14 +2405,14 @@ struct proc {
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>16</fr:day></fr:date><fr:title text="Unix process syscalls">Unix process syscalls</fr:title></fr:frontmatter><fr:mainmatter>
 <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/O1S9/</fr:uri><fr:display-uri>O1S9</fr:display-uri><fr:route>/O1S9/</fr:route><fr:title text="fork()">fork()</fr:title></fr:frontmatter><fr:mainmatter><html:p>The Unix system call that duplicates the calling <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>. After <html:code>fork()</html:code> returns, two processes exist where there was one. The child gets its own copy of:</html:p><html:ol><html:li>Address space.</html:li>
   <html:li>General-purpose registers.</html:li>
-  <html:li>Program counter — the child returns from <html:code>fork()</html:code> at the same instruction the parent does.</html:li></html:ol><html:p>The two processes are distinguished by <html:code>fork()</html:code>'s return value:</html:p><html:pre><![CDATA[int main()
+  <html:li>Program counter — the child returns from <html:code>fork()</html:code> at the same instruction the parent does.</html:li></html:ol><html:p>The two processes are distinguished by <html:code>fork()</html:code>'s return value:</html:p><html:pre><html:code class="language-c"><![CDATA[int main()
   int rc = fork();
   if (rc < 0)
     printf("error with fork");
   else if (rc == 0)
     printf("in child");
   else
-    printf("in parent");        // rc holds child PID]]></html:pre>
+    printf("in parent");        // rc holds child PID]]></html:code></html:pre>
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
   padding: 0.5em 1.1em 0.5em 1.2em;
@@ -2448,7 +2440,7 @@ struct proc {
 </fr:mainmatter></fr:tree>
 <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/YHJR/</fr:uri><fr:display-uri>YHJR</fr:display-uri><fr:route>/YHJR/</fr:route><fr:title text="exec()">exec()</fr:title></fr:frontmatter><fr:mainmatter><html:p>Replaces the calling <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>'s program with a new executable. <html:code>exec()</html:code> does not return on success — the original code, data, stack, and heap are discarded and the new program runs in their place. The PID is unchanged.</html:p><html:p>What <html:code>exec()</html:code> does internally:</html:p><html:ol><html:li>Loads the new executable's code and static data, overwriting the current.</html:li>
   <html:li>Re-initializes stack and heap.</html:li>
-  <html:li>Jumps to the new program's entry point with arguments passed as <html:code>argv</html:code>.</html:li></html:ol><html:p>The canonical Unix pattern is <html:code>fork()</html:code> then <html:code>exec()</html:code> — the shell uses this to launch a command without becoming that command:</html:p><html:pre><![CDATA[int main()
+  <html:li>Jumps to the new program's entry point with arguments passed as <html:code>argv</html:code>.</html:li></html:ol><html:p>The canonical Unix pattern is <html:code>fork()</html:code> then <html:code>exec()</html:code> — the shell uses this to launch a command without becoming that command:</html:p><html:pre><html:code class="language-c"><![CDATA[int main()
   while (true) {
     command = getcommand();
     int rc = fork();
@@ -2458,10 +2450,10 @@ struct proc {
       exec(command);            // child becomes the command
     else
       int rc = wait(NULL);      // parent waits for it
-  }]]></html:pre><html:p>Redirection is implemented by opening a file in the child between <html:code>fork()</html:code> and <html:code>exec()</html:code>, attached to <html:code>STDOUT_FILENO</html:code>:</html:p><html:pre><![CDATA[if (rc == 0)
+  }]]></html:code></html:pre><html:p>Redirection is implemented by opening a file in the child between <html:code>fork()</html:code> and <html:code>exec()</html:code>, attached to <html:code>STDOUT_FILENO</html:code>:</html:p><html:pre><html:code class="language-c"><![CDATA[if (rc == 0)
   close(STDOUT_FILENO);
   open("output.txt");
-  exec(command);]]></html:pre>
+  exec(command);]]></html:code></html:pre>
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
   padding: 0.5em 1.1em 0.5em 1.2em;

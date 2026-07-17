@@ -73,10 +73,10 @@
   background-color: rgba(200, 55, 45, 0.06);
   "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> 
   You can only read the active member of a union.
-<html:pre><![CDATA[union U { int i; float f; };
+<html:pre><html:code class="language-cpp"><![CDATA[union U { int i; float f; };
 U u;
 u.i = 42;
-float x = u.f;  // UB — reading the inactive member]]></html:pre>
+float x = u.f;  // UB — reading the inactive member]]></html:code></html:pre>
 </html:div>
 
  <html:div class="jms-callout" style="
@@ -87,7 +87,7 @@ float x = u.f;  // UB — reading the inactive member]]></html:pre>
   background-color: rgba(200, 55, 45, 0.06);
   "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> 
 <html:em>No automatic lifetime management for non-trivial types.</html:em> If a union holds an object with a non-trivial constructor/destructor (like <html:code>std::string</html:code>), the compiler won't call them for you. You must manually placement-new and explicitly call the destructor, and getting this wrong causes leaks or corruption.
-<html:pre><![CDATA[union U { std::string s; int i; };  // destructor not called automatically]]></html:pre>
+<html:pre><html:code class="language-cpp"><![CDATA[union U { std::string s; int i; };  // destructor not called automatically]]></html:code></html:pre>
 </html:div>
 
  <html:div class="jms-callout" style="
@@ -98,14 +98,14 @@ float x = u.f;  // UB — reading the inactive member]]></html:pre>
   background-color: rgba(90, 90, 110, 0.05);
   "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 Avoid "naked" unions; opt for "tagged" unions.
-<html:pre><![CDATA[struct Value {
+<html:pre><html:code class="language-cpp"><![CDATA[struct Value {
     enum class Type { Int, Float, Str } tag;
     union {
         int   i;
         float f;
         char  s[32];
     };
-};]]></html:pre>
+};]]></html:code></html:pre>
 This along with lifetime management is the basis of <fr:link href="https://en.cppreference.com/cpp/utility/variant" type="external"><html:code>std::variant</html:code></fr:link>.
 </html:div>
 </fr:mainmatter></fr:tree>
@@ -117,9 +117,9 @@ This along with lifetime management is the basis of <fr:link href="https://en.cp
   border-radius: var(--radius);
   background-color: rgba(60, 90, 180, 0.05);
   "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
-<html:pre><![CDATA[enum class Color { red, green, blue };
+<html:pre><html:code class="language-cpp"><![CDATA[enum class Color { red, green, blue };
 
-Color c = Color::red;]]></html:pre>
+Color c = Color::red;]]></html:code></html:pre>
 </html:div>
 <html:p>If you want enumerator values to be <html:code>int</html:code>, you can use <html:code>enum</html:code>.</html:p>
  <html:div class="jms-callout" style="
@@ -129,9 +129,9 @@ Color c = Color::red;]]></html:pre>
   border-radius: var(--radius);
   background-color: rgba(60, 90, 180, 0.05);
   "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
-<html:pre><![CDATA[enum Color { red, green, blue };
+<html:pre><html:code class="language-cpp"><![CDATA[enum Color { red, green, blue };
 
-int color = green     // color = 1]]></html:pre>
+int color = green     // color = 1]]></html:code></html:pre>
 Note that this is an error if <html:code>Color</html:code> is <html:code>enum class</html:code>.
 </html:div>
 
@@ -195,12 +195,12 @@ We call <html:code>vector</html:code> a container.
   background-color: rgba(60, 90, 180, 0.05);
   "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
   Below is an abstract implementation of a <fr:link href="/OGCSE/" title="Container (C++)" uri="https://kellenkanarios.com/OGCSE/" display-uri="OGCSE" type="local">container class</fr:link>.
-  <html:pre><![CDATA[  class Container {
+  <html:pre><html:code class="language-cpp"><![CDATA[  class Container {
   public:
     virtual double& operator[](int) = 0; // pure virtual function
     virtual int size() const = 0; // const member function
     virtual ˜Container() {} // destructor
-  };]]></html:pre>
+  };]]></html:code></html:pre>
 </html:div>
 </fr:mainmatter></fr:tree>
 </fr:mainmatter></fr:tree>
@@ -230,7 +230,7 @@ The <html:code>type_info</html:code> pointer is needed to support runtime type-c
   border-radius: var(--radius);
   background-color: rgba(60, 90, 180, 0.05);
   "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
-<html:pre><![CDATA[struct A {
+<html:pre><html:code class="language-cpp"><![CDATA[struct A {
     virtual void f();
     int a;
 };
@@ -243,7 +243,7 @@ struct B {
 struct D : A, B {
     void g() override;   // overrides B::g
     int d;
-};]]></html:pre>
+};]]></html:code></html:pre>
 <html:pre><![CDATA[offset 0:   [ vptr_A ]   ← D's primary vtable (A subobject)
 offset 8:   [ a      ]
 offset 16:  [ vptr_B ]   ← D's secondary vtable (B subobject)
@@ -259,7 +259,7 @@ offset 32:  [ d      ]]]></html:pre>
   background-color: rgba(60, 90, 180, 0.05);
   "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
 Consider the following class hierarchy:
-<html:pre><![CDATA[struct Base {
+<html:pre><html:code class="language-cpp"><![CDATA[struct Base {
     virtual void f();
     virtual void g();
     int x;
@@ -269,7 +269,7 @@ struct Derived : Base {
     void f() override;   // overrides Base::f
     void h();            // non-virtual, not in vtable
     int y;
-};]]></html:pre>
+};]]></html:code></html:pre>
 This yields the following components for each type of object:
 <html:pre><![CDATA[Base object:        Derived object:
 [ vptr ]            [ vptr ]      → points to Derived's vtable
@@ -495,10 +495,10 @@ Generally, if you know how much memory you need it is good practice to just allo
   background-color: rgba(200, 55, 45, 0.06);
   "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> 
   You can only read the active member of a union.
-<html:pre><![CDATA[union U { int i; float f; };
+<html:pre><html:code class="language-cpp"><![CDATA[union U { int i; float f; };
 U u;
 u.i = 42;
-float x = u.f;  // UB — reading the inactive member]]></html:pre>
+float x = u.f;  // UB — reading the inactive member]]></html:code></html:pre>
 </html:div>
 
  <html:div class="jms-callout" style="
@@ -509,7 +509,7 @@ float x = u.f;  // UB — reading the inactive member]]></html:pre>
   background-color: rgba(200, 55, 45, 0.06);
   "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> 
 <html:em>No automatic lifetime management for non-trivial types.</html:em> If a union holds an object with a non-trivial constructor/destructor (like <html:code>std::string</html:code>), the compiler won't call them for you. You must manually placement-new and explicitly call the destructor, and getting this wrong causes leaks or corruption.
-<html:pre><![CDATA[union U { std::string s; int i; };  // destructor not called automatically]]></html:pre>
+<html:pre><html:code class="language-cpp"><![CDATA[union U { std::string s; int i; };  // destructor not called automatically]]></html:code></html:pre>
 </html:div>
 
  <html:div class="jms-callout" style="
@@ -520,14 +520,14 @@ float x = u.f;  // UB — reading the inactive member]]></html:pre>
   background-color: rgba(90, 90, 110, 0.05);
   "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 Avoid "naked" unions; opt for "tagged" unions.
-<html:pre><![CDATA[struct Value {
+<html:pre><html:code class="language-cpp"><![CDATA[struct Value {
     enum class Type { Int, Float, Str } tag;
     union {
         int   i;
         float f;
         char  s[32];
     };
-};]]></html:pre>
+};]]></html:code></html:pre>
 This along with lifetime management is the basis of <fr:link href="https://en.cppreference.com/cpp/utility/variant" type="external"><html:code>std::variant</html:code></fr:link>.
 </html:div>
 </fr:mainmatter></fr:tree>
@@ -539,9 +539,9 @@ This along with lifetime management is the basis of <fr:link href="https://en.cp
   border-radius: var(--radius);
   background-color: rgba(60, 90, 180, 0.05);
   "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
-<html:pre><![CDATA[enum class Color { red, green, blue };
+<html:pre><html:code class="language-cpp"><![CDATA[enum class Color { red, green, blue };
 
-Color c = Color::red;]]></html:pre>
+Color c = Color::red;]]></html:code></html:pre>
 </html:div>
 <html:p>If you want enumerator values to be <html:code>int</html:code>, you can use <html:code>enum</html:code>.</html:p>
  <html:div class="jms-callout" style="
@@ -551,9 +551,9 @@ Color c = Color::red;]]></html:pre>
   border-radius: var(--radius);
   background-color: rgba(60, 90, 180, 0.05);
   "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
-<html:pre><![CDATA[enum Color { red, green, blue };
+<html:pre><html:code class="language-cpp"><![CDATA[enum Color { red, green, blue };
 
-int color = green     // color = 1]]></html:pre>
+int color = green     // color = 1]]></html:code></html:pre>
 Note that this is an error if <html:code>Color</html:code> is <html:code>enum class</html:code>.
 </html:div>
 
@@ -617,12 +617,12 @@ We call <html:code>vector</html:code> a container.
   background-color: rgba(60, 90, 180, 0.05);
   "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
   Below is an abstract implementation of a <fr:link href="/OGCSE/" title="Container (C++)" uri="https://kellenkanarios.com/OGCSE/" display-uri="OGCSE" type="local">container class</fr:link>.
-  <html:pre><![CDATA[  class Container {
+  <html:pre><html:code class="language-cpp"><![CDATA[  class Container {
   public:
     virtual double& operator[](int) = 0; // pure virtual function
     virtual int size() const = 0; // const member function
     virtual ˜Container() {} // destructor
-  };]]></html:pre>
+  };]]></html:code></html:pre>
 </html:div>
 </fr:mainmatter></fr:tree>
 </fr:mainmatter></fr:tree>
@@ -652,7 +652,7 @@ The <html:code>type_info</html:code> pointer is needed to support runtime type-c
   border-radius: var(--radius);
   background-color: rgba(60, 90, 180, 0.05);
   "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
-<html:pre><![CDATA[struct A {
+<html:pre><html:code class="language-cpp"><![CDATA[struct A {
     virtual void f();
     int a;
 };
@@ -665,7 +665,7 @@ struct B {
 struct D : A, B {
     void g() override;   // overrides B::g
     int d;
-};]]></html:pre>
+};]]></html:code></html:pre>
 <html:pre><![CDATA[offset 0:   [ vptr_A ]   ← D's primary vtable (A subobject)
 offset 8:   [ a      ]
 offset 16:  [ vptr_B ]   ← D's secondary vtable (B subobject)
@@ -681,7 +681,7 @@ offset 32:  [ d      ]]]></html:pre>
   background-color: rgba(60, 90, 180, 0.05);
   "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
 Consider the following class hierarchy:
-<html:pre><![CDATA[struct Base {
+<html:pre><html:code class="language-cpp"><![CDATA[struct Base {
     virtual void f();
     virtual void g();
     int x;
@@ -691,7 +691,7 @@ struct Derived : Base {
     void f() override;   // overrides Base::f
     void h();            // non-virtual, not in vtable
     int y;
-};]]></html:pre>
+};]]></html:code></html:pre>
 This yields the following components for each type of object:
 <html:pre><![CDATA[Base object:        Derived object:
 [ vptr ]            [ vptr ]      → points to Derived's vtable

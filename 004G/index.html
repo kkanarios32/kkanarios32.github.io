@@ -1,6 +1,14 @@
 <!DOCTYPE html PUBLIC "" "">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<meta name="viewport" content="width=device-width"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>Self-Attention</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<meta name="viewport" content="width=device-width"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script src="/highlightjs-line-numbers.min.js"></script><script>
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+    if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
+  });
+});
+          </script><title>Self-Attention</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon"></span>Self-Attention <a class="slug" href="/004G/">[004G]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">February 1, 2025</li>
@@ -444,7 +452,17 @@ such that \(\mathbf {o}_{i,n}' = \mathbf {o}_n\)</p>
     .\end {align*}
     \]
   </div>
-<p xmlns="http://www.w3.org/1999/xhtml">Thus, we are left with the following algorithm</p><p xmlns="http://www.w3.org/1999/xhtml"><img src="https://kellenkanarios.com/e443552973fe32fe694e594b454313d2.svg"></img></p>
+<p xmlns="http://www.w3.org/1999/xhtml">Thus, we are left with the following algorithm</p><div xmlns="http://www.w3.org/1999/xhtml" class="code-figure"><div class="code-filename">flash_attention.py</div><pre><code class="language-python">for i in range(N):                      # one query row at a time
+    m = float("-inf")                    # running max of the logits
+    d = 0.0                              # running softmax denominator
+    o = zeros(head_dim)                  # running output accumulator
+    for j in range(M):                   # stream over keys/values
+        x = q[i] @ k[j]                  # logit x_{i,j}
+        m_new = max(m, x)
+        d_new = d * exp(m - m_new) + exp(x - m_new)
+        o = o * (d * exp(m - m_new) / d_new) + (exp(x - m_new) / d_new) * v[j]
+        m, d = m_new, d_new
+    out[i] = o</code></pre></div>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
 A key benefit of this algorithm is that it is entirely parallelizable across rows. This means that we can loop across entire <span xmlns="" class="link local"><a href="/OGCRV/" title="Memory Tiling (GPU) [OGCRV]">tiles</a></span> like in the GEMM case.
 </div>
@@ -487,9 +505,7 @@ Similar to the <span xmlns="" class="link local"><a href="/TJLA/" title="KV-cach
 <li class="meta-item">July 14, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The idea behind <em>sliding window attention</em> is to ensure the number of weight matrices needed for the keys \(K\) and values \(V\) does not scale with the sequence length. Intuitively, this means allowing each word to "attend" to only some fixed number of previous words rather than the whole sequence</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmidqeoo6wx6s4ry6u74fcelfzxvwreyf7d44whnql4ffnnyd2dwcha.png"></img>
-<figcaption>"the" only sees "on" and "sat" rather than the full sentence.</figcaption></figure></details></section>
-  
-</details></section>
+<figcaption>"the" only sees "on" and "sat" rather than the full sentence.</figcaption></figure></details></section></details></section>
       </details></section>
     
     

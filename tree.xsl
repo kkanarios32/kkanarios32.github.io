@@ -25,6 +25,19 @@
           </xsl:if>
         </script>
         <script type="module" src="{/f:tree/@base-url}forester.js"></script>
+        <script src="{/f:tree/@base-url}highlight.min.js"></script>
+        <script src="{/f:tree/@base-url}highlightjs-line-numbers.min.js"></script>
+        <script>
+          <xsl:text disable-output-escaping="yes"><![CDATA[
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+    if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
+  });
+});
+          ]]></xsl:text>
+        </script>
         <script>
           <xsl:text disable-output-escaping="yes"><![CDATA[
 (function(){

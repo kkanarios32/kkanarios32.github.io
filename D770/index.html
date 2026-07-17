@@ -1,6 +1,14 @@
 <!DOCTYPE html PUBLIC "" "">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<meta name="viewport" content="width=device-width"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>Exceptions (error handling)</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<meta name="viewport" content="width=device-width"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script src="/highlightjs-line-numbers.min.js"></script><script>
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+    if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
+  });
+});
+          </script><title>Exceptions (error handling)</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon"></span>Exceptions (error handling) <a class="slug" href="/D770/">[D770]</a> </h1>
 <div class="metadata"><ul><li class="meta-item">June 3, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">In <span xmlns="" class="link local"><a href="/OGCS1/" title="Notebook: C++ [OGCS1]">C++</a></span>, exceptions are thrown via the <code>throw</code> keyword.</p><p xmlns="http://www.w3.org/1999/xhtml">The <code>throw</code> keyword transfers control to <em>exception handler</em>. This then proceeds as</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Allocate heap memory for the exception object.</li>
   <li>Invoke the unwinder.</li>
@@ -52,27 +60,27 @@ The compiler may call copy constructor instead of move constructor if the move c
 <div class="metadata"><ul><li class="meta-item">June 1, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A union is a <span xmlns="" class="link local"><a href="/CCIB/" title="Struct (C++) [CCIB]">struct</a></span> in which all members are allocated at the same address. This ensures that the union occupies only as much space as its largest member.</p><p xmlns="http://www.w3.org/1999/xhtml">A union can hold a value for only one member at a time.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
   You can only read the active member of a union.
-<pre>union U { int i; float f; };
+<pre><code class="language-cpp">union U { int i; float f; };
 U u;
 u.i = 42;
-float x = u.f;  // UB — reading the inactive member</pre>
+float x = u.f;  // UB — reading the inactive member</code></pre>
 </div>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
 <em>No automatic lifetime management for non-trivial types.</em> If a union holds an object with a non-trivial constructor/destructor (like <code>std::string</code>), the compiler won't call them for you. You must manually placement-new and explicitly call the destructor, and getting this wrong causes leaks or corruption.
-<pre>union U { std::string s; int i; };  // destructor not called automatically</pre>
+<pre><code class="language-cpp">union U { std::string s; int i; };  // destructor not called automatically</code></pre>
 </div>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
 Avoid "naked" unions; opt for "tagged" unions.
-<pre>struct Value {
+<pre><code class="language-cpp">struct Value {
     enum class Type { Int, Float, Str } tag;
     union {
         int   i;
         float f;
         char  s[32];
     };
-};</pre>
+};</code></pre>
 This along with lifetime management is the basis of <span xmlns="" class="link external"><code xmlns="http://www.w3.org/1999/xhtml"><a xmlns="" href="https://en.cppreference.com/cpp/utility/variant" title="">std::variant</a></code></span>.
 </div>
 </details></section>
@@ -83,15 +91,15 @@ This along with lifetime management is the basis of <span xmlns="" class="link e
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">User-defined type in <span xmlns="" class="link local"><a href="/OGCS1/" title="Notebook: C++ [OGCS1]">C++</a></span> that is a set of named values designed to make code more readable and less error prone.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
-<pre>enum class Color { red, green, blue };
+<pre><code class="language-cpp">enum class Color { red, green, blue };
 
-Color c = Color::red;</pre>
+Color c = Color::red;</code></pre>
 </div>
 <p xmlns="http://www.w3.org/1999/xhtml">If you want enumerator values to be <code>int</code>, you can use <code>enum</code>.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
-<pre>enum Color { red, green, blue };
+<pre><code class="language-cpp">enum Color { red, green, blue };
 
-int color = green     // color = 1</pre>
+int color = green     // color = 1</code></pre>
 Note that this is an error if <code>Color</code> is <code>enum class</code>.
 </div>
 
@@ -150,12 +158,12 @@ We call <code>vector</code> a container.
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An <em>abstract type</em> is a type that completely insulates a user from implementation details.</p><p xmlns="http://www.w3.org/1999/xhtml">Since we do not know anything about the representation (in particular, the size) we must allocate everything on heap.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
   Below is an abstract implementation of a <span xmlns="" class="link local"><a href="/OGCSE/" title="Container (C++) [OGCSE]">container class</a></span>.
-  <pre>  class Container {
+  <pre><code class="language-cpp">  class Container {
   public:
     virtual double&amp; operator[](int) = 0; // pure virtual function
     virtual int size() const = 0; // const member function
     virtual ˜Container() {} // destructor
-  };</pre>
+  };</code></pre>
 </div>
 </details></section>
 </details></section>
@@ -188,7 +196,7 @@ The <code>type_info</code> pointer is needed to support runtime type-checking / 
 </div>
 <p xmlns="http://www.w3.org/1999/xhtml">During construction, the vptr is initialized to point to the base class's vtable. In each classes vtable, there is a <em>thunk</em> (<code>offset-to-top</code>) that tells </p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
-<pre>struct A {
+<pre><code class="language-cpp">struct A {
     virtual void f();
     int a;
 };
@@ -201,7 +209,7 @@ struct B {
 struct D : A, B {
     void g() override;   // overrides B::g
     int d;
-};</pre>
+};</code></pre>
 <pre>offset 0:   [ vptr_A ]   ← D's primary vtable (A subobject)
 offset 8:   [ a      ]
 offset 16:  [ vptr_B ]   ← D's secondary vtable (B subobject)
@@ -211,7 +219,7 @@ offset 32:  [ d      ]</pre>
 </details></section><p xmlns="http://www.w3.org/1999/xhtml">Every <strong>object</strong> of a class with a virtual function carries a hidden vptr (virtual pointer) that points to the class's virtual table.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
 Consider the following class hierarchy:
-<pre>struct Base {
+<pre><code class="language-cpp">struct Base {
     virtual void f();
     virtual void g();
     int x;
@@ -221,7 +229,7 @@ struct Derived : Base {
     void f() override;   // overrides Base::f
     void h();            // non-virtual, not in vtable
     int y;
-};</pre>
+};</code></pre>
 This yields the following components for each type of object:
 <pre>Base object:        Derived object:
 [ vptr ]            [ vptr ]      → points to Derived's vtable
@@ -342,27 +350,27 @@ The compiler may call copy constructor instead of move constructor if the move c
 <div class="metadata"><ul><li class="meta-item">June 1, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A union is a <span xmlns="" class="link local"><a href="/CCIB/" title="Struct (C++) [CCIB]">struct</a></span> in which all members are allocated at the same address. This ensures that the union occupies only as much space as its largest member.</p><p xmlns="http://www.w3.org/1999/xhtml">A union can hold a value for only one member at a time.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
   You can only read the active member of a union.
-<pre>union U { int i; float f; };
+<pre><code class="language-cpp">union U { int i; float f; };
 U u;
 u.i = 42;
-float x = u.f;  // UB — reading the inactive member</pre>
+float x = u.f;  // UB — reading the inactive member</code></pre>
 </div>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
 <em>No automatic lifetime management for non-trivial types.</em> If a union holds an object with a non-trivial constructor/destructor (like <code>std::string</code>), the compiler won't call them for you. You must manually placement-new and explicitly call the destructor, and getting this wrong causes leaks or corruption.
-<pre>union U { std::string s; int i; };  // destructor not called automatically</pre>
+<pre><code class="language-cpp">union U { std::string s; int i; };  // destructor not called automatically</code></pre>
 </div>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
 Avoid "naked" unions; opt for "tagged" unions.
-<pre>struct Value {
+<pre><code class="language-cpp">struct Value {
     enum class Type { Int, Float, Str } tag;
     union {
         int   i;
         float f;
         char  s[32];
     };
-};</pre>
+};</code></pre>
 This along with lifetime management is the basis of <span xmlns="" class="link external"><code xmlns="http://www.w3.org/1999/xhtml"><a xmlns="" href="https://en.cppreference.com/cpp/utility/variant" title="">std::variant</a></code></span>.
 </div>
 </details></section>
@@ -373,15 +381,15 @@ This along with lifetime management is the basis of <span xmlns="" class="link e
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">User-defined type in <span xmlns="" class="link local"><a href="/OGCS1/" title="Notebook: C++ [OGCS1]">C++</a></span> that is a set of named values designed to make code more readable and less error prone.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
-<pre>enum class Color { red, green, blue };
+<pre><code class="language-cpp">enum class Color { red, green, blue };
 
-Color c = Color::red;</pre>
+Color c = Color::red;</code></pre>
 </div>
 <p xmlns="http://www.w3.org/1999/xhtml">If you want enumerator values to be <code>int</code>, you can use <code>enum</code>.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
-<pre>enum Color { red, green, blue };
+<pre><code class="language-cpp">enum Color { red, green, blue };
 
-int color = green     // color = 1</pre>
+int color = green     // color = 1</code></pre>
 Note that this is an error if <code>Color</code> is <code>enum class</code>.
 </div>
 
@@ -440,12 +448,12 @@ We call <code>vector</code> a container.
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An <em>abstract type</em> is a type that completely insulates a user from implementation details.</p><p xmlns="http://www.w3.org/1999/xhtml">Since we do not know anything about the representation (in particular, the size) we must allocate everything on heap.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
   Below is an abstract implementation of a <span xmlns="" class="link local"><a href="/OGCSE/" title="Container (C++) [OGCSE]">container class</a></span>.
-  <pre>  class Container {
+  <pre><code class="language-cpp">  class Container {
   public:
     virtual double&amp; operator[](int) = 0; // pure virtual function
     virtual int size() const = 0; // const member function
     virtual ˜Container() {} // destructor
-  };</pre>
+  };</code></pre>
 </div>
 </details></section>
 </details></section>
@@ -478,7 +486,7 @@ The <code>type_info</code> pointer is needed to support runtime type-checking / 
 </div>
 <p xmlns="http://www.w3.org/1999/xhtml">During construction, the vptr is initialized to point to the base class's vtable. In each classes vtable, there is a <em>thunk</em> (<code>offset-to-top</code>) that tells </p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
-<pre>struct A {
+<pre><code class="language-cpp">struct A {
     virtual void f();
     int a;
 };
@@ -491,7 +499,7 @@ struct B {
 struct D : A, B {
     void g() override;   // overrides B::g
     int d;
-};</pre>
+};</code></pre>
 <pre>offset 0:   [ vptr_A ]   ← D's primary vtable (A subobject)
 offset 8:   [ a      ]
 offset 16:  [ vptr_B ]   ← D's secondary vtable (B subobject)
@@ -501,7 +509,7 @@ offset 32:  [ d      ]</pre>
 </details></section><p xmlns="http://www.w3.org/1999/xhtml">Every <strong>object</strong> of a class with a virtual function carries a hidden vptr (virtual pointer) that points to the class's virtual table.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
 Consider the following class hierarchy:
-<pre>struct Base {
+<pre><code class="language-cpp">struct Base {
     virtual void f();
     virtual void g();
     int x;
@@ -511,7 +519,7 @@ struct Derived : Base {
     void f() override;   // overrides Base::f
     void h();            // non-virtual, not in vtable
     int y;
-};</pre>
+};</code></pre>
 This yields the following components for each type of object:
 <pre>Base object:        Derived object:
 [ vptr ]            [ vptr ]      → points to Derived's vtable

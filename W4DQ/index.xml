@@ -1762,7 +1762,7 @@ pens when you use <html:code>-S SWITCH ON IO</html:code> vs. <html:code>-S SWITC
                 <fr:route>/JE53/</fr:route>
                 <fr:title text="Process control block">Process control block</fr:title>
               </fr:frontmatter>
-              <fr:mainmatter><html:p>The kernel-side data structure holding all per-process state. There is one PCB per <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>, threaded together into the <html:em>process list</html:em>. The PCB is what the OS reads and writes during a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">Context switch</fr:link>: the saved register set lives here, as does the process state, the open files, the parent pointer, and so on.</html:p><html:p>An example from <html:code>xv6</html:code>:</html:p><html:pre><![CDATA[// the registers xv6 will save and restore
+              <fr:mainmatter><html:p>The kernel-side data structure holding all per-process state. There is one PCB per <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>, threaded together into the <html:em>process list</html:em>. The PCB is what the OS reads and writes during a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">Context switch</fr:link>: the saved register set lives here, as does the process state, the open files, the parent pointer, and so on.</html:p><html:p>An example from <html:code>xv6</html:code>:</html:p><html:pre><html:code class="language-c"><![CDATA[// the registers xv6 will save and restore
 // to stop and subsequently restart a process
 struct context {
   int eip;
@@ -1791,7 +1791,7 @@ struct proc {
   struct inode *cwd;         // Current directory
   struct context context;    // Switch here to run process
   struct trapframe *tf;      // Trap frame for the current interrupt
-};]]></html:pre>
+};]]></html:code></html:pre>
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
   padding: 0.5em 1.1em 0.5em 1.2em;
@@ -1936,7 +1936,7 @@ struct proc {
           </fr:frontmatter>
           <fr:mainmatter><html:p>Replaces the calling <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>'s program with a new executable. <html:code>exec()</html:code> does not return on success — the original code, data, stack, and heap are discarded and the new program runs in their place. The PID is unchanged.</html:p><html:p>What <html:code>exec()</html:code> does internally:</html:p><html:ol><html:li>Loads the new executable's code and static data, overwriting the current.</html:li>
   <html:li>Re-initializes stack and heap.</html:li>
-  <html:li>Jumps to the new program's entry point with arguments passed as <html:code>argv</html:code>.</html:li></html:ol><html:p>The canonical Unix pattern is <html:code>fork()</html:code> then <html:code>exec()</html:code> — the shell uses this to launch a command without becoming that command:</html:p><html:pre><![CDATA[int main()
+  <html:li>Jumps to the new program's entry point with arguments passed as <html:code>argv</html:code>.</html:li></html:ol><html:p>The canonical Unix pattern is <html:code>fork()</html:code> then <html:code>exec()</html:code> — the shell uses this to launch a command without becoming that command:</html:p><html:pre><html:code class="language-c"><![CDATA[int main()
   while (true) {
     command = getcommand();
     int rc = fork();
@@ -1946,10 +1946,10 @@ struct proc {
       exec(command);            // child becomes the command
     else
       int rc = wait(NULL);      // parent waits for it
-  }]]></html:pre><html:p>Redirection is implemented by opening a file in the child between <html:code>fork()</html:code> and <html:code>exec()</html:code>, attached to <html:code>STDOUT_FILENO</html:code>:</html:p><html:pre><![CDATA[if (rc == 0)
+  }]]></html:code></html:pre><html:p>Redirection is implemented by opening a file in the child between <html:code>fork()</html:code> and <html:code>exec()</html:code>, attached to <html:code>STDOUT_FILENO</html:code>:</html:p><html:pre><html:code class="language-c"><![CDATA[if (rc == 0)
   close(STDOUT_FILENO);
   open("output.txt");
-  exec(command);]]></html:pre>
+  exec(command);]]></html:code></html:pre>
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
   padding: 0.5em 1.1em 0.5em 1.2em;
@@ -2005,14 +2005,14 @@ struct proc {
           </fr:frontmatter>
           <fr:mainmatter><html:p>The Unix system call that duplicates the calling <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>. After <html:code>fork()</html:code> returns, two processes exist where there was one. The child gets its own copy of:</html:p><html:ol><html:li>Address space.</html:li>
   <html:li>General-purpose registers.</html:li>
-  <html:li>Program counter — the child returns from <html:code>fork()</html:code> at the same instruction the parent does.</html:li></html:ol><html:p>The two processes are distinguished by <html:code>fork()</html:code>'s return value:</html:p><html:pre><![CDATA[int main()
+  <html:li>Program counter — the child returns from <html:code>fork()</html:code> at the same instruction the parent does.</html:li></html:ol><html:p>The two processes are distinguished by <html:code>fork()</html:code>'s return value:</html:p><html:pre><html:code class="language-c"><![CDATA[int main()
   int rc = fork();
   if (rc < 0)
     printf("error with fork");
   else if (rc == 0)
     printf("in child");
   else
-    printf("in parent");        // rc holds child PID]]></html:pre>
+    printf("in parent");        // rc holds child PID]]></html:code></html:pre>
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
   padding: 0.5em 1.1em 0.5em 1.2em;
@@ -2047,7 +2047,7 @@ struct proc {
             <fr:route>/JE53/</fr:route>
             <fr:title text="Process control block">Process control block</fr:title>
           </fr:frontmatter>
-          <fr:mainmatter><html:p>The kernel-side data structure holding all per-process state. There is one PCB per <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>, threaded together into the <html:em>process list</html:em>. The PCB is what the OS reads and writes during a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">Context switch</fr:link>: the saved register set lives here, as does the process state, the open files, the parent pointer, and so on.</html:p><html:p>An example from <html:code>xv6</html:code>:</html:p><html:pre><![CDATA[// the registers xv6 will save and restore
+          <fr:mainmatter><html:p>The kernel-side data structure holding all per-process state. There is one PCB per <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>, threaded together into the <html:em>process list</html:em>. The PCB is what the OS reads and writes during a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">Context switch</fr:link>: the saved register set lives here, as does the process state, the open files, the parent pointer, and so on.</html:p><html:p>An example from <html:code>xv6</html:code>:</html:p><html:pre><html:code class="language-c"><![CDATA[// the registers xv6 will save and restore
 // to stop and subsequently restart a process
 struct context {
   int eip;
@@ -2076,7 +2076,7 @@ struct proc {
   struct inode *cwd;         // Current directory
   struct context context;    // Switch here to run process
   struct trapframe *tf;      // Trap frame for the current interrupt
-};]]></html:pre>
+};]]></html:code></html:pre>
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
   padding: 0.5em 1.1em 0.5em 1.2em;

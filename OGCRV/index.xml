@@ -110,23 +110,17 @@ such that <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,n}' = \mathbf {o}_n]]
     .\end {align*}
     ]]></fr:tex>
   </html:div>
-<html:p>Thus, we are left with the following algorithm</html:p><html:p><fr:resource hash="e443552973fe32fe694e594b454313d2"><fr:resource-content><html:img src="https://kellenkanarios.com/e443552973fe32fe694e594b454313d2.svg" /></fr:resource-content><fr:resource-source type="latex" part="preamble"><![CDATA[
-  \usepackage{tikz, tikz-cd, mathtools, amssymb, amsmath, stmaryrd, algpseudocodex}
- \newenvironment{algo}{\begin{varwidth}{20cm}\begin{algorithmic}}{\end{algorithmic}\end{varwidth}}
- \ExplSyntaxOff
-]]></fr:resource-source><fr:resource-source type="latex" part="body"><![CDATA[
-\begin {algo}
-\For {$i = 1$ \textbf {to} $N$}
-\State  $m_{0} \gets  -\infty ;\quad  d_{0} \gets  0$
-\For {$j = 1$ \textbf {to} $M$}
-  \State  $x_{i,j} \gets  \mathbf {q}_i \cdot  \mathbf {k}_j$
-  \State  $m_{j} \gets  \max (m_{j-1}, x_{i,j})$
-  \State  $d_{j} \gets  d_{j - 1} \cdot  e^{\,m_{j - 1} - m_{j}} + e^{\,x_{i,j} - m_{j}}$
-  \State  $\mathbf {o}_{i, j} \gets  \mathbf {o}_{i, j - 1} \cdot  \frac {d_{j - 1} \cdot  \exp (m_{j-1} - m_{j})}{d_j} +  \frac {\exp (x_{i,j} - m_j)}{d_j} \cdot  \mathbf {v}_j$
-\EndFor 
-\EndFor 
-\end {algo}
-]]></fr:resource-source></fr:resource></html:p>
+<html:p>Thus, we are left with the following algorithm</html:p><html:div class="code-figure"><html:div class="code-filename">flash_attention.py</html:div><html:pre><html:code class="language-python">for i in range(N):                      # one query row at a time
+    m = float("-inf")                    # running max of the logits
+    d = 0.0                              # running softmax denominator
+    o = zeros(head_dim)                  # running output accumulator
+    for j in range(M):                   # stream over keys/values
+        x = q[i] @ k[j]                  # logit x_{i,j}
+        m_new = max(m, x)
+        d_new = d * exp(m - m_new) + exp(x - m_new)
+        o = o * (d * exp(m - m_new) / d_new) + (exp(x - m_new) / d_new) * v[j]
+        m, d = m_new, d_new
+    out[i] = o</html:code></html:pre></html:div>
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
   padding: 0.5em 1.1em 0.5em 1.2em;
@@ -220,23 +214,13 @@ Therefore, we must find a recursive relationship such that <fr:tex display="inli
 
 <html:p>
 The running denominator <fr:tex display="inline"><![CDATA[d]]></fr:tex> is rescaled by <fr:tex display="inline"><![CDATA[e^{m - m_{\text {new}}}]]></fr:tex> each time a new maximum is found, keeping it consistent with the safe-softmax shift.</html:p>
-<html:p><fr:resource hash="4a2d5b3202e83ff6780ef6fedca07f67"><fr:resource-content><html:img src="https://kellenkanarios.com/4a2d5b3202e83ff6780ef6fedca07f67.svg" /></fr:resource-content><fr:resource-source type="latex" part="preamble"><![CDATA[
-  \usepackage{tikz, tikz-cd, mathtools, amssymb, amsmath, stmaryrd, algpseudocodex}
- \newenvironment{algo}{\begin{varwidth}{20cm}\begin{algorithmic}}{\end{algorithmic}\end{varwidth}}
- \ExplSyntaxOff
-]]></fr:resource-source><fr:resource-source type="latex" part="body"><![CDATA[
-\begin {algo}
-\State  $m \gets  -\infty ;\quad  d \gets  0$
-\For {$i = 1$ \textbf {to} $n$}
-  \State  $m_{i+1} \gets  \max (m_i, x_i)$
-  \State  $d_{i + 1} \gets  d_i \cdot  e^{\,m_i - m_{i+1}} + e^{\,x_i - m_{i}}$
-\EndFor 
-\For {$i = 1$ \textbf {to} $n$}
-    \State  $\mathbf {p}_{i} \gets  e^{\,x_i - m_n} / d \;$
-\EndFor 
-\Return  $\mathbf {p}$
-\end {algo}
-]]></fr:resource-source></fr:resource></html:p>
+<html:div class="code-figure"><html:div class="code-filename">online_softmax.py</html:div><html:pre><html:code class="language-python">m = float("-inf")                    # running max of the logits
+d = 0.0                              # running softmax denominator
+for i in range(n):                   # one fused sweep for the stats
+    m_new = max(m, x[i])
+    d = d * exp(m - m_new) + exp(x[i] - m_new)
+    m = m_new
+p = [exp(x[i] - m) / d for i in range(n)]   # second pass: normalized probs</html:code></html:pre></html:div>
 
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;

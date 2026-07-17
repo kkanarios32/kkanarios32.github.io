@@ -194,7 +194,13 @@ Therefore, we must find a recursive relationship such that <code>d_{i+1} = f(d_i
 
 <p>
 The running denominator <code>d</code> is rescaled by <code>e^{m - m_{\text {new}}}</code> each time a new maximum is found, keeping it consistent with the safe-softmax shift.</p>
-<p><img src="https://kellenkanarios.com/4a2d5b3202e83ff6780ef6fedca07f67.svg" /></p>
+<div class="code-figure"><div class="code-filename">online_softmax.py</div><pre><code class="language-python">m = float("-inf")                    # running max of the logits
+d = 0.0                              # running softmax denominator
+for i in range(n):                   # one fused sweep for the stats
+    m_new = max(m, x[i])
+    d = d * exp(m - m_new) + exp(x[i] - m_new)
+    m = m_new
+p = [exp(x[i] - m) / d for i in range(n)]   # second pass: normalized probs</code></pre></div>
 
  <div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
@@ -256,7 +262,17 @@ such that <code>\mathbf {o}_{i,n}' = \mathbf {o}_n</code></p>
     .\end {align*}
     </code>
   </div>
-<p>Thus, we are left with the following algorithm</p><p><img src="https://kellenkanarios.com/e443552973fe32fe694e594b454313d2.svg" /></p>
+<p>Thus, we are left with the following algorithm</p><div class="code-figure"><div class="code-filename">flash_attention.py</div><pre><code class="language-python">for i in range(N):                      # one query row at a time
+    m = float("-inf")                    # running max of the logits
+    d = 0.0                              # running softmax denominator
+    o = zeros(head_dim)                  # running output accumulator
+    for j in range(M):                   # stream over keys/values
+        x = q[i] @ k[j]                  # logit x_{i,j}
+        m_new = max(m, x)
+        d_new = d * exp(m - m_new) + exp(x - m_new)
+        o = o * (d * exp(m - m_new) / d_new) + (exp(x - m_new) / d_new) * v[j]
+        m, d = m_new, d_new
+    out[i] = o</code></pre></div>
  <div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
   padding: 0.5em 1.1em 0.5em 1.2em;
@@ -667,259 +683,6 @@ Once we have sent the <code>PutE</code>, or the <code>PutM</code> <code>EI^A</co
     </content>
   </entry>
   <entry>
-    <title>Reinforcement Learning \iff  Linear Programming</title>
-    <published>2025-08-31T22:07:55Z</published>
-    <updated>2025-08-31T22:07:55Z</updated>
-    <author>
-      <name>Kellen Kanarios</name>
-      <uri>https://kellenkanarios.com/kellenkanarios/</uri>
-    </author>
-    <link rel="alternate" type="text/html" href="https://kellenkanarios.com/J3CP/" />
-    <id>https://kellenkanarios.com/J3CP/</id>
-    <content type="xhtml">
-      <div xmlns="http://www.w3.org/1999/xhtml">
-
-  <section><header><h2>Linear Program</h2></header>
-    For this note, we will consider a <em>maximization</em> linear program. Namely, an optimization problem of the following form
-    <code>
-        \begin {align*}
-        \max _{\mathbf {x}} \quad  &amp;\mathbf {c}^{\top } \mathbf {x} \\
-        \text {s.t.} \quad  &amp;A\mathbf {x} \leq  b
-        .\end {align*}
-        </code>
-        In the spirit of <em>lagrange multipliers</em>, we can also get a <em>dual formulation</em>. To do so, we add a multiplier <code>y_i</code> for each constraint i.e. 
-        <code>y_i \mathbf {a}_i^T \mathbf {x} \leq  y_i b_i</code>
-        we then consider the summed constraint (which ends up being tight enough),
-        <code>\mathbf {y}^T A \mathbf {x} \leq  \mathbf {y}^T\mathbf {b}</code>
-        To relate this back to our primal problem, we enforce the additional constraint that <code>\mathbf {y}^T A = \mathbf {c}^T \iff  A \mathbf {y} = \mathbf {c} </code>. The reason for this is that for a feasible <code>\mathbf {y}</code>, we have
-        <code>\mathbf {y}^T A \mathbf {x} = \mathbf {c}^T \mathbf {x} \leq  \mathbf {y}^T \mathbf {b},  </code>
-        so that <code>\mathbf {y}^T \mathbf {b}</code> is an upper bound for our primal objective <code>\mathbf {c}^T \mathbf {x} </code>. Intuitively, to recover <code>\mathbf {c}^T \mathbf {x}^* </code>, we can just minimize over <code>\mathbf {y}</code>, resulting in the following <em>dual</em> program
-        <code>
-            \begin {align*}
-             \min _{\mathbf {y}} \quad  &amp;\mathbf {b}^T\mathbf {y} \\   
-             \text {s.t.} \quad  &amp;A \mathbf {y} = \mathbf {c} \\ 
-             &amp; \mathbf {y} \geq  0
-            .\end {align*}
-            </code>
-</section>
-
-  <section><header><h2>RL as Linear Program</h2></header>
-    Let <code>\rho (s) \in  \mathbb {R}^{|\mathcal {S}|} </code> be the initial state distribution. Then consider the following LP 
-    <code>\begin {align*}
-\begin {array}{ll} \displaystyle  \max _{V \in  \mathbb {R}^{|\mathcal {S}|}} &amp; \displaystyle  \sum _{s \in  \mathcal {S}} \rho (s) V(s) \\ \text {s.t.} &amp; V(s) \leq  r(s,a) + \gamma  \sum _{s'} P(s' \mid  s,a) \, V(s'), \qquad  \forall  s,a. \end {array}
-    \end {align*}</code>
-    Translating this into our standard form, we have
-    <ol><li><code>\mathbf {c} \in  \mathbb {R}^{|\mathcal {S}|}</code> with <code>c_s = \rho (s)</code></li>
-      <li><code>A \in  \mathbb {R}^{|\mathcal {S}| \times  |\mathcal {A}| \times  |\mathcal {S}|}</code> with <code>A_{(s,a),s'} = -\delta _{s,s'} + \gamma  P(s'|s,a).
-</code></li></ol>
-    Substituting this in for the dual formulation gives us
-    <code>\begin {align*}
-&amp; \min _{y(s,a) \geq  0} &amp; &amp; \sum _{s,a} r(s,a) \, y(s,a) \\ &amp; \text {s.t.} &amp; &amp; \sum _{a} y(s,a) - \gamma  \sum _{s',a'} P(s \mid  s',a') \, y(s',a') = \rho (s), \qquad  \forall  s
-    \end {align*}</code>
-    Here <code>\mathbf {y}</code> can be seen as the <em>discounted occupancy measure</em>. This allows us to recover a randomized optimal policy via
-    <code>\mathbb {P}(\pi ^*(s) = a) = \frac {y(s, a)}{\sum _{a} y(s,a)}</code>
-</section>
-
-  <div class="comments">
-    
-  <hr />
-
-    <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
-  </div>
-      </div>
-    </content>
-  </entry>
-  <entry>
-    <title>Rapidly Exploring Random Trees</title>
-    <published>2025-08-14T23:31:25Z</published>
-    <updated>2025-08-14T23:31:25Z</updated>
-    <author>
-      <name>Kellen Kanarios</name>
-      <uri>https://kellenkanarios.com/kellenkanarios/</uri>
-    </author>
-    <link rel="alternate" type="text/html" href="https://kellenkanarios.com/QQC1/" />
-    <id>https://kellenkanarios.com/QQC1/</id>
-    <content type="xhtml">
-      <div xmlns="http://www.w3.org/1999/xhtml">
-<p>Rapidly exploring random trees (RRT) is a very simple, elegant and widely used algorithm for motion planning. The algorithm proceeds as follows:</p>
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(0, 100, 255, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(0, 100, 255, 0.05);
-  "><span style="font-weight: 600; color: rgba(0, 100, 255, 0.7);">Algorithm.</span> 
-  For <code>k = 1</code> to <code>K</code> do
- <ol><li><code>x_{rand} \gets  \mathsf {RANDOM\_STATE}()</code></li>
-  <li><code>x_{near} \gets  \mathsf {NEAREST\_NEIGHBOR}(x_{rand}, \mathcal {T})</code></li>
-  <li><code>u \gets  \mathsf {SELECT\_INPUT}(x_{near})</code></li>
-  <li><code>x_{new} \gets  \mathsf {NEW\_STATE}(x_{near}, u, \Delta  t)</code></li>
-  <li><code>\mathcal {T}.add\_vertex(x_{new})</code></li>
-  <li><code>\mathcal {T}.add\_edge((x_{near}, u, x_{new}))</code></li></ol>
- return <code>\mathcal {T}</code>
-</div>
-
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-Given some dynamics model <code>\dot {x} = f(x, u)</code>, <code>\mathsf {NEW\_STATE}</code> is some approximate integration, such as Euler integration i.e.
-<code>x_{new} = x_{near} + f(x_{near}, u) \Delta  t</code>
-Preferable to use higher-order method like Runge-Kutta.
-</div>
-
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-<code>\mathsf {SELECT\_INPUT}</code> is determined by whether the system is holonomic or non-holomonic. If the agent is holonomic, then <code>u</code> will just be the control corresponding to the difference in the two states.
-</div>
-
-  <div class="comments">
-    
-  <hr />
-
-    <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
-  </div>
-      </div>
-    </content>
-  </entry>
-  <entry>
-    <title>Eligibility Traces</title>
-    <published>2025-07-24T21:14:08Z</published>
-    <updated>2025-07-24T21:14:08Z</updated>
-    <author>
-      <name>Kellen Kanarios</name>
-      <uri>https://kellenkanarios.com/kellenkanarios/</uri>
-    </author>
-    <link rel="alternate" type="text/html" href="https://kellenkanarios.com/DJPO/" />
-    <id>https://kellenkanarios.com/DJPO/</id>
-    <content type="xhtml">
-      <div xmlns="http://www.w3.org/1999/xhtml">
-<p>As I grow more interested in abandoning batched updates and the replay buffer, the importance of elibility traces grows with me. Due to this, I thought it finally time to re-prove / understand what makes these traces so eligible.</p><p>The reference followed is <a href="https://kellenkanarios.com/suttonReinforcementLearningIntroduction2018/">Sutton and Barto</a> (Ch 12.).</p><p>The eligibility trace vector is given by
-<code>
-\begin {align*}
- \mathbf {z}_{-1} &amp;= 0 \\
- \mathbf {z}_t &amp;= \gamma  \lambda  \mathbf {z}_{t - 1} + \nabla  \hat {v}(S_t; \mathbf {w}_t)
-.\end {align*}
-</code>
-Recall the temporal difference error is given by
-<code>\begin {align*}
-  \mathbf {\delta }_t = r_{t + 1} + \gamma  \hat {v}(s_{t + 1}; \mathbf {w}_t) - \hat {v}(s_t; \mathbf {w}_t)
-.\end {align*}</code>
-For TD(<code>\lambda </code>), the incremental update is given by
-<code>\begin {align*}
-  \mathbf {w}_{t + 1} = \mathbf {w}_t + \alpha  \mathbf {\delta }_{t} \mathbf {z}_t
-.\end {align*}</code></p><p>We can rewrite the <code>\lambda </code>-return recursively in terms of reward and itself as follows:
-<code>\begin {align*}
-  G_t^{\lambda } &amp;= (1 - \lambda ) \sum _{n=1}^{\infty } \lambda ^{n-1}G_{t:t+n} \\
-  G_t^{\lambda } &amp;= (1 - \lambda ) \sum _{n=1}^{\infty } \lambda ^{n-1}(R_{t + 1} + \gamma  G_{t+1:t+n}) \\
-  G_t^{\lambda } &amp;= R_{t + 1} + \gamma  (1 - \lambda ) \left [\hat {v}(S_{t + 1}; \mathbf {w}_t) + \sum _{n=2}^{\infty } \lambda ^{n-1} G_{t+1:t+n}\right ] \\
-  G_t^{\lambda } &amp;= R_{t + 1} + (1 - \lambda )\gamma  \hat {v}(S_{t + 1}; \mathbf {w}_t) + \gamma  \lambda  G_{t + 1}^{\lambda }
-.\end {align*}</code></p><p>Now we will show that the prediction error of TD(<code>\lambda </code>) can be re-written as the sum of TD-errors. The prediction error is written as
-<code>PE = G_t^{\lambda } - \hat {v}(S_t, \mathbf {w}_t)</code>
-Rewriting the <code>\lambda </code>-return as above
-<code>
-\begin {align*}
- PE &amp;= R_{t + 1} + \gamma  \hat {v}(S_{t + 1} ; \mathbf {w}_t) + \gamma  \lambda  G_{t + 1}^{\lambda } - \gamma  \lambda  \hat {v}(S_{t + 1}, \mathbf {w}_t) - \hat {v}(S_t; \mathbf {w}_t) 
- &amp;= (R_{t + 1} + \gamma  \hat {v}(S_{t + 1} ; \mathbf {w}_t) - \hat {v}(S_t, \mathbf {w}_t)) + \gamma  \lambda  G_{t + 1}^{\lambda } - \gamma  \lambda  \hat {v}(S_{t + 1}; \mathbf {w}_t)
- &amp;= \mathbf {\delta }_t  + \gamma  \lambda  G_{t + 1}^{\lambda } - \gamma  \lambda  \hat {v}(S_{t + 1}; \mathbf {w}_t)
-.\end {align*}
-</code>
-<p>
-We now are left with <code>\gamma  \lambda  (G_{t + 1}^{\lambda } - \hat {v}(S_{t + 1}, \mathbf {w}_t))</code>, where we can proceed in the same manner recursively, such that
-<code>PE = \sum _{t=1}^{\infty } (\gamma  \lambda )^{t - 1} \delta _t</code>
-It is easy to see the same thing goes through for the finite time slice <code>\lambda </code>-return i.e.
-<code>G_{t:t + k}^{\lambda } - \hat {v}(S_t, \mathbf {w}_{t - 1}) = \sum _{i = t}^{t + k} (\gamma  \lambda )^{i - t} \delta _i</code></p>
-<p>
-  Going back to the eligibility trace update, if we instead do not apply each elibgibility trace update but apply the sum of all the updates for the same fixed <code>\mathbf {w}_t</code>, then we get that the total update is
-<code>
-  \begin {align*}
-   \mathbf {w}_{t+1} &amp;= \sum _{t=1}^{T} \alpha  \delta _t \mathbf {z}_t \\
-   &amp;= \sum _{t=1}^{T} \alpha  \delta _t \sum _{i=0}^{t} (\lambda  \gamma )^{i} \nabla  \hat {v}(S_i, \mathbf {w}_t) \\
-   &amp;= \sum _{t=1}^{T} \alpha  (r_t + \gamma  \hat {v}(S_{t+1}, \mathbf {w}_t) - \hat {v}(S_t, \mathbf {w}_t)) \underbrace {\sum _{i=0}^{t} (\lambda  \gamma )^{i} \nabla  \hat {v}(S_i, \mathbf {w}_t)}_{X_t}
-  .\end {align*}
-  </code>
-  Then
-  <code>\begin {align*}
-   &amp;= \sum _{t=1}^{T} \alpha  r_t X_t + \gamma  \hat {v}(S_{t+1}, \mathbf {w}_t) X_t - \hat {v}(S_t, \mathbf {w}_t) X_t
-  .\end {align*}</code></p>
-<p>
-  This shows that the <em>backward-view</em> and <em>forward-view</em> are "equivalent". The forward-view in practice makes an update at each step, so it is typically better.
-</p></p>
-  <div class="comments">
-    
-  <hr />
-
-    <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
-  </div>
-      </div>
-    </content>
-  </entry>
-  <entry>
-    <title>Multi Query Attention</title>
-    <published>2025-07-14T17:21:58Z</published>
-    <updated>2025-07-14T17:21:58Z</updated>
-    <author>
-      <name>Kellen Kanarios</name>
-      <uri>https://kellenkanarios.com/kellenkanarios/</uri>
-    </author>
-    <link rel="alternate" type="text/html" href="https://kellenkanarios.com/W4YP/" />
-    <id>https://kellenkanarios.com/W4YP/</id>
-    <content type="xhtml">
-      <div xmlns="http://www.w3.org/1999/xhtml">
-<p>Notes on the paper <a href="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/">Fast Transformer Decoding: One Write-Head is All You Need</a>.</p><p>For, 
-<ul><li><code>b</code> batch dimension,</li>
-  <li><code>n</code> sequence length,</li>
-  <li><code>d</code> hidden dimension,</li>
-  <li><code>h</code> number of heads.</li></ul>
-The total <a href="https://kellenkanarios.com/4K5H/">FLOPS</a> for <a href="https://kellenkanarios.com/004G/">attention</a> are roughly <code>bnd^2</code>. This comes from 
-<ol><li><code>3nd^2</code> FLOPS to compute <code>Q = XW_Q, K = XW_K, V = XW_V</code>.</li>
-  <li>Need to do this <code>b</code> times for each input in batch.</li></ol>
-and the total memory accesses are roughly <code>\underbrace {bnd}_{X} + \underbrace {bhn^2}_{\text {softmax}} + \underbrace {d^2}_{\text {projection}}</code>.
-This gives high arithmetic intensity
-<code>O\left (\left (\frac {h}{d} + \frac {1}{bn}\right )^{-1}\right )</code></p><p>However, if we do incremental inference then we must multiply our total number of memory accesses by <code>n</code> i.e. <code>bn^2d + nd^2</code>. This gives arithmetic intensity
-<code>O\left (\left (\frac {n}{d} + \frac {1}{b}\right )^{-1}\right ),</code>
-which requires large batch and short sequence length.
-</p>
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-I believe we just ignore the softmax memory contribution in the inference case because it does not scale with <code>n</code> anymore as we are computing the logits just for the next token. Therefore, it becomes a <code>\frac {d}{h}</code> term, which we can safely ignore?
-</div>
-<p>The key is that the <code>\frac {n}{d}</code> term comes from the <code>bn^2d</code> term, where we are loading <code>h</code> <code>(b \times  n \times  d / h)</code> <code>K</code> and <code>V</code> matrices <code>n</code> times. Thus, we can improve the <code>\frac {n}{d}</code> term by a factor of <code>h</code> by simply not using a different <code>K</code> and <code>V</code> matrix for each head. This is the entire idea behind <a href="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/">MQA</a>.</p>
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-Similar to the <a href="https://kellenkanarios.com/TJLA/">KV-cache</a>, we still can use <code>h</code> <code>Q</code> matrices because we do not need to load <code>n</code> of them into memory because only the last one matters for inference.
-</div>
-<section><header><h2>Group Query Attention</h2></header><p><em>Group query attention</em> is the same idea as <a href="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/">MQA</a> but instead of using one <code>K</code> and <code>V</code> for every head, they use a <em>group</em> of them. Where obviously the number of groups needs to be less than the number of heads.</p><figure><img width="80%" src="https://kellenkanarios.com/bafkrmicmjlgi2o3oetsssjdwk6y2pqce4vrdwiw2ah4wwe3ulnt74upkiu.png" />
-<figcaption>Grouped query uses subset of <code>K</code> and <code>V</code> matrices.</figcaption></figure></section><p>Also inspired by this idea of reducing the dependence of <code>K</code> and <code>V</code> on the sequence length is sliding window attention.</p><section><header><h2>Sliding Window Attention</h2></header><p>The idea behind <em>sliding window attention</em> is to ensure the number of weight matrices needed for the keys <code>K</code> and values <code>V</code> does not scale with the sequence length. Intuitively, this means allowing each word to "attend" to only some fixed number of previous words rather than the whole sequence</p><figure><img width="80%" src="https://kellenkanarios.com/bafkrmidqeoo6wx6s4ry6u74fcelfzxvwreyf7d44whnql4ffnnyd2dwcha.png" />
-<figcaption>"the" only sees "on" and "sat" rather than the full sentence.</figcaption></figure></section>
-  <div class="comments">
-    
-  <hr />
-
-    <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
-  </div>
-      </div>
-    </content>
-  </entry>
-  <entry>
     <title>Expectation Maximization</title>
     <published>2025-07-01T17:03:45Z</published>
     <updated>2025-07-01T17:03:45Z</updated>
@@ -1026,10 +789,6 @@ Now this is all cool theoretically but how TF do we actually maximize this thing
     The <a href="https://kellenkanarios.com/0089/">reparametrization trick</a>!!
   </div>
 
-  <section><header><h3>Reparametrization Trick</h3></header><p>For <code>q_{\phi }(\cdot  | x) \sim  N(\mu _{\phi }(x), \sigma _{\phi }(x))</code>. The <em>reparametrization trick</em> allows us to differentate through a random sample by sampling from <code>q_{\phi }(\cdot  | x)</code> via 
-<code>z(\phi ) = \mu _{\phi }(x) + \sigma _{\phi }(x) \cdot  \epsilon ,</code>
-where <code>\epsilon  \sim  N(0, 1)</code>. Then, for a given sample <code>\epsilon </code>, we can easily compute
-<code>\nabla _{\phi } z(\phi ) = \nabla _{\phi } \mu _{\phi }(x) + \nabla _{\phi }\sigma _{\phi }(x) \cdot  \epsilon </code></p></section>
   <p>Now for a given sample <code>x_i \sim  \mathcal {D}</code>, we can get a sample <code>z_i(\phi ) \sim  q(\cdot  \mid  x_i, \theta )</code> that is differentiable with respect to <code>\phi </code>. Using this, we can get the stochastic gradient estimate
   <code>\nabla _q \widetilde {\mathsf {ELBO}}(x, q, \theta ) = \nabla _{\phi } \left [\frac {z_i(\phi )^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((z_i(\phi ) - \mu _{\theta }(z_i(\phi )))^2 - (z_i(\phi ) - \mu _{\phi }(x))^2\big )\right ]</code></p>
 
@@ -1184,7 +943,8 @@ You may be wondering how we use this algorithmically to find <code>\theta ^*</co
 
   <section><header><h2>Native LSP, no framework</h2></header>
 <p>This is where the config diverged most sharply from where it started. The first pass used <code>mason.nvim</code>, <code>mason-lspconfig</code>, and <code>nvim-lspconfig</code> — the standard stack. All three are now gone. Neovim 0.11 ships a <a href="https://neovim.io/doc/user/lsp/">native LSP</a> configuration API: <code>vim.lsp.config</code> defines a server and <code>vim.lsp.enable</code> turns it on, and any table returned from <code>lsp/&lt;name&gt;.lua</code> on the runtime path is picked up as that server's config. So <code>core.lsp</code> is just a list —</p>
-<pre><![CDATA[vim.lsp.enable({ "forester", "texlab", "clangd", "basedpyright", "lua_ls", "ruff" })]]></pre>
+<pre><code class="language-lua"> vim.lsp.enable({ "forester", "texlab", "clangd", "basedpyright", "lua_ls", "ruff" })
+</code></pre>
 <p>— and each server gets a plain Lua file in <code>lsp/</code>. No package manager, no bridge plugin translating between two config schemas. I install the servers themselves through my system package manager and let Neovim wire them up. It is dramatically less machinery for the same result, and when something breaks there is exactly one place to look.</p>
 <p>The Python setup is the clearest upgrade. I dropped <code>pyright</code> for <code>basedpyright</code> and split responsibilities: <code>basedpyright</code> does type checking and inlay hints, while <code>ruff</code> runs as its own language server handling import organization and diagnostics. In the LazyVim days I fought constantly with import resolution, hand-writing a function to locate each project's virtualenv and pin <code>pythonPath</code> to its interpreter. <code>basedpyright</code> resolves environments well enough on its own that the hack is gone. <code>clangd</code>, <code>texlab</code>, and <code>lua_ls</code> round out the set, each configured in its own file — <code>texlab</code> in particular carries a fair amount of custom command wiring for building, forward search into Zathura, and environment manipulation.</p>
 <p>A shared <code>LspAttach</code> autocommand in <code>core.lsp</code> binds the buffer-local LSP keymaps once, for every server: go-to-definition and friends route through <code>fzf-lua</code> pickers, and document highlighting, inlay-hint toggling, and native completion get enabled per-buffer based on what each client actually supports.</p>
@@ -1223,40 +983,6 @@ You may be wondering how we use this algorithmically to find <code>\theta ^*</co
   <hr />
 
     <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="nvim" theme="boxy-light" crossorigin="anonymous" async="" />
-  </div>
-      </div>
-    </content>
-  </entry>
-  <entry>
-    <title>Stack vs. Heap</title>
-    <published>2024-12-28T00:00:00Z</published>
-    <updated>2024-12-28T00:00:00Z</updated>
-    <author>
-      <name>Kellen Kanarios</name>
-      <uri>https://kellenkanarios.com/kellenkanarios/</uri>
-    </author>
-    <link rel="alternate" type="text/html" href="https://kellenkanarios.com/0025/" />
-    <id>https://kellenkanarios.com/0025/</id>
-    <content type="xhtml">
-      <div xmlns="http://www.w3.org/1999/xhtml">
-<p>I often hear this question come up amongst performance-driven developers, and for the longest time I could never get a straight answer as to why the stack was so much better? After a long foray into the inner workings of how memory allocation is actually done, I think I finally have an answer. I do not want to forget this, so I am doing a quick write up here.</p>
-  <section><header><h2>Why stack is faster.</h2></header>
-This all comes down to what happens during each memory allocation. Prior to actually running the program, the operating system allocates some amount of memory for both the stack and the heap (I think around 2-4MB?). When you allocate memory on the stack i.e. <code>int x = 1;</code>
-<ul><li>Stack just increments stack pointer.</li>
-    <li>Writes value to new address pointed to by stack pointer.</li></ul>
-When you allocate memory on the heap i.e. <code>int *x = malloc(sizeof(int))</code>, we must instead choose how best to fulfill the request, which is a whole research direction in itself.
-<ul><li>One such implementation is the <a href="https://en.wikipedia.org/wiki/Buddy_memory_allocation">buddy algorithm</a></li></ul>
-However, <code>malloc</code> itself is not a system call and therefore is not terribly slow. A real issue occurs when we run out of pre-allocated heap memory. This requires <a href="https://kellenkanarios.com/A5S6/">invoking a system call</a> like <code>sbrk</code> to increment the size of the allocated memory for the heap.
-<ul><li>If no available pages, OS must evict and write to disk...</li>
-      <li>Formally, this is known as "heap growth".</li></ul>
-Generally, if you know how much memory you need it is good practice to just allocated all up front to minimize any potential system calls. With this, the performance difference is not too drastic <![CDATA[ :)]]>
-</section>
-
-  <div class="comments">
-    
-  <hr />
-
-    <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
   </div>
       </div>
     </content>

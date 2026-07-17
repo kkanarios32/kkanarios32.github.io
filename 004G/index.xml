@@ -483,23 +483,17 @@ such that <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,n}' = \mathbf {o}_n]]
     .\end {align*}
     ]]></fr:tex>
   </html:div>
-<html:p>Thus, we are left with the following algorithm</html:p><html:p><fr:resource hash="e443552973fe32fe694e594b454313d2"><fr:resource-content><html:img src="https://kellenkanarios.com/e443552973fe32fe694e594b454313d2.svg" /></fr:resource-content><fr:resource-source type="latex" part="preamble"><![CDATA[
-  \usepackage{tikz, tikz-cd, mathtools, amssymb, amsmath, stmaryrd, algpseudocodex}
- \newenvironment{algo}{\begin{varwidth}{20cm}\begin{algorithmic}}{\end{algorithmic}\end{varwidth}}
- \ExplSyntaxOff
-]]></fr:resource-source><fr:resource-source type="latex" part="body"><![CDATA[
-\begin {algo}
-\For {$i = 1$ \textbf {to} $N$}
-\State  $m_{0} \gets  -\infty ;\quad  d_{0} \gets  0$
-\For {$j = 1$ \textbf {to} $M$}
-  \State  $x_{i,j} \gets  \mathbf {q}_i \cdot  \mathbf {k}_j$
-  \State  $m_{j} \gets  \max (m_{j-1}, x_{i,j})$
-  \State  $d_{j} \gets  d_{j - 1} \cdot  e^{\,m_{j - 1} - m_{j}} + e^{\,x_{i,j} - m_{j}}$
-  \State  $\mathbf {o}_{i, j} \gets  \mathbf {o}_{i, j - 1} \cdot  \frac {d_{j - 1} \cdot  \exp (m_{j-1} - m_{j})}{d_j} +  \frac {\exp (x_{i,j} - m_j)}{d_j} \cdot  \mathbf {v}_j$
-\EndFor 
-\EndFor 
-\end {algo}
-]]></fr:resource-source></fr:resource></html:p>
+<html:p>Thus, we are left with the following algorithm</html:p><html:div class="code-figure"><html:div class="code-filename">flash_attention.py</html:div><html:pre><html:code class="language-python">for i in range(N):                      # one query row at a time
+    m = float("-inf")                    # running max of the logits
+    d = 0.0                              # running softmax denominator
+    o = zeros(head_dim)                  # running output accumulator
+    for j in range(M):                   # stream over keys/values
+        x = q[i] @ k[j]                  # logit x_{i,j}
+        m_new = max(m, x)
+        d_new = d * exp(m - m_new) + exp(x - m_new)
+        o = o * (d * exp(m - m_new) / d_new) + (exp(x - m_new) / d_new) * v[j]
+        m, d = m_new, d_new
+    out[i] = o</html:code></html:pre></html:div>
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
   padding: 0.5em 1.1em 0.5em 1.2em;
@@ -563,14 +557,7 @@ Similar to the <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanari
 </html:div>
 <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XUVV/</fr:uri><fr:display-uri>XUVV</fr:display-uri><fr:route>/XUVV/</fr:route><fr:title text="Group Query Attention">Group Query Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:em>Group query attention</html:em> is the same idea as <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">MQA</fr:link> but instead of using one <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> for every head, they use a <html:em>group</html:em> of them. Where obviously the number of groups needs to be less than the number of heads.</html:p><html:figure><html:img width="80%" src="/bafkrmicmjlgi2o3oetsssjdwk6y2pqce4vrdwiw2ah4wwe3ulnt74upkiu.png" />
 <html:figcaption>Grouped query uses subset of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrices.</html:figcaption></html:figure></fr:mainmatter></fr:tree><html:p>Also inspired by this idea of reducing the dependence of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> on the sequence length is sliding window attention.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/WM3M/</fr:uri><fr:display-uri>WM3M</fr:display-uri><fr:route>/WM3M/</fr:route><fr:title text="Sliding Window Attention">Sliding Window Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p>The idea behind <html:em>sliding window attention</html:em> is to ensure the number of weight matrices needed for the keys <fr:tex display="inline"><![CDATA[K]]></fr:tex> and values <fr:tex display="inline"><![CDATA[V]]></fr:tex> does not scale with the sequence length. Intuitively, this means allowing each word to "attend" to only some fixed number of previous words rather than the whole sequence</html:p><html:figure><html:img width="80%" src="/bafkrmidqeoo6wx6s4ry6u74fcelfzxvwreyf7d44whnql4ffnnyd2dwcha.png" />
-<html:figcaption>"the" only sees "on" and "sat" rather than the full sentence.</html:figcaption></html:figure></fr:mainmatter></fr:tree>
-  <html:div class="comments">
-    
-  <html:hr />
-
-    <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
-  </html:div>
-</fr:mainmatter>
+<html:figcaption>"the" only sees "on" and "sat" rather than the full sentence.</html:figcaption></html:figure></fr:mainmatter></fr:tree></fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>
     </fr:tree>

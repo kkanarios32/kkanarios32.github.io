@@ -338,23 +338,13 @@ Therefore, we must find a recursive relationship such that <fr:tex display="inli
 
 <html:p>
 The running denominator <fr:tex display="inline"><![CDATA[d]]></fr:tex> is rescaled by <fr:tex display="inline"><![CDATA[e^{m - m_{\text {new}}}]]></fr:tex> each time a new maximum is found, keeping it consistent with the safe-softmax shift.</html:p>
-<html:p><fr:resource hash="4a2d5b3202e83ff6780ef6fedca07f67"><fr:resource-content><html:img src="https://kellenkanarios.com/4a2d5b3202e83ff6780ef6fedca07f67.svg" /></fr:resource-content><fr:resource-source type="latex" part="preamble"><![CDATA[
-  \usepackage{tikz, tikz-cd, mathtools, amssymb, amsmath, stmaryrd, algpseudocodex}
- \newenvironment{algo}{\begin{varwidth}{20cm}\begin{algorithmic}}{\end{algorithmic}\end{varwidth}}
- \ExplSyntaxOff
-]]></fr:resource-source><fr:resource-source type="latex" part="body"><![CDATA[
-\begin {algo}
-\State  $m \gets  -\infty ;\quad  d \gets  0$
-\For {$i = 1$ \textbf {to} $n$}
-  \State  $m_{i+1} \gets  \max (m_i, x_i)$
-  \State  $d_{i + 1} \gets  d_i \cdot  e^{\,m_i - m_{i+1}} + e^{\,x_i - m_{i}}$
-\EndFor 
-\For {$i = 1$ \textbf {to} $n$}
-    \State  $\mathbf {p}_{i} \gets  e^{\,x_i - m_n} / d \;$
-\EndFor 
-\Return  $\mathbf {p}$
-\end {algo}
-]]></fr:resource-source></fr:resource></html:p>
+<html:div class="code-figure"><html:div class="code-filename">online_softmax.py</html:div><html:pre><html:code class="language-python">m = float("-inf")                    # running max of the logits
+d = 0.0                              # running softmax denominator
+for i in range(n):                   # one fused sweep for the stats
+    m_new = max(m, x[i])
+    d = d * exp(m - m_new) + exp(x[i] - m_new)
+    m = m_new
+p = [exp(x[i] - m) / d for i in range(n)]   # second pass: normalized probs</html:code></html:pre></html:div>
 
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
@@ -416,23 +406,17 @@ such that <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,n}' = \mathbf {o}_n]]
     .\end {align*}
     ]]></fr:tex>
   </html:div>
-<html:p>Thus, we are left with the following algorithm</html:p><html:p><fr:resource hash="e443552973fe32fe694e594b454313d2"><fr:resource-content><html:img src="https://kellenkanarios.com/e443552973fe32fe694e594b454313d2.svg" /></fr:resource-content><fr:resource-source type="latex" part="preamble"><![CDATA[
-  \usepackage{tikz, tikz-cd, mathtools, amssymb, amsmath, stmaryrd, algpseudocodex}
- \newenvironment{algo}{\begin{varwidth}{20cm}\begin{algorithmic}}{\end{algorithmic}\end{varwidth}}
- \ExplSyntaxOff
-]]></fr:resource-source><fr:resource-source type="latex" part="body"><![CDATA[
-\begin {algo}
-\For {$i = 1$ \textbf {to} $N$}
-\State  $m_{0} \gets  -\infty ;\quad  d_{0} \gets  0$
-\For {$j = 1$ \textbf {to} $M$}
-  \State  $x_{i,j} \gets  \mathbf {q}_i \cdot  \mathbf {k}_j$
-  \State  $m_{j} \gets  \max (m_{j-1}, x_{i,j})$
-  \State  $d_{j} \gets  d_{j - 1} \cdot  e^{\,m_{j - 1} - m_{j}} + e^{\,x_{i,j} - m_{j}}$
-  \State  $\mathbf {o}_{i, j} \gets  \mathbf {o}_{i, j - 1} \cdot  \frac {d_{j - 1} \cdot  \exp (m_{j-1} - m_{j})}{d_j} +  \frac {\exp (x_{i,j} - m_j)}{d_j} \cdot  \mathbf {v}_j$
-\EndFor 
-\EndFor 
-\end {algo}
-]]></fr:resource-source></fr:resource></html:p>
+<html:p>Thus, we are left with the following algorithm</html:p><html:div class="code-figure"><html:div class="code-filename">flash_attention.py</html:div><html:pre><html:code class="language-python">for i in range(N):                      # one query row at a time
+    m = float("-inf")                    # running max of the logits
+    d = 0.0                              # running softmax denominator
+    o = zeros(head_dim)                  # running output accumulator
+    for j in range(M):                   # stream over keys/values
+        x = q[i] @ k[j]                  # logit x_{i,j}
+        m_new = max(m, x)
+        d_new = d * exp(m - m_new) + exp(x - m_new)
+        o = o * (d * exp(m - m_new) / d_new) + (exp(x - m_new) / d_new) * v[j]
+        m, d = m_new, d_new
+    out[i] = o</html:code></html:pre></html:div>
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
   padding: 0.5em 1.1em 0.5em 1.2em;
@@ -854,275 +838,6 @@ Once we have sent the <html:code>PutE</html:code>, or the <html:code>PutM</html:
                 </fr:authors>
                 <fr:date>
                   <fr:year>2025</fr:year>
-                  <fr:month>8</fr:month>
-                  <fr:day>31</fr:day>
-                </fr:date>
-                <fr:uri>https://kellenkanarios.com/J3CP/</fr:uri>
-                <fr:display-uri>J3CP</fr:display-uri>
-                <fr:route>/J3CP/</fr:route>
-                <fr:title text="Reinforcement Learning \iff  Linear Programming">Reinforcement Learning <fr:tex display="inline"><![CDATA[\iff ]]></fr:tex> Linear Programming</fr:title>
-              </fr:frontmatter>
-              <fr:mainmatter>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>31</fr:day></fr:date><fr:title text="Linear Program">Linear Program</fr:title></fr:frontmatter><fr:mainmatter>
-    For this note, we will consider a <html:em>maximization</html:em> linear program. Namely, an optimization problem of the following form
-    <fr:tex display="block"><![CDATA[
-        \begin {align*}
-        \max _{\mathbf {x}} \quad  &\mathbf {c}^{\top } \mathbf {x} \\
-        \text {s.t.} \quad  &A\mathbf {x} \leq  b
-        .\end {align*}
-        ]]></fr:tex>
-        In the spirit of <html:em>lagrange multipliers</html:em>, we can also get a <html:em>dual formulation</html:em>. To do so, we add a multiplier <fr:tex display="inline"><![CDATA[y_i]]></fr:tex> for each constraint i.e. 
-        <fr:tex display="block"><![CDATA[y_i \mathbf {a}_i^T \mathbf {x} \leq  y_i b_i]]></fr:tex>
-        we then consider the summed constraint (which ends up being tight enough),
-        <fr:tex display="block"><![CDATA[\mathbf {y}^T A \mathbf {x} \leq  \mathbf {y}^T\mathbf {b}]]></fr:tex>
-        To relate this back to our primal problem, we enforce the additional constraint that <fr:tex display="block"><![CDATA[\mathbf {y}^T A = \mathbf {c}^T \iff  A \mathbf {y} = \mathbf {c} ]]></fr:tex>. The reason for this is that for a feasible <fr:tex display="inline"><![CDATA[\mathbf {y}]]></fr:tex>, we have
-        <fr:tex display="block"><![CDATA[\mathbf {y}^T A \mathbf {x} = \mathbf {c}^T \mathbf {x} \leq  \mathbf {y}^T \mathbf {b},  ]]></fr:tex>
-        so that <fr:tex display="inline"><![CDATA[\mathbf {y}^T \mathbf {b}]]></fr:tex> is an upper bound for our primal objective <fr:tex display="inline"><![CDATA[\mathbf {c}^T \mathbf {x} ]]></fr:tex>. Intuitively, to recover <fr:tex display="inline"><![CDATA[\mathbf {c}^T \mathbf {x}^* ]]></fr:tex>, we can just minimize over <fr:tex display="inline"><![CDATA[\mathbf {y}]]></fr:tex>, resulting in the following <html:em>dual</html:em> program
-        <fr:tex display="block"><![CDATA[
-            \begin {align*}
-             \min _{\mathbf {y}} \quad  &\mathbf {b}^T\mathbf {y} \\   
-             \text {s.t.} \quad  &A \mathbf {y} = \mathbf {c} \\ 
-             & \mathbf {y} \geq  0
-            .\end {align*}
-            ]]></fr:tex>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>8</fr:month><fr:day>31</fr:day></fr:date><fr:title text="RL as Linear Program">RL as Linear Program</fr:title></fr:frontmatter><fr:mainmatter>
-    Let <fr:tex display="inline"><![CDATA[\rho (s) \in  \mathbb {R}^{|\mathcal {S}|} ]]></fr:tex> be the initial state distribution. Then consider the following LP 
-    <fr:tex display="block"><![CDATA[\begin {align*}
-\begin {array}{ll} \displaystyle  \max _{V \in  \mathbb {R}^{|\mathcal {S}|}} & \displaystyle  \sum _{s \in  \mathcal {S}} \rho (s) V(s) \\ \text {s.t.} & V(s) \leq  r(s,a) + \gamma  \sum _{s'} P(s' \mid  s,a) \, V(s'), \qquad  \forall  s,a. \end {array}
-    \end {align*}]]></fr:tex>
-    Translating this into our standard form, we have
-    <html:ol><html:li><fr:tex display="inline"><![CDATA[\mathbf {c} \in  \mathbb {R}^{|\mathcal {S}|}]]></fr:tex> with <fr:tex display="inline"><![CDATA[c_s = \rho (s)]]></fr:tex></html:li>
-      <html:li><fr:tex display="inline"><![CDATA[A \in  \mathbb {R}^{|\mathcal {S}| \times  |\mathcal {A}| \times  |\mathcal {S}|}]]></fr:tex> with <fr:tex display="inline"><![CDATA[A_{(s,a),s'} = -\delta _{s,s'} + \gamma  P(s'|s,a).
-]]></fr:tex></html:li></html:ol>
-    Substituting this in for the dual formulation gives us
-    <fr:tex display="block"><![CDATA[\begin {align*}
-& \min _{y(s,a) \geq  0} & & \sum _{s,a} r(s,a) \, y(s,a) \\ & \text {s.t.} & & \sum _{a} y(s,a) - \gamma  \sum _{s',a'} P(s \mid  s',a') \, y(s',a') = \rho (s), \qquad  \forall  s
-    \end {align*}]]></fr:tex>
-    Here <fr:tex display="inline"><![CDATA[\mathbf {y}]]></fr:tex> can be seen as the <html:em>discounted occupancy measure</html:em>. This allows us to recover a randomized optimal policy via
-    <fr:tex display="block"><![CDATA[\mathbb {P}(\pi ^*(s) = a) = \frac {y(s, a)}{\sum _{a} y(s,a)}]]></fr:tex>
-</fr:mainmatter></fr:tree>
-
-  <html:div class="comments">
-    
-  <html:hr />
-
-    <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
-  </html:div>
-</fr:mainmatter>
-            </fr:tree>
-            <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
-              <fr:frontmatter>
-                <fr:authors>
-                  <fr:author>
-                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
-                  </fr:author>
-                </fr:authors>
-                <fr:date>
-                  <fr:year>2025</fr:year>
-                  <fr:month>8</fr:month>
-                  <fr:day>14</fr:day>
-                </fr:date>
-                <fr:uri>https://kellenkanarios.com/QQC1/</fr:uri>
-                <fr:display-uri>QQC1</fr:display-uri>
-                <fr:route>/QQC1/</fr:route>
-                <fr:title text="Rapidly Exploring Random Trees">Rapidly Exploring Random Trees</fr:title>
-              </fr:frontmatter>
-              <fr:mainmatter><html:p>Rapidly exploring random trees (RRT) is a very simple, elegant and widely used algorithm for motion planning. The algorithm proceeds as follows:</html:p>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(0, 100, 255, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(0, 100, 255, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(0, 100, 255, 0.7);">Algorithm.</html:span> 
-  For <fr:tex display="inline"><![CDATA[k = 1]]></fr:tex> to <fr:tex display="inline"><![CDATA[K]]></fr:tex> do
- <html:ol><html:li><fr:tex display="inline"><![CDATA[x_{rand} \gets  \mathsf {RANDOM\_STATE}()]]></fr:tex></html:li>
-  <html:li><fr:tex display="inline"><![CDATA[x_{near} \gets  \mathsf {NEAREST\_NEIGHBOR}(x_{rand}, \mathcal {T})]]></fr:tex></html:li>
-  <html:li><fr:tex display="inline"><![CDATA[u \gets  \mathsf {SELECT\_INPUT}(x_{near})]]></fr:tex></html:li>
-  <html:li><fr:tex display="inline"><![CDATA[x_{new} \gets  \mathsf {NEW\_STATE}(x_{near}, u, \Delta  t)]]></fr:tex></html:li>
-  <html:li><fr:tex display="inline"><![CDATA[\mathcal {T}.add\_vertex(x_{new})]]></fr:tex></html:li>
-  <html:li><fr:tex display="inline"><![CDATA[\mathcal {T}.add\_edge((x_{near}, u, x_{new}))]]></fr:tex></html:li></html:ol>
- return <fr:tex display="inline"><![CDATA[\mathcal {T}]]></fr:tex>
-</html:div>
-
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
-Given some dynamics model <fr:tex display="inline"><![CDATA[\dot {x} = f(x, u)]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathsf {NEW\_STATE}]]></fr:tex> is some approximate integration, such as Euler integration i.e.
-<fr:tex display="block"><![CDATA[x_{new} = x_{near} + f(x_{near}, u) \Delta  t]]></fr:tex>
-Preferable to use higher-order method like Runge-Kutta.
-</html:div>
-
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
-<fr:tex display="inline"><![CDATA[\mathsf {SELECT\_INPUT}]]></fr:tex> is determined by whether the system is holonomic or non-holomonic. If the agent is holonomic, then <fr:tex display="inline"><![CDATA[u]]></fr:tex> will just be the control corresponding to the difference in the two states.
-</html:div>
-
-  <html:div class="comments">
-    
-  <html:hr />
-
-    <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
-  </html:div>
-</fr:mainmatter>
-            </fr:tree>
-            <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
-              <fr:frontmatter>
-                <fr:authors>
-                  <fr:author>
-                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
-                  </fr:author>
-                </fr:authors>
-                <fr:date>
-                  <fr:year>2025</fr:year>
-                  <fr:month>7</fr:month>
-                  <fr:day>24</fr:day>
-                </fr:date>
-                <fr:uri>https://kellenkanarios.com/DJPO/</fr:uri>
-                <fr:display-uri>DJPO</fr:display-uri>
-                <fr:route>/DJPO/</fr:route>
-                <fr:title text="Eligibility Traces">Eligibility Traces</fr:title>
-              </fr:frontmatter>
-              <fr:mainmatter><html:p>As I grow more interested in abandoning batched updates and the replay buffer, the importance of elibility traces grows with me. Due to this, I thought it finally time to re-prove / understand what makes these traces so eligible.</html:p><html:p>The reference followed is <fr:link href="/suttonReinforcementLearningIntroduction2018/" title="Reinforcement learning: An introduction" uri="https://kellenkanarios.com/suttonReinforcementLearningIntroduction2018/" display-uri="suttonReinforcementLearningIntroduction2018" type="local">Sutton and Barto</fr:link> (Ch 12.).</html:p><html:p>The eligibility trace vector is given by
-<fr:tex display="block"><![CDATA[
-\begin {align*}
- \mathbf {z}_{-1} &= 0 \\
- \mathbf {z}_t &= \gamma  \lambda  \mathbf {z}_{t - 1} + \nabla  \hat {v}(S_t; \mathbf {w}_t)
-.\end {align*}
-]]></fr:tex>
-Recall the temporal difference error is given by
-<fr:tex display="block"><![CDATA[\begin {align*}
-  \mathbf {\delta }_t = r_{t + 1} + \gamma  \hat {v}(s_{t + 1}; \mathbf {w}_t) - \hat {v}(s_t; \mathbf {w}_t)
-.\end {align*}]]></fr:tex>
-For TD(<fr:tex display="inline"><![CDATA[\lambda ]]></fr:tex>), the incremental update is given by
-<fr:tex display="block"><![CDATA[\begin {align*}
-  \mathbf {w}_{t + 1} = \mathbf {w}_t + \alpha  \mathbf {\delta }_{t} \mathbf {z}_t
-.\end {align*}]]></fr:tex></html:p><html:p>We can rewrite the <fr:tex display="inline"><![CDATA[\lambda ]]></fr:tex>-return recursively in terms of reward and itself as follows:
-<fr:tex display="block"><![CDATA[\begin {align*}
-  G_t^{\lambda } &= (1 - \lambda ) \sum _{n=1}^{\infty } \lambda ^{n-1}G_{t:t+n} \\
-  G_t^{\lambda } &= (1 - \lambda ) \sum _{n=1}^{\infty } \lambda ^{n-1}(R_{t + 1} + \gamma  G_{t+1:t+n}) \\
-  G_t^{\lambda } &= R_{t + 1} + \gamma  (1 - \lambda ) \left [\hat {v}(S_{t + 1}; \mathbf {w}_t) + \sum _{n=2}^{\infty } \lambda ^{n-1} G_{t+1:t+n}\right ] \\
-  G_t^{\lambda } &= R_{t + 1} + (1 - \lambda )\gamma  \hat {v}(S_{t + 1}; \mathbf {w}_t) + \gamma  \lambda  G_{t + 1}^{\lambda }
-.\end {align*}]]></fr:tex></html:p><html:p>Now we will show that the prediction error of TD(<fr:tex display="inline"><![CDATA[\lambda ]]></fr:tex>) can be re-written as the sum of TD-errors. The prediction error is written as
-<fr:tex display="block"><![CDATA[PE = G_t^{\lambda } - \hat {v}(S_t, \mathbf {w}_t)]]></fr:tex>
-Rewriting the <fr:tex display="inline"><![CDATA[\lambda ]]></fr:tex>-return as above
-<fr:tex display="block"><![CDATA[
-\begin {align*}
- PE &= R_{t + 1} + \gamma  \hat {v}(S_{t + 1} ; \mathbf {w}_t) + \gamma  \lambda  G_{t + 1}^{\lambda } - \gamma  \lambda  \hat {v}(S_{t + 1}, \mathbf {w}_t) - \hat {v}(S_t; \mathbf {w}_t) 
- &= (R_{t + 1} + \gamma  \hat {v}(S_{t + 1} ; \mathbf {w}_t) - \hat {v}(S_t, \mathbf {w}_t)) + \gamma  \lambda  G_{t + 1}^{\lambda } - \gamma  \lambda  \hat {v}(S_{t + 1}; \mathbf {w}_t)
- &= \mathbf {\delta }_t  + \gamma  \lambda  G_{t + 1}^{\lambda } - \gamma  \lambda  \hat {v}(S_{t + 1}; \mathbf {w}_t)
-.\end {align*}
-]]></fr:tex>
-<html:p>
-We now are left with <fr:tex display="inline"><![CDATA[\gamma  \lambda  (G_{t + 1}^{\lambda } - \hat {v}(S_{t + 1}, \mathbf {w}_t))]]></fr:tex>, where we can proceed in the same manner recursively, such that
-<fr:tex display="block"><![CDATA[PE = \sum _{t=1}^{\infty } (\gamma  \lambda )^{t - 1} \delta _t]]></fr:tex>
-It is easy to see the same thing goes through for the finite time slice <fr:tex display="inline"><![CDATA[\lambda ]]></fr:tex>-return i.e.
-<fr:tex display="block"><![CDATA[G_{t:t + k}^{\lambda } - \hat {v}(S_t, \mathbf {w}_{t - 1}) = \sum _{i = t}^{t + k} (\gamma  \lambda )^{i - t} \delta _i]]></fr:tex></html:p>
-<html:p>
-  Going back to the eligibility trace update, if we instead do not apply each elibgibility trace update but apply the sum of all the updates for the same fixed <fr:tex display="inline"><![CDATA[\mathbf {w}_t]]></fr:tex>, then we get that the total update is
-<fr:tex display="block"><![CDATA[
-  \begin {align*}
-   \mathbf {w}_{t+1} &= \sum _{t=1}^{T} \alpha  \delta _t \mathbf {z}_t \\
-   &= \sum _{t=1}^{T} \alpha  \delta _t \sum _{i=0}^{t} (\lambda  \gamma )^{i} \nabla  \hat {v}(S_i, \mathbf {w}_t) \\
-   &= \sum _{t=1}^{T} \alpha  (r_t + \gamma  \hat {v}(S_{t+1}, \mathbf {w}_t) - \hat {v}(S_t, \mathbf {w}_t)) \underbrace {\sum _{i=0}^{t} (\lambda  \gamma )^{i} \nabla  \hat {v}(S_i, \mathbf {w}_t)}_{X_t}
-  .\end {align*}
-  ]]></fr:tex>
-  Then
-  <fr:tex display="block"><![CDATA[\begin {align*}
-   &= \sum _{t=1}^{T} \alpha  r_t X_t + \gamma  \hat {v}(S_{t+1}, \mathbf {w}_t) X_t - \hat {v}(S_t, \mathbf {w}_t) X_t
-  .\end {align*}]]></fr:tex></html:p>
-<html:p>
-  This shows that the <html:em>backward-view</html:em> and <html:em>forward-view</html:em> are "equivalent". The forward-view in practice makes an update at each step, so it is typically better.
-</html:p></html:p>
-  <html:div class="comments">
-    
-  <html:hr />
-
-    <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
-  </html:div>
-</fr:mainmatter>
-            </fr:tree>
-            <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
-              <fr:frontmatter>
-                <fr:authors>
-                  <fr:author>
-                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
-                  </fr:author>
-                </fr:authors>
-                <fr:date>
-                  <fr:year>2025</fr:year>
-                  <fr:month>7</fr:month>
-                  <fr:day>14</fr:day>
-                </fr:date>
-                <fr:uri>https://kellenkanarios.com/W4YP/</fr:uri>
-                <fr:display-uri>W4YP</fr:display-uri>
-                <fr:route>/W4YP/</fr:route>
-                <fr:title text="Multi Query Attention">Multi Query Attention</fr:title>
-              </fr:frontmatter>
-              <fr:mainmatter><html:p>Notes on the paper <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">Fast Transformer Decoding: One Write-Head is All You Need</fr:link>.</html:p><html:p>For, 
-<html:ul><html:li><fr:tex display="inline"><![CDATA[b]]></fr:tex> batch dimension,</html:li>
-  <html:li><fr:tex display="inline"><![CDATA[n]]></fr:tex> sequence length,</html:li>
-  <html:li><fr:tex display="inline"><![CDATA[d]]></fr:tex> hidden dimension,</html:li>
-  <html:li><fr:tex display="inline"><![CDATA[h]]></fr:tex> number of heads.</html:li></html:ul>
-The total <fr:link href="/4K5H/" title="Floating Point Operations" uri="https://kellenkanarios.com/4K5H/" display-uri="4K5H" type="local">FLOPS</fr:link> for <fr:link href="/004G/" title="Self-Attention" uri="https://kellenkanarios.com/004G/" display-uri="004G" type="local">attention</fr:link> are roughly <fr:tex display="inline"><![CDATA[bnd^2]]></fr:tex>. This comes from 
-<html:ol><html:li><fr:tex display="inline"><![CDATA[3nd^2]]></fr:tex> FLOPS to compute <fr:tex display="inline"><![CDATA[Q = XW_Q, K = XW_K, V = XW_V]]></fr:tex>.</html:li>
-  <html:li>Need to do this <fr:tex display="inline"><![CDATA[b]]></fr:tex> times for each input in batch.</html:li></html:ol>
-and the total memory accesses are roughly <fr:tex display="inline"><![CDATA[\underbrace {bnd}_{X} + \underbrace {bhn^2}_{\text {softmax}} + \underbrace {d^2}_{\text {projection}}]]></fr:tex>.
-This gives high arithmetic intensity
-<fr:tex display="block"><![CDATA[O\left (\left (\frac {h}{d} + \frac {1}{bn}\right )^{-1}\right )]]></fr:tex></html:p><html:p>However, if we do incremental inference then we must multiply our total number of memory accesses by <fr:tex display="inline"><![CDATA[n]]></fr:tex> i.e. <fr:tex display="inline"><![CDATA[bn^2d + nd^2]]></fr:tex>. This gives arithmetic intensity
-<fr:tex display="block"><![CDATA[O\left (\left (\frac {n}{d} + \frac {1}{b}\right )^{-1}\right ),]]></fr:tex>
-which requires large batch and short sequence length.
-</html:p>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
-I believe we just ignore the softmax memory contribution in the inference case because it does not scale with <fr:tex display="inline"><![CDATA[n]]></fr:tex> anymore as we are computing the logits just for the next token. Therefore, it becomes a <fr:tex display="inline"><![CDATA[\frac {d}{h}]]></fr:tex> term, which we can safely ignore?
-</html:div>
-<html:p>The key is that the <fr:tex display="inline"><![CDATA[\frac {n}{d}]]></fr:tex> term comes from the <fr:tex display="inline"><![CDATA[bn^2d]]></fr:tex> term, where we are loading <fr:tex display="inline"><![CDATA[h]]></fr:tex> <fr:tex display="inline"><![CDATA[(b \times  n \times  d / h)]]></fr:tex> <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrices <fr:tex display="inline"><![CDATA[n]]></fr:tex> times. Thus, we can improve the <fr:tex display="inline"><![CDATA[\frac {n}{d}]]></fr:tex> term by a factor of <fr:tex display="inline"><![CDATA[h]]></fr:tex> by simply not using a different <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrix for each head. This is the entire idea behind <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">MQA</fr:link>.</html:p>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
-Similar to the <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanarios.com/TJLA/" display-uri="TJLA" type="local">KV-cache</fr:link>, we still can use <fr:tex display="inline"><![CDATA[h]]></fr:tex> <fr:tex display="inline"><![CDATA[Q]]></fr:tex> matrices because we do not need to load <fr:tex display="inline"><![CDATA[n]]></fr:tex> of them into memory because only the last one matters for inference.
-</html:div>
-<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XUVV/</fr:uri><fr:display-uri>XUVV</fr:display-uri><fr:route>/XUVV/</fr:route><fr:title text="Group Query Attention">Group Query Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:em>Group query attention</html:em> is the same idea as <fr:link href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/shazeerFastTransformerDecoding2019/" display-uri="shazeerFastTransformerDecoding2019" type="local">MQA</fr:link> but instead of using one <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> for every head, they use a <html:em>group</html:em> of them. Where obviously the number of groups needs to be less than the number of heads.</html:p><html:figure><html:img width="80%" src="/bafkrmicmjlgi2o3oetsssjdwk6y2pqce4vrdwiw2ah4wwe3ulnt74upkiu.png" />
-<html:figcaption>Grouped query uses subset of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> matrices.</html:figcaption></html:figure></fr:mainmatter></fr:tree><html:p>Also inspired by this idea of reducing the dependence of <fr:tex display="inline"><![CDATA[K]]></fr:tex> and <fr:tex display="inline"><![CDATA[V]]></fr:tex> on the sequence length is sliding window attention.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>14</fr:day></fr:date><fr:uri>https://kellenkanarios.com/WM3M/</fr:uri><fr:display-uri>WM3M</fr:display-uri><fr:route>/WM3M/</fr:route><fr:title text="Sliding Window Attention">Sliding Window Attention</fr:title></fr:frontmatter><fr:mainmatter><html:p>The idea behind <html:em>sliding window attention</html:em> is to ensure the number of weight matrices needed for the keys <fr:tex display="inline"><![CDATA[K]]></fr:tex> and values <fr:tex display="inline"><![CDATA[V]]></fr:tex> does not scale with the sequence length. Intuitively, this means allowing each word to "attend" to only some fixed number of previous words rather than the whole sequence</html:p><html:figure><html:img width="80%" src="/bafkrmidqeoo6wx6s4ry6u74fcelfzxvwreyf7d44whnql4ffnnyd2dwcha.png" />
-<html:figcaption>"the" only sees "on" and "sat" rather than the full sentence.</html:figcaption></html:figure></fr:mainmatter></fr:tree>
-  <html:div class="comments">
-    
-  <html:hr />
-
-    <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
-  </html:div>
-</fr:mainmatter>
-            </fr:tree>
-            <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
-              <fr:frontmatter>
-                <fr:authors>
-                  <fr:author>
-                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
-                  </fr:author>
-                </fr:authors>
-                <fr:date>
-                  <fr:year>2025</fr:year>
                   <fr:month>7</fr:month>
                   <fr:day>1</fr:day>
                 </fr:date>
@@ -1226,10 +941,6 @@ Now this is all cool theoretically but how TF do we actually maximize this thing
     The <fr:link href="/0089/" title="Reparametrization Trick" uri="https://kellenkanarios.com/0089/" display-uri="0089" type="local">reparametrization trick</fr:link>!!
   </html:div>
 
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:uri>https://kellenkanarios.com/0089/</fr:uri><fr:display-uri>0089</fr:display-uri><fr:route>/0089/</fr:route><fr:title text="Reparametrization Trick">Reparametrization Trick</fr:title></fr:frontmatter><fr:mainmatter><html:p>For <fr:tex display="inline"><![CDATA[q_{\phi }(\cdot  | x) \sim  N(\mu _{\phi }(x), \sigma _{\phi }(x))]]></fr:tex>. The <html:em>reparametrization trick</html:em> allows us to differentate through a random sample by sampling from <fr:tex display="inline"><![CDATA[q_{\phi }(\cdot  | x)]]></fr:tex> via 
-<fr:tex display="block"><![CDATA[z(\phi ) = \mu _{\phi }(x) + \sigma _{\phi }(x) \cdot  \epsilon ,]]></fr:tex>
-where <fr:tex display="inline"><![CDATA[\epsilon  \sim  N(0, 1)]]></fr:tex>. Then, for a given sample <fr:tex display="inline"><![CDATA[\epsilon ]]></fr:tex>, we can easily compute
-<fr:tex display="block"><![CDATA[\nabla _{\phi } z(\phi ) = \nabla _{\phi } \mu _{\phi }(x) + \nabla _{\phi }\sigma _{\phi }(x) \cdot  \epsilon ]]></fr:tex></html:p></fr:mainmatter></fr:tree>
   <html:p>Now for a given sample <fr:tex display="inline"><![CDATA[x_i \sim  \mathcal {D}]]></fr:tex>, we can get a sample <fr:tex display="inline"><![CDATA[z_i(\phi ) \sim  q(\cdot  \mid  x_i, \theta )]]></fr:tex> that is differentiable with respect to <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. Using this, we can get the stochastic gradient estimate
   <fr:tex display="block"><![CDATA[\nabla _q \widetilde {\mathsf {ELBO}}(x, q, \theta ) = \nabla _{\phi } \left [\frac {z_i(\phi )^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((z_i(\phi ) - \mu _{\theta }(z_i(\phi )))^2 - (z_i(\phi ) - \mu _{\phi }(x))^2\big )\right ]]]></fr:tex></html:p>
 
@@ -1392,7 +1103,8 @@ You may be wondering how we use this algorithmically to find <fr:tex display="in
 
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>3</fr:month><fr:day>4</fr:day></fr:date><fr:title text="Native LSP, no framework">Native LSP, no framework</fr:title></fr:frontmatter><fr:mainmatter>
 <html:p>This is where the config diverged most sharply from where it started. The first pass used <html:code>mason.nvim</html:code>, <html:code>mason-lspconfig</html:code>, and <html:code>nvim-lspconfig</html:code> — the standard stack. All three are now gone. Neovim 0.11 ships a <fr:link href="https://neovim.io/doc/user/lsp/" type="external">native LSP</fr:link> configuration API: <html:code>vim.lsp.config</html:code> defines a server and <html:code>vim.lsp.enable</html:code> turns it on, and any table returned from <html:code>lsp/&lt;name&gt;.lua</html:code> on the runtime path is picked up as that server's config. So <html:code>core.lsp</html:code> is just a list —</html:p>
-<html:pre><![CDATA[vim.lsp.enable({ "forester", "texlab", "clangd", "basedpyright", "lua_ls", "ruff" })]]></html:pre>
+<html:pre><html:code class="language-lua"> vim.lsp.enable({ "forester", "texlab", "clangd", "basedpyright", "lua_ls", "ruff" })
+</html:code></html:pre>
 <html:p>— and each server gets a plain Lua file in <html:code>lsp/</html:code>. No package manager, no bridge plugin translating between two config schemas. I install the servers themselves through my system package manager and let Neovim wire them up. It is dramatically less machinery for the same result, and when something breaks there is exactly one place to look.</html:p>
 <html:p>The Python setup is the clearest upgrade. I dropped <html:code>pyright</html:code> for <html:code>basedpyright</html:code> and split responsibilities: <html:code>basedpyright</html:code> does type checking and inlay hints, while <html:code>ruff</html:code> runs as its own language server handling import organization and diagnostics. In the LazyVim days I fought constantly with import resolution, hand-writing a function to locate each project's virtualenv and pin <html:code>pythonPath</html:code> to its interpreter. <html:code>basedpyright</html:code> resolves environments well enough on its own that the hack is gone. <html:code>clangd</html:code>, <html:code>texlab</html:code>, and <html:code>lua_ls</html:code> round out the set, each configured in its own file — <html:code>texlab</html:code> in particular carries a fair amount of custom command wiring for building, forward search into Zathura, and environment manipulation.</html:p>
 <html:p>A shared <html:code>LspAttach</html:code> autocommand in <html:code>core.lsp</html:code> binds the buffer-local LSP keymaps once, for every server: go-to-definition and friends route through <html:code>fzf-lua</html:code> pickers, and document highlighting, inlay-hint toggling, and native completion get enabled per-buffer based on what each client actually supports.</html:p>
@@ -1431,44 +1143,6 @@ You may be wondering how we use this algorithmically to find <fr:tex display="in
   <html:hr />
 
     <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="nvim" theme="boxy-light" crossorigin="anonymous" async="" />
-  </html:div>
-</fr:mainmatter>
-            </fr:tree>
-            <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
-              <fr:frontmatter>
-                <fr:authors>
-                  <fr:author>
-                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
-                  </fr:author>
-                </fr:authors>
-                <fr:date>
-                  <fr:year>2024</fr:year>
-                  <fr:month>12</fr:month>
-                  <fr:day>28</fr:day>
-                </fr:date>
-                <fr:uri>https://kellenkanarios.com/0025/</fr:uri>
-                <fr:display-uri>0025</fr:display-uri>
-                <fr:route>/0025/</fr:route>
-                <fr:title text="Stack vs. Heap"><fr:link href="/NZBG/" title="Stack" uri="https://kellenkanarios.com/NZBG/" display-uri="NZBG" type="local">Stack</fr:link> vs. <fr:link href="/WLBG/" title="Heap" uri="https://kellenkanarios.com/WLBG/" display-uri="WLBG" type="local">Heap</fr:link></fr:title>
-              </fr:frontmatter>
-              <fr:mainmatter><html:p>I often hear this question come up amongst performance-driven developers, and for the longest time I could never get a straight answer as to why the stack was so much better? After a long foray into the inner workings of how memory allocation is actually done, I think I finally have an answer. I do not want to forget this, so I am doing a quick write up here.</html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2024</fr:year><fr:month>12</fr:month><fr:day>28</fr:day></fr:date><fr:title text="Why stack is faster.">Why stack is faster.</fr:title></fr:frontmatter><fr:mainmatter>
-This all comes down to what happens during each memory allocation. Prior to actually running the program, the operating system allocates some amount of memory for both the stack and the heap (I think around 2-4MB?). When you allocate memory on the stack i.e. <html:code>int x = 1;</html:code>
-<html:ul><html:li>Stack just increments stack pointer.</html:li>
-    <html:li>Writes value to new address pointed to by stack pointer.</html:li></html:ul>
-When you allocate memory on the heap i.e. <html:code>int *x = malloc(sizeof(int))</html:code>, we must instead choose how best to fulfill the request, which is a whole research direction in itself.
-<html:ul><html:li>One such implementation is the <fr:link href="https://en.wikipedia.org/wiki/Buddy_memory_allocation" type="external">buddy algorithm</fr:link></html:li></html:ul>
-However, <html:code>malloc</html:code> itself is not a system call and therefore is not terribly slow. A real issue occurs when we run out of pre-allocated heap memory. This requires <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">invoking a system call</fr:link> like <html:code>sbrk</html:code> to increment the size of the allocated memory for the heap.
-<html:ul><html:li>If no available pages, OS must evict and write to disk...</html:li>
-      <html:li>Formally, this is known as "heap growth".</html:li></html:ul>
-Generally, if you know how much memory you need it is good practice to just allocated all up front to minimize any potential system calls. With this, the performance difference is not too drastic <![CDATA[ :)]]>
-</fr:mainmatter></fr:tree>
-
-  <html:div class="comments">
-    
-  <html:hr />
-
-    <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
   </html:div>
 </fr:mainmatter>
             </fr:tree>
