@@ -66,7 +66,7 @@ This idea is mainly based on the <a href="https://kellenkanarios.com/4WG5/">MLFQ
   border-radius: var(--radius);
   background-color: rgba(0, 100, 255, 0.05);
   "><span style="font-weight: 600; color: rgba(0, 100, 255, 0.7);">Algorithm.</span> 
-  <strong>Weekly review.</strong>
+  <strong style="font-family: var(--sans);">Weekly review.</strong>
 
  <div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
@@ -75,7 +75,7 @@ This idea is mainly based on the <a href="https://kellenkanarios.com/4WG5/">MLFQ
   border-radius: var(--radius);
   background-color: rgba(0, 100, 255, 0.05);
   "><span style="font-weight: 600; color: rgba(0, 100, 255, 0.7);">Algorithm.</span> 
-  <strong>Daily review.</strong>
+  <strong style="font-family: var(--sans);">Daily review.</strong>
   <ul><li>For each work stream,</li>
     <ul><li>If I finished the allocated task for the day, get new task from priority 2.</li>
      <li>Else, do nothing and continue with the current task.</li></ul>
@@ -434,28 +434,16 @@ and
     <id>https://kellenkanarios.com/HHZO/</id>
     <content type="xhtml">
       <div xmlns="http://www.w3.org/1999/xhtml">
-<p>This will also serve as a bit of notes from <a href="https://pages.cs.wisc.edu/~markhill/papers/primer2020_2nd_edition.pdf">A Primer on Memory Consistency and Cache Coherence</a></p>
-  <section><header><h2>Murphi</h2></header>
-<p>Syntactical things I need to remember from Murphi docs. Most things are straightforward, but there are a few things to note:</p>
-  <p><strong>Declarations.</strong> A <em>declaration</em> is a variable or a collection of variables that are used in the rules.</p>
-  <p><strong>Rules</strong>. A <em>rule</em> is a transition from one state to another</p>
-  <ul><li>Each rule can optionally have an initial condition required to be fired</li>
+<p>This will also serve as a bit of notes from <a href="https://pages.cs.wisc.edu/~markhill/papers/primer2020_2nd_edition.pdf">A Primer on Memory Consistency and Cache Coherence</a></p><section><header><h2>Murphi</h2></header><p>Syntactical things I need to remember from Murphi docs. Most things are straightforward, but there are a few things to note:</p><section><header><h3>Declarations</h3></header><p>A <em>declaration</em> is a variable or a collection of variables that are used in the rules.</p></section><section><header><h3>Rules</h3></header><p>A <em>rule</em> is a transition from one state to another</p><ul><li>Each rule can optionally have an initial condition required to be fired</li>
     <li>We can easily define rules for all the processors or collection of <code>n</code> things with <code>ruleset</code>.</li>
     <li>For our use case, rules are used to define</li>
     <ol><li>Controller actions</li>
       <li>Receiving a request from the network</li>
-      <li>Retrying stalled requests</li></ol></ul>
-  <p><strong>Startstates.</strong> A <em>startstate</em> is the intial configuration for all our declarations.</p>
-  <ul><li>Must assign a value to every global variable</li></ul>
-  <p><strong>Invariants</strong>. An <em>invariant</em> is something that Murphi checks to ensure is true at all possible configurations of the system.</p>
-<p><strong>Overview straight from the docs</strong>. Repeat forever:
-</p>
-<ol><li>Find all rules whose conditions are true in the current state.
+      <li>Retrying stalled requests</li></ol></ul></section><section><header><h3>Startstates</h3></header><p>A <em>startstate</em> is the intial configuration for all our declarations.</p><ul><li>Must assign a value to every global variable</li></ul></section><section><header><h3>Invariants</h3></header><p>An <em>invariant</em> is something that Murphi checks to ensure is true at all possible configurations of the system.</p></section><p><strong style="font-family: var(--sans);">Overview straight from the docs.</strong> Repeat forever:
+</p><ol><li>Find all rules whose conditions are true in the current state.
        (i.e. conditional expressions are true, given the current values
        of the global variables).</li>
-    <li>Choose one arbitrarily and execute the action, yielding a new state.</li></ol>
-</section>
-
+    <li>Choose one arbitrarily and execute the action, yielding a new state.</li></ol></section>
   <section><header><h2>Starting with MSI</h2></header>
 <p>The first thing we need to do is understand all the things that can go awry.</p>
 <p>First in the valid-invalid protocol example we were given they only have two <a href="https://kellenkanarios.com/DWV1/">virtual channels</a>. However, we need 3 channels to handle, request messages, <strong>forwarded</strong> messages, and response messages.</p>
@@ -483,7 +471,7 @@ and
     InvAck,         -- invalidation acknowledgment
     PutAck          -- put acknowledgment
   };]]></pre>
-<strong>Cache controller.</strong> We will start with MSI cache controller, given by the following table:
+<strong style="font-family: var(--sans);">Cache controller.</strong> We will start with MSI cache controller, given by the following table:
 <figure><img width="100%" src="https://kellenkanarios.com/bafkrmifhoq7kszlwemrlvvy4yuuvuk6l6bjadkvsmzclbemz2tzxdt6bjm.png" /></figure>
 <p>Notably, we are missing some of the messages in the figures below. We can handle these based on the <code>AckCount</code></p>
 <pre><![CDATA[  ProcState:
@@ -513,7 +501,7 @@ and
 The <code>load</code>, <code>store</code>, and <code>replacement</code> all only alter the states of the coherence protocol for the permanent states. Therefore, to simulate the system it is sufficient to only implement the rules that initiate these state transitions i.e. evict in modified state or load from invalid state.
 </div>
 
-<strong>Directory controller.</strong> Now for the directory controller:
+<strong style="font-family: var(--sans);">Directory controller.</strong> Now for the directory controller:
 <figure><img width="100%" src="https://kellenkanarios.com/bafkrmiadmfswkegttky27zg2gxvkwag3pt72ur7qam2z6vufr6xlvujqca.png" />
 <figcaption /></figure>
 
@@ -527,7 +515,7 @@ The <code>load</code>, <code>store</code>, and <code>replacement</code> all only
 We actually end up adding a second transient state to the directory controller <code>M^D</code>. This is to handle the <code>PutM</code>, <code>GetM</code> race described below.
 </div>
 
-<strong>Weird Race Conditions</strong>
+<strong style="font-family: var(--sans);">Weird Races.</strong>
 
  <div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
@@ -589,15 +577,15 @@ When the home directory is in <code>M</code> and we get a <code>GetS</code> we c
 
   <section><header><h2>Moving to MESI</h2></header>
 Aside from the modifications discussed above, the rest was straightforward and we now are ready to move on to MESI.
-<p><strong>Cache controller.</strong> We will start with MESI cache controller, given by the following table:
+<p><strong style="font-family: var(--sans);">Cache controller.</strong> We will start with MESI cache controller, given by the following table:
 </p>
 <figure><img width="100%" src="https://kellenkanarios.com/bafkrmia4fllqvr7nzhifqxwk5stk2kyje2tfokhddzfjkteyw4kbj6k25i.png" /></figure>
-<p><strong>Design choice 1.</strong> Since we allow immediate upgrade to <code>M</code>, without forwarding, if E upgrades to M, then the value in the directory sent to the next <code>GetS / GetM</code> would not have updated value. It seems we must either
+<p><strong style="font-family: var(--sans);">Design choice 1.</strong> Since we allow immediate upgrade to <code>M</code>, without forwarding, if E upgrades to M, then the value in the directory sent to the next <code>GetS / GetM</code> would not have updated value. It seems we must either
 <ol><li>not allow E to silently upgrade to M and then we do not need forwarding, or</li>
   <li>allow E to silently upgrade to M and treat E as M basically and forward everything.</li></ol>
 Notably, neither of these have to write back on <code>PutE</code>, but we will go with 1 because that is how it is indicated in the figure.
 </p>
-<p><strong>Design Choice 2.</strong> In order to indicate that the directory received the first <code>GetS</code> we introduce a <code>ExclusiveData</code> message. Upon receiving, <code>ExclusiveData</code> in <code>IS^D</code> we transition to <code>E</code>.</p>
+<p><strong style="font-family: var(--sans);">Design Choice 2.</strong> In order to indicate that the directory received the first <code>GetS</code> we introduce a <code>ExclusiveData</code> message. Upon receiving, <code>ExclusiveData</code> in <code>IS^D</code> we transition to <code>E</code>.</p>
 
  <div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
@@ -609,10 +597,10 @@ Notably, neither of these have to write back on <code>PutE</code>, but we will g
 Once we have sent the <code>PutE</code>, or the <code>PutM</code> <code>EI^A</code> and <code>MI^A</code> are functionally the same. I include both for completeness but verified that transitioning directly to <code>MI^A</code> from <code>E</code> works the same.
 </div>
 
-<p><strong>Directory controller.</strong> We start with the analagous table.</p>
+<p><strong style="font-family: var(--sans);">Directory controller.</strong> We start with the analagous table.</p>
 <figure><img width="100%" src="https://kellenkanarios.com/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png" /></figure>
 <p>Similar to the cache controller, we also add a <code>E^D</code> state for completion that can be absorbed into <code>M^D</code> introduced in the MSI protocol.</p>
-<p><strong>Weird Races.</strong></p>
+<p><strong style="font-family: var(--sans);">Weird Races.</strong></p>
 
  <div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;

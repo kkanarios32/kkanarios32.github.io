@@ -1,0 +1,44 @@
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><title>XLA - TensorFlow, compiled</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Reference"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon">Reference. </span>XLA - TensorFlow, compiled <a class="slug" href="/xla2017/">[xla2017]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">2017</li></ul>
+<br><ul><li class="meta-item"><address class="author">The XLA team</address></li></ul>
+<br><ul><li class="meta-item"><a class="link external" href="https://developers.googleblog.com/xla-tensorflow-compiled/">https://developers.googleblog.com/xla-tensorflow-compiled/</a></li></ul>
+</div></header></summary><pre>@incollection{xla2017,
+ title = {XLA - TensorFlow, compiled},
+ author = {The XLA team},
+ year = {2017},
+ url = {https://developers.googleblog.com/xla-tensorflow-compiled/}
+}</pre></details></section><footer xmlns="">
+    
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id3"><summary><header><h1>
+<span class="taxon"></span>MLIR <a class="slug" href="/IR7B/">[IR7B]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Collection of resources</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>https://llvm.org/devmtg/2020-09/slides/MLIR_Tutorial.pdf</li>
+  <li>https://www.lei.chat/posts/mlir-linalg-dialect-and-patterns/</li>
+  <li>https://www.lei.chat/posts/mlir-vector-dialect-and-patterns/</li></ul><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Dialects.</strong> This is effectively a syntax. For your given DSL, you must write each of the operations in this <em>MLIR dialect</em> in order to inherit the benefits of the MLIR ecosystem.</p>
+ <blockquote xmlns="http://www.w3.org/1999/xhtml" class="jms-quote" style="   margin: 1em 0 1em 0.25em;   padding: 0.6em 1.1em 0.6em 1.3em;   border-left: 4px solid rgba(0, 0, 0, 0.25);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.035);   font-style: italic;   color: rgba(0, 0, 0, 0.85);   ">The whole structured CodeGen paradigm in MLIR prefers co-designing op semantics and transformations and let ops structurally encode and guarantee certain properties to simplify analyses and transformations.<div style="    margin-top: -0.5em;    font-style: normal;    font-size: 0.9em;    text-align: right;    color: rgba(0, 0, 0, 0.55);   ">— <span xmlns="" class="link external"><a href="https://www.lei.chat/posts/mlir-linalg-dialect-and-patterns/" title="">Lei Zhang</a></span></div></blockquote>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong>The general paradigm</strong>: It seems that when you are writing a DSL backed by MLIR that you</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Write an MLIR dialect for your DSL</li>
+  <li>You can write custom compiler passes for your MLIR dialect.</li>
+  <ul><li>This is what is done in <span xmlns="" class="link local"><a href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations [tilletTritonIntermediateLanguage2019]">Triton</a></span>.</li>
+    <li><span xmlns="" class="link local"><a href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations [tilletTritonIntermediateLanguage2019]">Triton</a></span> has two custom MLIR dialects: <code>ttir</code> and <code>ttgir</code>.</li>
+    <ul><li>The <code>ttir</code> dialect is the backend agnostic IR.</li>
+      <li>The <code>ttgir</code> dialect is the <span xmlns="" class="link local"><a href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations [tilletTritonIntermediateLanguage2019]">Triton</a></span> GPU IR.</li></ul></ul>
+  <li>Write a lowering pass from your MLIR dialect to the MLIR dialect of an MLIR with codegen backing i.e.</li>
+  <ul><li>MLIR has an LLVM dialect</li>
+    <li>Alternatively, <span xmlns="" class="link local"><a href="/xla2017/" title="XLA - TensorFlow, compiled [xla2017]">XLA</a></span> ingests StableHLO which is an MLIR dialect. In theory, this means that if your DSL is similar to that of a JAX / LinAlg dialect, then you can get a lot of the optimizations Google has come up with for free.</li>
+    <ul><li>However, XLA works by translating StableHLO to HLO, which is then optimized by XLA. HLO is NOT an MLIR dialect and therefore in order to use XLA your backend needs to have an appropriate conversion from HLO to an executable on their backend.</li>
+      <li>This is what is done for trainium. Namely, the <span xmlns="" class="link external"><a href="https://awsdocs-neuron.readthedocs-hosted.com/en/latest/compiler/index.html" title="">neuronx-cc</a></span> compiler performs the translation from optimized HLO to optimized executable code on their ASIC.</li></ul>
+    <li><span xmlns="" class="link local"><a href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations [tilletTritonIntermediateLanguage2019]">Triton</a></span> and the GPU backend for XLA are the LLVM + NVVM MLIR, which is the MLIR dialect for LLVM with added GPU instructions.</li></ul></ol></details></section>
+      </details></section>
+    
+    
+  </footer></article></div></body></html>
