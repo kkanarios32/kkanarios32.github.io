@@ -18,7 +18,7 @@ window.addEventListener('load', function () {
   <li>Load the input tensors from memory.</li>
   <li>Perform the softmax.</li>
   <li>Store the output tensor to memory.</li></ol>
-    <p xmlns="http://www.w3.org/1999/xhtml">On a CPU, the input tensors would remain in the cache. However, this must be done explicitly on ASIC (or by the compiler in the case of Google / <span xmlns="" class="link external"><a href="https://kellenkanarios.com/M74N/" title="">XLA</a></span>).</p>
+    <p xmlns="http://www.w3.org/1999/xhtml">On a CPU, the input tensors would remain in the cache. However, this must be done explicitly on ASIC (or by the compiler in the case of Google / <span xmlns="" class="link local"><a href="/M74N/" title="XLA Compilation [M74N]">XLA</a></span>).</p>
   </details></section><footer xmlns="">
     
     <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
@@ -743,7 +743,7 @@ Here, the <code>ret</code> instruction just pops whatever is on the top of the s
 <div class="metadata"><ul><li class="meta-item">June 1, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">NVIDIA's hardware-level term for what CUDA programmers call a thread block.</p><p xmlns="http://www.w3.org/1999/xhtml">A CTA is a group of threads that execute on the same Streaming Multiprocessor (SM), can synchronize via barriers (<code>__syncthreads()</code>), and share fast on-chip <em>shared memory</em> (<span xmlns="" class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">Shared memory (GPU)</a></span>). Threads within a CTA are scheduled and executed in groups of 32 called <span xmlns="" class="link local"><a href="/OGCS5/" title="Warp (GPU) [OGCS5]">warps</a></span>. </p></details></section>
   <section lang="en" class="block"><details id="id76"><summary><header><h1>
 <span class="taxon"></span>Software pipelining vs. loop unrolling <a class="slug" href="/MOPC/">[MOPC]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">July 17, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">See <span class="link-reference" tid="H.3" refid="hennessy2019computer"><span xmlns="" class="link local"><a href="/hennessy2019computer/" title="Computer architecture: A quantitative approach [hennessy2019computer]">[hennessy2019computer, H.3]</a></span></span> for more details.</p><p xmlns="http://www.w3.org/1999/xhtml">Loop unrolling at its core performs no instruction re-ordering. It literally just expands the loop. When combined with a compiler, this increase the size of your basic blocks allowing for more optimization opportunities. This also eliminates overhead of branch prediction</p><p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link external"><a href="https://kellenkanarios.com/AOWY/" title="">AOWY</a></span> does not rely on the unroll window.</p>
+<div class="metadata"><ul><li class="meta-item">July 17, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">See <span class="link-reference" tid="H.3" refid="hennessy2019computer"><span xmlns="" class="link local"><a href="/hennessy2019computer/" title="Computer architecture: A quantitative approach [hennessy2019computer]">[hennessy2019computer, H.3]</a></span></span> for more details.</p><p xmlns="http://www.w3.org/1999/xhtml">Loop unrolling at its core performs no instruction re-ordering. It literally just expands the loop. When combined with a compiler, this increase the size of your basic blocks allowing for more optimization opportunities. This also eliminates overhead of branch prediction</p><p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/AOWY/" title="Software Pipelining [AOWY]">Software Pipelining</a></span> does not rely on the unroll window.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
   Loop unrolling cannot make use of the large distance between dependencies for large \(k\) below. 
   <pre><code class="language-c">for (i = k; i &lt; n; i++)
@@ -793,7 +793,7 @@ If A is taken (meaning x &lt; 7 was true), then B is guaranteed not taken. A pre
   <li>Store the output tensor to memory.</li>
   <li>Load the input tensors from memory.</li>
   <li>Perform the softmax.</li>
-  <li>Store the output tensor to memory.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">On a CPU, the input tensors would remain in the cache. However, this must be done explicitly on ASIC (or by the compiler in the case of Google / <span xmlns="" class="link external"><a href="https://kellenkanarios.com/M74N/" title="">XLA</a></span>).</p></details></section>
+  <li>Store the output tensor to memory.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">On a CPU, the input tensors would remain in the cache. However, this must be done explicitly on ASIC (or by the compiler in the case of Google / <span xmlns="" class="link local"><a href="/M74N/" title="XLA Compilation [M74N]">XLA</a></span>).</p></details></section>
   <section lang="en" class="block" data-taxon="Definition"><details id="id80"><summary><header><h1>
 <span class="taxon">Definition. </span>Softcapping <a class="slug" href="/39ZN/">[39ZN]</a> </h1>
 <div class="metadata"><ul>
@@ -1231,13 +1231,54 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 </details></section>
           </details></section>
         <section lang="en" class="block"><details id="id102"><summary><header><h1>
+<span class="taxon"></span>XLA Compilation <a class="slug" href="/M74N/">[M74N]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Overview.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Dispatch / Cache: caches compilation based on input argument signatures i.e. shapes, dtypes, sharding. If shapes change will need to <strong>recompile</strong>.</li>
+  <li>XLA transformation: Python -&gt; JaxPR -&gt; StableHLO, performing fusion and other simplifications to reduce memory overhead (?).</li>
+  <li>TPU specific: Further reduced to LLO IR, then <em>very large instruction word</em> (VLIW) scheduling to map dot products to MXU.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+As soon as python code is traced into jaxpr it is thrown away. Only HLO is input to XLA compiler.
+</div>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Compilation (Pipeline).</strong></p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Tracing: Python / JAX -&gt; Jaxpr</li>
+  <ul><li><code>jax.make_jaxpr(fun)(*args)</code></li>
+    <li>Abstract execution. JAX executes python code using abstract tracer objects instead of real arrays.</li>
+    <li>Recording the FLow. Every operation and its intermediate result is recorded into JAXpr.</li>
+    <li>Sequence used to construct a grap, which the XLA compiler will later optimize.</li>
+    <li>Python code is executed once during tracing but excluded from final graph.</li>
+    <li>Each JAX primitive registers functions for</li>
+    <ul><li>Lowering to StableHLO</li>  
+        <li>How it is transformed under <code>grad</code> and <code>vmap</code>.</li></ul></ul>
+  <li>Lowering: Jaxpr -&gt; HLO</li>
+  <ul><li><code>fn_lowered = jax.jit(fun).lower(*args)</code></li>
+    <li><code>stable_hlo = fn_lowered.as_text()</code></li>
+    <li><code>hlo = fn_lowered.compiler_ir('hlo')</code></li>
+    <li>Multiple ML frameworks lower to StableHLO.</li>
+    <ul><li>Hardware agnostic.</li>
+      <li>Backwards compatible.</li></ul></ul>
+  <li>Compile: HLO -&gt; Optimized HLO -&gt; LLO IR -&gt; VLIW -&gt; Executables</li>
+  <ul><li><code>compiled = fn_lowered.compile()</code></li>
+    <li><code>compiled.runtime_executable()</code> returns a <code>LoadedExecutable</code>.</li>
+    <li>Useful(?) <code>compiled.cost_analysis()</code>.</li>
+    <li>HLO:</li>
+    <ul><li>Input for XLA compiler.</li>
+      <li>Directed acyclic graph of copmutational operations.</li>
+      <li>All array dimensions are known at compile time.</li>
+      <li>Limited opcodes i.e. Add, Multiply, Transpose, Dot, etc.</li></ul></ul></ol><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">XLA Shapes and Memory Layout.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Every data type defined by data type and fixed dimensions, determined at compile time.</li>
+  <li>Minor-to-major order i.e. fastest changing to slowesting changin.</li>
+  <li>Tiling: arrays are split into smaller blocks to fit into VREG. Want to arrange data to efficiently fit VREG.</li></ul><figure xmlns="http://www.w3.org/1999/xhtml"><img width="60%" src="/bafkrmihanbz63fc3hvqd3drtqlm5shhn2624xbut2oobs3zibpwjw2jiju.png"></img>
+<figcaption>How memory is laid out based on XLA.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Execution.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Move tensors from CPU to HBM. Sharding is taken care of by PJIT if on TPU pod.</li>
+  <li>Async: Immediately returns a <code>Future</code> JAX array while the hardware executes VLIW microcode asynchronously.</li>
+  <li>Buffer management: Returns pointer to TPU memory. All handled lazily. Not copied back to CPU until <code>jax.block_until_ready()</code>.</li></ul></details></section>
+        <section lang="en" class="block"><details id="id103"><summary><header><h1>
 <span class="taxon"></span>Caches <a class="slug" href="/M91V/">[M91V]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">April 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The CPU clock is decreasing much faster than main-memory latency, so without a cache hierarchy a fast CPU spends most of its time stalled on memory.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> If you are a really fast factory, the size of the truck doesn't matter — you must still wait the full duration of the first delivery.</div>
-<section lang="en" class="block hide-metadata"><details id="id103" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id104" open="open"><summary><header><h1>
 <span class="taxon"></span>Cache hierarchy <a class="slug" href="/KBYI/">[KBYI]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1251,7 +1292,7 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> <em>A byte's journey.</em> L1 checked first; on miss, L2; on miss, main memory; on miss in main memory, <span xmlns="" class="link local"><a href="/CXFM/" title="Page fault [CXFM]">Page fault</a></span> to disk.</div>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> L1 is split into instruction and data caches because the locality profiles of code and data are very different — re-running the same code over different data has high temporal locality for code but low for data.</div>
-</details></section><section lang="en" class="block hide-metadata"><details id="id104" open="open"><summary><header><h1>
+</details></section><section lang="en" class="block hide-metadata"><details id="id105" open="open"><summary><header><h1>
 <span class="taxon"></span>Cache miss types <a class="slug" href="/8CGB/">[8CGB]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1260,13 +1301,13 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
   <li><em>Conflict miss</em> — the data was evicted because of an associativity collision. A different access mapped to the same set kicked it out. Reduced by higher <span xmlns="" class="link local"><a href="/C74U/" title="Cache associativity [C74U]">Cache associativity</a></span>.</li>
   <li><em>Coherence miss</em> — the data was invalidated because another core wrote to it. Specific to shared-memory multicore systems.</li>
   <li><em>Capacity miss</em> — the cache filled up and the data was evicted by <span xmlns="" class="link local"><a href="/UG51/" title="Cache replacement policy [UG51]">Cache replacement policy</a></span>. The working set doesn't fit.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">Distinguishing them matters because they have different mitigations: conflict misses respond to associativity changes, capacity misses respond to size, coherence misses respond to <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">cache-coherence protocol</a></span> design, and compulsory misses respond to prefetching.</p></details></section>
-  <section lang="en" class="block hide-metadata"><details id="id105" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id106" open="open"><summary><header><h1>
 <span class="taxon"></span>Locality, the reason caches work  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">April 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-<section lang="en" class="block hide-metadata"><details id="id106" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id107" open="open"><summary><header><h1>
 <span class="taxon"></span>Spatial locality <a class="slug" href="/PMP9/">[PMP9]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1274,7 +1315,7 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The empirical observation that if a program accesses memory address \(x\), it is likely to access addresses near \(x\) soon. Sequential array traversal, struct field access, and instruction fetch all exhibit it.</p><p xmlns="http://www.w3.org/1999/xhtml">Caches exploit spatial locality by loading whole <em>cache lines</em> (typically 64 bytes) on every miss, not just the single requested byte. The byte that triggered the load is the <em>critical word</em>; the surrounding bytes come along for free under the assumption you'll want them.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> RAM and caches are organized in cache-line granularity throughout. Bandwidth is sized for whole-line transfers; tags are per-line, not per-byte.</div>
 <p xmlns="http://www.w3.org/1999/xhtml">The complement is <span xmlns="" class="link local"><a href="/9RWN/" title="Temporal locality [9RWN]">Temporal locality</a></span> — repeated access to the same data over time. Temporal locality implies spatial locality (you re-touch nearby bytes when you re-touch the original), but not vice versa.</p></details></section>
-<section lang="en" class="block hide-metadata"><details id="id107" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id108" open="open"><summary><header><h1>
 <span class="taxon"></span>Temporal locality <a class="slug" href="/9RWN/">[9RWN]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1282,13 +1323,13 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">If a program accesses memory address \(x\), it is likely to access \(x\) again soon. Loop variables, frequently-called functions, and re-used data structures all exhibit it.</p><p xmlns="http://www.w3.org/1999/xhtml">Caches exploit temporal locality by retaining recently-accessed lines until something more important takes their slot. The <span xmlns="" class="link local"><a href="/UG51/" title="Cache replacement policy [UG51]">Cache replacement policy</a></span> is what decides "more important" — typically <span xmlns="" class="link local"><a href="/7WG2/" title="LRU and the clock algorithm [7WG2]">LRU and the clock algorithm</a></span>-ish.</p><p xmlns="http://www.w3.org/1999/xhtml">Temporal locality implies spatial locality (re-touching a byte tends to re-touch its neighbors) but not vice versa: a sequential scan has spatial locality with no temporal locality.</p></details></section>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id108" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id109" open="open"><summary><header><h1>
 <span class="taxon"></span>Cache structure  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">April 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-<section lang="en" class="block hide-metadata"><details id="id109" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id110" open="open"><summary><header><h1>
 <span class="taxon"></span>Cache associativity <a class="slug" href="/C74U/">[C74U]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1298,7 +1339,7 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
   <li><em>\(n\)-way set associative</em> — middle ground. The cache is divided into <em>sets</em> of \(n\) slots; an address maps to a specific set but can occupy any of its \(n\) slots. The hot setting on real caches is somewhere between 4-way and 16-way.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Higher associativity reduces conflict misses but increases tag-check hardware and power. The <em>cache tag</em> of an address is the bits that aren't used to pick the set — they're stored alongside the data and compared on every access.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The tag array is stored separately from the data array (<em>tag RAM</em>) so the tag comparison can happen in parallel with the data lookup. Tags are small, allowing many in-flight comparisons.</div>
 </details></section>
-<section lang="en" class="block hide-metadata"><details id="id110" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id111" open="open"><summary><header><h1>
 <span class="taxon"></span>Cache replacement policy <a class="slug" href="/UG51/">[UG51]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1306,7 +1347,7 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Within a <span xmlns="" class="link local"><a href="/C74U/" title="Cache associativity [C74U]">Cache associativity</a></span> set, when a new line arrives and the set is full, which existing line gets evicted? Same question as <span xmlns="" class="link local"><a href="/7WG2/" title="LRU and the clock algorithm [7WG2]">LRU and the clock algorithm</a></span> for pages, different timescales.</p><p xmlns="http://www.w3.org/1999/xhtml">The hot policy is <em>least recently used</em> — but pure LRU requires tracking a per-line ordering and updating it on every hit, which is too expensive at L1 latencies. Real caches use <em>pseudo-LRU</em> — a tree of single bits per set that approximates LRU with a fraction of the bookkeeping. The clock algorithm is one well-known pseudo-LRU scheme.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Block (cache line) size is part of the same tradeoff. Larger blocks improve <span xmlns="" class="link local"><a href="/PMP9/" title="Spatial locality [PMP9]">Spatial locality</a></span> but cause cache pollution (you fetch bytes you don't use) and eat memory bandwidth. The sweet spot is around 64 bytes on modern x86.</div>
 </details></section>
-<section lang="en" class="block hide-metadata"><details id="id111" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id112" open="open"><summary><header><h1>
 <span class="taxon"></span>Write-through vs write-back <a class="slug" href="/54BZ/">[54BZ]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1317,13 +1358,13 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 <p xmlns="http://www.w3.org/1999/xhtml">Write-back is one of the constraints behind <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">cache-coherence protocols</a></span> on multicore chips: every core must agree on which one currently owns a dirty line.</p></details></section>
 </details></section>
 </details></section>
-        <section lang="en" class="block"><details id="id112"><summary><header><h1>
+        <section lang="en" class="block"><details id="id113"><summary><header><h1>
 <span class="taxon"></span>TPU Architecture <a class="slug" href="/NZZ7/">[NZZ7]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">March 24, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-            <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id113" open="open"><summary><header><h1>
+            <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id114" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>TensorCore (TPU) <a class="slug" href="/OGCRQ/">[OGCRQ]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 22, 2026</li>
@@ -1335,7 +1376,7 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
                   <li><em>Vector register file</em> each register is 8x128 <span xmlns="" class="link local"><a href="/OGCRO/" title="Vector Register [OGCRO]">vector registers</a></span> with 8 horizontal lanes and 128 vertical lanes. There are typically 64 of these registers.</li>
                 </ul>
               </details></section>
-            <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id114" open="open"><summary><header><h1>
+            <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id115" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Vector Processing Unit <a class="slug" href="/OGCRN/">[OGCRN]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 22, 2026</li>
@@ -1346,7 +1387,7 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
   <li>Each site contains 4 ALUs, enabling 4096 FLOPs.</li>
   <li>Fed a 8x128 <span xmlns="" class="link local"><a href="/OGCRO/" title="Vector Register [OGCRO]">Vector Register</a></span> in one cycle.</li></ul>
               </details></section>
-            <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id115" open="open"><summary><header><h1>
+            <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id116" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Matrix Multiply Unit (MXU) <a class="slug" href="/OGCRP/">[OGCRP]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 22, 2026</li>
@@ -1360,7 +1401,7 @@ Can only do 256x256 matrix multiplication, so the order is
 <figure xmlns="http://www.w3.org/1999/xhtml"><img width="30%" src="/bafkrmickrnx5efnigkyxbpwks6lud2meikoqmsfy2llhy6lvb2y2bccpia.png"></img>
 <figcaption>Note the input are offset so that the result from the first column can be accumulated int the second column. Can compute matmul in \(2n - 1\) cycles.</figcaption></figure></details></section>
           </details></section>
-        <section lang="en" class="block" data-taxon="Definition"><details id="id116"><summary><header><h1>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id117"><summary><header><h1>
 <span class="taxon">Definition. </span>Softmax <a class="slug" href="/C00V/">[C00V]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 14, 2025</li>
