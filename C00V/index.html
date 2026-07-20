@@ -64,6 +64,18 @@ With the \(\nabla  D(\mathbf {x})\) should be \(0\) and we are effectively only 
    <li>For the <span xmlns="" class="link local"><a href="/004G/" title="Self-Attention [004G]">attention</a></span>, they primarily operate on the <em>logits</em> prior to the softmax. One way is via <span xmlns="" class="link local"><a href="/LVV4/" title="Layer Normalization [LVV4]">layer norm</a></span> before the <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">softmax</a></span>. Another is via <span xmlns="" class="link local"><a href="/39ZN/" title="Softcapping [39ZN]">Softcapping</a></span></li></ul></p>
           </details></section>
         <section lang="en" class="block"><details id="id4"><summary><header><h1>
+<span class="taxon"></span>Operator fusion is like ASIC caching <a class="slug" href="/PMIC/">[PMIC]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">July 13, 2026</li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">On a traditional CPU, the hardware manages <span xmlns="" class="link local"><a href="/M91V/" title="Caches [M91V]">caching</a></span> to ensure that data that is reused does not roundtrip through <span xmlns="" class="link local"><a href="/GWD5/" title="DRAM [GWD5]">DRAM</a></span>. On an <span xmlns="" class="link local"><a href="/OGCRS/" title="ASIC accelerators [OGCRS]">ASIC accelerators</a></span>, we forego the complexity of caching to allow for more execution units. However, now if we have two operations i.e. elementwise add \(\to \) <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">softmax</a></span> this would</p>
+            <ol xmlns="http://www.w3.org/1999/xhtml"><li>Load the input tensors from memory (HBM on <span xmlns="" class="link local"><a href="/NZZ7/" title="TPU Architecture [NZZ7]">TPU</a></span>).</li>
+  <li>Perform the elementwise add.</li>
+  <li>Store the output tensor to memory.</li>
+  <li>Load the input tensors from memory.</li>
+  <li>Perform the softmax.</li>
+  <li>Store the output tensor to memory.</li></ol>
+            <p xmlns="http://www.w3.org/1999/xhtml">On a CPU, the input tensors would remain in the cache. However, this must be done explicitly on ASIC (or by the compiler in the case of Google / <span xmlns="" class="link external"><a href="https://kellenkanarios.com/M74N/" title="">XLA</a></span>).</p>
+          </details></section>
+        <section lang="en" class="block"><details id="id5"><summary><header><h1>
 <span class="taxon"></span>Flash Attention (Bwd) <a class="slug" href="/OGCRZ/">[OGCRZ]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 27, 2026</li>
@@ -172,7 +184,7 @@ and
 
   <hr xmlns="http://www.w3.org/1999/xhtml"></hr>
 
-  <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
 <span class="taxon"></span>Summary  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 27, 2026</li>
@@ -190,13 +202,13 @@ and
     <li>Compute \(d\mathbf {K}_j\) via \(\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i\). \(O(d)\) memory.</li></ol></ul>
 </details></section>
 </details></section>
-        <section lang="en" class="block"><details id="id6"><summary><header><h1>
+        <section lang="en" class="block"><details id="id7"><summary><header><h1>
 <span class="taxon"></span>Online Softmax <a class="slug" href="/PI7N/">[PI7N]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 20, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This covers the math behind the online softmax algorithm required by <span xmlns="" class="link local"><a href="/R0PM/" title="Flash Attention (v1) [R0PM]">Flash Attention (v1)</a></span>.</p>
-  <section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
 <span class="taxon"></span>Safe softmax  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 20, 2026</li>
@@ -214,7 +226,7 @@ and
 
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id9" open="open"><summary><header><h1>
 <span class="taxon"></span>Fusing the max and normalization  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 20, 2026</li>

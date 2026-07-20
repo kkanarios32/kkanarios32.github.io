@@ -899,13 +899,31 @@ procedure central_barrier
     repeat until sense == local_sense</pre></details></section></details></section>
 </details></section>
 </details></section>
+            <section lang="en" class="block hide-metadata"><details id="id87" open="open"><summary><header><h1>
+<span class="taxon"></span>Persistence <a class="slug" href="/QAQB/">[QAQB]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 20, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+                <section lang="en" class="block hide-metadata"><details id="id88" open="open"><summary><header><h1>
+<span class="taxon"></span>Programmed I/O <a class="slug" href="/9RLX/">[9RLX]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">July 13, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Simplified I/O Device Protocol: requires three "registers". One is the status register that tells the OS whether the device is ready or currently performing an operation. The second is the command register, which tells the device what we want to do. Lastly, is the data register that stores the actual data we want moved. The procedure operates as follows <span class="link-reference" tid="36.3" refid="arpaci2018operating"><span xmlns="" class="link local"><a href="/arpaci2018operating/" title="Operating Systems: Three Easy Pieces [arpaci2018operating]">[arpaci2018operating, 36.3]</a></span></span></p><ol xmlns="http://www.w3.org/1999/xhtml"><li>OS polls status register in while loop until <code>status == READY</code></li>
+  <li>OS writes data register with data to be moved</li>
+  <li>OS writes command register with command to be performed</li>
+  <li>Device begins command and sets <code>status = BUSY</code></li>
+  <li>OS polls status register in while loop until <code>status == READY</code></li></ol><p xmlns="http://www.w3.org/1999/xhtml">The above protocol requires that the CPU polls the device. This is a huge waste if the device is very slow because the CPU is unable to do any work while waiting. One solution is to use <span xmlns="" class="link local"><a href="/K325/" title="Hardware interrupt path [K325]">interrupts</a></span>. In particular, the CPU follows the above procedure but after writing the command it resumes doing other work. Upon completion, the device issues an interrupt to the CPU to tell it that it has finished the command and that the CPU can resume working on that line of instructions.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> How is copying memory to device actually done in programmed I/O? Is the device address space mapped into the CPU address space and the CPU has 1. load from CPU address space to register, 2. write to device address from register?</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> There are two ways. The first is there are special I/O instructions (typically protected) that allow the CPU to directly write to the device. In x86, these are <code>in</code>, <code>out</code>. The second way is through memory-mapped I/O (MMIO). This is where the device is actually allocated a region of virtual address space and writing to / reading this region is routed to the device rather than the on-chip memory hierarchy <span class="link-reference" tid="36.6" refid="arpaci2018operating"><span xmlns="" class="link local"><a href="/arpaci2018operating/" title="Operating Systems: Three Easy Pieces [arpaci2018operating]">[arpaci2018operating, 36.6]</a></span></span>.</div>
+</details></section>
+              </details></section>
           </details></section>
       </details></section>
     
-    <section lang="en" class="block hide-metadata"><details id="id87" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id89" open="open"><summary><header><h1>
 <span class="taxon"></span>Related  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
-        <section lang="en" class="block"><details id="id88"><summary><header><h1>
+        <section lang="en" class="block"><details id="id90"><summary><header><h1>
 <span class="taxon"></span>Base and bounds <a class="slug" href="/9MPY/">[9MPY]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -913,7 +931,7 @@ procedure central_barrier
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The simplest hardware mechanism for <span xmlns="" class="link local"><a href="/7MH4/" title="Address space [7MH4]">Address space</a></span> translation. The CPU has two dedicated registers per process — a <em>base</em> pointing to the start of the process's region in physical memory and a <em>bound</em> marking the end. Translation is just <code>phys = base + virt</code>, with a check that the result stays below <code>bound</code>. The unit performing this translation in hardware is the <em>memory management unit</em> (MMU).</p><p xmlns="http://www.w3.org/1999/xhtml">The hardware must expose privileged instructions for the OS to set base and bound on a <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switch</a></span>, and trap on out-of-bound accesses.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> To support a large address space, base-and-bounds suffers significant <em>internal fragmentation</em> — the unused gap between the stack and heap is allocated but wasted. With 16KB total memory and 4KB-but-mostly-empty processes, you can run 4 processes when you'd really have room for 8.</div>
 <p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/REKW/" title="Segmentation [REKW]">Segmentation</a></span> is the natural next step — give each region (code, stack, heap) its own base and bound so the gaps don't have to be allocated.</p></details></section>
-        <section lang="en" class="block"><details id="id89"><summary><header><h1>
+        <section lang="en" class="block"><details id="id91"><summary><header><h1>
 <span class="taxon"></span>Segmentation <a class="slug" href="/REKW/">[REKW]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -923,7 +941,7 @@ procedure central_barrier
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Segmentation does not solve fragmentation; it pushes it from internal (per-process) to external (per-system). Variable-sized segments leave variably-sized holes in physical memory. The fix that eventually won is <span xmlns="" class="link local"><a href="/SB61/" title="Paging [SB61]">Paging</a></span>.</div>
 </details></section>
-        <section lang="en" class="block"><details id="id90"><summary><header><h1>
+        <section lang="en" class="block"><details id="id92"><summary><header><h1>
 <span class="taxon"></span>Paging <a class="slug" href="/SB61/">[SB61]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 31, 2025</li>
@@ -936,7 +954,7 @@ procedure central_barrier
   <li>The <span xmlns="" class="link local"><a href="/VX1M/" title="Multi-level page table [VX1M]">Multi-level page table</a></span> — the page table is itself paged, so processes only pay for the parts of the address space they use.</li></ol>
             <p xmlns="http://www.w3.org/1999/xhtml">When a process touches a virtual address whose page isn't in physical memory, the page table's <em>present bit</em> is unset; the hardware traps to the OS as a <em>page fault</em>, and the OS retrieves the page from swap. The eviction policies that decide what to swap out are covered by <span xmlns="" class="link local"><a href="/HK73/" title="Page replacement [HK73]">Page replacement</a></span>.</p>
             <p xmlns="http://www.w3.org/1999/xhtml">The two-level decomposition did not arrive fully formed. The <span xmlns="" class="link local"><a href="/HBFS/" title="Segmented page tables [HBFS]">Segmented page tables</a></span> design tried to give each named segment of the address space its own variable-sized page table; the fragmentation that produced is what motivated the move to fixed-size paged page tables.</p>
-            <section lang="en" class="block hide-metadata"><details id="id91" open="open"><summary><header><h1>
+            <section lang="en" class="block hide-metadata"><details id="id93" open="open"><summary><header><h1>
 <span class="taxon"></span>Page table <a class="slug" href="/WALE/">[WALE]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -950,7 +968,7 @@ procedure central_barrier
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Translation requires accessing the table in memory, which is slow on every memory reference. Mitigated by the <span xmlns="" class="link local"><a href="/FGOK/" title="Translation lookaside buffer [FGOK]">Translation lookaside buffer</a></span>.</div>
 <p xmlns="http://www.w3.org/1999/xhtml">The size problem is mitigated by <span xmlns="" class="link local"><a href="/VX1M/" title="Multi-level page table [VX1M]">Multi-level page table</a></span>, which only allocates the parts of the table that are actually used.</p></details></section>
-            <section lang="en" class="block hide-metadata"><details id="id92" open="open"><summary><header><h1>
+            <section lang="en" class="block hide-metadata"><details id="id94" open="open"><summary><header><h1>
 <span class="taxon"></span>Translation lookaside buffer <a class="slug" href="/FGOK/">[FGOK]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -962,7 +980,7 @@ procedure central_barrier
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Each process has different translations for the same VPN, so a naive TLB must be flushed on every <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switch</a></span>.</div>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Add an <em>address space identifier</em> (ASID) to each TLB entry and an ASID register set on context switch. Now entries from different processes coexist.</div>
-<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id93" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id95" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Culler's Law <a class="slug" href="/P9UM/">[P9UM]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 31, 2025</li>
@@ -972,7 +990,7 @@ procedure central_barrier
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> For very fast caches, even a TLB access is a bottleneck. <em>Virtually indexed caches</em> sidestep the TLB on the index path.</div>
 </details></section>
-            <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id94" open="open"><summary><header><h1>
+            <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id96" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Segmented page tables <a class="slug" href="/HBFS/">[HBFS]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 13, 2026</li>
@@ -985,7 +1003,7 @@ procedure central_barrier
                 <p xmlns="http://www.w3.org/1999/xhtml">Secondary issues compound. Translation costs two memory references (segment table, then page table) before reaching data, which hurts without a <span xmlns="" class="link local"><a href="/FGOK/" title="Translation lookaside buffer [FGOK]">Translation lookaside buffer</a></span>. The segment count is fixed by the architecture, which is awkward for programs whose layout does not fit "code/data/stack/heap" — a sprawling memory-mapped region or a JIT wanting many small protection domains has nowhere to go. And segmentation tends to leak into the programming model: x86 carried segment registers around for decades after they had stopped being useful.</p>
                 <p xmlns="http://www.w3.org/1999/xhtml">The fix that won is the <span xmlns="" class="link local"><a href="/VX1M/" title="Multi-level page table [VX1M]">Multi-level page table</a></span> — page the page table itself, in fixed-size chunks, and recover the "only pay for what you use" property without variable-sized contiguous allocations. Every modern architecture descends from that decision.</p>
               </details></section>
-            <section lang="en" class="block hide-metadata"><details id="id95" open="open"><summary><header><h1>
+            <section lang="en" class="block hide-metadata"><details id="id97" open="open"><summary><header><h1>
 <span class="taxon"></span>Multi-level page table <a class="slug" href="/VX1M/">[VX1M]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -997,35 +1015,35 @@ procedure central_barrier
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Real architectures push this further (x86-64 uses 4 or 5 levels) and lean on the TLB to absorb the walk cost.</div>
 </details></section>
           </details></section>
-        <section lang="en" class="block"><details id="id96"><summary><header><h1>
+        <section lang="en" class="block"><details id="id98"><summary><header><h1>
 <span class="taxon"></span>Scheduling <a class="slug" href="/B8GC/">[B8GC]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 26, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The scheduler decides which runnable <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span> to put on the CPU at each moment. There is no single right answer because the metrics conflict:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>Turnaround time</strong>: time from arrival to completion, \(T_{\text {completion}} - T_{\text {arrival}}\). Minimized by running short jobs first.</li>
   <li><strong>Response time</strong>: time from arrival to first scheduling. Minimized by frequent rotation.</li>
-  <li><strong>Fairness</strong>: every job makes progress; nobody starves.</li></ol><section lang="en" class="block hide-metadata"><details id="id97" open="open"><summary><header><h1>
+  <li><strong>Fairness</strong>: every job makes progress; nobody starves.</li></ol><section lang="en" class="block hide-metadata"><details id="id99" open="open"><summary><header><h1>
 <span class="taxon"></span>FIFO scheduling <a class="slug" href="/JA6Z/">[JA6Z]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">First-in, first-out. Jobs are run to completion in the order they arrive. Trivially fair under any reasonable notion of fairness, but suffers from the <em>convoy effect</em>: a single long-running job at the head delays every shorter job behind it, inflating average turnaround time.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> If the first arriving job is much longer than the rest, all subsequent jobs wait at least its full duration before getting any CPU.</div>
-</details></section><section lang="en" class="block hide-metadata"><details id="id98" open="open"><summary><header><h1>
+</details></section><section lang="en" class="block hide-metadata"><details id="id100" open="open"><summary><header><h1>
 <span class="taxon"></span>SJF scheduling <a class="slug" href="/VJ4F/">[VJ4F]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Shortest job first</em>. Run the job with the smallest total work first, run-to-completion. If all jobs arrive at the same time, SJF provably minimizes average turnaround time.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Real workloads don't all arrive at \(t = 0\). A long job that arrives slightly before a short one still gets to monopolize the CPU until it finishes — SJF degenerates to <span xmlns="" class="link local"><a href="/JA6Z/" title="FIFO scheduling [JA6Z]">FIFO scheduling</a></span> under sequential arrivals.</div>
-<p xmlns="http://www.w3.org/1999/xhtml">Removing the run-to-completion constraint and allowing preemption gives <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>.</p></details></section><section lang="en" class="block hide-metadata"><details id="id99" open="open"><summary><header><h1>
+<p xmlns="http://www.w3.org/1999/xhtml">Removing the run-to-completion constraint and allowing preemption gives <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>.</p></details></section><section lang="en" class="block hide-metadata"><details id="id101" open="open"><summary><header><h1>
 <span class="taxon"></span>STCF scheduling <a class="slug" href="/7R07/">[7R07]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Shortest time-to-completion first</em>. A preemptive refinement of <span xmlns="" class="link local"><a href="/VJ4F/" title="SJF scheduling [VJ4F]">SJF scheduling</a></span>: whenever the scheduler is invoked, it picks the job with the least <em>remaining</em> work. A short job arriving mid-execution can preempt a long one.</p><p xmlns="http://www.w3.org/1999/xhtml">STCF is provably optimal for minimizing average turnaround time over all preemptive schedulers.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Long jobs starve in response time. The lowest-priority work might not get a CPU slice for a very long time, which is unacceptable for interactive workloads.</div>
-</details></section><section lang="en" class="block hide-metadata"><details id="id100" open="open"><summary><header><h1>
+</details></section><section lang="en" class="block hide-metadata"><details id="id102" open="open"><summary><header><h1>
 <span class="taxon"></span>Round-robin scheduling <a class="slug" href="/NEL8/">[NEL8]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1033,7 +1051,7 @@ procedure central_barrier
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Cycle through all runnable jobs, giving each a fixed time slice — the <em>stride</em>, <em>time slice</em>, or <em>quantum length</em> — before preempting and moving to the next. The best you can do at minimizing <em>response time</em>: every job sees the CPU within at most \(N\) quanta where \(N\) is the runnable-job count.</p><p xmlns="http://www.w3.org/1999/xhtml">The quantum length is a tradeoff:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Short quantum: better response time, more frequent <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switches</a></span>, worse cache locality.</li>
   <li>Long quantum: amortizes context-switch cost, worse response time.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Worst-case response time for \(N\) jobs at quantum \(S\) is \(S(N-1)\).</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Round-robin minimizes response time but is poor for turnaround time relative to <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>. A scheduler that wants both has to combine ideas — see <span xmlns="" class="link local"><a href="/4WG5/" title="Multi-level feedback queue [4WG5]">Multi-level feedback queue</a></span>.</div>
-</details></section><section lang="en" class="block hide-metadata"><details id="id101" open="open"><summary><header><h1>
+</details></section><section lang="en" class="block hide-metadata"><details id="id103" open="open"><summary><header><h1>
 <span class="taxon"></span>Multi-level feedback queue <a class="slug" href="/4WG5/">[4WG5]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1048,7 +1066,7 @@ procedure central_barrier
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Starvation of low-priority queues if higher queues never empty.</div>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Periodically reset all jobs to the top priority. Cheap and effective.</div>
-</details></section><section lang="en" class="block hide-metadata"><details id="id102" open="open"><summary><header><h1>
+</details></section><section lang="en" class="block hide-metadata"><details id="id104" open="open"><summary><header><h1>
 <span class="taxon"></span>Lottery scheduling <a class="slug" href="/AM8U/">[AM8U]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1057,7 +1075,7 @@ procedure central_barrier
   <li><em>Ticket transfer</em> — a client process can hand tickets to a server to boost its priority while servicing the request.</li>
   <li><em>Ticket inflation</em> — a process can grow its share temporarily, with bounds set by trust.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The unsolved problem is <em>how</em> to assign tickets in the first place. The mechanism is simple; the policy is not.</div>
-<p xmlns="http://www.w3.org/1999/xhtml">A deterministic version of the same idea is <span xmlns="" class="link local"><a href="/HCJ7/" title="Stride scheduling [HCJ7]">Stride scheduling</a></span>, which avoids the variance of random sampling at the cost of needing global state.</p></details></section><section lang="en" class="block hide-metadata"><details id="id103" open="open"><summary><header><h1>
+<p xmlns="http://www.w3.org/1999/xhtml">A deterministic version of the same idea is <span xmlns="" class="link local"><a href="/HCJ7/" title="Stride scheduling [HCJ7]">Stride scheduling</a></span>, which avoids the variance of random sampling at the cost of needing global state.</p></details></section><section lang="en" class="block hide-metadata"><details id="id105" open="open"><summary><header><h1>
 <span class="taxon"></span>Stride scheduling <a class="slug" href="/HCJ7/">[HCJ7]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>

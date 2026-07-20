@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors>
+      <fr:author>John L. Hennessy</fr:author>
+      <fr:author>David A. Patterson</fr:author>
+    </fr:authors>
+    <fr:date>
+      <fr:year>2019</fr:year>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/hennessy2019computer/</fr:uri>
+    <fr:display-uri>hennessy2019computer</fr:display-uri>
+    <fr:route>/hennessy2019computer/</fr:route>
+    <fr:title text="Computer architecture: A quantitative approach">Computer architecture: A quantitative approach</fr:title>
+    <fr:taxon>Reference</fr:taxon>
+    <fr:meta name="bibtex"><![CDATA[@book{hennessy2019computer,
+ title = {Computer Architecture: A Quantitative Approach},
+ author = {Hennessy, John L. and Patterson, David A.},
+ year = {2019},
+ isbn = {9780128119051},
+ edition = {6th},
+ publisher = {Morgan Kaufmann}
+}]]></fr:meta>
+  </fr:frontmatter>
+  <fr:mainmatter />
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors />
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>17</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/MOPC/</fr:uri>
+            <fr:display-uri>MOPC</fr:display-uri>
+            <fr:route>/MOPC/</fr:route>
+            <fr:title text="Software pipelining vs. loop unrolling">Software pipelining vs. loop unrolling</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>See <html:span class="link-reference" tid="H.3" refid="hennessy2019computer"><fr:link href="/hennessy2019computer/" title="Computer architecture: A quantitative approach" uri="https://kellenkanarios.com/hennessy2019computer/" display-uri="hennessy2019computer" type="local">[hennessy2019computer, H.3]</fr:link></html:span> for more details.</html:p><html:p>Loop unrolling at its core performs no instruction re-ordering. It literally just expands the loop. When combined with a compiler, this increase the size of your basic blocks allowing for more optimization opportunities. This also eliminates overhead of branch prediction</html:p><html:p><fr:link href="https://kellenkanarios.com/AOWY/" type="external">AOWY</fr:link> does not rely on the unroll window.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(60, 90, 180, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(60, 90, 180, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
+  Loop unrolling cannot make use of the large distance between dependencies for large <fr:tex display="inline"><![CDATA[k]]></fr:tex> below. 
+  <html:pre><html:code class="language-c"><![CDATA[for (i = k; i < n; i++)
+    a[i] += a[i - k];]]></html:code></html:pre>
+  For <fr:tex display="inline"><![CDATA[k = 3]]></fr:tex>, Software pipelining can perform something like
+  <html:pre><html:code class="language-c"><![CDATA[for (i = 3; i < n; i++)
+    a[i - 2] += a[i - 2 - k];
+    a[i - 1] += a[i - 1 - k];
+    a[i] += a[i - k];]]></html:code></html:pre>
+  You can imagine how this becomes more useful as <fr:tex display="inline"><![CDATA[k]]></fr:tex> grows large.
+</html:div>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(60, 90, 180, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(60, 90, 180, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
+  There is an actual dependency between instructions here that cannot be circumvented by <fr:link href="/U0NY/" title="Out-of-order execution runs ready instructions past a stalled one, committing in program order" uri="https://kellenkanarios.com/U0NY/" display-uri="U0NY" type="local">OoO hardware</fr:link> 
+<html:pre><html:code class="language-c"><![CDATA[for (i = 0; i < n; i++)
+    sum += a[i];]]></html:code></html:pre>
+However, this can be re-written at the software level to get some parallelism within loop bodies as:
+<html:pre><html:code class="language-c"><![CDATA[for (i = 0; i < n; i += 4) {
+    s0 += a[i];   s1 += a[i+1];
+    s2 += a[i+2]; s3 += a[i+3];
+}
+sum = (s0 + s1) + (s2 + s3);}]]></html:code></html:pre>
+</html:div>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

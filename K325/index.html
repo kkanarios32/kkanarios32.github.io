@@ -746,7 +746,18 @@ The second <code>add</code> only depends on <code>r2</code> as a <em>destination
     <section lang="en" class="block hide-metadata"><details id="id73" open="open"><summary><header><h1>
 <span class="taxon"></span>Backlinks  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
-        <section lang="en" class="block" data-taxon="Definition"><details id="id74"><summary><header><h1>
+        <section lang="en" class="block"><details id="id74"><summary><header><h1>
+<span class="taxon"></span>Programmed I/O <a class="slug" href="/9RLX/">[9RLX]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">July 13, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Simplified I/O Device Protocol: requires three "registers". One is the status register that tells the OS whether the device is ready or currently performing an operation. The second is the command register, which tells the device what we want to do. Lastly, is the data register that stores the actual data we want moved. The procedure operates as follows <span class="link-reference" tid="36.3" refid="arpaci2018operating"><span xmlns="" class="link local"><a href="/arpaci2018operating/" title="Operating Systems: Three Easy Pieces [arpaci2018operating]">[arpaci2018operating, 36.3]</a></span></span></p><ol xmlns="http://www.w3.org/1999/xhtml"><li>OS polls status register in while loop until <code>status == READY</code></li>
+  <li>OS writes data register with data to be moved</li>
+  <li>OS writes command register with command to be performed</li>
+  <li>Device begins command and sets <code>status = BUSY</code></li>
+  <li>OS polls status register in while loop until <code>status == READY</code></li></ol><p xmlns="http://www.w3.org/1999/xhtml">The above protocol requires that the CPU polls the device. This is a huge waste if the device is very slow because the CPU is unable to do any work while waiting. One solution is to use <span xmlns="" class="link local"><a href="/K325/" title="Hardware interrupt path [K325]">interrupts</a></span>. In particular, the CPU follows the above procedure but after writing the command it resumes doing other work. Upon completion, the device issues an interrupt to the CPU to tell it that it has finished the command and that the CPU can resume working on that line of instructions.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> How is copying memory to device actually done in programmed I/O? Is the device address space mapped into the CPU address space and the CPU has 1. load from CPU address space to register, 2. write to device address from register?</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> There are two ways. The first is there are special I/O instructions (typically protected) that allow the CPU to directly write to the device. In x86, these are <code>in</code>, <code>out</code>. The second way is through memory-mapped I/O (MMIO). This is where the device is actually allocated a region of virtual address space and writing to / reading this region is routed to the device rather than the on-chip memory hierarchy <span class="link-reference" tid="36.6" refid="arpaci2018operating"><span xmlns="" class="link local"><a href="/arpaci2018operating/" title="Operating Systems: Three Easy Pieces [arpaci2018operating]">[arpaci2018operating, 36.6]</a></span></span>.</div>
+</details></section>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id75"><summary><header><h1>
 <span class="taxon">Definition. </span>Interrupt descriptor table <a class="slug" href="/YK46/">[YK46]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 15, 2026</li>
@@ -754,7 +765,7 @@ The second <code>add</code> only depends on <code>r2</code> as a <em>destination
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The CPU's lookup table from <em>interrupt number</em> to <em>handler</em>. The OS allocates the IDT in memory, fills entry \(N\) with the address of the handler for interrupt \(N\), and points the IDTR register at the table's base. From then on the <span xmlns="" class="link local"><a href="/K325/" title="Hardware interrupt path [K325]">Hardware interrupt path</a></span> uses the IDT to dispatch every interrupt without any further software help.</p><p xmlns="http://www.w3.org/1999/xhtml">Each entry — a <em>gate descriptor</em> on x86 — carries enough information for the CPU to switch into the handler safely: the handler's linear address, the code segment to load (which sets the new privilege level, typically ring 0), and a type byte distinguishing interrupt gates (which mask further interrupts on entry) from trap gates (which don't). Entries 0–31 are reserved for CPU-defined exceptions (divide-by-zero, <span xmlns="" class="link local"><a href="/CXFM/" title="Page fault [CXFM]">Page fault</a></span>, double fault, ...); 32–255 are available for device IRQs and software interrupts.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The IDT is one of three OS-installed tables that the CPU consults transparently — the others are the GDT (segment descriptors) and the page tables. Each is a hardware contract: the OS lays bytes out in a format the silicon understands, then hands over a pointer.</div>
 </details></section>
-        <section lang="en" class="block" data-taxon="Definition"><details id="id75"><summary><header><h1>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id76"><summary><header><h1>
 <span class="taxon">Definition. </span>Task state segment <a class="slug" href="/ZAAT/">[ZAAT]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 15, 2026</li>
@@ -763,10 +774,10 @@ The second <code>add</code> only depends on <code>r2</code> as a <em>destination
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> This is why a kernel needs a per-CPU TSS, not a per-process one: <code>RSP0</code> is consulted on every transition into the kernel, and each CPU needs its own kernel stack to land on.</div>
 </details></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id76" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id77" open="open"><summary><header><h1>
 <span class="taxon"></span>Related  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
-        <section lang="en" class="block"><details id="id77"><summary><header><h1>
+        <section lang="en" class="block"><details id="id78"><summary><header><h1>
 <span class="taxon"></span>IRET <a class="slug" href="/UHNL/">[UHNL]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 15, 2026</li>
@@ -774,7 +785,7 @@ The second <code>add</code> only depends on <code>r2</code> as a <em>destination
 </ul></div></header></summary>
  <div xmlns="http://www.w3.org/1999/xhtml" class="stub-notice" style="   margin: 0.5em 0;   padding: 8px 12px;   border-left: 4px solid 7cb342;   background-color: f1f8e9;   color: 33691e;   font-style: italic;   ">🌱 Stub — this concept is referenced but not yet written.</div>
 </details></section>
-        <section lang="en" class="block" data-taxon="Definition"><details id="id78"><summary><header><h1>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id79"><summary><header><h1>
 <span class="taxon">Definition. </span>Interrupt descriptor table <a class="slug" href="/YK46/">[YK46]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 15, 2026</li>
@@ -782,7 +793,7 @@ The second <code>add</code> only depends on <code>r2</code> as a <em>destination
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The CPU's lookup table from <em>interrupt number</em> to <em>handler</em>. The OS allocates the IDT in memory, fills entry \(N\) with the address of the handler for interrupt \(N\), and points the IDTR register at the table's base. From then on the <span xmlns="" class="link local"><a href="/K325/" title="Hardware interrupt path [K325]">Hardware interrupt path</a></span> uses the IDT to dispatch every interrupt without any further software help.</p><p xmlns="http://www.w3.org/1999/xhtml">Each entry — a <em>gate descriptor</em> on x86 — carries enough information for the CPU to switch into the handler safely: the handler's linear address, the code segment to load (which sets the new privilege level, typically ring 0), and a type byte distinguishing interrupt gates (which mask further interrupts on entry) from trap gates (which don't). Entries 0–31 are reserved for CPU-defined exceptions (divide-by-zero, <span xmlns="" class="link local"><a href="/CXFM/" title="Page fault [CXFM]">Page fault</a></span>, double fault, ...); 32–255 are available for device IRQs and software interrupts.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The IDT is one of three OS-installed tables that the CPU consults transparently — the others are the GDT (segment descriptors) and the page tables. Each is a hardware contract: the OS lays bytes out in a format the silicon understands, then hands over a pointer.</div>
 </details></section>
-        <section lang="en" class="block" data-taxon="Definition"><details id="id79"><summary><header><h1>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id80"><summary><header><h1>
 <span class="taxon">Definition. </span>Task state segment <a class="slug" href="/ZAAT/">[ZAAT]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 15, 2026</li>
@@ -790,7 +801,7 @@ The second <code>add</code> only depends on <code>r2</code> as a <em>destination
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A small OS-allocated structure that the CPU reads to find the <em>kernel stack pointer</em> when it raises privilege. Its historical purpose — full task switching in hardware — is dead on modern x86-64; what survives is one essential field: <code>RSP0</code>, the address of the kernel stack to switch to on entry from ring 3.</p><p xmlns="http://www.w3.org/1999/xhtml">During the <span xmlns="" class="link local"><a href="/K325/" title="Hardware interrupt path [K325]">Hardware interrupt path</a></span>, the moment the CPU decides to push RIP/RSP/CS/RFLAGS, it reads <code>RSP0</code> from the current TSS (located via the GDT entry pointed at by the TR register) and switches RSP to that value <em>before</em> pushing. If the TSS were missing or pointed at user memory, the very first interrupt would either fault while trying to push, or push the user's registers onto attacker-controlled memory. So the TSS is set up at boot, before interrupts are enabled.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> This is why a kernel needs a per-CPU TSS, not a per-process one: <code>RSP0</code> is consulted on every transition into the kernel, and each CPU needs its own kernel stack to land on.</div>
 </details></section>
-        <section lang="en" class="block"><details id="id80"><summary><header><h1>
+        <section lang="en" class="block"><details id="id81"><summary><header><h1>
 <span class="taxon"></span>Reorder buffer <a class="slug" href="/BI4H/">[BI4H]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 13, 2026</li>
@@ -801,7 +812,7 @@ The second <code>add</code> only depends on <code>r2</code> as a <em>destination
   <li>The instruction's result, held in a data field that doubles as a <span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">register renaming</a></span> register.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Speculatively-issued instructions also enter the ROB but are tagged. On a branch misprediction, all speculative entries past the mispredicted branch are squashed.</p><p xmlns="http://www.w3.org/1999/xhtml">The Pentium Pro introduced this design with a 40-entry ROB. The ROB sits at both ends of the pipeline — dispatch enters it, retirement leaves it — which is what makes the rest of the back-end free to issue and execute out of order.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> ROB size, <span xmlns="" class="link local"><a href="/FQ9N/" title="Reservation station [FQ9N]">Reservation station</a></span> count, and pipeline depth set each other's bounds. A shallow pipeline can afford a small ROB; a deep one (Pentium 4 had 126) needs a large one to keep the back-end fed.</div>
 </details></section>
-        <section lang="en" class="block"><details id="id81"><summary><header><h1>
+        <section lang="en" class="block"><details id="id82"><summary><header><h1>
 <span class="taxon"></span>Out-of-order execution runs ready instructions past a stalled one, committing in program order <a class="slug" href="/U0NY/">[U0NY]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -810,7 +821,7 @@ The second <code>add</code> only depends on <code>r2</code> as a <em>destination
   <li><span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span> — preserves program order so commits look sequential and mispredicted <span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span> paths can be unwound.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Combined with <span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">register renaming</a></span> to break false dependencies, the back-end of a modern CPU is essentially a dynamic scheduler that uses the program order only as a hint about what to retire next.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> An out-of-order pipeline can issue a load early (because its address operands are ready), execute several unrelated ALU ops while waiting for the memory, then have all four instructions ready to commit in program order. The illusion of sequential execution is preserved; the parallelism is real.</div>
 </details></section>
-        <section lang="en" class="block"><details id="id82"><summary><header><h1>
+        <section lang="en" class="block"><details id="id83"><summary><header><h1>
 <span class="taxon"></span>Speculative execution <a class="slug" href="/IIF9/">[IIF9]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -818,7 +829,7 @@ The second <code>add</code> only depends on <code>r2</code> as a <em>destination
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Run instructions before knowing whether they should actually be run, on the assumption that you'll usually be right. Used after <span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span> to keep the pipeline busy past a <span xmlns="" class="link local"><a href="/IJ7Q/" title="Branch instruction [IJ7Q]">Branch instruction</a></span>: instructions on the predicted path enter the pipeline, execute, and stash their results in non-architectural state. Only when the branch resolves are speculated results "committed" to architectural state — or, if the prediction was wrong, discarded.</p><p xmlns="http://www.w3.org/1999/xhtml">Speculative state lives in the <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span> (and the <span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">register renaming</a></span> rename registers). Entries are tagged as speculative; on misprediction the speculative entries are flushed.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Modern speculative execution drives a lot of CPU complexity — and a lot of CPU security work. Spectre-class side channels exploit the fact that speculative execution can leave traces in caches even after the speculative results are discarded.</div>
 </details></section>
-        <section lang="en" class="block"><details id="id83"><summary><header><h1>
+        <section lang="en" class="block"><details id="id84"><summary><header><h1>
 <span class="taxon"></span>Page fault <a class="slug" href="/CXFM/">[CXFM]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>

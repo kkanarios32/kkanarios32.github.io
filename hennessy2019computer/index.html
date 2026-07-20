@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script src="/highlightjs-line-numbers.min.js"></script><script>
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+    if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
+  });
+});
+          </script><title>Computer architecture: A quantitative approach</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Reference"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon">Reference. </span>Computer architecture: A quantitative approach <a class="slug" href="/hennessy2019computer/">[hennessy2019computer]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">2019</li></ul>
+<br><ul><li class="meta-item"><address class="author">John L. Hennessy,  David A. Patterson</address></li></ul>
+<br><ul></ul>
+</div></header></summary><pre>@book{hennessy2019computer,
+ title = {Computer Architecture: A Quantitative Approach},
+ author = {Hennessy, John L. and Patterson, David A.},
+ year = {2019},
+ isbn = {9780128119051},
+ edition = {6th},
+ publisher = {Morgan Kaufmann}
+}</pre></details></section><footer xmlns="">
+    
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id3"><summary><header><h1>
+<span class="taxon"></span>Software pipelining vs. loop unrolling <a class="slug" href="/MOPC/">[MOPC]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">July 17, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">See <span class="link-reference" tid="H.3" refid="hennessy2019computer"><span xmlns="" class="link local"><a href="/hennessy2019computer/" title="Computer architecture: A quantitative approach [hennessy2019computer]">[hennessy2019computer, H.3]</a></span></span> for more details.</p><p xmlns="http://www.w3.org/1999/xhtml">Loop unrolling at its core performs no instruction re-ordering. It literally just expands the loop. When combined with a compiler, this increase the size of your basic blocks allowing for more optimization opportunities. This also eliminates overhead of branch prediction</p><p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link external"><a href="https://kellenkanarios.com/AOWY/" title="">AOWY</a></span> does not rely on the unroll window.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
+  Loop unrolling cannot make use of the large distance between dependencies for large \(k\) below. 
+  <pre><code class="language-c">for (i = k; i &lt; n; i++)
+    a[i] += a[i - k];</code></pre>
+  For \(k = 3\), Software pipelining can perform something like
+  <pre><code class="language-c">for (i = 3; i &lt; n; i++)
+    a[i - 2] += a[i - 2 - k];
+    a[i - 1] += a[i - 1 - k];
+    a[i] += a[i - k];</code></pre>
+  You can imagine how this becomes more useful as \(k\) grows large.
+</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
+  There is an actual dependency between instructions here that cannot be circumvented by <span xmlns="" class="link local"><a href="/U0NY/" title="Out-of-order execution runs ready instructions past a stalled one, committing in program order [U0NY]">OoO hardware</a></span> 
+<pre><code class="language-c">for (i = 0; i &lt; n; i++)
+    sum += a[i];</code></pre>
+However, this can be re-written at the software level to get some parallelism within loop bodies as:
+<pre><code class="language-c">for (i = 0; i &lt; n; i += 4) {
+    s0 += a[i];   s1 += a[i+1];
+    s2 += a[i+2]; s3 += a[i+3];
+}
+sum = (s0 + s1) + (s2 + s3);}</code></pre>
+</div>
+</details></section>
+      </details></section>
+    
+    
+  </footer></article></div></body></html>
