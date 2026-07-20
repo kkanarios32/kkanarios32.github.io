@@ -71,6 +71,25 @@
   src: url('fonts/XCharter-BoldItalic.woff2') format('woff2');
 }
 
+/* Hanken Grotesk — structural chrome (titles, wordmark, TOC, metadata, and the
+   \paragraph run-in labels), driven by var(--sans). Variable font, wght 100–900,
+   normal + italic. License: OFL, theme/LICENSES/HankenGrotesk.txt */
+@font-face {
+  font-display: swap;
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 100 900;
+  src: url('fonts/HankenGrotesk-Variable.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Hanken Grotesk';
+  font-style: italic;
+  font-weight: 100 900;
+  src: url('fonts/HankenGrotesk-Italic-Variable.woff2') format('woff2-variations');
+}
+
 /* inria-sans-regular - latin_latin-ext */
 @font-face {
   font-display: swap;
@@ -121,7 +140,7 @@
   /* Sans family for structural chrome — titles, wordmark, TOC, metadata, and
      the \paragraph run-in labels. Swap this one value to change the site's
      sans; the serif body font is set directly on `body`. */
-  --sans: 'Facebook Sans';
+  --sans: 'Hanken Grotesk';
 }
 
 h1,
@@ -311,6 +330,7 @@ h5,
 h6,
 .logo {
   font-family: var(--sans);
+  font-weight: 700;
 }
 
 math {
@@ -322,7 +342,7 @@ mrow:hover {
 }
 
 .logo {
-  font-weight: 1000;
+  font-weight: 600;
   font-size: 24px;
 }
 
@@ -409,6 +429,7 @@ footer h2 {
   #grid-wrapper > article {
     max-width: 90ex;
     width: 100%;
+    grid-column: 1;
   }
 
   #grid-wrapper>nav {
@@ -417,17 +438,53 @@ footer h2 {
   }
 }
 
+/* Desktop: a symmetric three-column grid — equal `1fr` flanks keep the
+   90ex article dead-center in the viewport, and the TOC drops into the
+   right flank so it sits off-center without stealing from the centering. */
 @media only screen and (min-width: 1000px) {
   body {
     margin-top: 2em;
-    margin-left: 2em;
+    margin-left: 0;
     transition: ease all .2s;
   }
 
   #grid-wrapper {
     display: grid;
-    grid-template-columns: 90ex;
+    grid-template-columns: 1fr 90ex 1fr;
     justify-content: center;
+  }
+
+  #grid-wrapper>article {
+    grid-column: 2;
+  }
+
+  #grid-wrapper>nav {
+    grid-column: 3;
+    justify-self: start;
+    max-width: 22em;
+  }
+}
+
+/* Between the mobile breakpoint and the width where a centered article
+   plus a TOC flank actually fit, there isn't room to keep the article
+   centered with the TOC in a gutter — so fall back to the classic
+   left-aligned layout: article then TOC, packed to the left. */
+@media only screen and (min-width: 1000px) and (max-width: 1300px) {
+  body {
+    margin-left: 2em;
+  }
+
+  #grid-wrapper {
+    grid-template-columns: 90ex auto;
+    justify-content: start;
+  }
+
+  #grid-wrapper>article {
+    grid-column: 1;
+  }
+
+  #grid-wrapper>nav {
+    grid-column: 2;
   }
 }
 
@@ -437,12 +494,6 @@ body>header {
 
 #grid-wrapper>article {
   max-width: 90ex;
-  margin-right: auto;
-  grid-column: 1;
-}
-
-#grid-wrapper>nav {
-  grid-column: 2;
 }
 
 details>summary>header {
@@ -464,7 +515,7 @@ section .block[data-taxon] details>summary>header>h1 {
 
 span.taxon {
   color: #444;
-  font-weight: bolder;
+  font-weight: 500;
 }
 
 

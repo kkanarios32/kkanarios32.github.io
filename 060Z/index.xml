@@ -47,15 +47,15 @@
     <html:ul><html:li>35.82% flop utilization.</html:li>
       <html:li>19.49% HBM bandwidth utilization.</html:li>
       <html:li>7.39% On-chip read utilization.</html:li></html:ul></html:ul>
-  <html:p><html:strong style="font-family: var(--sans);">HBM Bottleneck.</html:strong> The default XLA attention does not fuse the softmax with the logit computation, requiring the entire logit matrix to be written back to HBM.</html:p>
-  <html:p><html:strong style="font-family: var(--sans);">Vector Unit Limitations.</html:strong> MXU can be left idle while VPU is performing copmlex exponential and sum operations.</html:p>
-  <html:p><html:strong style="font-family: var(--sans);">VMEM Residency and Loop Control.</html:strong> Pallas allows you to control data movement, so that we can explicitly enforce <html:em>online softmax</html:em> rather than writing back to HBM.</html:p>
-  <html:p><html:strong style="font-family: var(--sans);">Temporal Control via LLO.</html:strong> Pallas also allows control over the <html:em>temporal flow</html:em>, preventing the compiler from reordering your manual optimizations.</html:p>
+  <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">HBM Bottleneck.</html:strong> The default XLA attention does not fuse the softmax with the logit computation, requiring the entire logit matrix to be written back to HBM.</html:p>
+  <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Vector Unit Limitations.</html:strong> MXU can be left idle while VPU is performing copmlex exponential and sum operations.</html:p>
+  <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">VMEM Residency and Loop Control.</html:strong> Pallas allows you to control data movement, so that we can explicitly enforce <html:em>online softmax</html:em> rather than writing back to HBM.</html:p>
+  <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Temporal Control via LLO.</html:strong> Pallas also allows control over the <html:em>temporal flow</html:em>, preventing the compiler from reordering your manual optimizations.</html:p>
 </fr:mainmatter></fr:tree>
 
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>23</fr:day></fr:date><fr:title text="Pallas Fundamentals">Pallas Fundamentals</fr:title></fr:frontmatter><fr:mainmatter>
 <html:em>Ignore the HLO pass.</html:em>
-<html:p><html:strong style="font-family: var(--sans);">Writing a kernel.</html:strong></html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Writing a kernel.</html:strong></html:p>
 <html:ul><html:li>Inside the kernel, data has already been moved from HBM to VMEM.
 <html:figure><html:img width="100%" src="/bafkrmiha7cfu4qisvm3es3cn2gvqjz7u3l5o6piqj3lehpbl34j5bf42ma.png" /></html:figure></html:li>
   <html:li>If data exceeds VMEM, we need to <html:em>tile</html:em> with <html:code>BlockSpec</html:code>.</html:li>
@@ -66,18 +66,18 @@
     <html:li>Asynchronous overlap.</html:li>
     <html:li>Buffer reuse. Uses same VMEM buffer across iterations.</html:li></html:ul></html:ul>
   <html:figure><html:img width="100%" src="/bafkrmieaepdhrv4tueesd6qhpu2sfijzhjoeyqs2i7xtryiimjhaqvgdeu.png" /></html:figure>
-  <html:p><html:strong style="font-family: var(--sans);">Two-level Tiling.</html:strong></html:p>
+  <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Two-level Tiling.</html:strong></html:p>
   <html:ul><html:li>Macro-tiling: this is done by Pallas / user. You define the larger software blocks i.e. 1024x1024 to hide latency DMA transfers. Pallas manages pipeling.</html:li>
     <html:li>Micro-tiling: this is done by compiler / hardware. Translates larger block into hardware native VREG 8x128.
     </html:li></html:ul>
-  <html:p><html:strong style="font-family: var(--sans);">VPU Pipelining.</html:strong></html:p>
+  <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">VPU Pipelining.</html:strong></html:p>
   <html:ul><html:li>VLOAD: fetching inputs for <html:strong>chunk (8x128)(N + 1)th</html:strong> from VMEM and move to VRegs</html:li>
     <html:li>VALU: Perform elementwise operations for <html:strong>current (Nth)</html:strong> chunk </html:li>
     <html:li>VSTORE: write completed result for <html:strong>previous (N - 1)th</html:strong> chunk from VRegs back to VMEM.</html:li></html:ul>
 </fr:mainmatter></fr:tree>
 
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>23</fr:day></fr:date><fr:title text="Flash Attention">Flash Attention</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p><html:strong style="font-family: var(--sans);">Online softmax.</html:strong></html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Online softmax.</html:strong></html:p>
 <html:ul><html:li>Each block does a local softmax calculation.</html:li>
   <html:li>Tracks a shared maximum and adjusts results.</html:li></html:ul>
 <html:p>Can Now fuse score calculation, softmax, and value aggregation into single pass.</html:p>
@@ -88,17 +88,17 @@
   <html:li>Re-scale accumulation: Multiplies by <fr:tex display="inline"><![CDATA[\alpha ]]></fr:tex> to the previously accumulated sums before adding current block output to accurately rescale all past results.</html:li>
   <html:li>Additive updates: partial results (current softmax and outputs) are added to running totals via fast multiply and addition ops.</html:li>
   <html:li>Delayed normalization: only divide by normalization once at the very end of the loop because division is slow.</html:li></html:ul>
-<html:p><html:strong style="font-family: var(--sans);">Block-size tuning.</html:strong> to maximize compute-to-load ratio need biggest block sizes that fit into VMEM.</html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Block-size tuning.</html:strong> to maximize compute-to-load ratio need biggest block sizes that fit into VMEM.</html:p>
 </fr:mainmatter></fr:tree>
 
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>23</fr:day></fr:date><fr:title text="Splash Attention">Splash Attention</fr:title></fr:frontmatter><fr:mainmatter>
 <html:p>With certain masks (i.e. causal) can skip alot of computation for parts of the attention matrix that are being masked out.</html:p>
 <html:ul><html:li>Finer blocks -&gt; can skip more but then have poorer utilization.</html:li></html:ul>
-<html:p><html:strong style="font-family: var(--sans);">Pre-processing Mask Info.</html:strong></html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Pre-processing Mask Info.</html:strong></html:p>
 <html:ul><html:li>Sparsity pruning: Divide mask into blocks and discard all inactive blocks (all zeros).</html:li>
   <html:li>Data compression: see how many unique mask patterns are needed to describe the remaining active blocks.</html:li>
   <html:li>Execution map and pre-fetching: (active_rows, mask_next) generated to map the computation order and tell the MXU which mask pattern to prefetch for zero-latency application.</html:li></html:ul>
-<html:p><html:strong style="font-family: var(--sans);">Metadata structures.</html:strong></html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Metadata structures.</html:strong></html:p>
 <html:ul><html:li>Block filtering (block_mask): categorizes QK blocks as zero, non-zero, partial.</html:li>
   <html:li>Coordinate mapping (active_ros/cols): provides the hardware with (Q, KV) grid indices, ensuring efficient loading of active blocks from HBM.</html:li>
   <html:li>Mask pipelining (mask_next): tells the hardware which mask pattern to prefetch.</html:li>

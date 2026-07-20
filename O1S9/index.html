@@ -32,973 +32,18 @@ window.addEventListener('load', function () {
 <span class="taxon"></span>Context  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section lang="en" class="block"><details id="id3"><summary><header><h1>
-<span class="taxon"></span>What I've been thinking about <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">June 2, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The 15 most recently modified trees, by git commit time.</p>
-  
-  
-  
-  
-  <section lang="en" class="block"><details id="id4"><summary><header><h1>
-<span class="taxon"></span>Enumerations (C++) <a class="slug" href="/QK4C/">[QK4C]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">June 2, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">User-defined type in <span xmlns="" class="link local"><a href="/OGCS1/" title="Notebook: C++ [OGCS1]">C++</a></span> that is a set of named values designed to make code more readable and less error prone.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
-<pre><code class="language-cpp">enum class Color { red, green, blue };
-
-Color c = Color::red;</code></pre>
-</div>
-<p xmlns="http://www.w3.org/1999/xhtml">If you want enumerator values to be <code>int</code>, you can use <code>enum</code>.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
-<pre><code class="language-cpp">enum Color { red, green, blue };
-
-int color = green     // color = 1</code></pre>
-Note that this is an error if <code>Color</code> is <code>enum class</code>.
-</div>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-Use enumerations to represent sets of named constants
-</div>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-Prefer <code>enum class</code> to <code>enum</code> when possible
-</div>
-</details></section>
-  <section lang="en" class="block"><details id="id5"><summary><header><h1>
-<span class="taxon"></span>exec() <a class="slug" href="/YHJR/">[YHJR]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">May 12, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Replaces the calling <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>'s program with a new executable. <code>exec()</code> does not return on success — the original code, data, stack, and heap are discarded and the new program runs in their place. The PID is unchanged.</p><p xmlns="http://www.w3.org/1999/xhtml">What <code>exec()</code> does internally:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Loads the new executable's code and static data, overwriting the current.</li>
-  <li>Re-initializes stack and heap.</li>
-  <li>Jumps to the new program's entry point with arguments passed as <code>argv</code>.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">The canonical Unix pattern is <code>fork()</code> then <code>exec()</code> — the shell uses this to launch a command without becoming that command:</p><pre xmlns="http://www.w3.org/1999/xhtml"><code class="language-c">int main()
-  while (true) {
-    command = getcommand();
-    int rc = fork();
-    if (rc &lt; 0)
-      printf("error with fork");
-    else if (rc == 0)
-      exec(command);            // child becomes the command
-    else
-      int rc = wait(NULL);      // parent waits for it
-  }</code></pre><p xmlns="http://www.w3.org/1999/xhtml">Redirection is implemented by opening a file in the child between <code>fork()</code> and <code>exec()</code>, attached to <code>STDOUT_FILENO</code>:</p><pre xmlns="http://www.w3.org/1999/xhtml"><code class="language-c">if (rc == 0)
-  close(STDOUT_FILENO);
-  open("output.txt");
-  exec(command);</code></pre>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The many variants — <code>execl</code>, <code>execle</code>, <code>execlp</code>, <code>execv</code>, <code>execvp</code>, <code>execvP</code> — differ in how they take arguments (list vs. vector), whether they use the <code>PATH</code> environment variable, and whether they take an explicit environment.</div>
-</details></section>
-  <section lang="en" class="block"><details id="id6"><summary><header><h1>
-<span class="taxon"></span>fork() <a class="slug" href="/O1S9/">[O1S9]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">May 12, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The Unix system call that duplicates the calling <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>. After <code>fork()</code> returns, two processes exist where there was one. The child gets its own copy of:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Address space.</li>
-  <li>General-purpose registers.</li>
-  <li>Program counter — the child returns from <code>fork()</code> at the same instruction the parent does.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">The two processes are distinguished by <code>fork()</code>'s return value:</p><pre xmlns="http://www.w3.org/1999/xhtml"><code class="language-c">int main()
-  int rc = fork();
-  if (rc &lt; 0)
-    printf("error with fork");
-  else if (rc == 0)
-    printf("in child");
-  else
-    printf("in parent");        // rc holds child PID</code></pre>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Which process is scheduled first after <code>fork()</code> is non-deterministic. Use <span xmlns="" class="link local"><a href="/J6VZ/" title="wait() [J6VZ]">wait()</a></span> if you need ordering.</div>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The copy is logical, not physical: real implementations use <span xmlns="" class="link local"><a href="/DEJB/" title="Copy-on-write [DEJB]">Copy-on-write</a></span> so the duplicated address space only allocates fresh pages when one side writes to them.</div>
-</details></section>
-  <section lang="en" class="block"><details id="id7"><summary><header><h1>
-<span class="taxon"></span>Process control block <a class="slug" href="/JE53/">[JE53]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">May 12, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The kernel-side data structure holding all per-process state. There is one PCB per <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>, threaded together into the <em>process list</em>. The PCB is what the OS reads and writes during a <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">Context switch</a></span>: the saved register set lives here, as does the process state, the open files, the parent pointer, and so on.</p><p xmlns="http://www.w3.org/1999/xhtml">An example from <code>xv6</code>:</p><pre xmlns="http://www.w3.org/1999/xhtml"><code class="language-c">// the registers xv6 will save and restore
-// to stop and subsequently restart a process
-struct context {
-  int eip;
-  int esp;
-  int ebx;
-  int ecx;
-  int edx;
-  int esi;
-  int edi;
-  int ebp;
-};
-// the different states a process can be in
-enum proc_state { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
-// the information xv6 tracks about each process
-// including its register context and state
-struct proc {
-  char *mem;                 // Start of process memory
-  uint sz;                   // Size of process memory
-  char *kstack;              // Bottom of kernel stack for this process
-  enum proc_state state;     // Process state
-  int pid;                   // Process ID
-  struct proc *parent;       // Parent process
-  void *chan;                // If non-zero, sleeping on chan
-  int killed;                // If non-zero, have been killed
-  struct file *ofile[NOFILE]; // Open files
-  struct inode *cwd;         // Current directory
-  struct context context;    // Switch here to run process
-  struct trapframe *tf;      // Trap frame for the current interrupt
-};</code></pre>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> <span xmlns="" class="link local"><a href="/63U3/" title="Thread [63U3]">Thread</a></span>s need an analogous <em>thread control block</em>; see <span xmlns="" class="link local"><a href="/16TG/" title="Concurrency Intro [16TG]">Concurrency Intro</a></span>.</div>
-</details></section>
-  <section lang="en" class="block" data-taxon="Definition"><details id="id8"><summary><header><h1>
-<span class="taxon">Definition. </span>Virtual Function (<span class="link local"><a href="/OGCS1/" title="Notebook: C++ [OGCS1]">C++</a></span>) <a class="slug" href="/OGCSG/">[OGCSG]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">June 9, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id9" open="open"><summary><header><h1>
-<span class="taxon">Definition. </span>Virtual Function Table (<span class="link local"><a href="/OGCS1/" title="Notebook: C++ [OGCS1]">C++</a></span>) <a class="slug" href="/OGCSH/">[OGCSH]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">June 9, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Each <span xmlns="" class="link local"><a href="/KE3D/" title="Class (C++) [KE3D]">class</a></span> with a <span xmlns="" class="link local"><a href="/OGCSG/" title="Virtual Function (C++) [OGCSG]">virtual function</a></span> gets a virtual table: a static, per-class, array of function pointers with one entry per virtual function.</p><p xmlns="http://www.w3.org/1999/xhtml">The virtual table is created by the compiler and is stored in the object's memory.</p><pre xmlns="http://www.w3.org/1999/xhtml">vtable layout:
-  [ offset-to-top  ]   // slot -2
-  [ type_info*     ]   // slot -1  ← RTTI
-  [ &amp;virtual_fn_0  ]   // slot  0
-  [ &amp;virtual_fn_1  ]   // slot  1
-  ...</pre>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-The <code>type_info</code> pointer is needed to support runtime type-checking / <span xmlns="" class="link external"><a href="https://kellenkanarios.com/OGCSI/" title="">dynamic casting</a></span> .
-</div>
-<p xmlns="http://www.w3.org/1999/xhtml">During construction, the vptr is initialized to point to the base class's vtable. In each classes vtable, there is a <em>thunk</em> (<code>offset-to-top</code>) that tells </p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
-<pre><code class="language-cpp">struct A {
-    virtual void f();
-    int a;
-};
-
-struct B {
-    virtual void g();
-    int b;
-};
-
-struct D : A, B {
-    void g() override;   // overrides B::g
-    int d;
-};</code></pre>
-<pre>offset 0:   [ vptr_A ]   ← D's primary vtable (A subobject)
-offset 8:   [ a      ]
-offset 16:  [ vptr_B ]   ← D's secondary vtable (B subobject)
-offset 24:  [ b      ]
-offset 32:  [ d      ]</pre>
-</div>
-</details></section><p xmlns="http://www.w3.org/1999/xhtml">Every <strong>object</strong> of a class with a virtual function carries a hidden vptr (virtual pointer) that points to the class's virtual table.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
-Consider the following class hierarchy:
-<pre><code class="language-cpp">struct Base {
-    virtual void f();
-    virtual void g();
-    int x;
-};
-
-struct Derived : Base {
-    void f() override;   // overrides Base::f
-    void h();            // non-virtual, not in vtable
-    int y;
-};</code></pre>
-This yields the following components for each type of object:
-<pre>Base object:        Derived object:
-[ vptr ]            [ vptr ]      → points to Derived's vtable
-[ x    ]            [ x    ]
-                    [ y    ]</pre>
-</div>
-</details></section>
-  <section lang="en" class="block" data-taxon="Definition"><details id="id10"><summary><header><h1>
-<span class="taxon">Definition. </span>Virtual Function Table (<span class="link local"><a href="/OGCS1/" title="Notebook: C++ [OGCS1]">C++</a></span>) <a class="slug" href="/OGCSH/">[OGCSH]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">June 9, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Each <span xmlns="" class="link local"><a href="/KE3D/" title="Class (C++) [KE3D]">class</a></span> with a <span xmlns="" class="link local"><a href="/OGCSG/" title="Virtual Function (C++) [OGCSG]">virtual function</a></span> gets a virtual table: a static, per-class, array of function pointers with one entry per virtual function.</p><p xmlns="http://www.w3.org/1999/xhtml">The virtual table is created by the compiler and is stored in the object's memory.</p><pre xmlns="http://www.w3.org/1999/xhtml">vtable layout:
-  [ offset-to-top  ]   // slot -2
-  [ type_info*     ]   // slot -1  ← RTTI
-  [ &amp;virtual_fn_0  ]   // slot  0
-  [ &amp;virtual_fn_1  ]   // slot  1
-  ...</pre>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-The <code>type_info</code> pointer is needed to support runtime type-checking / <span xmlns="" class="link external"><a href="https://kellenkanarios.com/OGCSI/" title="">dynamic casting</a></span> .
-</div>
-<p xmlns="http://www.w3.org/1999/xhtml">During construction, the vptr is initialized to point to the base class's vtable. In each classes vtable, there is a <em>thunk</em> (<code>offset-to-top</code>) that tells </p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
-<pre><code class="language-cpp">struct A {
-    virtual void f();
-    int a;
-};
-
-struct B {
-    virtual void g();
-    int b;
-};
-
-struct D : A, B {
-    void g() override;   // overrides B::g
-    int d;
-};</code></pre>
-<pre>offset 0:   [ vptr_A ]   ← D's primary vtable (A subobject)
-offset 8:   [ a      ]
-offset 16:  [ vptr_B ]   ← D's secondary vtable (B subobject)
-offset 24:  [ b      ]
-offset 32:  [ d      ]</pre>
-</div>
-</details></section>
-  <section lang="en" class="block" data-taxon="Definition"><details id="id11"><summary><header><h1>
-<span class="taxon">Definition. </span>Abstract type (<span class="link local"><a href="/OGCS1/" title="Notebook: C++ [OGCS1]">C++</a></span>) <a class="slug" href="/OGCSF/">[OGCSF]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">June 5, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An <em>abstract type</em> is a type that completely insulates a user from implementation details.</p><p xmlns="http://www.w3.org/1999/xhtml">Since we do not know anything about the representation (in particular, the size) we must allocate everything on heap.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
-  Below is an abstract implementation of a <span xmlns="" class="link local"><a href="/OGCSE/" title="Container (C++) [OGCSE]">container class</a></span>.
-  <pre><code class="language-cpp">  class Container {
-  public:
-    virtual double&amp; operator[](int) = 0; // pure virtual function
-    virtual int size() const = 0; // const member function
-    virtual ˜Container() {} // destructor
-  };</code></pre>
-</div>
-</details></section>
-  <section lang="en" class="block"><details id="id12"><summary><header><h1>
-<span class="taxon"></span>Union (<span class="link local"><a href="/OGCS1/" title="Notebook: C++ [OGCS1]">C++</a></span>) <a class="slug" href="/W375/">[W375]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">June 1, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A union is a <span xmlns="" class="link local"><a href="/CCIB/" title="Struct (C++) [CCIB]">struct</a></span> in which all members are allocated at the same address. This ensures that the union occupies only as much space as its largest member.</p><p xmlns="http://www.w3.org/1999/xhtml">A union can hold a value for only one member at a time.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
-  You can only read the active member of a union.
-<pre><code class="language-cpp">union U { int i; float f; };
-U u;
-u.i = 42;
-float x = u.f;  // UB — reading the inactive member</code></pre>
-</div>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
-<em>No automatic lifetime management for non-trivial types.</em> If a union holds an object with a non-trivial constructor/destructor (like <code>std::string</code>), the compiler won't call them for you. You must manually placement-new and explicitly call the destructor, and getting this wrong causes leaks or corruption.
-<pre><code class="language-cpp">union U { std::string s; int i; };  // destructor not called automatically</code></pre>
-</div>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-Avoid "naked" unions; opt for "tagged" unions.
-<pre><code class="language-cpp">struct Value {
-    enum class Type { Int, Float, Str } tag;
-    union {
-        int   i;
-        float f;
-        char  s[32];
-    };
-};</code></pre>
-This along with lifetime management is the basis of <span xmlns="" class="link external"><code xmlns="http://www.w3.org/1999/xhtml"><a xmlns="" href="https://en.cppreference.com/cpp/utility/variant" title="">std::variant</a></code></span>.
-</div>
-</details></section>
-  <section lang="en" class="block"><details id="id13"><summary><header><h1>
-<span class="taxon"></span>Online Softmax <a class="slug" href="/PI7N/">[PI7N]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">May 20, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This covers the math behind the online softmax algorithm required by <span xmlns="" class="link local"><a href="/R0PM/" title="Flash Attention (v1) [R0PM]">Flash Attention (v1)</a></span>.</p>
-  <section lang="en" class="block hide-metadata"><details id="id14" open="open"><summary><header><h1>
-<span class="taxon"></span>Safe softmax  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">May 20, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">The first thing we must consider is numerical precision. Namely, the <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">original softmax</a></span> operation is given by</p>
-\[\mathrm {softmax}(\mathbf {x}) = \frac {\exp (\mathbf {x})}{\sum _{i=1}^n \exp (\mathbf {x}_i)}\]
-<p xmlns="http://www.w3.org/1999/xhtml">However, when operating with <span xmlns="" class="link local"><a href="/DEQV/" title="Low Precision Data Types [DEQV]">low precision data types</a></span> (i.e. float16) the maximum value is \(65536\). Therefore, with \(\exp \) we can easily get numerically overflow.</p>
-<p xmlns="http://www.w3.org/1999/xhtml">To get around this, the online softmax algorithm adheres to the <em>safe softmax</em>. For safe softmax, we simply multiply the numerator and denominator by \(\exp (-m)\), where \(m = \max  \{x_{1}, \ldots , x_n\}\). This gives</p>
-\[\mathrm {softmax}(\mathbf {x}) = \frac {\exp (\mathbf {x} - m)}{\sum _{i=1}^n \exp (\mathbf {x}_i - m)}\]
-<p xmlns="http://www.w3.org/1999/xhtml">Since \(x_i - m \leq  0\), this ensures that each \(\exp (x_i - m)\) is bounded in a safe range.</p>
-
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Note that computing the \(\max \) over \(\mathbf {x}\) means that we must have all of the logits in a row of \(QK^T\) materialized in <span xmlns="" class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">SMEM</a></span>, or first loop over all of them to compute the max before computing the normalization constant.</div>
-
-</details></section>
-
-  <section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
-<span class="taxon"></span>Fusing the max and normalization  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">May 20, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">The online softmax algorithm fuses the max reduction into the normalization pass, so a single sweep over the row suffices to compute the normalization with the max. The key difficulty is that the denominator depends on \(n\) <strong>for each</strong> \(i\) i.e.</p>
-\[d = \sum _{i=1}^{n} \exp (x_i - m_n)\]
-<p xmlns="http://www.w3.org/1999/xhtml">
-Therefore, we must find a recursive relationship such that \(d_{i+1} = f(d_i, m_i, x_{i+1})\) for some function \(f\). This would then allow us to locally compute \(d_{i+1}\) with only the local information of current \(x_{i+1}\) and the two running statistics \(d_i\) and \(m_i\). This is exactly the kind of algorithm that is conducive to <span xmlns="" class="link local"><a href="/OGCRV/" title="Memory Tiling (GPU) [OGCRV]">memory tiling</a></span>.
-</p>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> What is \(f(d_i, m_i, x_{i+1})\)?</div>
-
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> Consider \(d_{i+1} = d_i \cdot  \exp (m_{i} - m_{i + 1}) + \exp (x_{i + 1} - m_{i + 1})\).</div>
-
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> 
-  This can be seen by directly rewriting \(d_{i + 1}\). 
-  \[
-    \begin {align*}
-      d_{i + 1} &amp;= \sum _{j = 1}^{i+1} \exp (x_j - m_{i + 1}) \\
-      &amp;= \left (\sum _{j = 1}^{i} \exp (x_j - m_{i+1})\right ) + \exp (x_{i+1} - m_{i+1}) \\
-      &amp;= \left (\sum _{j = 1}^{i} \exp (x_j - m_{i})\right )\exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1}) \\
-      &amp;= d_{i} \exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1})
-    \end {align*}
-  \]
-</div>
-
-<p xmlns="http://www.w3.org/1999/xhtml">
-The running denominator \(d\) is rescaled by \(e^{m - m_{\text {new}}}\) each time a new maximum is found, keeping it consistent with the safe-softmax shift.</p>
-<div xmlns="http://www.w3.org/1999/xhtml" class="code-figure"><div class="code-filename">online_softmax.py</div><pre><code class="language-python">m = float("-inf")                    # running max of the logits
-d = 0.0                              # running softmax denominator
-for i in range(n):                   # one fused sweep for the stats
-    m_new = max(m, x[i])
-    d = d * exp(m - m_new) + exp(x[i] - m_new)
-    m = m_new
-p = [exp(x[i] - m) / d for i in range(n)]   # second pass: normalized probs</code></pre></div>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-Unfortunately, we cannot get around the second pass to compute the normalized output for \(\mathbf {p}\). However, this is not the case in <span xmlns="" class="link local"><a href="/R0PM/" title="Flash Attention (v1) [R0PM]">Flash Attention (v1)</a></span>.
-</div>
-
-</details></section>
-</details></section>
-  <section lang="en" class="block"><details id="id16"><summary><header><h1>
-<span class="taxon"></span>Flash Attention (Fwd) <a class="slug" href="/OGCS0/">[OGCS0]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">May 27, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">
-Unlike in the <span xmlns="" class="link local"><a href="/PI7N/" title="Online Softmax [PI7N]">online softmax</a></span>, we are not interested in the outputted probability vector \(\mathbf {p}\). Instead we are interested in the entire output matrix \(O\) given by
-  </p>\[O = \mathrm {softmax}(QK^T) V\]<p xmlns="http://www.w3.org/1999/xhtml">
-For more details see <span xmlns="" class="link local"><a href="/004G/" title="Self-Attention [004G]">self-attention</a></span>.
-  </p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(70, 100, 150, 0.75);   border-radius: var(--radius);   background-color: rgba(70, 100, 150, 0.05);   "><span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</span> 
-  In correspondence with the notation in the <span xmlns="" class="link local"><a href="/PI7N/" title="Online Softmax [PI7N]">online softmax</a></span>, we define the following:
-  \[x_{i,j} = \mathbf {q}_i \cdot  \mathbf {k}_j,\]
-  where \(\mathbf {q}_i\) is the \(i\)th row of \(Q\) and \(\mathbf {k}_j\) is the \(j\)th row of \(K\). Similarly, \(\mathbf {o}_i\) is the \(i\)th row of the output matrix \(O\) given by
-  \[\mathbf {o}_i = \sum _{j = 1}^{n} \frac {\exp (x_{i,j} - m_n)}{d_n} \cdot  \mathbf {v}_j \]
-</div>
-<p xmlns="http://www.w3.org/1999/xhtml">Now following the template provided by the <span xmlns="" class="link local"><a href="/PI7N/" title="Online Softmax [PI7N]">online softmax</a></span>, we must find a recurrence for \(\mathbf {o}_i\). Namely, we will consider the sequence \(\mathbf {o}_{i,k}'\) given by
-\[\mathbf {o}_{i,k}' = \sum _{j = 1}^{k} \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_j, \]
-such that \(\mathbf {o}_{i,n}' = \mathbf {o}_n\)</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(140, 60, 170, 0.8);   border-radius: var(--radius);   background-color: rgba(140, 60, 170, 0.05);   "><span style="font-weight: 600; color: rgba(140, 60, 170, 0.8);">Claim.</span> 
-  We have the following recurrence for \(\mathbf {o}_{i,k}'\):
-  \[
-  \mathbf {o}_{i,k}' = \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} + \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_k
-    \]
-</div>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> 
-  We will proceed by directly rewriting the recurrence for \(\mathbf {o}_{i,k}'\) as 
-  \[
-    \begin {align*}
-      \mathbf {o}_{i,k}' &amp;= \sum _{j = 1}^{k} \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_j \\
-                        &amp;= \left (\sum _{j = 1}^{k - 1} \frac {\exp (x_{i,j} - m_{k-1})}{d_{k-1}} \cdot  \mathbf {v}_j\right ) \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} +  \frac {\exp (x_{i,k} - m_k)}{d_k} \cdot  \mathbf {v}_k \\
-                        &amp;= \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} +  \frac {\exp (x_{i,k} - m_k)}{d_k} \cdot  \mathbf {v}_k
-    .\end {align*}
-    \]
-  </div>
-<p xmlns="http://www.w3.org/1999/xhtml">Thus, we are left with the following algorithm</p><div xmlns="http://www.w3.org/1999/xhtml" class="code-figure"><div class="code-filename">flash_attention.py</div><pre><code class="language-python">for i in range(N):                      # one query row at a time
-    m = float("-inf")                    # running max of the logits
-    d = 0.0                              # running softmax denominator
-    o = zeros(head_dim)                  # running output accumulator
-    for j in range(M):                   # stream over keys/values
-        x = q[i] @ k[j]                  # logit x_{i,j}
-        m_new = max(m, x)
-        d_new = d * exp(m - m_new) + exp(x - m_new)
-        o = o * (d * exp(m - m_new) / d_new) + (exp(x - m_new) / d_new) * v[j]
-        m, d = m_new, d_new
-    out[i] = o</code></pre></div>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-A key benefit of this algorithm is that it is entirely parallelizable across rows. This means that we can loop across entire <span xmlns="" class="link local"><a href="/OGCRV/" title="Memory Tiling (GPU) [OGCRV]">tiles</a></span> like in the GEMM case.
-</div>
-</details></section>
-  <section lang="en" class="block"><details id="id17"><summary><header><h1>
-<span class="taxon"></span>Notebook: <span class="link local"><a href="/stanford/" title="Stanford University [stanford]">Stanford</a></span> <span class="link external"><a href="https://stanford-cs336.github.io/spring2025/index.htmlschedule" title="">CS336</a></span> <a class="slug" href="/0085/">[0085]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 1, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Formal notebook for my journey in <span xmlns="" class="link local"><a href="/stanford/" title="Stanford University [stanford]">Stanford's</a></span> <span xmlns="" class="link external"><a href="https://stanford-cs336.github.io/spring2025/index.htmlschedule" title="">CS336</a></span> as part of my <span xmlns="" class="link local"><a href="/003W/" title="LLMs [003W]">LLM</a></span> self-study endeavors.</p><section lang="en" class="block hide-metadata"><details id="id18" open="open"><summary><header><h1>
-<span class="taxon"></span>Tokenization <a class="slug" href="/0087/">[0087]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 1, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-  <section lang="en" class="block hide-metadata"><details id="id19" open="open"><summary><header><h1>
-<span class="taxon"></span>Introduction  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 1, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-  <p xmlns="http://www.w3.org/1999/xhtml">
-A <em>tokenizer</em> is responsible for taking text and turning it into a numerical representation we can pass to a neural network i.e.
-\[\mathsf {encode}(\text {hello world}) \mapsto  \begin {bmatrix} 24912, &amp; 2375 \end {bmatrix} \]
-    However, we also need 
-    \[\mathsf {decode}(\begin {bmatrix} 24912, &amp; 2375 \end {bmatrix}) \mapsto  \text {hello world} 
-    \]
- When defining a "good" tokenizer, we are concerned with the <em>compression ratio</em> i.e. the # of bytes per token.
-    </p>
-</details></section>
-
-  <section lang="en" class="block hide-metadata"><details id="id20" open="open"><summary><header><h1>
-<span class="taxon"></span>Character-based tokenization  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 1, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">Trivially, we can do <em>character-based tokenization</em> i.e. mapping each character to a unique number. For example, \(\mathsf {chr}(97) = \text {``a''}\) and \(\mathsf {ord}(\text {``a''}) = 97\). The compression ratio will be \(&gt; 1\) because each token corresponds to a character potentially consisting of more than one byte.</p>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
-  <ol><li>Very large vocabulary</li>
-    <li>Many characters are quite rare.</li></ol>
-</div>
-
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-There is a fundamental <strong>tradeoff</strong> between compression ratio and vocabulary size. As an example, suppose we map every sequence of \(n\) bytes to a token. This would achieve a compression ratio of \(n\). However, this would require \(256^n\) tokens in our vocabulary.
-</div>
-
-<p xmlns="http://www.w3.org/1999/xhtml">
-  Problem 2 was not entirely straight-forward to me. This actually reminds me of an idea from my <span xmlns="" class="link local"><a href="/004B/" title="Notebook: Information Theory [004B]">information theory</a></span> course, where we can assume we are given a "prior" over human language then we want to map low-probability characters to large strings in order to minimize the expected length (see <span xmlns="" class="link local"><a href="/005Z/" title="Huffman Code [005Z]">huffman coding</a></span>).
-</p>
-</details></section>
-
-  <section lang="en" class="block hide-metadata"><details id="id21" open="open"><summary><header><h1>
-<span class="taxon"></span>Byte-based tokenization  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 1, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">In byte-based tokenization, each byte is a token achieving a compression ratio of exactly \(1\), where a byte \(\mapsto  [0, 256]\)
-. This is very elegant in the sense that our vocabulary size is fixed at \(256\).
-</p>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
-However, with this, the length of our encoding is the number of bytes in the string, which will become too long.
-</div>
-
-</details></section>
-
-  <section lang="en" class="block hide-metadata"><details id="id22" open="open"><summary><header><h1>
-<span class="taxon"></span>Word-based tokenization  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 1, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-  <p xmlns="http://www.w3.org/1999/xhtml">
-In <em>word-based tokenization</em>, we simply split the string into the corresponding words then map each of these to a unique integer.
-    </p>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
-  The vocabulary size is "unbounded" i.e. if we see a word we have not seen before then we need to extend the vocabulary size.
-</div>
-
-</details></section>
-
-  <section lang="en" class="block hide-metadata"><details id="id23" open="open"><summary><header><h1>
-<span class="taxon"></span>Byte Pair Encoding  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 1, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">For the <em>byte pair encoding</em> (BPE), we instead <em>train</em> the tokenizer on raw text to automatically determine the vocabulary.</p>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-In GPT2, they first split the raw text into words and then do this byte pair encoding.
-</div>
-
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 100, 255, 0.7);   border-radius: var(--radius);   background-color: rgba(0, 100, 255, 0.05);   "><span style="font-weight: 600; color: rgba(0, 100, 255, 0.7);">Algorithm.</span> 
-<em>while</em> <strong>true</strong>:
-<ol><li>Count occurences of byte pairs. Store in dict \(D\) with \(\{(b_1, b_2): \text {count}\}\)</li>
-  <li>Find \((b_1, b_2)\) with highest count.</li>
-  <li>Merge \((b_1, b_2)\) by \((b_{1}, b_{2}) \mapsto  b'\)</li>
-  <li>Replace all instances of \((b_{1}, b_{2})\) in string with \(b'\) i.e. 
-  \[b_{1} b_{2} b_{3} b_{4} \mapsto  b'b_{3} b_{4}\]</li></ol>
-</div>
-
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-  There are a few additional implementation details to consider for project 1.
-<ol><li>\(\mathsf {encode}\) loops over all merges. Only loop over merges that matter.</li>
-  <li>Detect and preserve special tokens (e.g. &lt;|endoftext|&gt;)</li>
-  <li>Use pre-tokenization (GPT2 regex)</li></ol>
-</div>
-
-</details></section>
-</details></section>
-  <section lang="en" class="block hide-metadata"><details id="id24" open="open"><summary><header><h1>
-<span class="taxon"></span>Motivating Questions  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 1, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-  <p xmlns="http://www.w3.org/1999/xhtml">We start by discussing a few essential questions one hopes to answer when they set out to train a large model.</p>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> How long to train a 70b parameter model on 15T tokens on 1024 H100s?
-</div>
-
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> Mysteriously, we spawn from the ether (will be explained later) that <code>total_flops = 6 * 70e9 * 15e12</code>. Intuitively, we know that we need to perform some computation for each parameter for each token. However, the 6 is still an ominous mystery. Given the total flops, we then can just take the GPUs FLOP/s multiply by the number of seconds in the day and divide <code>total_flops</code> by this number i.e. 
-<code>days = total_flops / flops_per_day</code>
-</div>
-
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-In practice, we must also consider the <em>model flop utilization</em> (MFU). Basically, our algorithm cannot utilize the entirety of the maximum FLOP/s provided by the hardware due to things like memory bandwidth, etc. To account for this in the calculation, they just take <code>flops_per_day / 2</code>.
-</div>
-
-
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> 
-  What is the largest model that you can train on 8 H100s using AdamW?
-</div>
-
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> 
-  An H100 has 80gb of shared memory i.e. <code>h100_bytes = 80e9</code>. The calculation then proceeds as
-  <pre><code class="language-python"> # parameters, gradients, optimizer state
-bytest_per_param = 4 + 4 + (4 + 4)
-num_parameters = (h100_bytes * 8) / bytes_per_parameter</code></pre>
-  what we need each of parameters, gradients, optimizer state will become clear later.
-</div>
-
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-In practice, we also need to account for activations, which will depend on <strong>both</strong> batch size and sequence length.
-</div>
-
-  </details></section>
-<section lang="en" class="block hide-metadata"><details id="id25" open="open"><summary><header><h1>
-<span class="taxon"></span>Memory Accounting <a class="slug" href="/DEQU/">[DEQU]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 3, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Tensor Memory.</strong>
-Tensors are stored as a <em>floating point number</em>. Memory is determined by (i) number of values in tensor and (ii) data type of each value.
-</p><section lang="en" class="block hide-metadata"><details id="id26" open="open"><summary><header><h1>
-<span class="taxon"></span>Low Precision Data Types <a class="slug" href="/DEQV/">[DEQV]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 3, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><code>float16</code>: here, we decrease both the fraction and exponent bits. Importantly, there are only \(5\) exponent bits making the effective range \((2^{-6}, 2^{6})\). The dynamic range for small numbers is pretty bad. This can cause small numbers to "die" effectively killing these neurons for the remainder of learning due to backpropagation.
-</p><p xmlns="http://www.w3.org/1999/xhtml"><code>bfloat16</code>: to fix the problems with <code>float16</code>, they instead keep \(8\) exponent bits and reduce the fraction bits to \(7\). This maintains the same dynamic range as <code>float32</code> while still only using \(16\) bits. 
-</p><p xmlns="http://www.w3.org/1999/xhtml"><code>fp8</code>: Two variants
-<ol><li>E4M3: has 4 exponent bits and 3 mantissa bits</li> 
-<li>E5M2: has 5 exponent bits and 2 mantissa bits</li></ol>
-Requires modern Hopper Architecture i.e. H100 to perform operations. Also supported by TPUs.
-</p></details></section><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Training Implications.</strong>
-<ol><li><code>float32</code> training works but requires lots of memory</li>
-  <li>Using <span xmlns="" class="link local"><a href="/DEQV/" title="Low Precision Data Types [DEQV]">lower precision data types</a></span> allows you to train larger models due to lower memory requirements, but can cause instability</li>
-  <li>To optimize this tradeoff, use <em>mixed-precision training</em>.</li></ol></p></details></section><section lang="en" class="block hide-metadata"><details id="id27" open="open"><summary><header><h1>
-<span class="taxon"></span>Torch Tensors <a class="slug" href="/DYIV/">[DYIV]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 3, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">
-In pytorch, tensors are <em>contiguous</em> blocks of memory, where their shape is controlled by <em>strides</em>. A stride basically just refers to how far you have to jump in physical memory to correspond to incrementing the logical index i.e. in a (2, 3) matrix each row requires jumping \(3\) spots in physical memory. Thus, <code>stride[1] = 3</code>.
-  </p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-Calling <code>.view((m, n))</code> just changes the stride but does <strong>not</strong> modify the physical memory. If you call <code>.view</code> that results in a non-contiguous view, then you cannot call <code>.view</code> again because it assumes contiguous indexing to properly adjust the strides. To deal with this, they have <code>.contiguous()</code> and <code>.reshape()</code> is basically <code>.contiguous().view()</code>.
-</div>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-All <strong>elementwise</strong> operations make a copy i.e. <code>x + y</code>. A useful function for masked attention is <code>triu()</code>.
-</div>
-
-  <section lang="en" class="block hide-metadata"><details id="id28" open="open"><summary><header><h1>
-<span class="taxon"></span>Einops  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 3, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-Einops is a useful python library to keep track of high-dimensional matrix operations i.e. matmuls over <code xmlns="http://www.w3.org/1999/xhtml">batch_size</code>, <code xmlns="http://www.w3.org/1999/xhtml">seqlen</code>, etc. High level overview
-<ul xmlns="http://www.w3.org/1999/xhtml"><li>Initialize like <code>X[float.tensor, "batch seq hidden"] = torch.tensor((2, 3, 4))</code></li>
-  <li>Can perform matmul with named dims like</li>
-  <code>z = einsum(x, y, "batch seq1 hidden, batch seq2 hidden -&gt; batch seq1 seq2")</code>
-  <li><code>reduce</code>: <code>x = reduce(x, "x y z -&gt; x y 1")</code> is just like <code>mean(x, axis=-1)</code></li>
-  <li><code>rearrange</code>: <code>x = rearrange(x, "... (heads hidden1) -&gt; ... heads hidden 1")</code></li></ul>
-</details></section>
-</details></section>
-  <section lang="en" class="block hide-metadata"><details id="id29" open="open"><summary><header><h1>
-<span class="taxon"></span>Computation  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 1, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id30" open="open"><summary><header><h1>
-<span class="taxon">Definition. </span>Floating Point Operations <a class="slug" href="/4K5H/">[4K5H]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 12, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">We refer to the <strong>total</strong> number of floating point operatings as <em>FLOPS</em>. Alternatively, we refer to the number of floating point operations per second as <em>FLOP/s</em>.</p></details></section>
-<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id31" open="open"><summary><header><h1>
-<span class="taxon">Definition. </span>Model FLOP Utilization (MFU) <a class="slug" href="/99G8/">[99G8]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 12, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Given a promised <span xmlns="" class="link local"><a href="/4K5H/" title="Floating Point Operations [4K5H]">FLOP/s</a></span>, the <em>model flop utilization</em> is given by
-\[\frac {\text {actual FLOP/s}}{\text {promised FLOP/s}}\]</p></details></section>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
-Performing a matrix multiplication \(A \cdot  B\) for \(A \in  \mathbb {R}^{(B \times  D)}\) and \(B \in  \mathbb {R}^{(D \times  K)}\), requires \(2 \times  B \times  D \times  K\) <span xmlns="" class="link local"><a href="/4K5H/" title="Floating Point Operations [4K5H]">FLOPS</a></span></div>
-
-</details></section>
-
-  <section lang="en" class="block hide-metadata"><details id="id32" open="open"><summary><header><h1>
-<span class="taxon"></span>Optimizers  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 1, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">I hope to do a formal blog touring optimizers because I have written a paper on deep learning optimizers for my <span xmlns="" class="link local"><a href="/0033/" title="Notebook: Optimization Theory [0033]">optimization course</a></span>. Due to this, I will leave this blank for now. A brief list of the covered concepts are below:</p>
-<ul xmlns="http://www.w3.org/1999/xhtml"><li>momentum</li>
-  <li>adagrad</li>
-  <li>RMSProp</li>
-  <li>Adam</li></ul>
-<p xmlns="http://www.w3.org/1999/xhtml">A key formula to remember:
-\[\text {total memory} \approx  4 \times  (\text {params} + \text {activations} + \text {grad size} + \text {optimizer state size})\]</p>
-</details></section>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-Another useful trick is to use <span xmlns="" class="link local"><a href="/DEQV/" title="Low Precision Data Types [DEQV]">low precision</a></span> for forward pass activations, then use <code>float32</code> for gradients and network parameters.
-</div>
-<section lang="en" class="block hide-metadata"><details id="id33" open="open"><summary><header><h1>
-<span class="taxon"></span>Architecture Variations <a class="slug" href="/W4WB/">[W4WB]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 13, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><section lang="en" class="block hide-metadata"><details id="id34" open="open"><summary><header><h1>
-<span class="taxon"></span>Norms <a class="slug" href="/7JRP/">[7JRP]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 16, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Pre-norm vs. Post-norm.</strong> The first architecture variation discussed is when to apply the <span xmlns="" class="link local"><a href="/LVV4/" title="Layer Normalization [LVV4]">layer norm</a></span>. As can be seen in the figure below, rather than apply the <span xmlns="" class="link local"><a href="/LVV4/" title="Layer Normalization [LVV4]">layer norm</a></span> in the residual stream. They instead place it before the FFN and MHA layers.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="40%" src="/bafkrmiawz4eenenwuvnx3pzxjniwghlortvgc5ytxzq5z5oyznugozl22y.png"></img>
-<figcaption>Post norm (a) vs. pre norm (b).</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml">They actually found that adding <span xmlns="" class="link local"><a href="/LVV4/" title="Layer Normalization [LVV4]">layer normalization</a></span> before and after the MHA and FFN works the best. This is known as <em>double norm</em>.</p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);"><span xmlns="" class="link local"><a href="/1XNO/" title="RMS Norm [1XNO]">RMSNorm</a></span> vs. <span xmlns="" class="link local"><a href="/LVV4/" title="Layer Normalization [LVV4]">LayerNorm</a></span>.</strong>
-Another useful trick is to use the <span xmlns="" class="link local"><a href="/1XNO/" title="RMS Norm [1XNO]">RMSNorm</a></span> instead of <span xmlns="" class="link local"><a href="/LVV4/" title="Layer Normalization [LVV4]">LayerNorm</a></span>.
-</p><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id35" open="open"><summary><header><h1>
-<span class="taxon">Definition. </span>RMS Norm <a class="slug" href="/1XNO/">[1XNO]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 14, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The RMS norm is simply the <span xmlns="" class="link local"><a href="/LVV4/" title="Layer Normalization [LVV4]">layer norm</a></span> without the added bias term and centering i.e. 
-\[\mathrm {RMSNorm}: \mathbb {R}^d \to  \mathbb {R}^d, \quad  \mathbf {x} \mapsto  \frac {\mathbf {x}}{\sqrt {\mathrm {Var}[\mathbf {x}_i] + \epsilon }}*\gamma .\]
-This is used to spare memory movement of <span xmlns="" class="link local"><a href="/LVV4/" title="Layer Normalization [LVV4]">layernorm</a></span>, where the bias term \(\beta  \in  \mathbb {R}^d\) and has been found to be empirically almost if not as good.
-</p></details></section><p xmlns="http://www.w3.org/1999/xhtml">One might wonder if matrix multiplies are the only thing that matters what can such a small change really accomplish.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Due to memory movement, despite being .17% of <span xmlns="" class="link local"><a href="/4K5H/" title="Floating Point Operations [4K5H]">FLOPS</a></span>, provided 25% speedup in runtime!!</li></ul>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-Most people apparently just drop the bias term and keep the centering i.e. subtracting the mean. This makes sense because computing the mean does not require loading any additional information back to memory.
-</div>
-</details></section><section lang="en" class="block hide-metadata"><details id="id36" open="open"><summary><header><h1>
-<span class="taxon"></span>Activations <a class="slug" href="/9X1X/">[9X1X]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 16, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Despite a long list of activations, the two focused on are <span xmlns="" class="link local"><a href="/BEA2/" title="Rectified Linear Unit (ReLU) [BEA2]">ReLU</a></span> and <span xmlns="" class="link local"><a href="/5SPM/" title="Gaussian Error Linear Unit (GELU) [5SPM]">GELU</a></span>.</p><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id37" open="open"><summary><header><h1>
-<span class="taxon">Definition. </span>Rectified Linear Unit (ReLU) <a class="slug" href="/BEA2/">[BEA2]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 14, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The <em>rectified linear unit</em>(ReLU) is defined as
-\[\mathrm {ReLU} : \mathbb {R}^d \to  \mathbb {R}^d, \quad  \mathbf {x} \mapsto  \max (0, \mathbf {x}),\]
-where the \(\max \) is done elementwise i.e. \(\mathrm {ReLU}(\mathbf {x})_i = \max (0, x_i)\)
-This provides "nice" gradients, making it common when training neural networks.
-</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id38" open="open"><summary><header><h1>
-<span class="taxon">Definition. </span>Gaussian Error Linear Unit (GELU) <a class="slug" href="/5SPM/">[5SPM]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 14, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The <em>Gaussian Error Linear Unit</em> (GELU) is a slight modification to the <span xmlns="" class="link local"><a href="/BEA2/" title="Rectified Linear Unit (ReLU) [BEA2]">ReLU</a></span> to account for the non-differentiability at \(0\). Namely,
-\[\mathrm {GELU}(\mathbf {x}) : \mathbb {R}^d \to  \mathbb {R}^d, \quad  \mathbf {x} \mapsto  \mathbf {x} \cdot  \psi (\mathbf {x}),\]
-where \(\psi (\mathbf {x}) = \mathrm {CDF}(\mathcal {N}(\mathbf {x}, \mathbf {I}))\)</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="70%" src="/bafkrmian7h7ke2dp6nqdq4624wx4off5lk346f7d5pp6mv7bbimcy7azni.png"></img>
-<figcaption>GELU vs. ReLU activation and derivative. Taken from <span xmlns="" class="link external"><a href="https://www.baeldung.com/cs/gelu-activation-function" title="">here</a></span>.</figcaption></figure></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id39" open="open"><summary><header><h1>
-<span class="taxon">Definition. </span>Swish Activation <a class="slug" href="/OZD8/">[OZD8]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 14, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The <em>Swish</em> activation is given by
-\[\mathrm {Swish}(\mathbf {x}) : \mathbb {R}^d \to  \mathbb {R}^d, \quad  \mathbf {x} \mapsto  \mathbf {x} s(\mathbf {x}),\]
-where \(s : \mathbb {R}^d \to  \mathbb {R}^d\) is the <span xmlns="" class="link local"><a href="/NNDS/" title="Sigmoid [NNDS]">sigmoid function</a></span>.
-</p></details></section>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-  The extra computation required by <span xmlns="" class="link local"><a href="/5SPM/" title="Gaussian Error Linear Unit (GELU) [5SPM]">GELU</a></span> or <span xmlns="" class="link local"><a href="/OZD8/" title="Swish Activation [OZD8]">Swish</a></span> is a non-factor because <span xmlns="" class="link local"><a href="/4K5H/" title="Floating Point Operations [4K5H]">FLOPS</a></span> are dominated by matrix multiplication and there is no increase in memory pressure.
-  </div>
-<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id40" open="open"><summary><header><h1>
-<span class="taxon">Definition. </span>Gated Linear Unit (GLU) <a class="slug" href="/K2N7/">[K2N7]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 14, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>gated linear unit</em> is an activation function combined with an elementwise multiplication i.e. 
-<ul><li>\(\mathrm {ReGLU} = \mathrm {ReLU}(\mathbf {x}) \otimes  \mathbf {V} \mathbf {x},\)</li>
-  <li>\(\mathrm {SwiGLU} = \mathrm {Swish}(\mathbf {x}) \otimes  \mathbf {V} \mathbf {x},\)</li></ul>
-where \(\mathrm {ReLU}\) is the <span xmlns="" class="link local"><a href="/BEA2/" title="Rectified Linear Unit (ReLU) [BEA2]">ReLU</a></span> activation and \(\mathrm {Swish}\) is the <span xmlns="" class="link local"><a href="/OZD8/" title="Swish Activation [OZD8]">Swish</a></span> activation respectively.
-</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-The matrix \(\mathbf {V}\) introduces additional learnable parameters. Therefore, an architecture that uses gating typically reduces their other parameters by a factor of \(\frac {2}{3}\).
-</div>
-</details></section></details></section><section lang="en" class="block hide-metadata"><details id="id41" open="open"><summary><header><h1>
-<span class="taxon"></span>Computing FFN and MHA in parallel is free speedup <a class="slug" href="/ZAR4/">[ZAR4]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 16, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">
-Another small trick is to parallelize computation. Traditionally, one computes the \(\mathrm {MHA}\) output and then passes this to the \(\mathrm {FFN}\) i.e.
-\[\mathbf {y} = \mathbf {x} + \mathrm {FFN}(\mathrm {LN}(\mathbf {x} + \mathrm {MHA}(\mathrm {LN}(\mathbf {x})))).\]
-However, this requires waiting for the \(\mathrm {MHA}\) to complete before performing the \(\mathrm {FFN}\) computation. It has been found that performing these in parallel does not cause any severe degradation in performance. Explicitly, instead they do
-\[\mathbf {y} = \mathbf {x} + \mathrm {FFN}(\mathrm {LN}(\mathbf {x})) + \mathrm {MHA}(\mathrm {LN}(\mathbf {x}))\]</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Question"><details id="id42" open="open"><summary><header><h1>
-<span class="taxon">Question. </span>What is the role of weight decay in training large models? <a class="slug" href="/U52K/">[U52K]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 16, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Since there is so much data, it is not feasible to train your model for multiple epochs. This is actually nice in the sense that we do not have to worry about overfitting and performing regularization.</p><p xmlns="http://www.w3.org/1999/xhtml">However, many of the large models are still trained with weight decay. Tatsu claims that this is not to do with regularization but actually due to some weird interaction with the learning rate schedule. I am not sure I entirely understood this part.</p></details></section></details></section><section lang="en" class="block hide-metadata"><details id="id43" open="open"><summary><header><h1>
-<span class="taxon"></span>Rotary Position Embeddings (ROPE) <a class="slug" href="/TOD6/">[TOD6]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 14, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(70, 100, 150, 0.75);   border-radius: var(--radius);   background-color: rgba(70, 100, 150, 0.05);   "><span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</span> 
-For this section, our notion of an <em>embedding</em> is a function \(f\) that takes a token and a position i.e. \(f(x, i)\) is the embedding of token \(x\), occurring at position \(i\).
-</div>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 160, 175, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 160, 175, 0.06);   "><span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</span> The <span xmlns="" class="link local"><a href="/B1RI/" title="Inner Product [B1RI]">inner product</a></span> of two embeddings should only need relative positioning i.e. for any two \(\mathbf {x}\), \(\mathbf {y}\) with positions \(i\) and \(j\) respectively, there should exist some \(g\), such that
-\[\langle  f(\mathbf {x}, i), f(\mathbf {y}, j) \rangle  = g(\mathbf {x}, \mathbf {y}, i - j)\]
-Namely, this can be written as a function of just the relative positioning between the embeddings.
-</div>
-<p xmlns="http://www.w3.org/1999/xhtml">The simplest transformation that only preserves this relative information are <span xmlns="" class="link local"><a href="/10H9/" title="Rotation matrix [10H9]">rotations</a></span>.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="50%" src="/bafkrmiba4muc7qqk2agccjalqpm24hxw7u4gkfpozmnhz7if6ncagxpsgi.png"></img>
-<figcaption>Rotating embeddings does not change relative position.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml">However, <span xmlns="" class="link local"><a href="/10H9/" title="Rotation matrix [10H9]">rotations</a></span> are only easily defined for \(\mathbb {R}^2\). To get around this, they simply partition their input 2d slices and apply the rotation via
-\[\mathrm {ROT} = \begin {bmatrix} \cos  m \theta _{1} &amp; - \sin  m \theta _{1} &amp; &amp; &amp; \\
-\sin  m \theta _{1} &amp; \cos  m \theta _{1} &amp; &amp; &amp; \\
-&amp; &amp; \cos  m \theta _{2} &amp; -\sin  m \theta _{2} &amp; \\
-&amp; &amp; \sin  m \theta _{2} &amp; \cos  m \theta _{2} &amp; \\
-&amp; &amp; &amp; &amp; \ddots 
-\end {bmatrix} \]</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-The \(\theta _i\)'s are fixed and chosen according to some schedule to capture different "frequencies". 
-</div>
-<p xmlns="http://www.w3.org/1999/xhtml">The embedding are used by appling them to the query and key matrices separately i.e. 
-\[W_K = \mathrm {ROT}(W_K), \quad  W_Q = \mathrm {ROT}(W_Q)\]
-These are then what is used in self-attention.
-</p></details></section>
-  <section lang="en" class="block hide-metadata"><details id="id44" open="open"><summary><header><h1>
-<span class="taxon"></span>The little details  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 1, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-  <p xmlns="http://www.w3.org/1999/xhtml">A lot of deep learning is empirical magic. A quick look behind the curtain into this magic awaits below... </p>
-  <section lang="en" class="block hide-metadata"><details id="id45" open="open"><summary><header><h1>
-<span class="taxon"></span>Hyperparameter Rules (<span class="link local"><a href="/0085/" title="Notebook: Stanford CS336 [0085]">CS336</a></span>) <a class="slug" href="/9VZH/">[9VZH]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 14, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Rule 1.</strong> \(d_{\text {ff}} = d_{\text {model}}\)
-<ul><li>\(d_{\text {model}}\) is the input dimension</li>
-  <li>\(d_{\text {ff}}\) is the hidden dimension</li></ul></p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Exception 1.</strong> in the case of <span xmlns="" class="link local"><a href="/K2N7/" title="Gated Linear Unit (GLU) [K2N7]">GLUs</a></span>, we recall that to account for extra parameters we scale \(\frac {2}{3}\). Therefore, \(d_{\text {ff}} = \frac {8}{3}d_{\text {model}}\).</p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Exception 2.</strong> In T5, they use \(d_{\text {ff}} = 64d_{\text {model}}\). The logic for this was that we could maximize the <span xmlns="" class="link local"><a href="/99G8/" title="Model FLOP Utilization (MFU) [99G8]">MFU</a></span> by increasing matrix size. Ended up going back to small \(d_{\text {model}}\).</p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Rule 2.</strong> \(d_{\text {head}} = d_{\text {model}} / \text {num heads}\)
-<ul><li>I believe the \(d_{\text {head}}\) is the output dim of each head.</li>
-  <li>This just says the total output dim for \(n\) heads is the same as if we did one head.</li>
-  <li>Means there is something important about splitting up the heads.</li></ul></p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Rule 3.</strong> Aspect ratio = \(\frac {d_{\text {model}}}{n_{\text {layer}}} \approx  100-200\)
-<ul><li>Pipeline dependent: if network speed is fast than parallelizing is easier and shallow networks are better.</li>
-  <li>If poor network speed then pipeline parallel might be more viable and deeper networks would be more parallelizable.</li></ul></p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Rule 4.</strong> Vocab size
-<ul><li>For single language models, vocab size is typically \(30-50k\)</li>
-  <li>For multi language models, vocab size is typically \(100-250k\)</li></ul></p></details></section>
-  <section lang="en" class="block hide-metadata"><details id="id46" open="open"><summary><header><h1>
-<span class="taxon"></span>Stabilizing <span class="link local"><a href="/C00V/" title="Softmax [C00V]">Softmax</a></span> in <span class="link local"><a href="/004G/" title="Self-Attention [004G]">Attention</a></span> <a class="slug" href="/7TMH/">[7TMH]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 16, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">softmax</a></span> is ill-behaved due to the exponentials. In the transformer, we have two softmaxes: one at the end and one in the <span xmlns="" class="link local"><a href="/004G/" title="Self-Attention [004G]">attention</a></span>.
-<ul><li>For the first, note \[\log  \sigma (\mathbf {x})_i = \log (x_i) - \log  \underbrace {\sum _{j=1}^{d} e^{x_j}}_{D(\mathbf {x})}\]
-   The only problem is the denominator term. The idea is to enforce the \(D(\mathbf {x}) = 1\) by regularizing via a penalty on \(\log  D(\mathbf {x})\) ie.
-\[\mathcal {L}_{\text {aux}} = 10^{-4} \log ^2(D(\mathbf {x}))\]
-With the \(\nabla  D(\mathbf {x})\) should be \(0\) and we are effectively only considering the non-exponential term.
-   </li>
-   <li>For the <span xmlns="" class="link local"><a href="/004G/" title="Self-Attention [004G]">attention</a></span>, they primarily operate on the <em>logits</em> prior to the softmax. One way is via <span xmlns="" class="link local"><a href="/LVV4/" title="Layer Normalization [LVV4]">layer norm</a></span> before the <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">softmax</a></span>. Another is via <span xmlns="" class="link external"><a href="https://kellenkanarios.com/39ZN/" title="">39ZN</a></span></li></ul></p></details></section>
-</details></section>
-<section lang="en" class="block hide-metadata"><details id="id47" open="open"><summary><header><h1>
-<span class="taxon"></span>Multi Query Attention <a class="slug" href="/W4YP/">[W4YP]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 14, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Notes on the paper <span xmlns="" class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">Fast Transformer Decoding: One Write-Head is All You Need</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml">For, 
-<ul><li>\(b\) batch dimension,</li>
-  <li>\(n\) sequence length,</li>
-  <li>\(d\) hidden dimension,</li>
-  <li>\(h\) number of heads.</li></ul>
-The total <span xmlns="" class="link local"><a href="/4K5H/" title="Floating Point Operations [4K5H]">FLOPS</a></span> for <span xmlns="" class="link local"><a href="/004G/" title="Self-Attention [004G]">attention</a></span> are roughly \(bnd^2\). This comes from 
-<ol><li>\(3nd^2\) FLOPS to compute \(Q = XW_Q, K = XW_K, V = XW_V\).</li>
-  <li>Need to do this \(b\) times for each input in batch.</li></ol>
-and the total memory accesses are roughly \(\underbrace {bnd}_{X} + \underbrace {bhn^2}_{\text {softmax}} + \underbrace {d^2}_{\text {projection}}\).
-This gives high arithmetic intensity
-\[O\left (\left (\frac {h}{d} + \frac {1}{bn}\right )^{-1}\right )\]</p><p xmlns="http://www.w3.org/1999/xhtml">However, if we do incremental inference then we must multiply our total number of memory accesses by \(n\) i.e. \(bn^2d + nd^2\). This gives arithmetic intensity
-\[O\left (\left (\frac {n}{d} + \frac {1}{b}\right )^{-1}\right ),\]
-which requires large batch and short sequence length.
-</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-I believe we just ignore the softmax memory contribution in the inference case because it does not scale with \(n\) anymore as we are computing the logits just for the next token. Therefore, it becomes a \(\frac {d}{h}\) term, which we can safely ignore?
-</div>
-<p xmlns="http://www.w3.org/1999/xhtml">The key is that the \(\frac {n}{d}\) term comes from the \(bn^2d\) term, where we are loading \(h\) \((b \times  n \times  d / h)\) \(K\) and \(V\) matrices \(n\) times. Thus, we can improve the \(\frac {n}{d}\) term by a factor of \(h\) by simply not using a different \(K\) and \(V\) matrix for each head. This is the entire idea behind <span xmlns="" class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">MQA</a></span>.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-Similar to the <span xmlns="" class="link local"><a href="/TJLA/" title="KV-cache [TJLA]">KV-cache</a></span>, we still can use \(h\) \(Q\) matrices because we do not need to load \(n\) of them into memory because only the last one matters for inference.
-</div>
-<section lang="en" class="block hide-metadata"><details id="id48" open="open"><summary><header><h1>
-<span class="taxon"></span>Group Query Attention <a class="slug" href="/XUVV/">[XUVV]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 14, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Group query attention</em> is the same idea as <span xmlns="" class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">MQA</a></span> but instead of using one \(K\) and \(V\) for every head, they use a <em>group</em> of them. Where obviously the number of groups needs to be less than the number of heads.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmicmjlgi2o3oetsssjdwk6y2pqce4vrdwiw2ah4wwe3ulnt74upkiu.png"></img>
-<figcaption>Grouped query uses subset of \(K\) and \(V\) matrices.</figcaption></figure></details></section><p xmlns="http://www.w3.org/1999/xhtml">Also inspired by this idea of reducing the dependence of \(K\) and \(V\) on the sequence length is sliding window attention.</p><section lang="en" class="block hide-metadata"><details id="id49" open="open"><summary><header><h1>
-<span class="taxon"></span>Sliding Window Attention <a class="slug" href="/WM3M/">[WM3M]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 14, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The idea behind <em>sliding window attention</em> is to ensure the number of weight matrices needed for the keys \(K\) and values \(V\) does not scale with the sequence length. Intuitively, this means allowing each word to "attend" to only some fixed number of previous words rather than the whole sequence</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmidqeoo6wx6s4ry6u74fcelfzxvwreyf7d44whnql4ffnnyd2dwcha.png"></img>
-<figcaption>"the" only sees "on" and "sat" rather than the full sentence.</figcaption></figure></details></section></details></section></details></section>
-  <section lang="en" class="block"><details id="id50"><summary><header><h1>
-<span class="taxon"></span>Rebuilding My (Neo)Vim Config From Scratch <a class="slug" href="/005F/">[005F]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">March 4, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">I used LazyVim for a long time, but I kept hitting a wall: understanding <em>how</em> LazyVim did something was consistently harder than if I had just written the thing myself. So I gave myself one day to rebuild from scratch, with the modest goal of first-class support for \(\TeX \), Python, Forester, and C/C++. That one-day sprint is long past, and the config has kept evolving since — this note describes where it landed, not the frantic first pass. The through-line is that almost everything now leans on Neovim's own primitives instead of a framework, which is exactly the transparency I was missing.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The whole config lives in my <span xmlns="" class="link external"><a href="https://github.com/kkanarios32/dotfiles" title="">dotfiles</a></span>. It is a thin <code>init.lua</code> that loads four modules — <code>config.lazy</code>, <code>config.options</code>, <code>config.keymaps</code>, and <code>core.lsp</code> — with the actual plugin specs under <code>lua/plugins/</code> and per-server LSP tables under <code>lsp/</code>.</div>
-
-  <section lang="en" class="block hide-metadata"><details id="id51" open="open"><summary><header><h1>
-<span class="taxon"></span>Sane defaults  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">March 4, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">To my surprise, a lot of the behavior I had taken for granted turned out to be options LazyVim set internally. I was greeted on first launch by 8-space indents and a clipboard that would not survive a trip between terminal instances. So the first job was archaeology: I dug through LazyVim for every option I actually liked and copied them into <code>config/options.lua</code>. System clipboard, sensible folding via Treesitter (<code>foldexpr = v:lua.vim.treesitter.foldexpr()</code>), a global statusline, <code>conceallevel</code> for markup — the unglamorous foundation everything else sits on.</p>
-</details></section>
-
-  <section lang="en" class="block hide-metadata"><details id="id52" open="open"><summary><header><h1>
-<span class="taxon"></span>Plugin management  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">March 4, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">The plugin manager is <code>lazy.nvim</code>, the de facto standard, and it genuinely just works. The bootstrap snippet from their docs clones it on first run, and after that every file under <code>lua/plugins/</code> that returns a spec table is imported automatically. No central manifest to keep in sync — a new file is a new plugin.</p>
-</details></section>
-
-  <section lang="en" class="block hide-metadata"><details id="id53" open="open"><summary><header><h1>
-<span class="taxon"></span>Native LSP, no framework  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">March 4, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">This is where the config diverged most sharply from where it started. The first pass used <code>mason.nvim</code>, <code>mason-lspconfig</code>, and <code>nvim-lspconfig</code> — the standard stack. All three are now gone. Neovim 0.11 ships a <span xmlns="" class="link external"><a href="https://neovim.io/doc/user/lsp/" title="">native LSP</a></span> configuration API: <code>vim.lsp.config</code> defines a server and <code>vim.lsp.enable</code> turns it on, and any table returned from <code>lsp/&lt;name&gt;.lua</code> on the runtime path is picked up as that server's config. So <code>core.lsp</code> is just a list —</p>
-<pre xmlns="http://www.w3.org/1999/xhtml"><code class="language-lua"> vim.lsp.enable({ "forester", "texlab", "clangd", "basedpyright", "lua_ls", "ruff" })
-</code></pre>
-<p xmlns="http://www.w3.org/1999/xhtml">— and each server gets a plain Lua file in <code>lsp/</code>. No package manager, no bridge plugin translating between two config schemas. I install the servers themselves through my system package manager and let Neovim wire them up. It is dramatically less machinery for the same result, and when something breaks there is exactly one place to look.</p>
-<p xmlns="http://www.w3.org/1999/xhtml">The Python setup is the clearest upgrade. I dropped <code>pyright</code> for <code>basedpyright</code> and split responsibilities: <code>basedpyright</code> does type checking and inlay hints, while <code>ruff</code> runs as its own language server handling import organization and diagnostics. In the LazyVim days I fought constantly with import resolution, hand-writing a function to locate each project's virtualenv and pin <code>pythonPath</code> to its interpreter. <code>basedpyright</code> resolves environments well enough on its own that the hack is gone. <code>clangd</code>, <code>texlab</code>, and <code>lua_ls</code> round out the set, each configured in its own file — <code>texlab</code> in particular carries a fair amount of custom command wiring for building, forward search into Zathura, and environment manipulation.</p>
-<p xmlns="http://www.w3.org/1999/xhtml">A shared <code>LspAttach</code> autocommand in <code>core.lsp</code> binds the buffer-local LSP keymaps once, for every server: go-to-definition and friends route through <code>fzf-lua</code> pickers, and document highlighting, inlay-hint toggling, and native completion get enabled per-buffer based on what each client actually supports.</p>
-</details></section>
-
-  <section lang="en" class="block hide-metadata"><details id="id54" open="open"><summary><header><h1>
-<span class="taxon"></span>Forester finally has a <span class="link external"><a href="https://www.forester-notes.org/MZSF/index.xml" title="">real language server</a></span>  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">March 4, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">The original post described an ugly hack to get Forester completion. The <code>forester.nvim</code> plugin exposed a completion source, but only for <code>nvim-cmp</code>; <code>blink.cmp</code> (which I use — see below) needs a <code>blink.compat</code> shim, and that shim expected a plugin to <em>be</em> a source rather than to bury one inside a larger feature set. Getting reference completion working meant reading <code>blink.compat</code> internals and registering the source by hand.</p>
-<p xmlns="http://www.w3.org/1999/xhtml">None of that survives, because Forester now ships an actual language server. My <code>lsp/forester.lua</code> just launches <code>forester lsp</code> and hands it the forest root. The one wrinkle worth recording: <code>forester</code> locates the forest by its process working directory and <em>ignores</em> the LSP <code>rootUri</code>, and Neovim does not spawn the server in <code>root_dir</code> by default. So the config resolves the nearest <code>forest.toml</code> and starts the RPC process with an explicit <code>cwd</code> — otherwise the server exits with status 1 whenever Neovim's cwd has no <code>forest.toml</code> (e.g. when I open a tree from <code>$HOME</code>). Reference completion — indispensable for writing this very blog — now flows through the standard LSP path with no shim in sight.</p>
-</details></section>
-
-  <section lang="en" class="block hide-metadata"><details id="id55" open="open"><summary><header><h1>
-<span class="taxon"></span>Completion  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">March 4, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">Completion is <code>blink.cmp</code>, the successor that finally displaced <code>nvim-cmp</code>. Its sources are <code>lsp</code>, <code>path</code>, <code>snippets</code>, and <code>omni</code>, with LuaSnip as the snippet engine. Because I lean on native LSP, the <code>on_attach</code> handler calls <code>vim.lsp.completion.enable</code> with autotrigger, so the server's completions feed the picker directly.</p>
-<p xmlns="http://www.w3.org/1999/xhtml">Layered on top is <code>supermaven-nvim</code> for AI ghost-text suggestions — accept-suggestion, accept-word, and clear bound to <code>&lt;C-l&gt;</code>, <code>&lt;C-j&gt;</code>, and <code>&lt;C-]&gt;</code>. It fills the role Copilot-style tools play elsewhere without getting in the way of the structured LSP and snippet completions.</p>
-</details></section>
-
-  <section lang="en" class="block hide-metadata"><details id="id56" open="open"><summary><header><h1>
-<span class="taxon"></span>Snippets  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">March 4, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">Going all the way back to the <span xmlns="" class="link external"><a href="https://castel.dev/post/lecture-notes-1/" title="">Gilles Castel blog post</a></span>, I have always wanted snippets that auto-expand. Under LazyVim I had settled for friendly-snippets on native Neovim snippets; rebuilding from scratch, I refused to compromise. The engine is <code>LuaSnip</code>, which <code>blink.cmp</code> supports natively, and I have to plug the <span xmlns="" class="link external"><a href="https://github.com/iurimateus/luasnip-latex-snippets.nvim" title="">luasnip-latex-snippets repo</a></span> that ports the original UltiSnips math snippets over. My own snippets live in a small local plugin, <code>custom-luasnip-snippets.nvim</code>, vendored under <code>lua/local/</code>.</p>
-<p xmlns="http://www.w3.org/1999/xhtml">The trick I had wanted for years and can finally do: load LaTeX math snippets while inside math environments <em>in Forester</em>. The snippet plugin runs with <code>use_treesitter = true</code>, so it inspects the Forester Treesitter grammar, finds the node types for math environments, and only expands the math snippets when the cursor is actually inside one. Writing \(\TeX \) inside a <code>.tree</code> file feels exactly like writing it in a <code>.tex</code> file.</p>
-</details></section>
-
-  <section lang="en" class="block hide-metadata"><details id="id57" open="open"><summary><header><h1>
-<span class="taxon"></span>Formatting and linting  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">March 4, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">Formatting runs through <code>conform.nvim</code> on save. Python is handled by <code>ruff_format</code> followed by <code>pyink</code>, Lua by <code>stylua</code> — this replaced the old <code>black</code> + <code>isort</code> pairing, folding most of it into the same <code>ruff</code> that already runs as a language server. Formatting falls back to the LSP formatter when no dedicated tool is configured for a filetype.</p>
-</details></section>
-
-  <section lang="en" class="block hide-metadata"><details id="id58" open="open"><summary><header><h1>
-<span class="taxon"></span>Fuzzy finding and forest integration  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">March 4, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">The fuzzy finder is <code>fzf-lua</code>, which replaced Telescope. File and grep pickers are scoped to a detected project root — a small <code>utils.root</code> module (lifted from LazyVim) walks LSP workspace folders, <code>.git</code>, and cwd to find it — with a dedicated <code>tex</code> override that restricts live-grep to \(\TeX \) source files.</p>
-<p xmlns="http://www.w3.org/1999/xhtml">The piece I am most fond of is <code>forester-new</code>, a local plugin that wires the editor into the forest's own note pipeline. It shells out to <code>scripts/new</code> so every tree gets the standard frontmatter and routing, then commands like <code>:ForesterNew</code>, <code>:ForesterStub</code>, <code>:ForesterCitek</code>, and <code>:ForesterTransient</code> handle the follow-through: creating a tree and inserting a <code>\transclude</code>, stubbing a concept and dropping a <code>[[id]]</code> link at the cursor, or — in visual mode — lifting a selection into a new tree and replacing it in place with the transclude. Stub-and-link without ever leaving the sentence, which is exactly the friction the forest workflow is supposed to remove.</p>
-</details></section>
-
-  <section lang="en" class="block hide-metadata"><details id="id59" open="open"><summary><header><h1>
-<span class="taxon"></span>Anki  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">March 4, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">I originally built a whole in-editor Anki workflow on top of <span xmlns="" class="link external"><a href="https://git.sr.ht/~foosoft/anki-connectdeck-actions" title="">AnkiConnect</a></span> and a vendored <code>anki.nvim</code>. That has since moved out of the editor and into the forest itself: cards are just <code>\taxon{Card}</code> trees, and <code>scripts/anki-sync</code> mirrors them into Anki — creating the note on first sync and updating in place thereafter. Writing a card is now the same as writing any other tree, snippets and all, and the sync is one command away. This is <span xmlns="" class="link local"><a href="/2RO9/" title="What false dependencies does register renaming eliminate? [2RO9]">an example of a card</a></span>.</p>
-</details></section>
-
-  
-</details></section>
-  <section lang="en" class="block" data-taxon="Definition"><details id="id60"><summary><header><h1>
-<span class="taxon">Definition. </span>Software Pipelining <a class="slug" href="/AOWY/">[AOWY]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 17, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A compiler transformation that restructures a loop so the steady-state body contains instructions from <strong>multiple logical iterations</strong>, each at a different stage — statically constructing the overlap an OoO core would find dynamically. Canonical algorithm: modulo scheduling.</p></details></section>
-  <section lang="en" class="block"><details id="id61"><summary><header><h1>
-<span class="taxon"></span>CISC vs RISC <a class="slug" href="/L896/">[L896]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">May 12, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Two design philosophies for an instruction set architecture.</p><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id62" open="open"><summary><header><h1>
-<span class="taxon">Definition. </span>Complex instruction set computing (CISC) <a class="slug" href="/RIS1/">[RIS1]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 17, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An ISA with many specialized instructions, including ones that combine memory access with arithmetic or operate on complex types (strings, decimal numbers). One instruction often does the work of several. x86 is the canonical example.</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id63" open="open"><summary><header><h1>
-<span class="taxon">Definition. </span>Reduced instruction set computing (RISC) <a class="slug" href="/XJQO/">[XJQO]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 17, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An ISA with a small set of simple, uniform instructions; explicit load and store; arithmetic only on registers. Each instruction does little but maps cleanly to hardware. PowerPC, MIPS, ARM are RISC.</p></details></section>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> <span xmlns="" class="link local"><a href="/RIS1/" title="Complex instruction set computing (CISC) [RIS1]">CISC</a></span> needs a fat <span xmlns="" class="link local"><a href="/87GH/" title="Microarchitecture [87GH]">Microarchitecture</a></span> engine to translate its complex instructions into hardware-executable primitives. That's silicon area, power, and design complexity that doesn't directly add throughput.</div>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Once <span xmlns="" class="link local"><a href="/XJQO/" title="Reduced instruction set computing (RISC) [XJQO]">RISC</a></span> clearly won as a hardware model, x86 vendors adopted <em>instruction translation</em>: a <span xmlns="" class="link local"><a href="/RIS1/" title="Complex instruction set computing (CISC) [RIS1]">CISC</a></span> front-end decodes x86 into RISC-like <span xmlns="" class="link local"><a href="/WEW2/" title="Micro-operations [WEW2]">Micro-operations</a></span> internally. The chip is <span xmlns="" class="link local"><a href="/XJQO/" title="Reduced instruction set computing (RISC) [XJQO]">RISC</a></span> on the inside, <span xmlns="" class="link local"><a href="/RIS1/" title="Complex instruction set computing (CISC) [RIS1]">CISC</a></span> on the outside.</div>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The cost of legacy is real. The original Pentium spent roughly 30% of its transistors on legacy support (mostly the microcode ROM). The Pentium Pro spent 40% on backward compatibility. Modern x86 chips have absorbed this overhead because they can — transistor budgets grew faster than the legacy tax.</div>
-</details></section>
-  <section lang="en" class="block" data-taxon="Definition"><details id="id64"><summary><header><h1>
-<span class="taxon">Definition. </span>Reduced instruction set computing (RISC) <a class="slug" href="/XJQO/">[XJQO]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 17, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An ISA with a small set of simple, uniform instructions; explicit load and store; arithmetic only on registers. Each instruction does little but maps cleanly to hardware. PowerPC, MIPS, ARM are RISC.</p></details></section>
-</details></section>
-        <section lang="en" class="block"><details id="id65"><summary><header><h1>
 <span class="taxon"></span>Processes <a class="slug" href="/SE66/">[SE66]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">August 16, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The process abstraction, the syscalls for working with processes on Unix, the hardware-software contract that makes time-sharing safe, and the scheduling policies that decide who runs when.</p>
-  <section lang="en" class="block hide-metadata"><details id="id66" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
 <span class="taxon"></span>The abstraction  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">August 16, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-<section lang="en" class="block hide-metadata"><details id="id67" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
 <span class="taxon"></span>Process <a class="slug" href="/FCHM/">[FCHM]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1011,7 +56,7 @@ Similar to the <span xmlns="" class="link local"><a href="/TJLA/" title="KV-cach
   <li><em>blocked</em>: waiting on I/O or another event, not runnable.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Threads (see <span xmlns="" class="link local"><a href="/16TG/" title="Concurrency Intro [16TG]">Concurrency Intro</a></span>) share an address space within a process but each have their own PC, register set, and stack.</div>
 </details></section>
-<section lang="en" class="block hide-metadata"><details id="id68" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
 <span class="taxon"></span>Process API <a class="slug" href="/JJ45/">[JJ45]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1023,7 +68,7 @@ Similar to the <span xmlns="" class="link local"><a href="/TJLA/" title="KV-cach
   <li><strong>Status</strong>: report on running processes.</li></ol>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The stack is allocated up front. The heap starts small and grows via <code>malloc</code>, which calls into the OS (<code>brk</code>/<code>sbrk</code>) when it runs out of headroom.</div>
 <p xmlns="http://www.w3.org/1999/xhtml">On Unix, the concrete realization of this API uses <code>fork()</code>, <code>wait()</code>, and <code>exec()</code> — covered separately.</p></details></section>
-<section lang="en" class="block hide-metadata"><details id="id69" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
 <span class="taxon"></span>Process control block <a class="slug" href="/JE53/">[JE53]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1062,13 +107,13 @@ struct proc {
 </details></section>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id70" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
 <span class="taxon"></span>Unix process syscalls  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">August 16, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-<section lang="en" class="block hide-metadata"><details id="id71" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id9" open="open"><summary><header><h1>
 <span class="taxon"></span>fork() <a class="slug" href="/O1S9/">[O1S9]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1087,7 +132,7 @@ struct proc {
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The copy is logical, not physical: real implementations use <span xmlns="" class="link local"><a href="/DEJB/" title="Copy-on-write [DEJB]">Copy-on-write</a></span> so the duplicated address space only allocates fresh pages when one side writes to them.</div>
 </details></section>
-<section lang="en" class="block hide-metadata"><details id="id72" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id10" open="open"><summary><header><h1>
 <span class="taxon"></span>wait() <a class="slug" href="/J6VZ/">[J6VZ]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1095,7 +140,7 @@ struct proc {
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Blocks the calling <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span> until one of its children terminates. The OS marks the child's PCB <code>ZOMBIE</code> on exit, keeping enough state (exit status, resource usage) for the parent to retrieve via <code>wait()</code>; only when the parent collects it is the child fully reaped.</p><p xmlns="http://www.w3.org/1999/xhtml"><code>wait()</code> returns the PID of the child that died. Variant <code>waitpid(pid, ...)</code> blocks on a specific child — useful when a parent has multiple children and only one is interesting.</p><p xmlns="http://www.w3.org/1999/xhtml">Used to enforce ordering between parent and child code paths after <span xmlns="" class="link local"><a href="/O1S9/" title="fork() [O1S9]">fork()</a></span>, or to know when an <span xmlns="" class="link local"><a href="/YHJR/" title="exec() [YHJR]">exec()</a></span>'d program finishes.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Calling <code>wait()</code> with no children to wait on returns <code>-1</code>.</div>
 </details></section>
-<section lang="en" class="block hide-metadata"><details id="id73" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
 <span class="taxon"></span>exec() <a class="slug" href="/YHJR/">[YHJR]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1118,14 +163,14 @@ struct proc {
   exec(command);</code></pre>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The many variants — <code>execl</code>, <code>execle</code>, <code>execlp</code>, <code>execv</code>, <code>execvp</code>, <code>execvP</code> — differ in how they take arguments (list vs. vector), whether they use the <code>PATH</code> environment variable, and whether they take an explicit environment.</div>
 </details></section>
-<section lang="en" class="block hide-metadata"><details id="id74" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
 <span class="taxon"></span>Unix signals <a class="slug" href="/9V3H/">[9V3H]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An asynchronous notification delivered to a <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span>. A process sends a signal with <code>kill(pid, signum)</code> (the name is misleading — most signals don't kill); the recipient can install a handler with <code>signal(signum, handler)</code> to "catch" it, otherwise the default action runs (often termination).</p><p xmlns="http://www.w3.org/1999/xhtml">Signals are the OS's mechanism for events the recipient didn't ask to be told about: <code>SIGINT</code> from Ctrl-C, <code>SIGSEGV</code> from a <span xmlns="" class="link local"><a href="/CXFM/" title="Page fault [CXFM]">Page fault</a></span> on an invalid page, <code>SIGCHLD</code> when a child exits, <code>SIGTERM</code> from an administrative kill.</p><p xmlns="http://www.w3.org/1999/xhtml">Who can signal whom depends on the <em>user</em> owning the process — a user can signal their own processes; the <em>superuser</em> can signal any process.</p></details></section>
 </details></section>
-<section lang="en" class="block hide-metadata"><details id="id75" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id13" open="open"><summary><header><h1>
 <span class="taxon"></span>Limited Direct Execution <a class="slug" href="/VE8C/">[VE8C]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 19, 2025</li>
@@ -1135,21 +180,21 @@ struct proc {
   <ol><li><em>How do we make sure a program doesn't do what we don't want it to do?</em></li>
     <li><em>How do we enable time-sharing?</em></li></ol>
 </div>
-<p xmlns="http://www.w3.org/1999/xhtml">The first question is answered by hardware <span xmlns="" class="link local"><a href="/QUQC/" title="User mode vs kernel mode [QUQC]">User mode vs kernel mode</a></span> enforced via the <span xmlns="" class="link local"><a href="/0NVY/" title="Trap table [0NVY]">Trap table</a></span>, with a controlled <span xmlns="" class="link local"><a href="/A5S6/" title="Syscall mechanism [A5S6]">Syscall mechanism</a></span> as the only path from one to the other. The second is answered by periodic timer interrupts that trap to the OS, which performs a <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">Context switch</a></span> and runs the <span xmlns="" class="link local"><a href="/B8GC/" title="Scheduling [B8GC]">scheduler</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml">The whole stack is bootstrapped during the <span xmlns="" class="link local"><a href="/XSFO/" title="Boot sequence [XSFO]">Boot sequence</a></span>, when the kernel installs the trap table and starts the timer before handing control to user space.</p><section lang="en" class="block hide-metadata"><details id="id76" open="open"><summary><header><h1>
+<p xmlns="http://www.w3.org/1999/xhtml">The first question is answered by hardware <span xmlns="" class="link local"><a href="/QUQC/" title="User mode vs kernel mode [QUQC]">User mode vs kernel mode</a></span> enforced via the <span xmlns="" class="link local"><a href="/0NVY/" title="Trap table [0NVY]">Trap table</a></span>, with a controlled <span xmlns="" class="link local"><a href="/A5S6/" title="Syscall mechanism [A5S6]">Syscall mechanism</a></span> as the only path from one to the other. The second is answered by periodic timer interrupts that trap to the OS, which performs a <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">Context switch</a></span> and runs the <span xmlns="" class="link local"><a href="/B8GC/" title="Scheduling [B8GC]">scheduler</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml">The whole stack is bootstrapped during the <span xmlns="" class="link local"><a href="/XSFO/" title="Boot sequence [XSFO]">Boot sequence</a></span>, when the kernel installs the trap table and starts the timer before handing control to user space.</p><section lang="en" class="block hide-metadata"><details id="id14" open="open"><summary><header><h1>
 <span class="taxon"></span>User mode vs kernel mode <a class="slug" href="/QUQC/">[QUQC]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Two privilege levels supported by the CPU. <em>User mode</em> restricts the running process to a limited set of instructions and a limited view of memory — usually just its own <span xmlns="" class="link local"><a href="/7MH4/" title="Address space [7MH4]">address space</a></span>. <em>Kernel mode</em> runs the OS with full access to all instructions and all of physical memory.</p><p xmlns="http://www.w3.org/1999/xhtml">Switching between modes is mediated by hardware via a <span xmlns="" class="link local"><a href="/0NVY/" title="Trap table [0NVY]">Trap table</a></span> populated at boot. The OS sets up the table; the CPU enforces it. A process cannot promote itself to kernel mode arbitrarily — it must invoke a <span xmlns="" class="link local"><a href="/A5S6/" title="Syscall mechanism [A5S6]">Syscall mechanism</a></span>, which traps to a fixed entry point in the OS.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Kernel mode is dangerous because the address space is effectively the entire machine. The mode bit + the trap table together are what makes it safe to time-share a CPU between mutually distrusting programs.</div>
-</details></section><section lang="en" class="block hide-metadata"><details id="id77" open="open"><summary><header><h1>
+</details></section><section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
 <span class="taxon"></span>Trap table <a class="slug" href="/0NVY/">[0NVY]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A hardware-readable table installed by the OS at boot that maps each kind of exceptional control-flow event (<span xmlns="" class="link local"><a href="/A5S6/" title="Syscall mechanism [A5S6]">syscall</a></span>, interrupt, <span xmlns="" class="link local"><a href="/CXFM/" title="Page fault [CXFM]">page fault</a></span>, illegal instruction, ...) to the address of an OS handler. When the CPU takes a trap, it consults this table to decide where to jump, switches into kernel mode, and runs the handler.</p><p xmlns="http://www.w3.org/1999/xhtml">The table is what makes it safe to expose privileged operations to user mode: user code never gets to pick the destination of a mode-switch, only the trap number. The OS controls every entry point, the CPU enforces the indirection.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Installing the trap table is itself a privileged operation. It happens once, early in boot, before any user process exists.</div>
-</details></section><section lang="en" class="block hide-metadata"><details id="id78" open="open"><summary><header><h1>
+</details></section><section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
 <span class="taxon"></span>Syscall mechanism <a class="slug" href="/A5S6/">[A5S6]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1165,13 +210,13 @@ struct proc {
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Interrupts work via a similar trap-handler mechanism, but are initiated by hardware (timer, device) rather than user code.</div>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The kernel must validate any pointers or arguments the user supplies — user code cannot be trusted not to ask the kernel to read kernel memory on its behalf.</div>
-</details></section><section lang="en" class="block hide-metadata"><details id="id79" open="open"><summary><header><h1>
+</details></section><section lang="en" class="block hide-metadata"><details id="id17" open="open"><summary><header><h1>
 <span class="taxon"></span>Context switch <a class="slug" href="/OKCI/">[OKCI]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The operation of saving the full execution state of one process (or <span xmlns="" class="link local"><a href="/63U3/" title="Thread [63U3]">thread</a></span>) and restoring another's so the CPU can resume it as if it had never been interrupted. On a trap into the kernel, the hardware stashes the user-visible state (PC, condition codes, stack pointer) into a known location, and the OS saves the remaining general-purpose registers as part of the switching code.</p><p xmlns="http://www.w3.org/1999/xhtml">Two flavors of state are involved:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>User registers</strong>: the current program's context (general-purpose registers, stack vars).</li>
-  <li><strong>Kernel registers</strong>: meta-information used to resume the trap correctly (PC at trap, syscall number, etc.).</li></ol><p xmlns="http://www.w3.org/1999/xhtml">Context switches are not free — they incur the cost of cache and <span xmlns="" class="link local"><a href="/FGOK/" title="Translation lookaside buffer [FGOK]">TLB</a></span> pollution in addition to the direct cost of saving/restoring state. This is the cost amortized by larger <span xmlns="" class="link local"><a href="/B8GC/" title="Scheduling [B8GC]">scheduling</a></span> quanta and a recurring concern for any <span xmlns="" class="link local"><a href="/5P43/" title="Concurrency [5P43]">Concurrency</a></span> system.</p></details></section><section lang="en" class="block hide-metadata"><details id="id80" open="open"><summary><header><h1>
+  <li><strong>Kernel registers</strong>: meta-information used to resume the trap correctly (PC at trap, syscall number, etc.).</li></ol><p xmlns="http://www.w3.org/1999/xhtml">Context switches are not free — they incur the cost of cache and <span xmlns="" class="link local"><a href="/FGOK/" title="Translation lookaside buffer [FGOK]">TLB</a></span> pollution in addition to the direct cost of saving/restoring state. This is the cost amortized by larger <span xmlns="" class="link local"><a href="/B8GC/" title="Scheduling [B8GC]">scheduling</a></span> quanta and a recurring concern for any <span xmlns="" class="link local"><a href="/5P43/" title="Concurrency [5P43]">Concurrency</a></span> system.</p></details></section><section lang="en" class="block hide-metadata"><details id="id18" open="open"><summary><header><h1>
 <span class="taxon"></span>Boot sequence <a class="slug" href="/XSFO/">[XSFO]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1182,35 +227,35 @@ struct proc {
   <li>The bootloader places the kernel image at the correct address and jumps to its entry point.</li>
   <li>The kernel performs early setup: installs the <span xmlns="" class="link local"><a href="/0NVY/" title="Trap table [0NVY]">Trap table</a></span> (a special privileged instruction), starts the timer interrupt, sets up memory management, and finally enters user space.</li></ol>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The hardware is hard-wired only to find the BIOS. Everything past that is software the user can replace, which is why dual-booting and custom bootloaders work.</div>
-</details></section></details></section><section lang="en" class="block hide-metadata"><details id="id81" open="open"><summary><header><h1>
+</details></section></details></section><section lang="en" class="block hide-metadata"><details id="id19" open="open"><summary><header><h1>
 <span class="taxon"></span>Scheduling <a class="slug" href="/B8GC/">[B8GC]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 26, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The scheduler decides which runnable <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span> to put on the CPU at each moment. There is no single right answer because the metrics conflict:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>Turnaround time</strong>: time from arrival to completion, \(T_{\text {completion}} - T_{\text {arrival}}\). Minimized by running short jobs first.</li>
   <li><strong>Response time</strong>: time from arrival to first scheduling. Minimized by frequent rotation.</li>
-  <li><strong>Fairness</strong>: every job makes progress; nobody starves.</li></ol><section lang="en" class="block hide-metadata"><details id="id82" open="open"><summary><header><h1>
+  <li><strong>Fairness</strong>: every job makes progress; nobody starves.</li></ol><section lang="en" class="block hide-metadata"><details id="id20" open="open"><summary><header><h1>
 <span class="taxon"></span>FIFO scheduling <a class="slug" href="/JA6Z/">[JA6Z]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">First-in, first-out. Jobs are run to completion in the order they arrive. Trivially fair under any reasonable notion of fairness, but suffers from the <em>convoy effect</em>: a single long-running job at the head delays every shorter job behind it, inflating average turnaround time.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> If the first arriving job is much longer than the rest, all subsequent jobs wait at least its full duration before getting any CPU.</div>
-</details></section><section lang="en" class="block hide-metadata"><details id="id83" open="open"><summary><header><h1>
+</details></section><section lang="en" class="block hide-metadata"><details id="id21" open="open"><summary><header><h1>
 <span class="taxon"></span>SJF scheduling <a class="slug" href="/VJ4F/">[VJ4F]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Shortest job first</em>. Run the job with the smallest total work first, run-to-completion. If all jobs arrive at the same time, SJF provably minimizes average turnaround time.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Real workloads don't all arrive at \(t = 0\). A long job that arrives slightly before a short one still gets to monopolize the CPU until it finishes — SJF degenerates to <span xmlns="" class="link local"><a href="/JA6Z/" title="FIFO scheduling [JA6Z]">FIFO scheduling</a></span> under sequential arrivals.</div>
-<p xmlns="http://www.w3.org/1999/xhtml">Removing the run-to-completion constraint and allowing preemption gives <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>.</p></details></section><section lang="en" class="block hide-metadata"><details id="id84" open="open"><summary><header><h1>
+<p xmlns="http://www.w3.org/1999/xhtml">Removing the run-to-completion constraint and allowing preemption gives <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>.</p></details></section><section lang="en" class="block hide-metadata"><details id="id22" open="open"><summary><header><h1>
 <span class="taxon"></span>STCF scheduling <a class="slug" href="/7R07/">[7R07]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Shortest time-to-completion first</em>. A preemptive refinement of <span xmlns="" class="link local"><a href="/VJ4F/" title="SJF scheduling [VJ4F]">SJF scheduling</a></span>: whenever the scheduler is invoked, it picks the job with the least <em>remaining</em> work. A short job arriving mid-execution can preempt a long one.</p><p xmlns="http://www.w3.org/1999/xhtml">STCF is provably optimal for minimizing average turnaround time over all preemptive schedulers.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Long jobs starve in response time. The lowest-priority work might not get a CPU slice for a very long time, which is unacceptable for interactive workloads.</div>
-</details></section><section lang="en" class="block hide-metadata"><details id="id85" open="open"><summary><header><h1>
+</details></section><section lang="en" class="block hide-metadata"><details id="id23" open="open"><summary><header><h1>
 <span class="taxon"></span>Round-robin scheduling <a class="slug" href="/NEL8/">[NEL8]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1218,7 +263,7 @@ struct proc {
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Cycle through all runnable jobs, giving each a fixed time slice — the <em>stride</em>, <em>time slice</em>, or <em>quantum length</em> — before preempting and moving to the next. The best you can do at minimizing <em>response time</em>: every job sees the CPU within at most \(N\) quanta where \(N\) is the runnable-job count.</p><p xmlns="http://www.w3.org/1999/xhtml">The quantum length is a tradeoff:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Short quantum: better response time, more frequent <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switches</a></span>, worse cache locality.</li>
   <li>Long quantum: amortizes context-switch cost, worse response time.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Worst-case response time for \(N\) jobs at quantum \(S\) is \(S(N-1)\).</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Round-robin minimizes response time but is poor for turnaround time relative to <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>. A scheduler that wants both has to combine ideas — see <span xmlns="" class="link local"><a href="/4WG5/" title="Multi-level feedback queue [4WG5]">Multi-level feedback queue</a></span>.</div>
-</details></section><section lang="en" class="block hide-metadata"><details id="id86" open="open"><summary><header><h1>
+</details></section><section lang="en" class="block hide-metadata"><details id="id24" open="open"><summary><header><h1>
 <span class="taxon"></span>Multi-level feedback queue <a class="slug" href="/4WG5/">[4WG5]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1233,7 +278,7 @@ struct proc {
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Starvation of low-priority queues if higher queues never empty.</div>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Periodically reset all jobs to the top priority. Cheap and effective.</div>
-</details></section><section lang="en" class="block hide-metadata"><details id="id87" open="open"><summary><header><h1>
+</details></section><section lang="en" class="block hide-metadata"><details id="id25" open="open"><summary><header><h1>
 <span class="taxon"></span>Lottery scheduling <a class="slug" href="/AM8U/">[AM8U]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1242,7 +287,7 @@ struct proc {
   <li><em>Ticket transfer</em> — a client process can hand tickets to a server to boost its priority while servicing the request.</li>
   <li><em>Ticket inflation</em> — a process can grow its share temporarily, with bounds set by trust.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The unsolved problem is <em>how</em> to assign tickets in the first place. The mechanism is simple; the policy is not.</div>
-<p xmlns="http://www.w3.org/1999/xhtml">A deterministic version of the same idea is <span xmlns="" class="link local"><a href="/HCJ7/" title="Stride scheduling [HCJ7]">Stride scheduling</a></span>, which avoids the variance of random sampling at the cost of needing global state.</p></details></section><section lang="en" class="block hide-metadata"><details id="id88" open="open"><summary><header><h1>
+<p xmlns="http://www.w3.org/1999/xhtml">A deterministic version of the same idea is <span xmlns="" class="link local"><a href="/HCJ7/" title="Stride scheduling [HCJ7]">Stride scheduling</a></span>, which avoids the variance of random sampling at the cost of needing global state.</p></details></section><section lang="en" class="block hide-metadata"><details id="id26" open="open"><summary><header><h1>
 <span class="taxon"></span>Stride scheduling <a class="slug" href="/HCJ7/">[HCJ7]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1257,10 +302,10 @@ struct proc {
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> I/O-bound jobs are commonly handled by splitting a job into its non-I/O segments and scheduling them individually — turning one long-but-mostly-blocked job into many short, runnable ones.</div>
 </details></section></details></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id89" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id27" open="open"><summary><header><h1>
 <span class="taxon"></span>Backlinks  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
-        <section lang="en" class="block"><details id="id90"><summary><header><h1>
+        <section lang="en" class="block"><details id="id28"><summary><header><h1>
 <span class="taxon"></span>wait() <a class="slug" href="/J6VZ/">[J6VZ]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1268,7 +313,7 @@ struct proc {
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Blocks the calling <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span> until one of its children terminates. The OS marks the child's PCB <code>ZOMBIE</code> on exit, keeping enough state (exit status, resource usage) for the parent to retrieve via <code>wait()</code>; only when the parent collects it is the child fully reaped.</p><p xmlns="http://www.w3.org/1999/xhtml"><code>wait()</code> returns the PID of the child that died. Variant <code>waitpid(pid, ...)</code> blocks on a specific child — useful when a parent has multiple children and only one is interesting.</p><p xmlns="http://www.w3.org/1999/xhtml">Used to enforce ordering between parent and child code paths after <span xmlns="" class="link local"><a href="/O1S9/" title="fork() [O1S9]">fork()</a></span>, or to know when an <span xmlns="" class="link local"><a href="/YHJR/" title="exec() [YHJR]">exec()</a></span>'d program finishes.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Calling <code>wait()</code> with no children to wait on returns <code>-1</code>.</div>
 </details></section>
-        <section lang="en" class="block"><details id="id91"><summary><header><h1>
+        <section lang="en" class="block"><details id="id29"><summary><header><h1>
 <span class="taxon"></span>Three Easy Pieces: Exercises <a class="slug" href="/W4DQ/">[W4DQ]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1277,7 +322,7 @@ struct proc {
   
 
 
-  <section lang="en" class="block hide-metadata"><details id="id92"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id30"><summary><header><h1>
 <span class="taxon"></span>Processes Intro  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1451,7 +496,7 @@ pens when you use <code>-S SWITCH ON IO</code> vs. <code>-S SWITCH ON END</code>
 
 
 
-  <section lang="en" class="block hide-metadata"><details id="id93"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id31"><summary><header><h1>
 <span class="taxon"></span>Process Interlude  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1509,7 +554,7 @@ pens when you use <code>-S SWITCH ON IO</code> vs. <code>-S SWITCH ON END</code>
 
 
 </details></section>
-        <section lang="en" class="block"><details id="id94"><summary><header><h1>
+        <section lang="en" class="block"><details id="id32"><summary><header><h1>
 <span class="taxon"></span>Copy-on-write <a class="slug" href="/DEJB/">[DEJB]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1522,10 +567,10 @@ pens when you use <code>-S SWITCH ON IO</code> vs. <code>-S SWITCH ON END</code>
   <li>Kernel mapped into every process — same physical kernel code seen from every address space.</li></ul>
           </details></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id95" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id33" open="open"><summary><header><h1>
 <span class="taxon"></span>Related  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
-        <section lang="en" class="block"><details id="id96"><summary><header><h1>
+        <section lang="en" class="block"><details id="id34"><summary><header><h1>
 <span class="taxon"></span>wait() <a class="slug" href="/J6VZ/">[J6VZ]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1533,7 +578,7 @@ pens when you use <code>-S SWITCH ON IO</code> vs. <code>-S SWITCH ON END</code>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Blocks the calling <span xmlns="" class="link local"><a href="/FCHM/" title="Process [FCHM]">Process</a></span> until one of its children terminates. The OS marks the child's PCB <code>ZOMBIE</code> on exit, keeping enough state (exit status, resource usage) for the parent to retrieve via <code>wait()</code>; only when the parent collects it is the child fully reaped.</p><p xmlns="http://www.w3.org/1999/xhtml"><code>wait()</code> returns the PID of the child that died. Variant <code>waitpid(pid, ...)</code> blocks on a specific child — useful when a parent has multiple children and only one is interesting.</p><p xmlns="http://www.w3.org/1999/xhtml">Used to enforce ordering between parent and child code paths after <span xmlns="" class="link local"><a href="/O1S9/" title="fork() [O1S9]">fork()</a></span>, or to know when an <span xmlns="" class="link local"><a href="/YHJR/" title="exec() [YHJR]">exec()</a></span>'d program finishes.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Calling <code>wait()</code> with no children to wait on returns <code>-1</code>.</div>
 </details></section>
-        <section lang="en" class="block"><details id="id97"><summary><header><h1>
+        <section lang="en" class="block"><details id="id35"><summary><header><h1>
 <span class="taxon"></span>Process <a class="slug" href="/FCHM/">[FCHM]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1546,7 +591,7 @@ pens when you use <code>-S SWITCH ON IO</code> vs. <code>-S SWITCH ON END</code>
   <li><em>blocked</em>: waiting on I/O or another event, not runnable.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Threads (see <span xmlns="" class="link local"><a href="/16TG/" title="Concurrency Intro [16TG]">Concurrency Intro</a></span>) share an address space within a process but each have their own PC, register set, and stack.</div>
 </details></section>
-        <section lang="en" class="block"><details id="id98"><summary><header><h1>
+        <section lang="en" class="block"><details id="id36"><summary><header><h1>
 <span class="taxon"></span>Copy-on-write <a class="slug" href="/DEJB/">[DEJB]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>

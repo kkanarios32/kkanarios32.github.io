@@ -90,7 +90,7 @@ window.addEventListener('load', function () {
 <div class="metadata"><ul>
 <li class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An <em>invariant</em> is something that Murphi checks to ensure is true at all possible configurations of the system.</p></details></section><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Overview straight from the docs.</strong> Repeat forever:
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An <em>invariant</em> is something that Murphi checks to ensure is true at all possible configurations of the system.</p></details></section><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Overview straight from the docs.</strong> Repeat forever:
 </p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Find all rules whose conditions are true in the current state.
        (i.e. conditional expressions are true, given the current values
        of the global variables).</li>
@@ -127,7 +127,7 @@ window.addEventListener('load', function () {
     InvAck,         -- invalidation acknowledgment
     PutAck          -- put acknowledgment
   };</pre>
-<strong xmlns="http://www.w3.org/1999/xhtml" style="font-family: var(--sans);">Cache controller.</strong> We will start with MSI cache controller, given by the following table:
+<strong xmlns="http://www.w3.org/1999/xhtml" style="font-family: var(--sans); font-weight: 500;">Cache controller.</strong> We will start with MSI cache controller, given by the following table:
 <figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmifhoq7kszlwemrlvvy4yuuvuk6l6bjadkvsmzclbemz2tzxdt6bjm.png"></img></figure>
 <p xmlns="http://www.w3.org/1999/xhtml">Notably, we are missing some of the messages in the figures below. We can handle these based on the <code>AckCount</code></p>
 <pre xmlns="http://www.w3.org/1999/xhtml">  ProcState:
@@ -151,7 +151,7 @@ window.addEventListener('load', function () {
 The <code>load</code>, <code>store</code>, and <code>replacement</code> all only alter the states of the coherence protocol for the permanent states. Therefore, to simulate the system it is sufficient to only implement the rules that initiate these state transitions i.e. evict in modified state or load from invalid state.
 </div>
 
-<strong xmlns="http://www.w3.org/1999/xhtml" style="font-family: var(--sans);">Directory controller.</strong> Now for the directory controller:
+<strong xmlns="http://www.w3.org/1999/xhtml" style="font-family: var(--sans); font-weight: 500;">Directory controller.</strong> Now for the directory controller:
 <figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmiadmfswkegttky27zg2gxvkwag3pt72ur7qam2z6vufr6xlvujqca.png"></img>
 <figcaption></figcaption></figure>
 
@@ -159,7 +159,7 @@ The <code>load</code>, <code>store</code>, and <code>replacement</code> all only
 We actually end up adding a second transient state to the directory controller \(M^D\). This is to handle the <code>PutM</code>, <code>GetM</code> race described below.
 </div>
 
-<strong xmlns="http://www.w3.org/1999/xhtml" style="font-family: var(--sans);">Weird Races.</strong>
+<strong xmlns="http://www.w3.org/1999/xhtml" style="font-family: var(--sans); font-weight: 500;">Weird Races.</strong>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
 When implementing the <code>PutM</code> rule to downgrade from modified to invalid. We must <strong>NOT</strong> get rid of the data until we have been acknowledged, so that we can still service forward requests. This is a transition to \(MI^A\). However, we can still receive the <code>PutAck</code> causing us to transition to \(I\) before servicing the <code>Fwd-GetM</code> request. This is lost data.
@@ -196,24 +196,24 @@ When the home directory is in \(M\) and we get a <code>GetS</code> we cannot cle
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 Aside from the modifications discussed above, the rest was straightforward and we now are ready to move on to MESI.
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Cache controller.</strong> We will start with MESI cache controller, given by the following table:
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Cache controller.</strong> We will start with MESI cache controller, given by the following table:
 </p>
 <figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmia4fllqvr7nzhifqxwk5stk2kyje2tfokhddzfjkteyw4kbj6k25i.png"></img></figure>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Design choice 1.</strong> Since we allow immediate upgrade to \(M\), without forwarding, if E upgrades to M, then the value in the directory sent to the next <code>GetS / GetM</code> would not have updated value. It seems we must either
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Design choice 1.</strong> Since we allow immediate upgrade to \(M\), without forwarding, if E upgrades to M, then the value in the directory sent to the next <code>GetS / GetM</code> would not have updated value. It seems we must either
 <ol><li>not allow E to silently upgrade to M and then we do not need forwarding, or</li>
   <li>allow E to silently upgrade to M and treat E as M basically and forward everything.</li></ol>
 Notably, neither of these have to write back on <code>PutE</code>, but we will go with 1 because that is how it is indicated in the figure.
 </p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Design Choice 2.</strong> In order to indicate that the directory received the first <code>GetS</code> we introduce a <code>ExclusiveData</code> message. Upon receiving, <code>ExclusiveData</code> in \(IS^D\) we transition to \(E\).</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Design Choice 2.</strong> In order to indicate that the directory received the first <code>GetS</code> we introduce a <code>ExclusiveData</code> message. Upon receiving, <code>ExclusiveData</code> in \(IS^D\) we transition to \(E\).</p>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
 Once we have sent the <code>PutE</code>, or the <code>PutM</code> \(EI^A\) and \(MI^A\) are functionally the same. I include both for completeness but verified that transitioning directly to \(MI^A\) from \(E\) works the same.
 </div>
 
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Directory controller.</strong> We start with the analagous table.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Directory controller.</strong> We start with the analagous table.</p>
 <figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png"></img></figure>
 <p xmlns="http://www.w3.org/1999/xhtml">Similar to the cache controller, we also add a \(E^D\) state for completion that can be absorbed into \(M^D\) introduced in the MSI protocol.</p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans);">Weird Races.</strong></p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Weird Races.</strong></p>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> First processor does <code>GetS</code> and is in \(IS^D\) but the Home directory sends it exclusive data and is now in \(E\). Then second processor does <code>GetM</code> and Home issues <code>Fwd-GetM</code> to processor one, which arrives before data.</div>
 
