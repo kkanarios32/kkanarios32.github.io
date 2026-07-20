@@ -1,0 +1,305 @@
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script src="/highlightjs-line-numbers.min.js"></script><script>
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+    if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
+  });
+});
+          </script><title>Diversity is All You Need</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>Diversity is All You Need <a class="slug" href="/0080/">[0080]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">June 30, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The talk starts discussing <span xmlns="" class="link local"><a href="/beneysenbach/" title="Benjamin Eysenbach [beneysenbach]">Ben's</a></span> amazing paper <span xmlns="" class="link local"><a href="/eysenbachDiversityAllYou2018/" title="Diversity is All You Need: Learning Skills without a Reward Function [eysenbachDiversityAllYou2018]">DIAYN</a></span>. An idea that has become incredibly popular in unsupervised / self-supervised RL is learning <em>conditional</em> policies. In <span xmlns="" class="link local"><a href="/0005/" title="All things contrastive reinforcement learning [0005]">All things contrastive reinforcement learning</a></span>, the learn a <em>goal-conditioned</em> policy and value function i.e.
+\[\pi _{\theta }(s \mid  g), \quad  Q_{\psi }(s, a, g)\]
+However, we are not limited to goals. In <span xmlns="" class="link local"><a href="/machadoTemporalAbstractionReinforcement2023/" title="Temporal Abstraction in Reinforcement Learning with the Successor Representation [machadoTemporalAbstractionReinforcement2023]">successor-feature-based</a></span> frameworks, one learns a <em>task</em> vector \(\mathbf {w}\) such that \[r(s, a) = \phi (s,a) \cdot  \mathbf {w},\]
+where \(\phi \) is a lower dimensional representation. To learn the task vector (assuming you have \(\phi \) which is a whole other issue), you can recover \(\mathbf {w}\) by solving the linear regression
+\[\min _{\psi } \|r(s,a) - \phi (s,a) \cdot  \mathbf {w}_{\psi }\|^{2} \]
+One can then learn a <em>task</em> conditioned policy \(\pi _{\theta }(s \mid  \mathbf {w})\). This is precisely the idea in USFA.
+</p><p xmlns="http://www.w3.org/1999/xhtml">Getting back to <span xmlns="" class="link local"><a href="/eysenbachDiversityAllYou2018/" title="Diversity is All You Need: Learning Skills without a Reward Function [eysenbachDiversityAllYou2018]">DIAYN</a></span> (get used to these tangents), instead of a <em>task</em> or <em>goal</em>, they condition on a <em>skill</em> \(\mathbf {z}\). However, unlike a goal which is just a state in the environment, or a task which can be learned via regression as above, it is unclear how to learn this "skill" \(\mathbf {z}\).
+ </p><p xmlns="http://www.w3.org/1999/xhtml">
+  In this paper, they consider a skill as something distinguishable by a third party. What does this mean:
+</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+  <em>If you have a skill, then a discriminator observing you perform your skill should be able to tell you which skill you performed.</em>
+  </div>
+<p xmlns="http://www.w3.org/1999/xhtml">
+  Crucially, the discriminator does <strong>not</strong> know which actions you took when performing this skill. Namely, they must be able to identify the skill purely based on the <strong>states</strong> you visited when performing that skill. Mathematically, this can be roughly translated as maximizing the <span xmlns="" class="link local"><a href="/000V/" title="Mutual Information [000V]">mutual information</a></span> \(I^{\pi }(\mathbf {z}; \tau )\), where \(\tau \) is a trajectory of states \((s_0, s_1, \ldots , s_T) \sim  \pi \) visited by your policy \(\pi \). Using our previous knowledge of <span xmlns="" class="link local"><a href="/000V/" title="Mutual Information [000V]">mutual information</a></span>, we can rewrite this as
+  \[I^{\pi }(\mathbf {z}, \tau ) = H(\mathbf {z}) - H(\mathbf {z} \mid  \tau ),\]
+  where \(H\) is the <span xmlns="" class="link local"><a href="/0081/" title="Entropy [0081]">entropy</a></span>. Since \(H(\mathbf {z})\) is a constant, this is essentially,
+  \[\min _{\mathbf {z}} H(\mathbf {z} \mid  \tau )\]
+  which very intuitively corresponds to the notion that \(\mathbf {z}\) should be able to be <em>predicted</em> by \(\tau \). Formally, this is captured by the fact that the <span xmlns="" class="link local"><a href="/0081/" title="Entropy [0081]">entropy</a></span> is minimized i.e. \(0\) when \(\mathbf {z} = f(\tau )\) for some invertible \(f\).
+  
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+  Recall that <span xmlns="" class="link local"><a href="/0081/" title="Entropy [0081]">entropy</a></span> is actually defined on the PDF of a random variable \(X\). Therefore, minimizing the entropy over \(\mathbf {z}\) is actually finding a distribution \(p(\mathbf {z})\).
+  </div>
+
+  To learn the distribution \(p(\mathbf {z})\), they utilize the <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span>.
+  </p></details></section><footer xmlns="">
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>References  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block" data-taxon="Reference"><details id="id3"><summary><header><h1>
+<span class="taxon">Reference. </span>Temporal Abstraction in Reinforcement Learning with the Successor Representation <a class="slug" href="/machadoTemporalAbstractionReinforcement2023/">[machadoTemporalAbstractionReinforcement2023]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">April, 2023</li></ul>
+<br><ul><li class="meta-item"><address class="author">Marlos C. Machado,  Andre Barreto,  Doina Precup,  Michael Bowling</address></li></ul>
+<br><ul><li class="meta-item"><a class="link external" href="https://arxiv.org/abs/2110.05740">https://arxiv.org/abs/2110.05740</a></li></ul>
+</div></header></summary><pre>@misc{machadoTemporalAbstractionReinforcement2023,
+ title = {Temporal {{Abstraction}} in {{Reinforcement Learning}} with the {{Successor Representation}}},
+ author = {Machado, Marlos C. and Barreto, Andre and Precup, Doina and Bowling, Michael},
+ year = {2023},
+ urldate = {2024-10-18},
+ number = {arXiv:2110.05740},
+ publisher = {arXiv},
+ file = {/home/kellen/Downloads/pdfs/storage/PEJ6S5ZX/Machado et al. - 2023 - Temporal Abstraction in Reinforcement Learning with the Successor Representation.pdf},
+ keywords = {Computer Science - Artificial Intelligence,Computer Science - Machine Learning},
+ langid = {english},
+ archiveprefix = {arXiv},
+ abstract = {Reasoning at multiple levels of temporal abstraction is one of the key attributes of intelligence. In reinforcement learning, this is often modeled through temporally extended courses of actions called options. Options allow agents to make predictions and to operate at different levels of abstraction within an environment. Nevertheless, approaches based on the options framework often start with the assumption that a reasonable set of options is known beforehand. When this is not the case, there are no definitive answers for which options one should consider. In this paper, we argue that the successor representation, which encodes states based on the pattern of state visitation that follows them, can be seen as a natural substrate for the discovery and use of temporal abstractions. To support our claim, we take a big picture view of recent results, showing how the successor representation can be used to discover options that facilitate either temporally-extended exploration or planning. We cast these results as instantiations of a general framework for option discovery in which the agent's representation is used to identify useful options, which are then used to further improve its representation. This results in a virtuous, never-ending, cycle in which both the representation and the options are constantly refined based on each other. Beyond option discovery itself, we also discuss how the successor representation allows us to augment a set of options into a combinatorially large counterpart without additional learning. This is achieved through the combination of previously learned options. Our empirical evaluation focuses on options discovered for temporally-extended exploration and on the use of the successor representation to combine them. Our results shed light on important design decisions involved in the definition of options and demonstrate the synergy of different methods based on the successor representation, such as eigenoptions and the option keyboard.},
+ primaryclass = {cs},
+ eprint = {2110.05740},
+ month = {April}
+}</pre></details></section>
+        <section lang="en" class="block" data-taxon="Reference"><details id="id4"><summary><header><h1>
+<span class="taxon">Reference. </span>Diversity is All You Need: Learning Skills without a Reward Function <a class="slug" href="/eysenbachDiversityAllYou2018/">[eysenbachDiversityAllYou2018]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">October, 2018</li></ul>
+<br><ul><li class="meta-item"><address class="author">Benjamin Eysenbach,  Abhishek Gupta,  Julian Ibarz,  Sergey Levine</address></li></ul>
+<br><ul>
+<li class="meta-item"><a class="doi link" href="https://www.doi.org/10.48550/arXiv.1802.06070">10.48550/arXiv.1802.06070</a></li>
+<li class="meta-item"><a class="link external" href="https://arxiv.org/abs/1802.06070">https://arxiv.org/abs/1802.06070</a></li>
+</ul>
+</div></header></summary><pre>@misc{eysenbachDiversityAllYou2018,
+ title = {Diversity Is {{All You Need}}: {{Learning Skills}} without a {{Reward Function}}},
+ author = {Eysenbach, Benjamin and Gupta, Abhishek and Ibarz, Julian and Levine, Sergey},
+ year = {2018},
+ doi = {10.48550/arXiv.1802.06070},
+ urldate = {2025-06-30},
+ number = {arXiv:1802.06070},
+ publisher = {arXiv},
+ file = {/home/kellen/Downloads/papers/Diversity is All You Need Learning Skills without a Reward Function - Eysenbach et al..pdf},
+ keywords = {Computer Science - Artificial Intelligence,Computer Science - Robotics},
+ langid = {english},
+ archiveprefix = {arXiv},
+ abstract = {Intelligent creatures can explore their environments and learn useful skills without supervision. In this paper, we propose ``Diversity is All You Need''(DIAYN), a method for learning useful skills without a reward function. Our proposed method learns skills by maximizing an information theoretic objective using a maximum entropy policy. On a variety of simulated robotic tasks, we show that this simple objective results in the unsupervised emergence of diverse skills, such as walking and jumping. In a number of reinforcement learning benchmark environments, our method is able to learn a skill that solves the benchmark task despite never receiving the true task reward. We show how pretrained skills can provide a good parameter initialization for downstream tasks, and can be composed hierarchically to solve complex, sparse reward tasks. Our results suggest that unsupervised discovery of skills can serve as an effective pretraining mechanism for overcoming challenges of exploration and data efficiency in reinforcement learning.},
+ primaryclass = {cs},
+ eprint = {1802.06070},
+ month = {October},
+ shorttitle = {Diversity Is {{All You Need}}}
+}</pre></details></section>
+      </details></section>
+    
+    
+    <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id6"><summary><header><h1>
+<span class="taxon"></span>Evidence Lower Bound <a class="slug" href="/0082/">[0082]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">June 30, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Setup.</strong>
+We are given a joint distribution \(p(X, Z; \theta )\), where \(X\) and \(Z\) are random variables with their joint parametrized by \(\theta \). We are also given a dataset \(\mathcal {D}\) containing realizations of <strong>only</strong> \(X\) i.e. \(Z\) is a <span xmlns="" class="link local"><a href="/0083/" title="Latent Variable [0083]">latent random variable</a></span>.
+  </p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</span> We want to learn \(p(x; \theta )\).</div>
+<p xmlns="http://www.w3.org/1999/xhtml"> However, \[p(x; \theta ) = \int  p(x, z; \theta ) \mathrm {d}z = \int  p(x | z; \theta )p(z) \mathrm {d}z,\] which is computationally intractable for most continuous \(Z\).</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> Can we update \(\theta \) for a given realization of \(x\) and \(z\)?</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> Yes!!!</div>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Motivation.</strong> Suppose we had some \(q(z)\) that we could sample realizations of \(Z\) from. Then we want to find some reasonable \(\ell _{\theta }\), such that
+\[\theta ^* \approx  \arg \max _{\theta } \mathbb {E}_{x, \sim  p(x; \theta ^*), z \sim  q(z)}[\ell _{\theta }(X, Z)]\]
+
+ <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+\(q(z)\) can potentially (and will) depend on the sample \(x_i\). This is OK because we are given \(x_i\)'s, which we can then just pass to \(q\) to get the corresponding \(z_i\).
+</div>
+
+Why is this the case? Because then (for well-behaved \(\ell _{\theta }\))
+\[\theta _{t + 1} = \theta _{t} - \alpha  \nabla _{\theta _{t}}\ell _{\theta _{t}}(x_i, z_i) \to  \theta ^*\]
+i.e. SGD is a reasonable thing to do, where the gradient is for a <strong>single</strong> sample of \(x_i\) and \(z_i\) which we have readily available from our dataset \(\mathcal {D}\) and our distribution \(q\) that we can sample from. This idea comes up a lot in optimization, such as the \(\log \) trick in the original policy gradient.
+</p><p xmlns="http://www.w3.org/1999/xhtml">Similar to the \(\log \) trick, the <em>Evidence Lower Bound</em> (ELBO) comes from a simple multiply and divide trick. Namely,
+\[\begin {align*}
+  \log  p(x; \theta ) &amp;= \log  \int  p(x, z; \theta ) \mathrm {d}z \\
+  &amp;= \log  \int  p(x, z; \theta ) \frac {q(z)}{q(z)} \mathrm {d}z \\
+  &amp;= \log  \mathbb {E}_{z \sim  q(z)} \frac {p(x, Z; \theta )}{q(z)} \\
+  &amp;\geq  \mathbb {E}_{z \sim  q(z)} \log  \frac {p(x, Z; \theta )}{q(z)}
+.\end {align*}\]
+The last inequality follows directly from <span xmlns="" class="link local"><a href="/002G/" title="Jensen's Inequality [002G]">Jensen's Inequality</a></span>. However, note that this is only a lower bound and therefore not exactly what we want. For example, if we were to pick \(q \sim  N(0, 1)\) and then optimize the ELBO for \(\theta \) we would not necessarily find a good \(\theta \) for the likelihood \(\log  p(x; \theta )\). Luckily, we can actually get the difference \(\log  p(x; \theta ) - \)ELBO in closed form! Namely,
+\[\begin {align*}
+  \log  p(x; \theta ) - \mathrm {ELBO} &amp;= \log  p(x; \theta ) - \mathbb {E}_{z \sim  q(z)} \log  \frac {p(x, Z; \theta )}{q(z)} \\ 
+&amp;= \int  \left (\log  p(x; \theta ) - \log  \frac {p(x, z; \theta )}{q(z)}\right )q(z) \\ 
+&amp;= \int  \left (\log  \frac {p(x; \theta )q(z)}{p(x, z; \theta )}\right )q(z) \\ 
+&amp;= \int  \left (\log  \frac {p(x; \theta )q(z)}{p(z | x; \theta )p(x; \theta )}\right )q(z) \\ 
+&amp;= \int  \left (\log  \frac {q(z)}{p(z | x; \theta )}\right )q(z) \\ 
+&amp;= \mathrm {KL}\big (q(z) \mid \mid  p(z | x; \theta )\big )
+.\end {align*}\]
+Thus, to tighten the lower bound we can optimize \(q_{\phi }(z)\) to try to match \(p(z | x; \theta )\). As a sanity check, lets make sure these match when \(q(z) = p(z \mid  x; \theta )\). 
+\[\begin {align*}
+  \mathbb {E}_{z \sim  q(z)} \log  \frac {p(x, Z; \theta )}{q(z)} &amp;= \int  \log  \frac {p(x, z; \theta )}{q(z)}\mathrm {d}z \\
+  &amp;= \int  \log  \frac {p(x; \theta )p(z \mid  x; \theta )}{p(z \mid  x; \theta )}\mathrm {d}z \\
+  &amp;= \int  \log  p(x; \theta )\mathrm {d}z \\
+  &amp;= \log (x; \theta )
+.\end {align*}\]
+You may be wondering how we use this algorithmically to find \(\theta ^*\)? This will be the main idea of <span xmlns="" class="link local"><a href="/0088/" title="Expectation Maximization [0088]">expectation maximization</a></span>. Feel free to check it out!
+</p>
+  
+</details></section>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id7"><summary><header><h1>
+<span class="taxon">Definition. </span>Mutual Information <a class="slug" href="/000V/">[000V]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 21, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">The <em>mutual information</em> between two random variables \(X, Y\) is defined with respect to their joint distribution. Namely, it is the <span xmlns="" class="link local"><a href="/000W/" title="Kullback-Liebler Divergence [000W]">Kullback-Liebler Divergence</a></span> between the joint distribution \(p(x,y)\) and the product of the marginals \(p(x)p(y)\) i.e. 
+\[H(X || Y) = \mathbb {E}_{x,y \sim  p(x,y)}\left [\log  \frac {p(x, y)}{p(x)p(y)}\right ]\]</p>
+          </details></section>
+        <section lang="en" class="block"><details id="id8"><summary><header><h1>
+<span class="taxon"></span>All things contrastive reinforcement learning <a class="slug" href="/0005/">[0005]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">October 29, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">In this blog post, we aim to demistify <span xmlns="" class="link local"><em xmlns="http://www.w3.org/1999/xhtml"><a xmlns="" href="/eysenbachContrastiveLearningGoalConditioned2023/" title="Contrastive Learning as Goal-Conditioned Reinforcement Learning [eysenbachContrastiveLearningGoalConditioned2023]">Contrastive Reinforcement Learning</a></em></span>. This term often gets thrown around in the dark inner circles of the reinforcement learning community. However, for those that are not familiar with contrastive learning, what does contrastive even mean? For those that are, how can reinforcement learning be contrastive? Throughout this blog post, we will answer these questions and many more.</p><section lang="en" class="block hide-metadata"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon"></span>Contrastive Learning <a class="slug" href="/0009/">[0009]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">October 31, 2024</li>
+<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
+</address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Recall the longstanding objective of machine learning i.e. given data \(\mathcal {X}\) find the distribution \(p(x)\) that generated the data \(\mathcal {X}\). The most fundamental approach is <em>maximum likelihood estimation</em>. Namely, we want to maximize the <em>log-likelhood</em> of the data
+\[\max _{\theta } \sum _{x \in  \mathcal {X}} \log  p_{\theta }(x) \]</p>
+  <section lang="en" class="block hide-metadata"><details id="id10" open="open"><summary><header><h1>
+<span class="taxon"></span>NCE  </h1>
+<div class="metadata"><ul><li class="meta-item">October 31, 2024</li></ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Suppose we are given \(N\) dog samples \(\mathcal {D}\) from some distribution \(p_d(x)\). We want to learn \(\theta \) so that \(p_{\theta }(x) \approx  p_d(x)\). The idea is to learn to distinguish the dogs from our dataset and random samples according to some noisy distribution \(g(x)\). We can now return to the supervised learning setting, where we treat \(\mathcal {D}\) and \(\mathcal {R}\) as two classes. If we recall standard supervised learning practice, given a sample \(x\), we can easily estimate \[p(x \text { is a dog}) = 1 - p(x \text { is random noise})\] 
+via binary classification.
+</p>
+<p xmlns="http://www.w3.org/1999/xhtml">
+Explicitly, we will use logistic regression with the parametrization \[p_{\theta }(x) = \frac {1}{1 + e^{-G_{\theta }(x)}}.\] However, solving the logistic regression problem will yield \(p_{\theta ^*}(x) \approx  p(x \text { is a dog})\). Recall that we want to estimate \(p_d(x)\) which is the distribution over the "dog manifold".
+</p>
+<p xmlns="http://www.w3.org/1999/xhtml"> To estimate the correct quantity, we need to leverage our knowledge of the noise distribution. Recall that if \(p_{\theta }(x) = p(\mathcal {D} \mid  x)\) then \(G_{\theta }(x) = \log  \frac {p(x \mid  \mathcal {D})}{p(x \mid  \mathcal {R})}\). Since we generated the samples from \(\mathcal {R}\), we have the explicit distribution i.e. \(p(x \mid  \mathcal {R}) = p_{\mathcal {R}}(x)\). Therefore, we can restrict \(G_{\theta }\) to explicitly learn \(p(x \mid  \mathcal {D})\) by considering \[G_{\theta }(x) = \log  p_{\theta }(x \mid  \mathcal {D}) - \log  p_{\mathcal {R}}(x),\] considering the cross entropy loss we get the <span xmlns="" class="link local"><a href="/000E/" title="NCE loss [000E]">NCE loss</a></span></p>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>NCE loss <a class="slug" href="/000E/">[000E]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 4, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The <em><span xmlns="" class="link local"><a href="/gutmannNoisecontrastiveEstimationNew2010/" title="Noise-contrastive estimation: A new estimation principle for unnormalized statistical models [gutmannNoisecontrastiveEstimationNew2010]">NCE</a></span></em> loss aims to minimize the following objective \[\mathcal {L}_{N} = - \sum _{t} \log  \left [h(x_t; \theta )\right ] + \log \left [1 - h(y_t; \theta )\right ],\] where \(x_t\) are samples from the data distribution and \(y_t\) are randomly generated samples and \[\begin {array}{r c l}{{h({\bf  u};\theta )}}&amp;{{=}}&amp;{{\frac {1}{1+\exp \left [-G({\bf  u};\theta )\right ]},}}\\ {{G({\bf  u};\theta )}}&amp;{{=}}&amp;{{\ln  p_{m}({\bf  u};\theta )-\ln  p_{n}({\bf  u}).}}\end {array}\]</p></details></section>
+
+<p xmlns="http://www.w3.org/1999/xhtml">In the <span xmlns="" class="link local"><a href="/gutmannNoisecontrastiveEstimationNew2010/" title="Noise-contrastive estimation: A new estimation principle for unnormalized statistical models [gutmannNoisecontrastiveEstimationNew2010]">NCE paper</a></span>, they show under mild conditions that the estimator \(p_{\theta }(x \mid  D) \to  p_{\mathcal {D}}(x)\) in probability as the number of samples in the loss goes to infinity. Equivalently, the estimator is <span xmlns="" class="link local"><a href="/000F/" title="Consistent estimator [000F]">consistent</a></span>.</p>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
+<span class="taxon"></span>Temporally Contrastive Learning in Time Series  </h1>
+<div class="metadata"><ul><li class="meta-item">October 31, 2024</li></ul></div></header></summary>
+    <p xmlns="http://www.w3.org/1999/xhtml">
+Before we get to contrastive RL, it is a natural question to wonder how does this apply to temporal sequences? Concretely, we want to make predictions about the future given the current "context". However, we want to do so in an unsupervised way, meaning we are only given trajectories not a notion of what it means for a trajectory to be good. Naively, one can try to do this in a supervised manner.
+    </p>
+<p xmlns="http://www.w3.org/1999/xhtml">
+For a \(k\) step prediction, this would just be your model predicting what will happen in \(k\) steps then seeing if it matches what occured \(k\) steps in the future in the sample trajectory. However, if your sample space \(\mathcal {X}\) is very high-dimensional, modeling this relationship can require an exorbinant amount of trajectories.</p>
+<p xmlns="http://www.w3.org/1999/xhtml">This is a central question in the <span xmlns="" class="link local"><a href="/oordRepresentationLearningContrastive2019/" title="Representation Learning with Contrastive Predictive Coding [oordRepresentationLearningContrastive2019]">InfoNCE paper</a></span>, where they propose the following loss:</p>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id13" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>InfoNCE <a class="slug" href="/000B/">[000B]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 4, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em><span xmlns="" class="link local"><a href="/oordRepresentationLearningContrastive2019/" title="Representation Learning with Contrastive Predictive Coding [oordRepresentationLearningContrastive2019]">InfoNCE</a></span></em> recasts representation learning as classification: given a context \(c_t\) and a batch \(\mathcal {X}\) holding one positive future sample \(x_{t+k}\) among \(N-1\) distractors, it trains a score \(f_k\) to pick the positive out of the batch. This is the workhorse objective of contrastive learning.</p><p xmlns="http://www.w3.org/1999/xhtml">The loss is the cross-entropy of that identification: \[\mathcal {L}_{N} = - \mathbb {E}_{\mathcal {X}} \left [\log  \frac {f_k(x_{t + k}, c_t)}{\sum _{x_j \in  \mathcal {X}} f_k(x_j, c_t)}\right ]\] The numerator rewards a high score on the true pair; the denominator normalizes over the positive <em>plus every negative</em>, so a score only counts by being large <em>relative</em> to the distractors. Minimizing \(\mathcal {L}_N\) maximizes a lower bound on the mutual information \(I(x_{t+k}; c_t)\), and the bound tightens with \(N\) — which is the mechanistic reason contrastive methods reward large batches and many negatives.</p></details></section>
+</details></section>
+<p xmlns="http://www.w3.org/1999/xhtml">Now we need to unpack this very ominous loss. To start, what are \(x_k\) and \(c_t\)?</p><section lang="en" class="block hide-metadata" data-taxon="Theorem"><details id="id14" open="open"><summary><header><h1>
+<span class="taxon">Theorem. </span>Maximize Mutual info <a class="slug" href="/000C/">[000C]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">November 4, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">\(\mathcal {L}_N\) from <span xmlns="" class="link local"><a href="/oordRepresentationLearningContrastive2019/" title="Representation Learning with Contrastive Predictive Coding [oordRepresentationLearningContrastive2019]">InfoNCE paper</a></span> maximizes a lower bound on the <span xmlns="" class="link local"><a href="/000V/" title="Mutual Information [000V]">Mutual Information</a></span> between \(x_{t + k}\) and \(c_t\).</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> All we must do is plug \(\frac {p(x \mid  c)}{p(x)}\) back into the objective.
+  \[\begin {align*}
+    \mathcal {L}_{\mathbb {N}}^{\text {opt}}&amp;=-\,\mathbb {E}\log \left [\frac {\frac {p(x_{t+k}|c_{t})}{p(x_{t+k})}}{\frac {p(x_{t+k}|c_{t})}{p(x_{t+k})}+\sum _{x_{j}\in  X_{\text {neg}}}\frac {p(x_{j}|c_{t})}{p(x_{j})}}\right ] \\
+    &amp;=\mathbb {E}\log \left [1+\frac {p(x_{t+k})}{p(x_{t+k}|c_{t})}\sum _{x_{j}\in  X_{\text {neg}}}\frac {p(x_{j}|c_{t})}{p(x_{j})}\right ] \\
+    &amp;\approx \mathbb {E}\log \left [1+\frac {p(x_{t+k})}{p(x_{t+k}|c_{t})}(N-1)\,\mathbb {E}\,\frac {p(x_{j}|c_{t})}{p(x_{j})}\right ] \\
+    &amp;=\mathbb {E}\log \left [1+\frac {p(x_{t+k})}{p(x_{t+k} \mid  c_t)}N\right ] \\
+    &amp;\geq  \mathbb {E} \log  \left [\frac {p(x_{t + k})}{p(x_{t + k} \mid  c_t)}N \right ] \\
+    &amp;= - I(x_{t + k}, c_t) + \log  N
+ \end {align*}
+  \]
+</div>
+</details></section><section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
+<span class="taxon"></span>Contrastive Learning as GCRL <a class="slug" href="/P658/">[P658]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 17, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>\[
+\operatorname *{max}_{f(u,v)}\mathbb {E}_{(u,v^{+})\sim  p(u,v)}\left [\log \sigma (\underbrace {f(u,{\green  v^{+}})}_{\phi (u)^{T}\psi ({\green  v^{+}})})+\log (1-\sigma (\underbrace {f(u,{\red  v^{-}})}_{\phi (u)^{T}\psi ({\red  v^{-}})}))\right ]
+\]\[
+\begin {align*}
+&amp;\operatorname *{max}_{f}\mathbb {E}_{(s,a)\sim  p(s,a),s_{f}^{-}\sim  p(s_{f})}\left [\mathcal {L}(s,a,s_{f}^{+},s_{f}^{-})\right ] \\
+\end {align*}
+\]\[
+\mathcal {L}_1(\theta ) = \log \sigma (f_{\theta }(s_1,a_1,{\color {green} s_{8}})) + \log (1-\sigma (f_{\theta }(s_1,a_1, {\color {red} s_3})))
+\]\[
+\begin {align*}
+\widehat {\mathcal {L}}(\theta ) &amp;= \frac {1}{n} \sum _{i = 1}^{n} \mathcal {L}_i \\
+&amp;= \frac {1}{n} \sum _{i = 1}^{n} \Big [\log \sigma (f_{\theta }(s_i,a_i,{\color {green} s_{f}^{+}})) + \log (1-\sigma (f_{\theta }(s_i,a_i, {\color {red} s_{f}^{-}})))\Big ]
+\end {align*}
+\]\[
+\mathcal {L}(\theta ) = \mathbb {E}_{x \sim  p_X, y \sim  p_Y}\Big [\log \sigma (f_{\theta }(x)) + \log (1-\sigma (f_{\theta }(y)))\Big ]
+\]\[f^*(s, a, s_g) = \log \left (\frac {p^{\pi (\cdot  \mid  \cdot )}(s_g \mid  s, a)}{p(s_g)}\right )\]
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> 
+    We want to maximize
+\[
+    \begin {align*}
+\mathcal {L}(\theta ) &amp;= \mathbb {E}_{x \sim  p_X, y \sim  p_Y}\Big [\log \sigma (f_{\theta }(x)) + \log (1-\sigma (f_{\theta }(y)))\Big ] \\
+&amp;= \int  \log \sigma (f_{\theta }(x)) P_X(x) + \int  \log (1-\sigma (f_{\theta }(y))) P_Y(y) \\
+&amp;= \int  \log \sigma (f_{\theta }(z)) P_X(z) + \log (1-\sigma (f_{\theta }(z))) P_Y(z)
+    \end {align*}
+    \]
+    Since we are maximizing \(f(s)\), we can just maximize the integrand i.e.
+\[
+      \begin {align*}
+        \frac {\mathrm {d}}{\mathrm {d}f(z)} \Big [\log \sigma (f_{\theta }(z)) P_X(z) + \log (1-\sigma (f_{\theta }(z))) P_Y(z)\Big ] = 0
+      \end {align*}
+    \]
+    Solving,
+    \[
+        \begin {align*}
+          P_X(z)\big (1 - \sigma (f(z))\big ) - P_Y(z)\sigma (f(z)) = 0 &amp;\iff  \sigma (f(z)) = \frac {P_X(z)}{P_X(z) + P_Y(z)} \\
+          &amp;\iff  f(z) = \log \left (\frac {P_X(z)}{P_Y(z)}\right )
+        \end {align*}
+      \]
+  </div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> 
+The first step is to prove that the average Q-values are close to the task-conditioned Q-values. Below, we will use \(R_{g}(\tau )\triangleq \sum _{t=0}^{\tau }\gamma ^{\ell }r_{g}(s_{t},a_{t})\):
+
+\[
+\begin {align*}
+\left |Q^{\pi (\cdot |\cdot , g)}(s,a,g)-Q^{\\pi(\cdot |\cdot ,g^{\prime })}(s,a,e)\right |&amp;=\left |\int \pi (\tau \mid  s,a,g)R_{g}(\tau )d\tau -\int \pi (\tau \mid  s,a,g^{\prime })R_{g}(\tau )d\tau \right |\\ 
+&amp;=\left |\int \pi (\tau \mid  s,a,g)-\pi (\tau \mid  s,a,g^{\prime })R_{g}(\tau )d\tau \right | \\
+&amp;=\left |\int \pi (\tau \mid  s,a,g)\left (1-\frac {\pi (\tau \mid  s,a,g^{\prime })}{\pi (\tau \mid  s,a,g)}\right )R_{g}(\tau )d\tau \right | \\
+&amp;\leq \int \left |\pi (\tau \mid  s,a,g)\left (1-\frac {\pi (\tau \mid  s,a,g^{\prime })}{\pi (\tau \mid  s,a,g)}\right )\right |d\tau \cdot \operatorname *{max}_{\tau }|R_{g}(\tau )d\tau | \\
+&amp;\leq \int \pi (\tau \mid  s,a,g)\left |1-\frac {\pi (\tau \mid  s,a,g^{\prime })}{\pi (\tau \mid  s,a,g)}\right |d\tau \cdot  1 \\
+&amp;=\mathbb {E}_{\pi (\tau |s,a,g)}\left [\left |1-{\frac {\pi (\tau \mid  s,a,g^{\prime })}{\pi (\tau \mid  s,a,g)}}\right |\right ] \\
+&amp;\leq  \epsilon .
+\end {align*}
+  \]
+</div>
+</details></section></details></section>
+  
+</details></section>
+        <section lang="en" class="block" data-taxon="Person"><details id="id16"><summary><header><h1>
+<span class="taxon">Person. </span>Benjamin Eysenbach <a class="slug" href="/beneysenbach/">[beneysenbach]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">Assistant Professor</li>
+<li class="meta-item">
+              <span class="link local"><a href="/princeton/" title="Princeton University [princeton]">Princeton University</a></span>
+            </li>
+<li class="meta-item"><a class="link external" href="https://ben-eysenbach.github.io/">https://ben-eysenbach.github.io/</a></li>
+</ul></div></header></summary></details></section>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id17"><summary><header><h1>
+<span class="taxon">Definition. </span>Entropy <a class="slug" href="/0081/">[0081]</a> </h1>
+<div class="metadata"><ul><li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">We define the <em>entropy</em> of a random variable \(X \sim  p_{X}\), where \(p_{X} : \mathcal {X} \to  [0, 1]\) as 
+\[H(X) = -\sum _{x \in  |\mathcal {X}|} p_{X}(x) \log  p_{X}(x)\]</p>
+          </details></section>
+      </details></section>
+    
+  </footer></article></div></body></html>

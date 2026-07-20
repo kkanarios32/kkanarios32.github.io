@@ -1,0 +1,301 @@
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script src="/highlightjs-line-numbers.min.js"></script><script>
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+    if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
+  });
+});
+          </script><title>Flow Matching: What, Why, and How?</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><div class="logo"><a href="/index.html" title="Home">« Home</a></div></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>Flow Matching: What, Why, and How? <a class="slug" href="/008A/">[008A]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
+</address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This is a blog cataloging my understanding of <span xmlns="" class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">Flow Matching for Generative Modeling</a></span> prior to my group presentation on <span xmlns="" class="link local"><a href="/farebrotherTemporalDifferenceFlows2025/" title="Temporal Difference Flows [farebrotherTemporalDifferenceFlows2025]">Temporal Difference Flows</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Disclaimer.</strong> I came into this with literally no background. I have never even taken an ODE course. This may prove advantageous for the more general audience.</p>
+  <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon">1. </span>Motivation  </h1>
+<div class="metadata"><ul><li class="meta-item">July 1, 2025</li></ul></div></header></summary>
+To understand flow matching, it is a useful endeavor to understand the problems in prior work it aims to solve.
+<section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon">1.1. </span>Normalizing Flows <a class="slug" href="/B9J9/">[B9J9]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">July 15, 2025</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Brief notes on <span xmlns="" class="link local"><a href="/rezendeVariationalInferenceNormalizing/" title="Variational Inference with Normalizing Flows [rezendeVariationalInferenceNormalizing]">Variational Inference with Normalizing Flows</a></span> to motivate <span xmlns="" class="link local"><a href="/008A/" title="Flow Matching: What, Why, and How? [008A]">flow matching</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml">We are concerned with the problem of <em>density estimation</em>. Given a dataset \(\mathcal {X}\), consisting of samples \(\mathbf {x}_i \sim  p(\mathbf {x})\), we want to learn \(p(\mathbf {x})\). One popular way to do this is via <em>variational inference</em>. As a brief recap, in variational inference, we assume that there is actually a joint distribution \(p(\mathbf {x}, \mathbf {z})\), where \(\mathbf {z}\) is a <span xmlns="" class="link local"><a href="/0083/" title="Latent Variable [0083]">latent variable</a></span>. We then find \(p(\mathbf {x})\) by maximizing the log-likelihood \(\log  \int  p(\mathbf {x} \mid  \mathbf {z}) \mathrm {d}\mathbf {z}\)</p><p xmlns="http://www.w3.org/1999/xhtml">
+ For an example of this, see my post on <span xmlns="" class="link local"><a href="/0088/" title="Expectation Maximization [0088]">expectation maximization</a></span>. In that post, we utilize the <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> to learn a latent variable model \(q_{\phi }(\mathbf {z} | \mathbf {x})\). As discussed in my post on <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span>, in order to learn \(p(\mathbf {x})\), we must have that \(p(\mathbf {z} | \mathbf {x})\) is in the family \(q_{\phi }\). However, \(q_
+ {\phi }\) is usually a Gaussian parametrized by \(\phi \), so that we can easily learn \(\phi \). In this case, it is very unlikely that \(p(\mathbf {z} \mid  x)\) lies in the family of \(q_{\phi }\) and therefore we have no hope of learning the true \(p(\mathbf {x})\).
+</p></details></section>
+<section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon">1.2. </span>Continuous Normalizing Flows <a class="slug" href="/PY9P/">[PY9P]</a> </h1>
+<div class="metadata"><ul><li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/rezendeVariationalInferenceNormalizing/" title="Variational Inference with Normalizing Flows [rezendeVariationalInferenceNormalizing]">Variational Inference with Normalizing Flows</a></span>, <span xmlns="" class="link local"><a href="/chenNeuralOrdinaryDifferential/" title="Neural Ordinary Differential Equations [chenNeuralOrdinaryDifferential]">Neural Ordinary Differential Equations</a></span></p>
+  <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon"></span>What is this \(\det \) factor?  </h1>
+<div class="metadata"><ul><li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li></ul></div></header></summary>
+Since we are considering probability measures over \(\mathbb {R}^n\), it is not enough to just define a mapping between spaces. Explicitly, say that we are considering the two probability measures \(p \sim  \mathrm {Unif}[0,1]\) and \(q \sim  \mathrm {Unif}[0,2]\). Trivially, we have the mapping \(f : [0, 1] \to  [0,2]\) given by \(f(x) \mapsto  2x\).
+</details></section>
+</details></section>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon">2. </span>Definitions <span class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">FM</a></span> <a class="slug" href="/D8LA/">[D8LA]</a> </h1>
+<div class="metadata"><ul><li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li></ul></div></header></summary><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon">Definition 2.1. </span>Probablity density path <a class="slug" href="/008B/">[008B]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The <em>probability density path</em> \(p: [0,1] \times  \mathbb {R}^d \to  \mathbb {R}_{&gt;0}\) is a time dependent probability density function i.e. \(\int  p_t(x)\mathrm {d}x = 1\)</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id8" open="open"><summary><header><h1>
+<span class="taxon">Definition 2.2. </span>Time-dependent vector field <a class="slug" href="/008C/">[008C]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">We define a <em>time-dependent vector field</em> as a map \(v: [0,1] \times  \mathbb {R}^d \to  \mathbb {R}^d\)</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon">Definition 2.3. </span>Flow <a class="slug" href="/008D/">[008D]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Give a <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vector field [008C]">vector field</a></span> \(v_t\) one can construct a time-dependent diffeomorphic map called a <em>flow</em> \(\phi : [0,1] \times  \mathbb {R}^d \to  \mathbb {R}^d\) defined via the ordinary differential equation
+\[\begin {align*}
+  \frac {\mathrm {d}}{\mathrm {d}t} \phi _t(x) &amp;= v_t(\phi _t(x)) \\
+  \phi _{0}(x) &amp;= x
+.\end {align*}\]</p></details></section>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+   Modeling a <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vector field [008C]">vector field</a></span> via a neural network i.e. \(v_t(x; \theta )\) implicitly defines a deep parametric model of the flow \(\phi _t(x)\) via solving the ODE or an approximation, such as
+   \[\phi _{t + \Delta  t}(x) \approx  \phi _t(x) + \Delta  t \cdot  v_t(\phi _t(x); \theta )\]
+   Obviously, accuracy will be dependent on the step size \(\Delta  t\).
+ </div>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id10" open="open"><summary><header><h1>
+<span class="taxon">Definition 2.4. </span>Generated probability paths <a class="slug" href="/008E/">[008E]</a> </h1>
+<div class="metadata"><ul><li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">We say that a <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vector field [008C]">vector field</a></span> <em>generates</em> a <span xmlns="" class="link local"><a href="/008B/" title="Probablity density path [008B]">probability density path</a></span> if the <span xmlns="" class="link local"><a href="/008D/" title="Flow [008D]">flow</a></span> of \(v_t\) satisfies
+\[p_t = [\phi _t]_* p_{0},\]
+where
+\[[\phi _t]_*p_{0}(x) = p_{0}(\phi _t^{-1}(x)) \det \left [ \frac {\partial  \phi _t^{-1} }{\partial  x}(x) \right ].  \]</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Theorem"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon">Theorem 2.5. </span>Generation via Continuity Equation <a class="slug" href="/008I/">[008I]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 2, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">
+A <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vector field [008C]">vector field</a></span> generates a <span xmlns="" class="link local"><a href="/008B/" title="Probablity density path [008B]">probability density path</a></span> if it satisfies the <span xmlns="" class="link local"><a href="/EFN0/" title="Continuity Equation [EFN0]">continuity equation</a></span>.
+</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id12" open="open"><summary><header><h1>
+<span class="taxon">Definition 2.6. </span><span class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">Flow Matching</a></span> Loss <a class="slug" href="/LRL4/">[LRL4]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 9, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Given an initial noise distribution \(p\), a desired data distribution \(q\), a <span xmlns="" class="link local"><a href="/008B/" title="Probablity density path [008B]">probability density path</a></span> \(p_t\), such that \(p_{0} = p\) and \(p_{1} =q\), and a <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vector field [008C]">vector field</a></span> \(u_t\) that <span xmlns="" class="link local"><a href="/008E/" title="Generated probability paths [008E]">generates</a></span> \(p_t\). We define the <em>flow matching loss</em> \(\mathcal {L}_{\mathrm {FM}}\) as
+\[\mathcal {L}_{\mathrm {FM}}(\theta ) \coloneqq  \mathbb {E}_{t, p_t(x)} \|v_t(x; \theta ) - u_t\|\]</p></details></section></details></section><section lang="en" class="block hide-metadata"><details id="id13" open="open"><summary><header><h1>
+<span class="taxon">3. </span>Conditioning Trick <span class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">FM</a></span>  <a class="slug" href="/008F/">[008F]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 2, 2025</li>
+<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
+</address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"> Given data distribution \(q(x)\), we define an approximation \(p(x)\) with the form \[p(x) = \int  p(x \mid  x_1) q(x_1) \mathrm {d}x_{1}\] In order to ensure \(p(x) \approx  q(x)\), we pick \(p(x \mid  x_{1})\) that concentrates around \(x_{1}\) i.e. \(p(x \mid  x_{1}) \sim  N(x \mid  x_{1}, \sigma ^2 I)\) for small \(\sigma \).
+ </p><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id14" open="open"><summary><header><h1>
+<span class="taxon">Definition 3.1. </span>Conditional Vector Field <a class="slug" href="/8XAJ/">[8XAJ]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 9, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">
+ We define the <em>conditional vector field</em> \(v_t(\cdot  \mid  x_{1})\) as the <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vector field [008C]">vector field</a></span> that <span xmlns="" class="link local"><a href="/008E/" title="Generated probability paths [008E]">generates</a></span> the conditional <span xmlns="" class="link local"><a href="/008E/" title="Generated probability paths [008E]">probability path</a></span> \(p_t(x \mid  x_{1})\).
+</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id15" open="open"><summary><header><h1>
+<span class="taxon">Definition 3.2. </span>Marginal Vector Field <a class="slug" href="/373T/">[373T]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 9, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">
+ Given a <span xmlns="" class="link local"><a href="/8XAJ/" title="Conditional Vector Field [8XAJ]">conditional vector field</a></span> \(v_t(x \mid  x_{1})\) we define the <em>marginal vector field</em> as \[v_t(x) = \int  v_t(x \mid  x_1) \frac {p(x \mid  x_1) q(x_{1})}{p(t)}\]</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Theorem"><details id="id16" open="open"><summary><header><h1>
+<span class="taxon">Theorem 3.3. </span>Marginal Generation <a class="slug" href="/93R8/">[93R8]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 9, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Given a <span xmlns="" class="link local"><a href="/8XAJ/" title="Conditional Vector Field [8XAJ]">conditional vector field</a></span> \(v_t(x \mid  x_{1})\) that <span xmlns="" class="link local"><a href="/008E/" title="Generated probability paths [008E]">generates</a></span> the conditional <span xmlns="" class="link local"><a href="/008B/" title="Probablity density path [008B]">probability path</a></span> \(p_t(x \mid  x_{1})\)
+ then the <span xmlns="" class="link local"><a href="/373T/" title="Marginal Vector Field [373T]">marginal vector field</a></span> \(v_t\) generates \(p_t\), where
+ \[p_t(x) = \int  p_t(x \mid  x_1) q(x_{1})\]</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> 
+  This follows from just plugging into <span xmlns="" class="link local"><a href="/EFN0/" title="Continuity Equation [EFN0]">continuity equation</a></span>.
+</div>
+</details></section><section lang="en" class="block hide-metadata" data-taxon="Theorem"><details id="id17" open="open"><summary><header><h1>
+<span class="taxon">Theorem 3.4. </span><span class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">FM</a></span> Gradient Equivalence <a class="slug" href="/DZ1D/">[DZ1D]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 9, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> 
+
+</div>
+</details></section><p xmlns="http://www.w3.org/1999/xhtml">which is supposedly a "good" approximation of the data distribution \(q\). We can then show that a <em>conditional flow matching loss</em> has the same gradient as the full <em>flow matching loss</em> i.e. our vector field should converge to the <em>marginal vector field</em>, which is a good approximation for \(q\).
+ </p></details></section><p xmlns="http://www.w3.org/1999/xhtml">To generate samples, we integrate the <strong>vector field</strong></p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Important.</strong> We do not <em>have</em> the flow. We only have the flow for a <strong>given</strong> \(x_{1}\). This can then provide a target for the vector field with equivalent gradient.</p><section lang="en" class="block hide-metadata"><details id="id18" open="open"><summary><header><h1>
+<span class="taxon">4. </span>Flow Matching vs. Diffusion <a class="slug" href="/TGWF/">[TGWF]</a> </h1>
+<div class="metadata"><ul></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Notes and thoughts from blog <span xmlns="" class="link local"><a href="/gaoDiffusionMeetsFlow2024/" title="Diffusion Meets Flow Matching: Two Sides of the Same Coin [gaoDiffusionMeetsFlow2024]">Diffusion Meets Flow Matching: Two Sides of the Same Coin</a></span>. As a useful pre-requisite, I recommend my notes on <span xmlns="" class="link local"><a href="/007T/" title="Diffusion Models [007T]">diffusion</a></span> and <span xmlns="" class="link local"><a href="/008A/" title="Flow Matching: What, Why, and How? [008A]">flow matching</a></span> respectively.</p><p xmlns="http://www.w3.org/1999/xhtml">To start, I began looking into this due to the wildly empirical claims from <span xmlns="" class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">Flow Matching for Generative Modeling</a></span>. Namely,</p>
+ <blockquote xmlns="http://www.w3.org/1999/xhtml" class="jms-quote" style="   margin: 1em 0 1em 0.25em;   padding: 0.6em 1.1em 0.6em 1.3em;   border-left: 4px solid rgba(0, 0, 0, 0.25);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.035);   font-style: italic;   color: rgba(0, 0, 0, 0.85);   ">
+  <ul><li><em>"We find that using FM provides more robust and stable training, and achieves superior performance compared to score matching."</em></li>
+   <li><em>"Furthermore, we find that our models produce better trade-offs between computational cost and sample quality."</em></li></ul>
+ </blockquote>
+</details></section></details></section><footer xmlns="">
+    <section lang="en" class="block hide-metadata"><details id="id19" open="open"><summary><header><h1>
+<span class="taxon"></span>References  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block" data-taxon="Reference"><details id="id20"><summary><header><h1>
+<span class="taxon">Reference. </span>Temporal Difference Flows <a class="slug" href="/farebrotherTemporalDifferenceFlows2025/">[farebrotherTemporalDifferenceFlows2025]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">March, 2025</li></ul>
+<br><ul><li class="meta-item"><address class="author">Jesse Farebrother,  Matteo Pirotta,  Andrea Tirinzoni,  Rémi Munos,  Alessandro Lazaric,  Ahmed Touati</address></li></ul>
+<br><ul>
+<li class="meta-item"><a class="doi link" href="https://www.doi.org/10.48550/arXiv.2503.09817">10.48550/arXiv.2503.09817</a></li>
+<li class="meta-item"><a class="link external" href="https://arxiv.org/abs/2503.09817">https://arxiv.org/abs/2503.09817</a></li>
+</ul>
+</div></header></summary><pre>@misc{farebrotherTemporalDifferenceFlows2025,
+ title = {Temporal {{Difference Flows}}},
+ author = {Farebrother, Jesse and Pirotta, Matteo and Tirinzoni, Andrea and Munos, R{\'e}mi and Lazaric, Alessandro and Touati, Ahmed},
+ year = {2025},
+ doi = {10.48550/arXiv.2503.09817},
+ urldate = {2025-06-14},
+ number = {arXiv:2503.09817},
+ publisher = {arXiv},
+ file = {/home/kellen/Downloads/pdfs/storage/2V2SR66H/Farebrother et al. - 2025 - Temporal Difference Flows.pdf;/home/kellen/Downloads/pdfs/storage/D27PSL2L/2503.html},
+ keywords = {Computer Science - Artificial Intelligence,Computer Science - Machine Learning,Statistics - Machine Learning},
+ archiveprefix = {arXiv},
+ abstract = {Predictive models of the future are fundamental for an agent's ability to reason and plan. A common strategy learns a world model and unrolls it step-by-step at inference, where small errors can rapidly compound. Geometric Horizon Models (GHMs) offer a compelling alternative by directly making predictions of future states, avoiding cumulative inference errors. While GHMs can be conveniently learned by a generative analog to temporal difference (TD) learning, existing methods are negatively affected by bootstrapping predictions at train time and struggle to generate high-quality predictions at long horizons. This paper introduces Temporal Difference Flows (TD-Flow), which leverages the structure of a novel Bellman equation on probability paths alongside flow-matching techniques to learn accurate GHMs at over 5x the horizon length of prior methods. Theoretically, we establish a new convergence result and primarily attribute TD-Flow's efficacy to reduced gradient variance during training. We further show that similar arguments can be extended to diffusion-based methods. Empirically, we validate TD-Flow across a diverse set of domains on both generative metrics and downstream tasks including policy evaluation. Moreover, integrating TD-Flow with recent behavior foundation models for planning over pre-trained policies demonstrates substantial performance gains, underscoring its promise for long-horizon decision-making.},
+ primaryclass = {cs},
+ eprint = {2503.09817},
+ month = {March}
+}</pre></details></section>
+        <section lang="en" class="block" data-taxon="Reference"><details id="id21"><summary><header><h1>
+<span class="taxon">Reference. </span>Diffusion Meets Flow Matching: Two Sides of the Same Coin <a class="slug" href="/gaoDiffusionMeetsFlow2024/">[gaoDiffusionMeetsFlow2024]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">December, 2024</li></ul>
+<br><ul><li class="meta-item"><address class="author">Ruiqi Gao,  Emiel Hoogeboom,  Jonathan Heek,  Valentin De Bortoli,  Kevin P. Murphy,  Tim Salimans</address></li></ul>
+<br><ul></ul>
+</div></header></summary><pre>@misc{gaoDiffusionMeetsFlow2024,
+ title = {Diffusion {{Meets Flow Matching}}: {{Two Sides}} of the {{Same Coin}}},
+ author = {Gao, Ruiqi and Hoogeboom, Emiel and Heek, Jonathan and De Bortoli, Valentin and Murphy, Kevin P. and Salimans, Tim},
+ year = {2024},
+ month = {December}
+}</pre></details></section>
+        <section lang="en" class="block" data-taxon="Reference"><details id="id22"><summary><header><h1>
+<span class="taxon">Reference. </span>Flow Matching for Generative Modeling <a class="slug" href="/lipmanFlowMatchingGenerative2023/">[lipmanFlowMatchingGenerative2023]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">February, 2023</li></ul>
+<br><ul><li class="meta-item"><address class="author">Yaron Lipman,  Ricky T. Q. Chen,  Heli Ben-Hamu,  Maximilian Nickel,  Matt Le</address></li></ul>
+<br><ul>
+<li class="meta-item"><a class="doi link" href="https://www.doi.org/10.48550/arXiv.2210.02747">10.48550/arXiv.2210.02747</a></li>
+<li class="meta-item"><a class="link external" href="https://arxiv.org/abs/2210.02747">https://arxiv.org/abs/2210.02747</a></li>
+</ul>
+</div></header></summary><pre>@misc{lipmanFlowMatchingGenerative2023,
+ title = {Flow {{Matching}} for {{Generative Modeling}}},
+ author = {Lipman, Yaron and Chen, Ricky T. Q. and {Ben-Hamu}, Heli and Nickel, Maximilian and Le, Matt},
+ year = {2023},
+ doi = {10.48550/arXiv.2210.02747},
+ urldate = {2025-06-20},
+ number = {arXiv:2210.02747},
+ publisher = {arXiv},
+ file = {/home/kellen/Downloads/papers/Flow Matching for Generative Modeling - Lipman et al..pdf;/home/kellen/Downloads/pdfs/storage/R693NNL4/2210.html},
+ keywords = {Computer Science - Artificial Intelligence,Computer Science - Machine Learning,Statistics - Machine Learning},
+ archiveprefix = {arXiv},
+ abstract = {We introduce a new paradigm for generative modeling built on Continuous Normalizing Flows (CNFs), allowing us to train CNFs at unprecedented scale. Specifically, we present the notion of Flow Matching (FM), a simulation-free approach for training CNFs based on regressing vector fields of fixed conditional probability paths. Flow Matching is compatible with a general family of Gaussian probability paths for transforming between noise and data samples -- which subsumes existing diffusion paths as specific instances. Interestingly, we find that employing FM with diffusion paths results in a more robust and stable alternative for training diffusion models. Furthermore, Flow Matching opens the door to training CNFs with other, non-diffusion probability paths. An instance of particular interest is using Optimal Transport (OT) displacement interpolation to define the conditional probability paths. These paths are more efficient than diffusion paths, provide faster training and sampling, and result in better generalization. Training CNFs using Flow Matching on ImageNet leads to consistently better performance than alternative diffusion-based methods in terms of both likelihood and sample quality, and allows fast and reliable sample generation using off-the-shelf numerical ODE solvers.},
+ primaryclass = {cs},
+ eprint = {2210.02747},
+ month = {February}
+}</pre></details></section>
+        <section lang="en" class="block" data-taxon="Reference"><details id="id23"><summary><header><h1>
+<span class="taxon">Reference. </span>Neural Ordinary Differential Equations <a class="slug" href="/chenNeuralOrdinaryDifferential/">[chenNeuralOrdinaryDifferential]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item"><address class="author">Tian Qi Chen,  Yulia Rubanova,  Jesse Bettencourt,  David K Duvenaud</address></li></ul>
+<br><ul></ul>
+</div></header></summary><pre>@article{chenNeuralOrdinaryDifferential,
+ title = {Neural {{Ordinary Differential Equations}}},
+ author = {Chen, Tian Qi and Rubanova, Yulia and Bettencourt, Jesse and Duvenaud, David K},
+ file = {/home/kellen/Downloads/papers/Neural Ordinary Differential Equations - Chen et al..pdf},
+ langid = {english},
+ abstract = {We introduce a new family of deep neural network models. Instead of specifying a discrete sequence of hidden layers, we parameterize the derivative of the hidden state using a neural network. The output of the network is computed using a blackbox differential equation solver. These continuous-depth models have constant memory cost, adapt their evaluation strategy to each input, and can explicitly trade numerical precision for speed. We demonstrate these properties in continuous-depth residual networks and continuous-time latent variable models. We also construct continuous normalizing flows, a generative model that can train by maximum likelihood, without partitioning or ordering the data dimensions. For training, we show how to scalably backpropagate through any ODE solver, without access to its internal operations. This allows end-to-end training of ODEs within larger models.}
+}</pre></details></section>
+        <section lang="en" class="block" data-taxon="Reference"><details id="id24"><summary><header><h1>
+<span class="taxon">Reference. </span>Variational Inference with Normalizing Flows <a class="slug" href="/rezendeVariationalInferenceNormalizing/">[rezendeVariationalInferenceNormalizing]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item"><address class="author">Danilo Jimenez Rezende,  Shakir Mohamed</address></li></ul>
+<br><ul></ul>
+</div></header></summary><pre>@article{rezendeVariationalInferenceNormalizing,
+ title = {Variational {{Inference}} with {{Normalizing Flows}}},
+ author = {Rezende, Danilo Jimenez and Mohamed, Shakir},
+ file = {/home/kellen/Downloads/papers/Variational Inference with Normalizing Flows - Rezende and Mohamed.pdf},
+ langid = {english},
+ abstract = {The choice of approximate posterior distribution is one of the core problems in variational inference. Most applications of variational inference employ simple families of posterior approximations in order to allow for efficient inference, focusing on mean-field or other simple structured approximations. This restriction has a significant impact on the quality of inferences made using variational methods. We introduce a new approach for specifying flexible, arbitrarily complex and scalable approximate posterior distributions. Our approximations are distributions constructed through a normalizing flow, whereby a simple initial density is transformed into a more complex one by applying a sequence of invertible transformations until a desired level of complexity is attained. We use this view of normalizing flows to develop categories of finite and infinitesimal flows and provide a unified view of approaches for constructing rich posterior approximations. We demonstrate that the theoretical advantages of having posteriors that better match the true posterior, combined with the scalability of amortized variational approaches, provides a clear improvement in performance and applicability of variational inference.}
+}</pre></details></section>
+      </details></section>
+    
+    <section lang="en" class="block hide-metadata"><details id="id25" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id26"><summary><header><h1>
+<span class="taxon"></span>Normalizing Flows <a class="slug" href="/B9J9/">[B9J9]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">July 15, 2025</li></ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">Brief notes on <span xmlns="" class="link local"><a href="/rezendeVariationalInferenceNormalizing/" title="Variational Inference with Normalizing Flows [rezendeVariationalInferenceNormalizing]">Variational Inference with Normalizing Flows</a></span> to motivate <span xmlns="" class="link local"><a href="/008A/" title="Flow Matching: What, Why, and How? [008A]">flow matching</a></span>.</p>
+            <p xmlns="http://www.w3.org/1999/xhtml">We are concerned with the problem of <em>density estimation</em>. Given a dataset \(\mathcal {X}\), consisting of samples \(\mathbf {x}_i \sim  p(\mathbf {x})\), we want to learn \(p(\mathbf {x})\). One popular way to do this is via <em>variational inference</em>. As a brief recap, in variational inference, we assume that there is actually a joint distribution \(p(\mathbf {x}, \mathbf {z})\), where \(\mathbf {z}\) is a <span xmlns="" class="link local"><a href="/0083/" title="Latent Variable [0083]">latent variable</a></span>. We then find \(p(\mathbf {x})\) by maximizing the log-likelihood \(\log  \int  p(\mathbf {x} \mid  \mathbf {z}) \mathrm {d}\mathbf {z}\)</p>
+            <p xmlns="http://www.w3.org/1999/xhtml">
+ For an example of this, see my post on <span xmlns="" class="link local"><a href="/0088/" title="Expectation Maximization [0088]">expectation maximization</a></span>. In that post, we utilize the <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> to learn a latent variable model \(q_{\phi }(\mathbf {z} | \mathbf {x})\). As discussed in my post on <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span>, in order to learn \(p(\mathbf {x})\), we must have that \(p(\mathbf {z} | \mathbf {x})\) is in the family \(q_{\phi }\). However, \(q_
+ {\phi }\) is usually a Gaussian parametrized by \(\phi \), so that we can easily learn \(\phi \). In this case, it is very unlikely that \(p(\mathbf {z} \mid  x)\) lies in the family of \(q_{\phi }\) and therefore we have no hope of learning the true \(p(\mathbf {x})\).
+</p>
+          </details></section>
+        <section lang="en" class="block"><details id="id27"><summary><header><h1>
+<span class="taxon"></span>Flow Matching vs. Diffusion <a class="slug" href="/TGWF/">[TGWF]</a> </h1>
+<div class="metadata"><ul></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Notes and thoughts from blog <span xmlns="" class="link local"><a href="/gaoDiffusionMeetsFlow2024/" title="Diffusion Meets Flow Matching: Two Sides of the Same Coin [gaoDiffusionMeetsFlow2024]">Diffusion Meets Flow Matching: Two Sides of the Same Coin</a></span>. As a useful pre-requisite, I recommend my notes on <span xmlns="" class="link local"><a href="/007T/" title="Diffusion Models [007T]">diffusion</a></span> and <span xmlns="" class="link local"><a href="/008A/" title="Flow Matching: What, Why, and How? [008A]">flow matching</a></span> respectively.</p><p xmlns="http://www.w3.org/1999/xhtml">To start, I began looking into this due to the wildly empirical claims from <span xmlns="" class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">Flow Matching for Generative Modeling</a></span>. Namely,</p>
+ <blockquote xmlns="http://www.w3.org/1999/xhtml" class="jms-quote" style="   margin: 1em 0 1em 0.25em;   padding: 0.6em 1.1em 0.6em 1.3em;   border-left: 4px solid rgba(0, 0, 0, 0.25);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.035);   font-style: italic;   color: rgba(0, 0, 0, 0.85);   ">
+  <ul><li><em>"We find that using FM provides more robust and stable training, and achieves superior performance compared to score matching."</em></li>
+   <li><em>"Furthermore, we find that our models produce better trade-offs between computational cost and sample quality."</em></li></ul>
+ </blockquote>
+</details></section>
+      </details></section>
+    
+    
+  </footer></article><nav id="toc"><div class="block"><h1>Table of Contents</h1><ul xmlns="" class="block">
+<li>
+<a class="bullet" href="#id2" title="Motivation">■</a><span class="link local" data-target="#id2"><span class="taxon">1. </span>Motivation</span><ul class="block">
+<li>
+<a class="bullet" href="/B9J9/" title="Normalizing Flows [B9J9]">■</a><span class="link local" data-target="#id3"><span class="taxon">1.1. </span>Normalizing Flows</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/PY9P/" title="Continuous Normalizing Flows [PY9P]">■</a><span class="link local" data-target="#id4"><span class="taxon">1.2. </span>Continuous Normalizing Flows</span><ul class="block"><li>
+<a class="bullet" href="#id5" title="What is this \det  factor?">■</a><span class="link local" data-target="#id5"><span class="taxon"></span>What is this \(\det \) factor?</span><ul class="block"></ul>
+</li></ul>
+</li>
+</ul>
+</li>
+<li>
+<a class="bullet" href="/D8LA/" title="Definitions FM [D8LA]">■</a><span class="link local" data-target="#id6"><span class="taxon">2. </span>Definitions <span class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">FM</a></span></span><ul class="block">
+<li>
+<a class="bullet" href="/008B/" title="Probablity density path [008B]">■</a><span class="link local" data-target="#id7"><span class="taxon">Definition 2.1. </span>Probablity density path</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/008C/" title="Time-dependent vector field [008C]">■</a><span class="link local" data-target="#id8"><span class="taxon">Definition 2.2. </span>Time-dependent vector field</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/008D/" title="Flow [008D]">■</a><span class="link local" data-target="#id9"><span class="taxon">Definition 2.3. </span>Flow</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/008E/" title="Generated probability paths [008E]">■</a><span class="link local" data-target="#id10"><span class="taxon">Definition 2.4. </span>Generated probability paths</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/008I/" title="Generation via Continuity Equation [008I]">■</a><span class="link local" data-target="#id11"><span class="taxon">Theorem 2.5. </span>Generation via Continuity Equation</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/LRL4/" title="Flow Matching Loss [LRL4]">■</a><span class="link local" data-target="#id12"><span class="taxon">Definition 2.6. </span><span class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">Flow Matching</a></span> Loss</span><ul class="block"></ul>
+</li>
+</ul>
+</li>
+<li>
+<a class="bullet" href="/008F/" title="Conditioning Trick FM  [008F]">■</a><span class="link local" data-target="#id13"><span class="taxon">3. </span>Conditioning Trick <span class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">FM</a></span> </span><ul class="block">
+<li>
+<a class="bullet" href="/8XAJ/" title="Conditional Vector Field [8XAJ]">■</a><span class="link local" data-target="#id14"><span class="taxon">Definition 3.1. </span>Conditional Vector Field</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/373T/" title="Marginal Vector Field [373T]">■</a><span class="link local" data-target="#id15"><span class="taxon">Definition 3.2. </span>Marginal Vector Field</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/93R8/" title="Marginal Generation [93R8]">■</a><span class="link local" data-target="#id16"><span class="taxon">Theorem 3.3. </span>Marginal Generation</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/DZ1D/" title="FM Gradient Equivalence [DZ1D]">■</a><span class="link local" data-target="#id17"><span class="taxon">Theorem 3.4. </span><span class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">FM</a></span> Gradient Equivalence</span><ul class="block"></ul>
+</li>
+</ul>
+</li>
+<li>
+<a class="bullet" href="/TGWF/" title="Flow Matching vs. Diffusion [TGWF]">■</a><span class="link local" data-target="#id18"><span class="taxon">4. </span>Flow Matching vs. Diffusion</span><ul class="block"></ul>
+</li>
+</ul></div></nav></div></body></html>

@@ -45,6 +45,127 @@ window.addEventListener('load', function () {
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 <li class="meta-item"><a class="link external" href="/bafkrmie5b7t53zb2qsrluxkeuaeklf6cq7kb6aqdio56mvuop2jggrq6fa.pdf">Slides</a></li>
 </ul></div></header></summary></details></section>
+        <section lang="en" class="block"><details id="id4"><summary><header><h1>
+<span class="taxon"></span>Flow Matching: What, Why, and How? <a class="slug" href="/008A/">[008A]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
+</address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This is a blog cataloging my understanding of <span xmlns="" class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">Flow Matching for Generative Modeling</a></span> prior to my group presentation on <span xmlns="" class="link local"><a href="/farebrotherTemporalDifferenceFlows2025/" title="Temporal Difference Flows [farebrotherTemporalDifferenceFlows2025]">Temporal Difference Flows</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Disclaimer.</strong> I came into this with literally no background. I have never even taken an ODE course. This may prove advantageous for the more general audience.</p>
+  <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon"></span>Motivation  </h1>
+<div class="metadata"><ul><li class="meta-item">July 1, 2025</li></ul></div></header></summary>
+To understand flow matching, it is a useful endeavor to understand the problems in prior work it aims to solve.
+<section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon"></span>Normalizing Flows <a class="slug" href="/B9J9/">[B9J9]</a> </h1>
+<div class="metadata"><ul><li class="meta-item">July 15, 2025</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Brief notes on <span xmlns="" class="link local"><a href="/rezendeVariationalInferenceNormalizing/" title="Variational Inference with Normalizing Flows [rezendeVariationalInferenceNormalizing]">Variational Inference with Normalizing Flows</a></span> to motivate <span xmlns="" class="link local"><a href="/008A/" title="Flow Matching: What, Why, and How? [008A]">flow matching</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml">We are concerned with the problem of <em>density estimation</em>. Given a dataset \(\mathcal {X}\), consisting of samples \(\mathbf {x}_i \sim  p(\mathbf {x})\), we want to learn \(p(\mathbf {x})\). One popular way to do this is via <em>variational inference</em>. As a brief recap, in variational inference, we assume that there is actually a joint distribution \(p(\mathbf {x}, \mathbf {z})\), where \(\mathbf {z}\) is a <span xmlns="" class="link local"><a href="/0083/" title="Latent Variable [0083]">latent variable</a></span>. We then find \(p(\mathbf {x})\) by maximizing the log-likelihood \(\log  \int  p(\mathbf {x} \mid  \mathbf {z}) \mathrm {d}\mathbf {z}\)</p><p xmlns="http://www.w3.org/1999/xhtml">
+ For an example of this, see my post on <span xmlns="" class="link local"><a href="/0088/" title="Expectation Maximization [0088]">expectation maximization</a></span>. In that post, we utilize the <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> to learn a latent variable model \(q_{\phi }(\mathbf {z} | \mathbf {x})\). As discussed in my post on <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span>, in order to learn \(p(\mathbf {x})\), we must have that \(p(\mathbf {z} | \mathbf {x})\) is in the family \(q_{\phi }\). However, \(q_
+ {\phi }\) is usually a Gaussian parametrized by \(\phi \), so that we can easily learn \(\phi \). In this case, it is very unlikely that \(p(\mathbf {z} \mid  x)\) lies in the family of \(q_{\phi }\) and therefore we have no hope of learning the true \(p(\mathbf {x})\).
+</p></details></section>
+<section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon"></span>Continuous Normalizing Flows <a class="slug" href="/PY9P/">[PY9P]</a> </h1>
+<div class="metadata"><ul><li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/rezendeVariationalInferenceNormalizing/" title="Variational Inference with Normalizing Flows [rezendeVariationalInferenceNormalizing]">Variational Inference with Normalizing Flows</a></span>, <span xmlns="" class="link local"><a href="/chenNeuralOrdinaryDifferential/" title="Neural Ordinary Differential Equations [chenNeuralOrdinaryDifferential]">Neural Ordinary Differential Equations</a></span></p>
+  <section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
+<span class="taxon"></span>What is this \(\det \) factor?  </h1>
+<div class="metadata"><ul><li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li></ul></div></header></summary>
+Since we are considering probability measures over \(\mathbb {R}^n\), it is not enough to just define a mapping between spaces. Explicitly, say that we are considering the two probability measures \(p \sim  \mathrm {Unif}[0,1]\) and \(q \sim  \mathrm {Unif}[0,2]\). Trivially, we have the mapping \(f : [0, 1] \to  [0,2]\) given by \(f(x) \mapsto  2x\).
+</details></section>
+</details></section>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon"></span>Definitions <span class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">FM</a></span> <a class="slug" href="/D8LA/">[D8LA]</a> </h1>
+<div class="metadata"><ul><li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li></ul></div></header></summary><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id10" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Probablity density path <a class="slug" href="/008B/">[008B]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The <em>probability density path</em> \(p: [0,1] \times  \mathbb {R}^d \to  \mathbb {R}_{&gt;0}\) is a time dependent probability density function i.e. \(\int  p_t(x)\mathrm {d}x = 1\)</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Time-dependent vector field <a class="slug" href="/008C/">[008C]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">We define a <em>time-dependent vector field</em> as a map \(v: [0,1] \times  \mathbb {R}^d \to  \mathbb {R}^d\)</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id12" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Flow <a class="slug" href="/008D/">[008D]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Give a <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vector field [008C]">vector field</a></span> \(v_t\) one can construct a time-dependent diffeomorphic map called a <em>flow</em> \(\phi : [0,1] \times  \mathbb {R}^d \to  \mathbb {R}^d\) defined via the ordinary differential equation
+\[\begin {align*}
+  \frac {\mathrm {d}}{\mathrm {d}t} \phi _t(x) &amp;= v_t(\phi _t(x)) \\
+  \phi _{0}(x) &amp;= x
+.\end {align*}\]</p></details></section>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+   Modeling a <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vector field [008C]">vector field</a></span> via a neural network i.e. \(v_t(x; \theta )\) implicitly defines a deep parametric model of the flow \(\phi _t(x)\) via solving the ODE or an approximation, such as
+   \[\phi _{t + \Delta  t}(x) \approx  \phi _t(x) + \Delta  t \cdot  v_t(\phi _t(x); \theta )\]
+   Obviously, accuracy will be dependent on the step size \(\Delta  t\).
+ </div>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id13" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Generated probability paths <a class="slug" href="/008E/">[008E]</a> </h1>
+<div class="metadata"><ul><li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">We say that a <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vector field [008C]">vector field</a></span> <em>generates</em> a <span xmlns="" class="link local"><a href="/008B/" title="Probablity density path [008B]">probability density path</a></span> if the <span xmlns="" class="link local"><a href="/008D/" title="Flow [008D]">flow</a></span> of \(v_t\) satisfies
+\[p_t = [\phi _t]_* p_{0},\]
+where
+\[[\phi _t]_*p_{0}(x) = p_{0}(\phi _t^{-1}(x)) \det \left [ \frac {\partial  \phi _t^{-1} }{\partial  x}(x) \right ].  \]</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Theorem"><details id="id14" open="open"><summary><header><h1>
+<span class="taxon">Theorem. </span>Generation via Continuity Equation <a class="slug" href="/008I/">[008I]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 2, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">
+A <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vector field [008C]">vector field</a></span> generates a <span xmlns="" class="link local"><a href="/008B/" title="Probablity density path [008B]">probability density path</a></span> if it satisfies the <span xmlns="" class="link local"><a href="/EFN0/" title="Continuity Equation [EFN0]">continuity equation</a></span>.
+</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id15" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span><span class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">Flow Matching</a></span> Loss <a class="slug" href="/LRL4/">[LRL4]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 9, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Given an initial noise distribution \(p\), a desired data distribution \(q\), a <span xmlns="" class="link local"><a href="/008B/" title="Probablity density path [008B]">probability density path</a></span> \(p_t\), such that \(p_{0} = p\) and \(p_{1} =q\), and a <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vector field [008C]">vector field</a></span> \(u_t\) that <span xmlns="" class="link local"><a href="/008E/" title="Generated probability paths [008E]">generates</a></span> \(p_t\). We define the <em>flow matching loss</em> \(\mathcal {L}_{\mathrm {FM}}\) as
+\[\mathcal {L}_{\mathrm {FM}}(\theta ) \coloneqq  \mathbb {E}_{t, p_t(x)} \|v_t(x; \theta ) - u_t\|\]</p></details></section></details></section><section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
+<span class="taxon"></span>Conditioning Trick <span class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">FM</a></span>  <a class="slug" href="/008F/">[008F]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 2, 2025</li>
+<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
+</address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"> Given data distribution \(q(x)\), we define an approximation \(p(x)\) with the form \[p(x) = \int  p(x \mid  x_1) q(x_1) \mathrm {d}x_{1}\] In order to ensure \(p(x) \approx  q(x)\), we pick \(p(x \mid  x_{1})\) that concentrates around \(x_{1}\) i.e. \(p(x \mid  x_{1}) \sim  N(x \mid  x_{1}, \sigma ^2 I)\) for small \(\sigma \).
+ </p><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id17" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Conditional Vector Field <a class="slug" href="/8XAJ/">[8XAJ]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 9, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">
+ We define the <em>conditional vector field</em> \(v_t(\cdot  \mid  x_{1})\) as the <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vector field [008C]">vector field</a></span> that <span xmlns="" class="link local"><a href="/008E/" title="Generated probability paths [008E]">generates</a></span> the conditional <span xmlns="" class="link local"><a href="/008E/" title="Generated probability paths [008E]">probability path</a></span> \(p_t(x \mid  x_{1})\).
+</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id18" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>Marginal Vector Field <a class="slug" href="/373T/">[373T]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 9, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">
+ Given a <span xmlns="" class="link local"><a href="/8XAJ/" title="Conditional Vector Field [8XAJ]">conditional vector field</a></span> \(v_t(x \mid  x_{1})\) we define the <em>marginal vector field</em> as \[v_t(x) = \int  v_t(x \mid  x_1) \frac {p(x \mid  x_1) q(x_{1})}{p(t)}\]</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Theorem"><details id="id19" open="open"><summary><header><h1>
+<span class="taxon">Theorem. </span>Marginal Generation <a class="slug" href="/93R8/">[93R8]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 9, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Given a <span xmlns="" class="link local"><a href="/8XAJ/" title="Conditional Vector Field [8XAJ]">conditional vector field</a></span> \(v_t(x \mid  x_{1})\) that <span xmlns="" class="link local"><a href="/008E/" title="Generated probability paths [008E]">generates</a></span> the conditional <span xmlns="" class="link local"><a href="/008B/" title="Probablity density path [008B]">probability path</a></span> \(p_t(x \mid  x_{1})\)
+ then the <span xmlns="" class="link local"><a href="/373T/" title="Marginal Vector Field [373T]">marginal vector field</a></span> \(v_t\) generates \(p_t\), where
+ \[p_t(x) = \int  p_t(x \mid  x_1) q(x_{1})\]</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> 
+  This follows from just plugging into <span xmlns="" class="link local"><a href="/EFN0/" title="Continuity Equation [EFN0]">continuity equation</a></span>.
+</div>
+</details></section><section lang="en" class="block hide-metadata" data-taxon="Theorem"><details id="id20" open="open"><summary><header><h1>
+<span class="taxon">Theorem. </span><span class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">FM</a></span> Gradient Equivalence <a class="slug" href="/DZ1D/">[DZ1D]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 9, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> 
+
+</div>
+</details></section><p xmlns="http://www.w3.org/1999/xhtml">which is supposedly a "good" approximation of the data distribution \(q\). We can then show that a <em>conditional flow matching loss</em> has the same gradient as the full <em>flow matching loss</em> i.e. our vector field should converge to the <em>marginal vector field</em>, which is a good approximation for \(q\).
+ </p></details></section><p xmlns="http://www.w3.org/1999/xhtml">To generate samples, we integrate the <strong>vector field</strong></p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Important.</strong> We do not <em>have</em> the flow. We only have the flow for a <strong>given</strong> \(x_{1}\). This can then provide a target for the vector field with equivalent gradient.</p><section lang="en" class="block hide-metadata"><details id="id21" open="open"><summary><header><h1>
+<span class="taxon"></span>Flow Matching vs. Diffusion <a class="slug" href="/TGWF/">[TGWF]</a> </h1>
+<div class="metadata"><ul></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Notes and thoughts from blog <span xmlns="" class="link local"><a href="/gaoDiffusionMeetsFlow2024/" title="Diffusion Meets Flow Matching: Two Sides of the Same Coin [gaoDiffusionMeetsFlow2024]">Diffusion Meets Flow Matching: Two Sides of the Same Coin</a></span>. As a useful pre-requisite, I recommend my notes on <span xmlns="" class="link local"><a href="/007T/" title="Diffusion Models [007T]">diffusion</a></span> and <span xmlns="" class="link local"><a href="/008A/" title="Flow Matching: What, Why, and How? [008A]">flow matching</a></span> respectively.</p><p xmlns="http://www.w3.org/1999/xhtml">To start, I began looking into this due to the wildly empirical claims from <span xmlns="" class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">Flow Matching for Generative Modeling</a></span>. Namely,</p>
+ <blockquote xmlns="http://www.w3.org/1999/xhtml" class="jms-quote" style="   margin: 1em 0 1em 0.25em;   padding: 0.6em 1.1em 0.6em 1.3em;   border-left: 4px solid rgba(0, 0, 0, 0.25);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.035);   font-style: italic;   color: rgba(0, 0, 0, 0.85);   ">
+  <ul><li><em>"We find that using FM provides more robust and stable training, and achieves superior performance compared to score matching."</em></li>
+   <li><em>"Furthermore, we find that our models produce better trade-offs between computational cost and sample quality."</em></li></ul>
+ </blockquote>
+</details></section></details></section>
       </details></section>
     
     
