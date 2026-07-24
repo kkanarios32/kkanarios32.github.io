@@ -244,6 +244,147 @@ This is the harder part (and requires the most discipline). When working on a ta
                 </fr:authors>
                 <fr:date>
                   <fr:year>2026</fr:year>
+                  <fr:month>7</fr:month>
+                  <fr:day>21</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/F3T0/</fr:uri>
+                <fr:display-uri>F3T0</fr:display-uri>
+                <fr:route>/F3T0/</fr:route>
+                <fr:title text="Forward-backward algorithm">Forward-backward algorithm</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>Suppose we have a sequence of latent variable <fr:tex display="inline"><![CDATA[\xi  = (z_{1}, z_{2}, \ldots , z_{T})]]></fr:tex> and the corresponding sequence of observations <fr:tex display="inline"><![CDATA[\mathcal {H} = (x_{1}, x_{2}, \ldots , x_{T})]]></fr:tex></html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(190, 50, 130, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(190, 50, 130, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</html:span> We want to compute the <html:em>posterior</html:em> distribution <fr:tex display="inline"><![CDATA[\mathbb {P}(\xi  \mid  \mathcal {H}).]]></fr:tex></html:div>
+<html:p>Suppose <fr:tex display="inline"><![CDATA[\mathcal {z}]]></fr:tex> is a discrete random variable taking at most <fr:tex display="inline"><![CDATA[K]]></fr:tex> different values. Then, for horizon length <fr:tex display="inline"><![CDATA[T]]></fr:tex>, there are <fr:tex display="inline"><![CDATA[K^T]]></fr:tex> possible values for <fr:tex display="inline"><![CDATA[\xi ]]></fr:tex>. Thus, computing <fr:tex display="inline"><![CDATA[\mathbb {P}(\xi  \mid  \mathcal {H})]]></fr:tex> blows up <html:strong>exponentially</html:strong>.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(60, 90, 180, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(60, 90, 180, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
+<html:p>Suppose that <fr:tex display="inline"><![CDATA[z \in  \{0, 1\} ]]></fr:tex> and <fr:tex display="inline"><![CDATA[T = 2]]></fr:tex>. Then</html:p>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \xi  \in  \{\{0, 0\}, \{0, 1\}, \{1, 1\}, \{1, 0\} \}
+.\end {align*}]]></fr:tex>
+<html:p>If <fr:tex display="inline"><![CDATA[T = 3]]></fr:tex>,</html:p>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \xi  \in  \{\{0, 0, 0\}, \{0, 1, 0\}, \{1, 1, 0\}, \{1, 0, 0\}, \{1, 0, 1\}, \{0, 1, 1\}, \{1, 1, 1\} \}
+.\end {align*}]]></fr:tex>
+<html:p>If <fr:tex display="inline"><![CDATA[T = 4]]></fr:tex>,</html:p>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \xi  \in  \{\{0, 0, 0, 0\}, \{0, 1, 0, 0\}, \{1, 1, 0, 0\}, \ldots  \}
+.\end {align*}]]></fr:tex>
+<fr:tex display="block"><![CDATA[\begin {gathered}\vdots \end {gathered}]]></fr:tex>
+</html:div>
+<html:p>Directly computing the probability for each possible value of <fr:tex display="inline"><![CDATA[\xi ]]></fr:tex> would thus take <fr:tex display="inline"><![CDATA[O(K^T)]]></fr:tex> or exponential in the horizon length. Can we do better?</html:p><html:p>In the particular case of a <html:em>hidden markov model</html:em>, we can achieve <fr:tex display="inline"><![CDATA[O(TK^2)]]></fr:tex>!!!</html:p>
+  
+  
+  <fr:tree show-metadata="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>21</fr:day></fr:date><fr:uri>https://kellenkanarios.com/3C07/</fr:uri><fr:display-uri>3C07</fr:display-uri><fr:route>/3C07/</fr:route><fr:title text="Hidden markov model">Hidden markov model</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>A hidden markov model is a statistical model, where the <html:em>hidden states</html:em> <fr:tex display="inline"><![CDATA[h \in  \mathcal {H}]]></fr:tex> form a <fr:link href="/0040/" title="Markov Chain" uri="https://kellenkanarios.com/0040/" display-uri="0040" type="local">Markov Chain</fr:link>, such that <fr:tex display="inline"><![CDATA[\mathbb {P}(h_{t+1} \mid  h_{1}, \ldots , h_{t}) = \mathbb {P}(h_{t + 1} \mid  h_{t})]]></fr:tex></html:p><html:p>Unlike a Markov chain, in addition to the hidden states, a hidden markov models contains observations <fr:tex display="inline"><![CDATA[x \in  \mathcal {X}]]></fr:tex> with associated <html:em>emission probabilities</html:em> <fr:tex display="inline"><![CDATA[\mathbb {P}(x_t \mid  h_t)]]></fr:tex>.</html:p><html:figure><html:img width="80%" src="/bafkrmih7ygjf7ouq4la4sql6q2c2mzahnasgsmjxt5dd5oxsezsufl2fwu.png" />
+<html:figcaption>Graphical model of a hidden markov model.</html:figcaption></html:figure><html:p>From the graphical model, we can see that for any <fr:tex display="inline"><![CDATA[i < j]]></fr:tex>, <fr:tex display="inline"><![CDATA[(x_{0}, \ldots , x_i) \perp  (x_{j}, \ldots , x_{N}) \mid  z_{i}]]></fr:tex>. Or in english, <html:em>observations are independent conditioned on the hidden state</html:em>. </html:p></fr:mainmatter></fr:tree>
+<html:p>In our setup, we can rewrite the marginal as</html:p><fr:tex display="block"><![CDATA[\mathbb {P}(z_t \mid  \mathcal {H}) = \mathbb {P}(z_t \mid  x_{0}, \ldots , x_{T})]]></fr:tex><html:p>From Baye's rule, we can decompose this as</html:p><fr:tex display="block"><![CDATA[\begin {align*}
+    \mathbb {P}(z_t \mid  x_{0}, \ldots , x_{T}) &= \frac {\mathbb {P}(x_{0}, \ldots , x_{T} \mid  z_t)\mathbb {P}(z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})} \\
+&= \frac {\mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t, x_{0}, \ldots , x_t) \mathbb {P}(x_{0}, \ldots , x_{t} \mid  z_t)\mathbb {P}(z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})} \\
+&= \frac {\mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t, x_{0}, \ldots , x_t) \mathbb {P}(x_{0}, \ldots , x_{t}, z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})}
+  .\end {align*}]]></fr:tex><html:p>Since we are considering an <fr:link href="/3C07/" title="Hidden markov model" uri="https://kellenkanarios.com/3C07/" display-uri="3C07" type="local">HMM</fr:link>, <fr:tex display="inline"><![CDATA[(x_{1}, \ldots , x_t)]]></fr:tex> and <fr:tex display="inline"><![CDATA[(x_{t + 1}, \ldots , x_{T})]]></fr:tex> are <html:em>conditionally independent</html:em> conditioned on <fr:tex display="inline"><![CDATA[z_t]]></fr:tex>. Thus, we can further simplify this to</html:p><fr:tex display="block"><![CDATA[\mathbb {P}(z_t \mid  x_{0}, \ldots , x_{T}) = \frac {\mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t) \mathbb {P}(x_{0}, \ldots , x_{t}, z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})}]]></fr:tex>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(70, 100, 150, 0.75);
+  border-radius: var(--radius);
+  background-color: rgba(70, 100, 150, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</html:span> We will now consider the terms in the numerator separately. The first can be viewed as the <html:em>backward</html:em> term
+  <fr:tex display="block"><![CDATA[\beta _t(z) = \mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t = z),]]></fr:tex>
+  and the second as the <html:em>forward</html:em> term
+  <fr:tex display="block"><![CDATA[\phi _t(z) = \mathbb {P}(x_{0}, \ldots , x_{t}, z_t = z).]]></fr:tex>
+  Naming convention is to denote which direction in time information propagates (we will see shortly).
+  </html:div>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>21</fr:day></fr:date><fr:title text="Forward pass">Forward pass</fr:title></fr:frontmatter><fr:mainmatter>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \phi _t(z) &= \mathbb {P}(x_{0}, \ldots , x_t, z) \\
+  &= \mathbb {P}(x_0, \ldots , x_t \mid  z) \mathbb {P}(z) \\
+  &= \mathbb {P}(x_0, \ldots , x_{t - 1} \mid  x_t, z) \mathbb {P}(x_t \mid  z) \mathbb {P}(z)
+.\end {align*}]]></fr:tex>
+Since this is a <fr:link href="/3C07/" title="Hidden markov model" uri="https://kellenkanarios.com/3C07/" display-uri="3C07" type="local">HMM</fr:link>, <fr:tex display="inline"><![CDATA[(x_{0}, \ldots , x_{t - 1}) \perp  x_{t} \mid  z_{t}]]></fr:tex>. Therefore, we can drop the <fr:tex display="inline"><![CDATA[x_t]]></fr:tex> from the first term, such that
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \phi _t(z) &= \mathbb {P}(x_0, \ldots , x_{t - 1} \mid  z) \mathbb {P}(x_t \mid  z) \mathbb {P}(z) \\
+  &= \mathbb {P}(x_0, \ldots , x_{t - 1}, z) \mathbb {P}(x_t \mid  z) \\
+  &= \mathbb {P}(x_t \mid  z) \sum _{z'} \mathbb {P}(x_0, \ldots , x_{t - 1}, z', z)  \\
+  &= \mathbb {P}(x_t \mid  z) \sum _{z'} \mathbb {P}(x_0, \ldots , x_{t - 1} \mid  z', z) \mathbb {P}(z \mid  z') \mathbb {P}(z')
+.\end {align*}]]></fr:tex>
+Similarly, <fr:tex display="inline"><![CDATA[(x_{0}, \ldots , x_{t - 1}) \perp  z_{t} \mid  z_{t - 1}]]></fr:tex>, such that
+<fr:tex display="block"><![CDATA[\begin {align*}
+   \phi _t(z) &= \mathbb {P}(x_t \mid  z) \sum _{z'} \mathbb {P}(x_0, \ldots , x_{t - 1} \mid  z') \mathbb {P}(z \mid  z') \mathbb {P}(z') \\
+&= \mathbb {P}(x_t \mid  z) \sum _{z'} \mathbb {P}(x_0, \ldots , x_{t - 1}, z') \mathbb {P}(z \mid  z') \\
+&= \mathbb {P}(x_t \mid  z) \sum _{z'} \phi _{t - 1}(z') \mathbb {P}(z \mid  z')
+.\end {align*}]]></fr:tex>
+<html:p>Here <fr:tex display="inline"><![CDATA[z']]></fr:tex> ranges over the possible values of <fr:tex display="inline"><![CDATA[z_{t - 1}]]></fr:tex>. We see that <fr:tex display="inline"><![CDATA[\phi _t(z)]]></fr:tex> depends only on information from time <fr:tex display="inline"><![CDATA[t]]></fr:tex> and <fr:tex display="inline"><![CDATA[t - 1]]></fr:tex>. Therefore, information propagates <html:em>forward in time</html:em>.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>21</fr:day></fr:date><fr:title text="Backward Pass">Backward Pass</fr:title></fr:frontmatter><fr:mainmatter>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \beta _t(z) &= \mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z) \\
+  &= \sum _{z'} \mathbb {P}(x_{t + 1}, \ldots , x_{T}, z' \mid  z) \\
+  &= \sum _{z'} \mathbb {P}(x_{t + 2}, \ldots , x_{T} \mid  x_{t + 1}, z', z) \mathbb {P}(x_{t + 1} \mid  z', z) \mathbb {P}(z' \mid  z)
+.\end {align*}]]></fr:tex>
+First, since this is a <fr:link href="/3C07/" title="Hidden markov model" uri="https://kellenkanarios.com/3C07/" display-uri="3C07" type="local">HMM</fr:link>, everything is independent of <fr:tex display="inline"><![CDATA[z_{t}]]></fr:tex> given <fr:tex display="inline"><![CDATA[z_{t + 1}]]></fr:tex>. Therefore, we can simplify
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \beta _t(z) &= \sum _{z'} \mathbb {P}(x_{t + 2}, \ldots , x_{T} \mid  x_{t + 1}, z') \mathbb {P}(x_{t + 1} \mid  z') \mathbb {P}(z' \mid  z).
+\end {align*}]]></fr:tex>
+Additionally, <fr:tex display="inline"><![CDATA[(x_{t + 2}, \ldots , x_{T}) \perp  x_{t + 1} \mid  z_{t + 1}]]></fr:tex>, such that
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \beta _t(z) &= \sum _{z'} \mathbb {P}(x_{t + 2}, \ldots , x_{T} \mid  z') \mathbb {P}(x_{t + 1} \mid  z') \mathbb {P}(z' \mid  z) \\
+&= \sum _{z'} \beta _{t + 1}(z') \mathbb {P}(x_{t + 1} \mid  z') \mathbb {P}(z' \mid  z)
+.\end {align*}]]></fr:tex>
+<html:p>Here <fr:tex display="inline"><![CDATA[z']]></fr:tex> ranges over the possible values of <fr:tex display="inline"><![CDATA[z_{t + 1}]]></fr:tex>. We see that <fr:tex display="inline"><![CDATA[\beta _t(z)]]></fr:tex> depends only on information from time <fr:tex display="inline"><![CDATA[t]]></fr:tex> and <fr:tex display="inline"><![CDATA[t + 1]]></fr:tex>. Therefore, information propagates <html:em>backward in time</html:em>.</html:p>
+</fr:mainmatter></fr:tree>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+Both passes are <fr:tex display="inline"><![CDATA[O(TK^2)]]></fr:tex> because at each timestep, it requires computing <fr:tex display="inline"><![CDATA[\mathbb {P}(z_{t} \mid  z_{t - 1})]]></fr:tex> or <fr:tex display="inline"><![CDATA[\mathbb {P}(z_{t + 1} \mid  z_{t})]]></fr:tex> which is a <fr:tex display="inline"><![CDATA[K \times  K]]></fr:tex> transition matrix.
+</html:div>
+<html:p>Notably, the structure of the <fr:link href="/3C07/" title="Hidden markov model" uri="https://kellenkanarios.com/3C07/" display-uri="3C07" type="local">HMM</fr:link> ensures each marginal <fr:tex display="inline"><![CDATA[\mathbb {P}(z_t \mid  \mathcal {H})]]></fr:tex> depends only on the <html:strong>local</html:strong> transition probabilities <fr:tex display="inline"><![CDATA[\mathbb {P}(z_{t} \mid  z_{t - 1})]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbb {P}(z_{t + 1} \mid  z_{t})]]></fr:tex> rather than the exponential <html:strong>global</html:strong> <fr:tex display="inline"><![CDATA[\mathbb {P}(z_{0}, \ldots , z_{T})]]></fr:tex>. This lends itself to the idea of a <html:em>dynamic programming</html:em> algorithm, where we compute the posterior of the preceding / succeeding latent and use the result for the next. Since we have bi-directional dependencies this requires making two passes a <html:em>forward</html:em> and <html:em>backward</html:em> pass. The key remaining detail is that these components can be efficiently combined to recover the full true marginal.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>21</fr:day></fr:date><fr:title text="Computing the posterior">Computing the posterior</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p>Finally, all that remains is to combine <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex> and <fr:tex display="inline"><![CDATA[\beta ]]></fr:tex> to recover the true posterior. Recall that these directly correspond to the components in the numerator i.e.</html:p>
+  <fr:tex display="block"><![CDATA[\mathbb {P}(z_t \mid  \mathcal {H}) = \frac {\phi _t(z) \beta _t(z)}{\mathbb {P}(\mathcal {H})}]]></fr:tex>
+  <html:p>Therefore, it remains to compute the normalization term <fr:tex display="inline"><![CDATA[\mathbb {P}(\mathcal {H})]]></fr:tex>. To do so, note that</html:p>
+  <fr:tex display="block"><![CDATA[\begin {align*}
+    \phi _t(z) \beta _t(z) = \mathbb {P}(\mathcal {H} \mid  z) \mathbb {P}(z) \implies  \sum _{z} \phi _t(z)\beta _t(z) &= \sum _{z} \mathbb {P}(\mathcal {H} \mid  z) \mathbb {P}(z) \\
+    &= \mathbb {P}(\mathcal {H})
+  .\end {align*}]]></fr:tex>
+  <html:p>Thus, the true posterior can be recovered as</html:p>
+  <fr:tex display="block"><![CDATA[\mathbb {P}(z_t \mid  \mathcal {H}) = \frac {\phi _t(z) \beta _t(z)}{\sum _{z} \phi _t(z)\beta _t(z)}]]></fr:tex>
+  <html:p>Since <fr:tex display="inline"><![CDATA[z]]></fr:tex> is discrete, this sum is only <fr:tex display="inline"><![CDATA[O(K)]]></fr:tex> and therefore easily computable.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <html:div class="comments">
+    
+  <html:hr />
+
+    <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
+  </html:div>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
                   <fr:month>6</fr:month>
                   <fr:day>24</fr:day>
                 </fr:date>

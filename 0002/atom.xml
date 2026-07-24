@@ -4,11 +4,148 @@
     <name>Kellen Kanarios</name>
     <uri>https://kellenkanarios.com/kellenkanarios/</uri>
   </author>
-  <updated>2026-06-24T21:42:52Z</updated>
+  <updated>2026-07-21T16:04:27Z</updated>
   <title>Blog</title>
   <id>https://kellenkanarios.com/0002/</id>
   <link rel="alternate" href="https://kellenkanarios.com/0002/" />
   <link rel="self" href="https://kellenkanarios.com/0002/atom.xml" />
+  <entry>
+    <title>Forward-backward algorithm</title>
+    <published>2026-07-21T16:04:27Z</published>
+    <updated>2026-07-21T16:04:27Z</updated>
+    <author>
+      <name>Kellen Kanarios</name>
+      <uri>https://kellenkanarios.com/kellenkanarios/</uri>
+    </author>
+    <link rel="alternate" type="text/html" href="https://kellenkanarios.com/F3T0/" />
+    <id>https://kellenkanarios.com/F3T0/</id>
+    <content type="xhtml">
+      <div xmlns="http://www.w3.org/1999/xhtml">
+<p>Suppose we have a sequence of latent variable <code>\xi  = (z_{1}, z_{2}, \ldots , z_{T})</code> and the corresponding sequence of observations <code>\mathcal {H} = (x_{1}, x_{2}, \ldots , x_{T})</code></p>
+ <div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(190, 50, 130, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(190, 50, 130, 0.06);
+  "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</span> We want to compute the <em>posterior</em> distribution <code>\mathbb {P}(\xi  \mid  \mathcal {H}).</code></div>
+<p>Suppose <code>\mathcal {z}</code> is a discrete random variable taking at most <code>K</code> different values. Then, for horizon length <code>T</code>, there are <code>K^T</code> possible values for <code>\xi </code>. Thus, computing <code>\mathbb {P}(\xi  \mid  \mathcal {H})</code> blows up <strong>exponentially</strong>.</p>
+ <div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(60, 90, 180, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(60, 90, 180, 0.05);
+  "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
+<p>Suppose that <code>z \in  \{0, 1\} </code> and <code>T = 2</code>. Then</p>
+<code>\begin {align*}
+  \xi  \in  \{\{0, 0\}, \{0, 1\}, \{1, 1\}, \{1, 0\} \}
+.\end {align*}</code>
+<p>If <code>T = 3</code>,</p>
+<code>\begin {align*}
+  \xi  \in  \{\{0, 0, 0\}, \{0, 1, 0\}, \{1, 1, 0\}, \{1, 0, 0\}, \{1, 0, 1\}, \{0, 1, 1\}, \{1, 1, 1\} \}
+.\end {align*}</code>
+<p>If <code>T = 4</code>,</p>
+<code>\begin {align*}
+  \xi  \in  \{\{0, 0, 0, 0\}, \{0, 1, 0, 0\}, \{1, 1, 0, 0\}, \ldots  \}
+.\end {align*}</code>
+<code>\begin {gathered}\vdots \end {gathered}</code>
+</div>
+<p>Directly computing the probability for each possible value of <code>\xi </code> would thus take <code>O(K^T)</code> or exponential in the horizon length. Can we do better?</p><p>In the particular case of a <em>hidden markov model</em>, we can achieve <code>O(TK^2)</code>!!!</p>
+  
+  
+  <section><header><h2>Hidden markov model</h2></header><p>A hidden markov model is a statistical model, where the <em>hidden states</em> <code>h \in  \mathcal {H}</code> form a <a href="https://kellenkanarios.com/0040/">Markov Chain</a>, such that <code>\mathbb {P}(h_{t+1} \mid  h_{1}, \ldots , h_{t}) = \mathbb {P}(h_{t + 1} \mid  h_{t})</code></p><p>Unlike a Markov chain, in addition to the hidden states, a hidden markov models contains observations <code>x \in  \mathcal {X}</code> with associated <em>emission probabilities</em> <code>\mathbb {P}(x_t \mid  h_t)</code>.</p><figure><img width="80%" src="https://kellenkanarios.com/bafkrmih7ygjf7ouq4la4sql6q2c2mzahnasgsmjxt5dd5oxsezsufl2fwu.png" />
+<figcaption>Graphical model of a hidden markov model.</figcaption></figure><p>From the graphical model, we can see that for any <code>i &lt; j</code>, <code>(x_{0}, \ldots , x_i) \perp  (x_{j}, \ldots , x_{N}) \mid  z_{i}</code>. Or in english, <em>observations are independent conditioned on the hidden state</em>. </p></section>
+<p>In our setup, we can rewrite the marginal as</p><code>\mathbb {P}(z_t \mid  \mathcal {H}) = \mathbb {P}(z_t \mid  x_{0}, \ldots , x_{T})</code><p>From Baye's rule, we can decompose this as</p><code>\begin {align*}
+    \mathbb {P}(z_t \mid  x_{0}, \ldots , x_{T}) &amp;= \frac {\mathbb {P}(x_{0}, \ldots , x_{T} \mid  z_t)\mathbb {P}(z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})} \\
+&amp;= \frac {\mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t, x_{0}, \ldots , x_t) \mathbb {P}(x_{0}, \ldots , x_{t} \mid  z_t)\mathbb {P}(z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})} \\
+&amp;= \frac {\mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t, x_{0}, \ldots , x_t) \mathbb {P}(x_{0}, \ldots , x_{t}, z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})}
+  .\end {align*}</code><p>Since we are considering an <a href="https://kellenkanarios.com/3C07/">HMM</a>, <code>(x_{1}, \ldots , x_t)</code> and <code>(x_{t + 1}, \ldots , x_{T})</code> are <em>conditionally independent</em> conditioned on <code>z_t</code>. Thus, we can further simplify this to</p><code>\mathbb {P}(z_t \mid  x_{0}, \ldots , x_{T}) = \frac {\mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t) \mathbb {P}(x_{0}, \ldots , x_{t}, z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})}</code>
+ <div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(70, 100, 150, 0.75);
+  border-radius: var(--radius);
+  background-color: rgba(70, 100, 150, 0.05);
+  "><span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</span> We will now consider the terms in the numerator separately. The first can be viewed as the <em>backward</em> term
+  <code>\beta _t(z) = \mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t = z),</code>
+  and the second as the <em>forward</em> term
+  <code>\phi _t(z) = \mathbb {P}(x_{0}, \ldots , x_{t}, z_t = z).</code>
+  Naming convention is to denote which direction in time information propagates (we will see shortly).
+  </div>
+
+  <section><header><h2>Forward pass</h2></header>
+<code>\begin {align*}
+  \phi _t(z) &amp;= \mathbb {P}(x_{0}, \ldots , x_t, z) \\
+  &amp;= \mathbb {P}(x_0, \ldots , x_t \mid  z) \mathbb {P}(z) \\
+  &amp;= \mathbb {P}(x_0, \ldots , x_{t - 1} \mid  x_t, z) \mathbb {P}(x_t \mid  z) \mathbb {P}(z)
+.\end {align*}</code>
+Since this is a <a href="https://kellenkanarios.com/3C07/">HMM</a>, <code>(x_{0}, \ldots , x_{t - 1}) \perp  x_{t} \mid  z_{t}</code>. Therefore, we can drop the <code>x_t</code> from the first term, such that
+<code>\begin {align*}
+  \phi _t(z) &amp;= \mathbb {P}(x_0, \ldots , x_{t - 1} \mid  z) \mathbb {P}(x_t \mid  z) \mathbb {P}(z) \\
+  &amp;= \mathbb {P}(x_0, \ldots , x_{t - 1}, z) \mathbb {P}(x_t \mid  z) \\
+  &amp;= \mathbb {P}(x_t \mid  z) \sum _{z'} \mathbb {P}(x_0, \ldots , x_{t - 1}, z', z)  \\
+  &amp;= \mathbb {P}(x_t \mid  z) \sum _{z'} \mathbb {P}(x_0, \ldots , x_{t - 1} \mid  z', z) \mathbb {P}(z \mid  z') \mathbb {P}(z')
+.\end {align*}</code>
+Similarly, <code>(x_{0}, \ldots , x_{t - 1}) \perp  z_{t} \mid  z_{t - 1}</code>, such that
+<code>\begin {align*}
+   \phi _t(z) &amp;= \mathbb {P}(x_t \mid  z) \sum _{z'} \mathbb {P}(x_0, \ldots , x_{t - 1} \mid  z') \mathbb {P}(z \mid  z') \mathbb {P}(z') \\
+&amp;= \mathbb {P}(x_t \mid  z) \sum _{z'} \mathbb {P}(x_0, \ldots , x_{t - 1}, z') \mathbb {P}(z \mid  z') \\
+&amp;= \mathbb {P}(x_t \mid  z) \sum _{z'} \phi _{t - 1}(z') \mathbb {P}(z \mid  z')
+.\end {align*}</code>
+<p>Here <code>z'</code> ranges over the possible values of <code>z_{t - 1}</code>. We see that <code>\phi _t(z)</code> depends only on information from time <code>t</code> and <code>t - 1</code>. Therefore, information propagates <em>forward in time</em>.</p>
+</section>
+
+  <section><header><h2>Backward Pass</h2></header>
+<code>\begin {align*}
+  \beta _t(z) &amp;= \mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z) \\
+  &amp;= \sum _{z'} \mathbb {P}(x_{t + 1}, \ldots , x_{T}, z' \mid  z) \\
+  &amp;= \sum _{z'} \mathbb {P}(x_{t + 2}, \ldots , x_{T} \mid  x_{t + 1}, z', z) \mathbb {P}(x_{t + 1} \mid  z', z) \mathbb {P}(z' \mid  z)
+.\end {align*}</code>
+First, since this is a <a href="https://kellenkanarios.com/3C07/">HMM</a>, everything is independent of <code>z_{t}</code> given <code>z_{t + 1}</code>. Therefore, we can simplify
+<code>\begin {align*}
+  \beta _t(z) &amp;= \sum _{z'} \mathbb {P}(x_{t + 2}, \ldots , x_{T} \mid  x_{t + 1}, z') \mathbb {P}(x_{t + 1} \mid  z') \mathbb {P}(z' \mid  z).
+\end {align*}</code>
+Additionally, <code>(x_{t + 2}, \ldots , x_{T}) \perp  x_{t + 1} \mid  z_{t + 1}</code>, such that
+<code>\begin {align*}
+  \beta _t(z) &amp;= \sum _{z'} \mathbb {P}(x_{t + 2}, \ldots , x_{T} \mid  z') \mathbb {P}(x_{t + 1} \mid  z') \mathbb {P}(z' \mid  z) \\
+&amp;= \sum _{z'} \beta _{t + 1}(z') \mathbb {P}(x_{t + 1} \mid  z') \mathbb {P}(z' \mid  z)
+.\end {align*}</code>
+<p>Here <code>z'</code> ranges over the possible values of <code>z_{t + 1}</code>. We see that <code>\beta _t(z)</code> depends only on information from time <code>t</code> and <code>t + 1</code>. Therefore, information propagates <em>backward in time</em>.</p>
+</section>
+
+ <div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+Both passes are <code>O(TK^2)</code> because at each timestep, it requires computing <code>\mathbb {P}(z_{t} \mid  z_{t - 1})</code> or <code>\mathbb {P}(z_{t + 1} \mid  z_{t})</code> which is a <code>K \times  K</code> transition matrix.
+</div>
+<p>Notably, the structure of the <a href="https://kellenkanarios.com/3C07/">HMM</a> ensures each marginal <code>\mathbb {P}(z_t \mid  \mathcal {H})</code> depends only on the <strong>local</strong> transition probabilities <code>\mathbb {P}(z_{t} \mid  z_{t - 1})</code> and <code>\mathbb {P}(z_{t + 1} \mid  z_{t})</code> rather than the exponential <strong>global</strong> <code>\mathbb {P}(z_{0}, \ldots , z_{T})</code>. This lends itself to the idea of a <em>dynamic programming</em> algorithm, where we compute the posterior of the preceding / succeeding latent and use the result for the next. Since we have bi-directional dependencies this requires making two passes a <em>forward</em> and <em>backward</em> pass. The key remaining detail is that these components can be efficiently combined to recover the full true marginal.</p>
+  <section><header><h2>Computing the posterior</h2></header>
+  <p>Finally, all that remains is to combine <code>\phi </code> and <code>\beta </code> to recover the true posterior. Recall that these directly correspond to the components in the numerator i.e.</p>
+  <code>\mathbb {P}(z_t \mid  \mathcal {H}) = \frac {\phi _t(z) \beta _t(z)}{\mathbb {P}(\mathcal {H})}</code>
+  <p>Therefore, it remains to compute the normalization term <code>\mathbb {P}(\mathcal {H})</code>. To do so, note that</p>
+  <code>\begin {align*}
+    \phi _t(z) \beta _t(z) = \mathbb {P}(\mathcal {H} \mid  z) \mathbb {P}(z) \implies  \sum _{z} \phi _t(z)\beta _t(z) &amp;= \sum _{z} \mathbb {P}(\mathcal {H} \mid  z) \mathbb {P}(z) \\
+    &amp;= \mathbb {P}(\mathcal {H})
+  .\end {align*}</code>
+  <p>Thus, the true posterior can be recovered as</p>
+  <code>\mathbb {P}(z_t \mid  \mathcal {H}) = \frac {\phi _t(z) \beta _t(z)}{\sum _{z} \phi _t(z)\beta _t(z)}</code>
+  <p>Since <code>z</code> is discrete, this sum is only <code>O(K)</code> and therefore easily computable.</p>
+</section>
+
+  <div class="comments">
+    
+  <hr />
+
+    <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
+  </div>
+      </div>
+    </content>
+  </entry>
   <entry>
     <title>My Notes on Productivity</title>
     <published>2026-06-24T21:42:52Z</published>

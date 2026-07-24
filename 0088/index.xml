@@ -187,6 +187,147 @@ Alternating between these steps yields the <html:em>expectation-maximization</ht
                 </fr:authors>
                 <fr:date>
                   <fr:year>2026</fr:year>
+                  <fr:month>7</fr:month>
+                  <fr:day>21</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/F3T0/</fr:uri>
+                <fr:display-uri>F3T0</fr:display-uri>
+                <fr:route>/F3T0/</fr:route>
+                <fr:title text="Forward-backward algorithm">Forward-backward algorithm</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>Suppose we have a sequence of latent variable <fr:tex display="inline"><![CDATA[\xi  = (z_{1}, z_{2}, \ldots , z_{T})]]></fr:tex> and the corresponding sequence of observations <fr:tex display="inline"><![CDATA[\mathcal {H} = (x_{1}, x_{2}, \ldots , x_{T})]]></fr:tex></html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(190, 50, 130, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(190, 50, 130, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</html:span> We want to compute the <html:em>posterior</html:em> distribution <fr:tex display="inline"><![CDATA[\mathbb {P}(\xi  \mid  \mathcal {H}).]]></fr:tex></html:div>
+<html:p>Suppose <fr:tex display="inline"><![CDATA[\mathcal {z}]]></fr:tex> is a discrete random variable taking at most <fr:tex display="inline"><![CDATA[K]]></fr:tex> different values. Then, for horizon length <fr:tex display="inline"><![CDATA[T]]></fr:tex>, there are <fr:tex display="inline"><![CDATA[K^T]]></fr:tex> possible values for <fr:tex display="inline"><![CDATA[\xi ]]></fr:tex>. Thus, computing <fr:tex display="inline"><![CDATA[\mathbb {P}(\xi  \mid  \mathcal {H})]]></fr:tex> blows up <html:strong>exponentially</html:strong>.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(60, 90, 180, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(60, 90, 180, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
+<html:p>Suppose that <fr:tex display="inline"><![CDATA[z \in  \{0, 1\} ]]></fr:tex> and <fr:tex display="inline"><![CDATA[T = 2]]></fr:tex>. Then</html:p>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \xi  \in  \{\{0, 0\}, \{0, 1\}, \{1, 1\}, \{1, 0\} \}
+.\end {align*}]]></fr:tex>
+<html:p>If <fr:tex display="inline"><![CDATA[T = 3]]></fr:tex>,</html:p>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \xi  \in  \{\{0, 0, 0\}, \{0, 1, 0\}, \{1, 1, 0\}, \{1, 0, 0\}, \{1, 0, 1\}, \{0, 1, 1\}, \{1, 1, 1\} \}
+.\end {align*}]]></fr:tex>
+<html:p>If <fr:tex display="inline"><![CDATA[T = 4]]></fr:tex>,</html:p>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \xi  \in  \{\{0, 0, 0, 0\}, \{0, 1, 0, 0\}, \{1, 1, 0, 0\}, \ldots  \}
+.\end {align*}]]></fr:tex>
+<fr:tex display="block"><![CDATA[\begin {gathered}\vdots \end {gathered}]]></fr:tex>
+</html:div>
+<html:p>Directly computing the probability for each possible value of <fr:tex display="inline"><![CDATA[\xi ]]></fr:tex> would thus take <fr:tex display="inline"><![CDATA[O(K^T)]]></fr:tex> or exponential in the horizon length. Can we do better?</html:p><html:p>In the particular case of a <html:em>hidden markov model</html:em>, we can achieve <fr:tex display="inline"><![CDATA[O(TK^2)]]></fr:tex>!!!</html:p>
+  
+  
+  <fr:tree show-metadata="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>21</fr:day></fr:date><fr:uri>https://kellenkanarios.com/3C07/</fr:uri><fr:display-uri>3C07</fr:display-uri><fr:route>/3C07/</fr:route><fr:title text="Hidden markov model">Hidden markov model</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>A hidden markov model is a statistical model, where the <html:em>hidden states</html:em> <fr:tex display="inline"><![CDATA[h \in  \mathcal {H}]]></fr:tex> form a <fr:link href="/0040/" title="Markov Chain" uri="https://kellenkanarios.com/0040/" display-uri="0040" type="local">Markov Chain</fr:link>, such that <fr:tex display="inline"><![CDATA[\mathbb {P}(h_{t+1} \mid  h_{1}, \ldots , h_{t}) = \mathbb {P}(h_{t + 1} \mid  h_{t})]]></fr:tex></html:p><html:p>Unlike a Markov chain, in addition to the hidden states, a hidden markov models contains observations <fr:tex display="inline"><![CDATA[x \in  \mathcal {X}]]></fr:tex> with associated <html:em>emission probabilities</html:em> <fr:tex display="inline"><![CDATA[\mathbb {P}(x_t \mid  h_t)]]></fr:tex>.</html:p><html:figure><html:img width="80%" src="/bafkrmih7ygjf7ouq4la4sql6q2c2mzahnasgsmjxt5dd5oxsezsufl2fwu.png" />
+<html:figcaption>Graphical model of a hidden markov model.</html:figcaption></html:figure><html:p>From the graphical model, we can see that for any <fr:tex display="inline"><![CDATA[i < j]]></fr:tex>, <fr:tex display="inline"><![CDATA[(x_{0}, \ldots , x_i) \perp  (x_{j}, \ldots , x_{N}) \mid  z_{i}]]></fr:tex>. Or in english, <html:em>observations are independent conditioned on the hidden state</html:em>. </html:p></fr:mainmatter></fr:tree>
+<html:p>In our setup, we can rewrite the marginal as</html:p><fr:tex display="block"><![CDATA[\mathbb {P}(z_t \mid  \mathcal {H}) = \mathbb {P}(z_t \mid  x_{0}, \ldots , x_{T})]]></fr:tex><html:p>From Baye's rule, we can decompose this as</html:p><fr:tex display="block"><![CDATA[\begin {align*}
+    \mathbb {P}(z_t \mid  x_{0}, \ldots , x_{T}) &= \frac {\mathbb {P}(x_{0}, \ldots , x_{T} \mid  z_t)\mathbb {P}(z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})} \\
+&= \frac {\mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t, x_{0}, \ldots , x_t) \mathbb {P}(x_{0}, \ldots , x_{t} \mid  z_t)\mathbb {P}(z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})} \\
+&= \frac {\mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t, x_{0}, \ldots , x_t) \mathbb {P}(x_{0}, \ldots , x_{t}, z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})}
+  .\end {align*}]]></fr:tex><html:p>Since we are considering an <fr:link href="/3C07/" title="Hidden markov model" uri="https://kellenkanarios.com/3C07/" display-uri="3C07" type="local">HMM</fr:link>, <fr:tex display="inline"><![CDATA[(x_{1}, \ldots , x_t)]]></fr:tex> and <fr:tex display="inline"><![CDATA[(x_{t + 1}, \ldots , x_{T})]]></fr:tex> are <html:em>conditionally independent</html:em> conditioned on <fr:tex display="inline"><![CDATA[z_t]]></fr:tex>. Thus, we can further simplify this to</html:p><fr:tex display="block"><![CDATA[\mathbb {P}(z_t \mid  x_{0}, \ldots , x_{T}) = \frac {\mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t) \mathbb {P}(x_{0}, \ldots , x_{t}, z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})}]]></fr:tex>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(70, 100, 150, 0.75);
+  border-radius: var(--radius);
+  background-color: rgba(70, 100, 150, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</html:span> We will now consider the terms in the numerator separately. The first can be viewed as the <html:em>backward</html:em> term
+  <fr:tex display="block"><![CDATA[\beta _t(z) = \mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t = z),]]></fr:tex>
+  and the second as the <html:em>forward</html:em> term
+  <fr:tex display="block"><![CDATA[\phi _t(z) = \mathbb {P}(x_{0}, \ldots , x_{t}, z_t = z).]]></fr:tex>
+  Naming convention is to denote which direction in time information propagates (we will see shortly).
+  </html:div>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>21</fr:day></fr:date><fr:title text="Forward pass">Forward pass</fr:title></fr:frontmatter><fr:mainmatter>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \phi _t(z) &= \mathbb {P}(x_{0}, \ldots , x_t, z) \\
+  &= \mathbb {P}(x_0, \ldots , x_t \mid  z) \mathbb {P}(z) \\
+  &= \mathbb {P}(x_0, \ldots , x_{t - 1} \mid  x_t, z) \mathbb {P}(x_t \mid  z) \mathbb {P}(z)
+.\end {align*}]]></fr:tex>
+Since this is a <fr:link href="/3C07/" title="Hidden markov model" uri="https://kellenkanarios.com/3C07/" display-uri="3C07" type="local">HMM</fr:link>, <fr:tex display="inline"><![CDATA[(x_{0}, \ldots , x_{t - 1}) \perp  x_{t} \mid  z_{t}]]></fr:tex>. Therefore, we can drop the <fr:tex display="inline"><![CDATA[x_t]]></fr:tex> from the first term, such that
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \phi _t(z) &= \mathbb {P}(x_0, \ldots , x_{t - 1} \mid  z) \mathbb {P}(x_t \mid  z) \mathbb {P}(z) \\
+  &= \mathbb {P}(x_0, \ldots , x_{t - 1}, z) \mathbb {P}(x_t \mid  z) \\
+  &= \mathbb {P}(x_t \mid  z) \sum _{z'} \mathbb {P}(x_0, \ldots , x_{t - 1}, z', z)  \\
+  &= \mathbb {P}(x_t \mid  z) \sum _{z'} \mathbb {P}(x_0, \ldots , x_{t - 1} \mid  z', z) \mathbb {P}(z \mid  z') \mathbb {P}(z')
+.\end {align*}]]></fr:tex>
+Similarly, <fr:tex display="inline"><![CDATA[(x_{0}, \ldots , x_{t - 1}) \perp  z_{t} \mid  z_{t - 1}]]></fr:tex>, such that
+<fr:tex display="block"><![CDATA[\begin {align*}
+   \phi _t(z) &= \mathbb {P}(x_t \mid  z) \sum _{z'} \mathbb {P}(x_0, \ldots , x_{t - 1} \mid  z') \mathbb {P}(z \mid  z') \mathbb {P}(z') \\
+&= \mathbb {P}(x_t \mid  z) \sum _{z'} \mathbb {P}(x_0, \ldots , x_{t - 1}, z') \mathbb {P}(z \mid  z') \\
+&= \mathbb {P}(x_t \mid  z) \sum _{z'} \phi _{t - 1}(z') \mathbb {P}(z \mid  z')
+.\end {align*}]]></fr:tex>
+<html:p>Here <fr:tex display="inline"><![CDATA[z']]></fr:tex> ranges over the possible values of <fr:tex display="inline"><![CDATA[z_{t - 1}]]></fr:tex>. We see that <fr:tex display="inline"><![CDATA[\phi _t(z)]]></fr:tex> depends only on information from time <fr:tex display="inline"><![CDATA[t]]></fr:tex> and <fr:tex display="inline"><![CDATA[t - 1]]></fr:tex>. Therefore, information propagates <html:em>forward in time</html:em>.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>21</fr:day></fr:date><fr:title text="Backward Pass">Backward Pass</fr:title></fr:frontmatter><fr:mainmatter>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \beta _t(z) &= \mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z) \\
+  &= \sum _{z'} \mathbb {P}(x_{t + 1}, \ldots , x_{T}, z' \mid  z) \\
+  &= \sum _{z'} \mathbb {P}(x_{t + 2}, \ldots , x_{T} \mid  x_{t + 1}, z', z) \mathbb {P}(x_{t + 1} \mid  z', z) \mathbb {P}(z' \mid  z)
+.\end {align*}]]></fr:tex>
+First, since this is a <fr:link href="/3C07/" title="Hidden markov model" uri="https://kellenkanarios.com/3C07/" display-uri="3C07" type="local">HMM</fr:link>, everything is independent of <fr:tex display="inline"><![CDATA[z_{t}]]></fr:tex> given <fr:tex display="inline"><![CDATA[z_{t + 1}]]></fr:tex>. Therefore, we can simplify
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \beta _t(z) &= \sum _{z'} \mathbb {P}(x_{t + 2}, \ldots , x_{T} \mid  x_{t + 1}, z') \mathbb {P}(x_{t + 1} \mid  z') \mathbb {P}(z' \mid  z).
+\end {align*}]]></fr:tex>
+Additionally, <fr:tex display="inline"><![CDATA[(x_{t + 2}, \ldots , x_{T}) \perp  x_{t + 1} \mid  z_{t + 1}]]></fr:tex>, such that
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \beta _t(z) &= \sum _{z'} \mathbb {P}(x_{t + 2}, \ldots , x_{T} \mid  z') \mathbb {P}(x_{t + 1} \mid  z') \mathbb {P}(z' \mid  z) \\
+&= \sum _{z'} \beta _{t + 1}(z') \mathbb {P}(x_{t + 1} \mid  z') \mathbb {P}(z' \mid  z)
+.\end {align*}]]></fr:tex>
+<html:p>Here <fr:tex display="inline"><![CDATA[z']]></fr:tex> ranges over the possible values of <fr:tex display="inline"><![CDATA[z_{t + 1}]]></fr:tex>. We see that <fr:tex display="inline"><![CDATA[\beta _t(z)]]></fr:tex> depends only on information from time <fr:tex display="inline"><![CDATA[t]]></fr:tex> and <fr:tex display="inline"><![CDATA[t + 1]]></fr:tex>. Therefore, information propagates <html:em>backward in time</html:em>.</html:p>
+</fr:mainmatter></fr:tree>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+Both passes are <fr:tex display="inline"><![CDATA[O(TK^2)]]></fr:tex> because at each timestep, it requires computing <fr:tex display="inline"><![CDATA[\mathbb {P}(z_{t} \mid  z_{t - 1})]]></fr:tex> or <fr:tex display="inline"><![CDATA[\mathbb {P}(z_{t + 1} \mid  z_{t})]]></fr:tex> which is a <fr:tex display="inline"><![CDATA[K \times  K]]></fr:tex> transition matrix.
+</html:div>
+<html:p>Notably, the structure of the <fr:link href="/3C07/" title="Hidden markov model" uri="https://kellenkanarios.com/3C07/" display-uri="3C07" type="local">HMM</fr:link> ensures each marginal <fr:tex display="inline"><![CDATA[\mathbb {P}(z_t \mid  \mathcal {H})]]></fr:tex> depends only on the <html:strong>local</html:strong> transition probabilities <fr:tex display="inline"><![CDATA[\mathbb {P}(z_{t} \mid  z_{t - 1})]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbb {P}(z_{t + 1} \mid  z_{t})]]></fr:tex> rather than the exponential <html:strong>global</html:strong> <fr:tex display="inline"><![CDATA[\mathbb {P}(z_{0}, \ldots , z_{T})]]></fr:tex>. This lends itself to the idea of a <html:em>dynamic programming</html:em> algorithm, where we compute the posterior of the preceding / succeeding latent and use the result for the next. Since we have bi-directional dependencies this requires making two passes a <html:em>forward</html:em> and <html:em>backward</html:em> pass. The key remaining detail is that these components can be efficiently combined to recover the full true marginal.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>21</fr:day></fr:date><fr:title text="Computing the posterior">Computing the posterior</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p>Finally, all that remains is to combine <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex> and <fr:tex display="inline"><![CDATA[\beta ]]></fr:tex> to recover the true posterior. Recall that these directly correspond to the components in the numerator i.e.</html:p>
+  <fr:tex display="block"><![CDATA[\mathbb {P}(z_t \mid  \mathcal {H}) = \frac {\phi _t(z) \beta _t(z)}{\mathbb {P}(\mathcal {H})}]]></fr:tex>
+  <html:p>Therefore, it remains to compute the normalization term <fr:tex display="inline"><![CDATA[\mathbb {P}(\mathcal {H})]]></fr:tex>. To do so, note that</html:p>
+  <fr:tex display="block"><![CDATA[\begin {align*}
+    \phi _t(z) \beta _t(z) = \mathbb {P}(\mathcal {H} \mid  z) \mathbb {P}(z) \implies  \sum _{z} \phi _t(z)\beta _t(z) &= \sum _{z} \mathbb {P}(\mathcal {H} \mid  z) \mathbb {P}(z) \\
+    &= \mathbb {P}(\mathcal {H})
+  .\end {align*}]]></fr:tex>
+  <html:p>Thus, the true posterior can be recovered as</html:p>
+  <fr:tex display="block"><![CDATA[\mathbb {P}(z_t \mid  \mathcal {H}) = \frac {\phi _t(z) \beta _t(z)}{\sum _{z} \phi _t(z)\beta _t(z)}]]></fr:tex>
+  <html:p>Since <fr:tex display="inline"><![CDATA[z]]></fr:tex> is discrete, this sum is only <fr:tex display="inline"><![CDATA[O(K)]]></fr:tex> and therefore easily computable.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <html:div class="comments">
+    
+  <html:hr />
+
+    <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
+  </html:div>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
                   <fr:month>6</fr:month>
                   <fr:day>24</fr:day>
                 </fr:date>
@@ -1190,6 +1331,180 @@ You may be wondering how we use this algorithmically to find <fr:tex display="in
         <fr:title text="Backlinks">Backlinks</fr:title>
       </fr:frontmatter>
       <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>23</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/G27U/</fr:uri>
+            <fr:display-uri>G27U</fr:display-uri>
+            <fr:route>/G27U/</fr:route>
+            <fr:title text="POTW: Learning Options via Compression"><fr:link href="/005G/" title="Papers of a week" uri="https://kellenkanarios.com/005G/" display-uri="005G" type="local">POTW</fr:link>: <fr:link href="/jiangLearningOptionsCompression/" title="Learning Options via Compression" uri="https://kellenkanarios.com/jiangLearningOptionsCompression/" display-uri="jiangLearningOptionsCompression" type="local">Learning Options via Compression</fr:link></fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>The setup for <html:em><fr:link href="/jiangLearningOptionsCompression/" title="Learning Options via Compression" uri="https://kellenkanarios.com/jiangLearningOptionsCompression/" display-uri="jiangLearningOptionsCompression" type="local">Learning Options via Compression</fr:link></html:em>.</html:p>
+            <html:ul><html:li>A <html:em>state abstraction posterior</html:em> <fr:tex display="inline"><![CDATA[q_{\theta }(s_{t} \mid  z_{t}, x_{t})]]></fr:tex> and <html:em>decoder</html:em> <fr:tex display="inline"><![CDATA[p_{\theta }(a_{t} \mid  s_{t})]]></fr:tex>, where <fr:tex display="inline"><![CDATA[\pi _{\theta }(a_t \mid  s_t, x_t) = \mathbb {E}_{q_{\theta }(s_{t} \mid  x_{t}, z_{t})}[p_{\theta }(a_t \mid  s_t)]]]></fr:tex></html:li>
+  <html:ul><html:li>This seems to be needed to ensure that the decoder cannot overfit to the offline data?</html:li></html:ul>
+  <html:li>A <html:em>termination network</html:em> <fr:tex display="inline"><![CDATA[\beta _{\theta }(b_t \mid  x_{1}, \ldots , x_{t})]]></fr:tex></html:li>
+  <html:li>A <html:em>skill posterior</html:em> <fr:tex display="inline"><![CDATA[\eta _{\theta }(z_{t} \mid  z_{t - 1}, b_{t}, x_{1:T},a_{1:T})]]></fr:tex>.</html:li></html:ul>
+            <html:p>Unlike in <fr:link href="/foxMultiLevelDiscoveryDeep2017/" title="Multi-Level Discovery of Deep Options" uri="https://kellenkanarios.com/foxMultiLevelDiscoveryDeep2017/" display-uri="foxMultiLevelDiscoveryDeep2017" type="local">DDO</fr:link>, where they do exact posterior inference, here we do variational inference. Namely, they directly try to model the posterior via the neural network <fr:tex display="inline"><![CDATA[\eta _{\theta }(z_{t} \mid  z_{t - 1}, b_{t}, x_{1:T},a_{1:T})]]></fr:tex>. This has a few consequences:</html:p>
+            <html:ul>
+              <html:li>The <html:em>expectation gradient</html:em> is now true <fr:link href="/0088/" title="Expectation Maximization" uri="https://kellenkanarios.com/0088/" display-uri="0088" type="local">Expectation Maximization</fr:link>. In particular, we need to optimize the <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link>.</html:li>
+            </html:ul>
+            <html:p>The <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link> of <fr:link href="/jiangLearningOptionsCompression/" title="Learning Options via Compression" uri="https://kellenkanarios.com/jiangLearningOptionsCompression/" display-uri="jiangLearningOptionsCompression" type="local">LOVE</fr:link> can be written as</html:p>
+            <fr:tex display="block"><![CDATA[\begin {align*}
+\mathcal {L}_{\text {ELBO}}(\theta ) \approx  \sum _{t=1}^{T} \log  &p_{\theta }(\mathbf {a}_{t} \mid  \mathbf {s}_{t}) + D_{\text {KL}}(q_{\theta }(m_{t} \mid  \mathbf {x}_{1:t}) \parallel  p_{\theta }(m_{t} \mid  \mathbf {s}_{t})) \\ &+ D_{\text {KL}}(q_{\theta }(z_{t} \mid  m_{t}, \mathbf {x}_{1:T}, \mathbf {a}_{1:T}) \parallel  p(z_{t})) + D_{\text {KL}}(q_{\theta }(s_{t} \mid  z_{t}, \mathbf {x}_{t}) \parallel  p_{\theta }(s_{t} \mid  s_{t-1}, m_{t-1}))
+.\end {align*}]]></fr:tex>
+            <html:p>Notably this requires a few additional <html:em>prior networks</html:em> for the KL regularization term in the <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link>.</html:p>
+            <html:ul><html:li>A <html:em>boundary prior</html:em> <fr:tex display="inline"><![CDATA[\beta (b_t \mid  s_{t})]]></fr:tex>.</html:li>
+  <html:li>A <html:em>skill prior</html:em> <fr:tex display="inline"><![CDATA[p(z)]]></fr:tex>.</html:li>
+  <html:li>A <html:em>state abstraction transition prior</html:em> <fr:tex display="inline"><![CDATA[p(s_t | s_{t-1}, z_t)]]></fr:tex>.</html:li></html:ul>
+            <html:p>Additionally, we also need to <html:em>sample</html:em> the <fr:tex display="inline"><![CDATA[z]]></fr:tex>'s. This is done via Gumbel softmax and causes much higher variance.</html:p>
+            <html:figure><html:img width="80%" src="/bafkrmiebac34yymcnvkalur4ohcybqfury4csaurllfnwl7hlilkdfpf6q.png" />
+<html:figcaption>How <fr:link href="/jiangLearningOptionsCompression/" title="Learning Options via Compression" uri="https://kellenkanarios.com/jiangLearningOptionsCompression/" display-uri="jiangLearningOptionsCompression" type="local">LOVE</fr:link> goes from input sequence to end skill labels.</html:figcaption></html:figure>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/ZUAG/</fr:uri>
+            <fr:display-uri>ZUAG</fr:display-uri>
+            <fr:route>/ZUAG/</fr:route>
+            <fr:title text="POTW: Multi-Level Discovery of Deep Options"><fr:link href="/005G/" title="Papers of a week" uri="https://kellenkanarios.com/005G/" display-uri="005G" type="local">POTW</fr:link>: <fr:link href="/foxMultiLevelDiscoveryDeep2017/" title="Multi-Level Discovery of Deep Options" uri="https://kellenkanarios.com/foxMultiLevelDiscoveryDeep2017/" display-uri="foxMultiLevelDiscoveryDeep2017" type="local">Multi-Level Discovery of Deep Options</fr:link></fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The setup for <html:em><fr:link href="/foxMultiLevelDiscoveryDeep2017/" title="Multi-Level Discovery of Deep Options" uri="https://kellenkanarios.com/foxMultiLevelDiscoveryDeep2017/" display-uri="foxMultiLevelDiscoveryDeep2017" type="local">Multi-Level Discovery of Deep Options</fr:link></html:em>:</html:p><html:ul><html:li>We have a <html:em>meta-controller</html:em> that outputs the <html:em>skill</html:em> <fr:tex display="inline"><![CDATA[z]]></fr:tex> given the state <fr:tex display="inline"><![CDATA[s]]></fr:tex> i.e. <fr:tex display="inline"><![CDATA[z_t \sim  \eta (\cdot  \mid  s_t)]]></fr:tex></html:li>
+  <html:li>We have the <html:em>skill</html:em>, which is a skill-conditioned policy <fr:tex display="inline"><![CDATA[a_t \sim  \pi (\cdot  \mid  s_t, z_t)]]></fr:tex></html:li>
+  <html:li>We have the <html:em>termination function</html:em> <fr:tex display="inline"><![CDATA[\psi (\cdot  \mid  s_t, z_{t - 1})]]></fr:tex>, which is <html:strong>per skill</html:strong> and evaluates the <html:em>previous</html:em> skill <fr:tex display="inline"><![CDATA[z_{t - 1}]]></fr:tex> at the new state <fr:tex display="inline"><![CDATA[s_t]]></fr:tex>, such that <fr:tex display="inline"><![CDATA[b_t \sim  \mathrm {Ber}\big (\psi (s_t, z_{t - 1})\big ) \in  \{0, 1\}  ]]></fr:tex></html:li>
+  <html:ul><html:li>For <fr:tex display="inline"><![CDATA[b_t = 1]]></fr:tex>, we resample a new skill <fr:tex display="inline"><![CDATA[z_t \sim  \eta (\cdot  \mid  s_t)]]></fr:tex></html:li>
+    <html:li>Otherwise, <fr:tex display="inline"><![CDATA[z_{t} = z_{t - 1}]]></fr:tex></html:li></html:ul></html:ul><html:figure><html:img width="80%" src="/bafkrmicugzqh7nxbakyfuybckriuwek7cu3oage2oxxeyjlwox4cku2ib4.png" />
+<html:figcaption>Graphical model for <fr:link href="/foxMultiLevelDiscoveryDeep2017/" title="Multi-Level Discovery of Deep Options" uri="https://kellenkanarios.com/foxMultiLevelDiscoveryDeep2017/" display-uri="foxMultiLevelDiscoveryDeep2017" type="local">DDO</fr:link>.</html:figcaption></html:figure><html:p>Assuming there is a true underlying latent history <fr:tex display="inline"><![CDATA[\xi  = \{b_{0}, z_{0}, b_{1}, z_{1}, \ldots \}  ]]></fr:tex> and the observable history <fr:tex display="inline"><![CDATA[\mathcal {H} = \{s_{0}, a_{0}, s_{1}, a_{1}, \ldots \}  ]]></fr:tex>, the likelihood according to the above generative model is given by</html:p><fr:tex display="block"><![CDATA[\mathbb {P}(\mathcal {H}, \xi ) = p(s_{0})\delta _{\{b_{0} = 1\}}\eta (z_{0} \mid  s_{0}) \prod _{t=1}^{T - 1} \mathbb {P}(b_t, z_t \mid  z_{t - 1}, s_t) \prod _{t = 0}^{T - 1} \pi (a_t \mid  s_t, z_t) p(s_{t+1} \mid  s_t, a_t)]]></fr:tex><html:p>Furthermore, according to our model, we have that</html:p><fr:tex display="block"><![CDATA[
+\begin {align*}
+ \mathbb {P}(b_t = 0, z_t \mid  z_{t - 1}, s_t) &= (1 - \psi (s_t, z_{t - 1})) \cdot  \delta _{\{z_{t} = z_{t - 1}\}} \\
+ \mathbb {P}(b_t = 1, z_t \mid  z_{t - 1}, s_t) &= \psi (s_t, z_{t - 1}) \cdot  \eta (z_t \mid  s_t)
+.\end {align*}
+]]></fr:tex><html:p>Up to this point, we have assumed this is the ground truth model and we are given each of the components. Instead we want to <html:em>learn</html:em> these components. To do so, we introduce our set of parameters <fr:tex display="inline"><![CDATA[\mathbf {\theta } ]]></fr:tex>, such that each component is parametrized by a subset of <fr:tex display="inline"><![CDATA[\mathbf {\theta } ]]></fr:tex> i.e. <fr:tex display="inline"><![CDATA[\eta _{\theta }, \pi _{\theta }, \psi _{\theta }]]></fr:tex>.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(190, 50, 130, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(190, 50, 130, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</html:span> We want to learn some <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> that maximized the likelihood of the <html:em>observable</html:em> data.</html:div>
+<html:p>To do so, first consider the log-likelihood of our new parametrized model</html:p><fr:tex display="block"><![CDATA[
+\begin {align*}
+\log  \mathbb {P}_{\theta }(\mathcal {H}, \xi ) &= \log  \left [p(s_{0})\delta _{\{b_{0} = 1\}}\eta _{\theta }(z_{0} \mid  s_{0}) \prod _{t=1}^{T - 1} \mathbb {P}_{\theta }(b_t, z_t \mid  z_{t - 1}, s_t) \prod _{t = 0}^{T - 1} \pi _{\theta }(a_t \mid  s_t, z_t) p(s_{t+1} \mid  s_t, a_t)\right ] \\
+&= \log  p(s_{0})\delta _{\{b_{0} = 1\}} + \log \left [\eta _{\theta }(z_{0} \mid  s_{0}) \prod _{t=1}^{T - 1} \mathbb {P}_{\theta }(b_t, z_t \mid  z_{t - 1}, s_t) \prod _{t = 0}^{T - 1} \pi _{\theta }(a_t \mid  s_t, z_t) \right ] + \sum _{t=0}^{T-1} \log  \left [p(s_{t+1} \mid  s_t, a_t)\right ] \\
+&= \underbrace {\log  p(s_{0})\delta _{\{b_{0} = 1\}} + \sum _{t=0}^{T-1} \log  \left [p(s_{t+1} \mid  s_t, a_t)\right ]}_{\text {independent of } \theta } + \log \left [\eta _{\theta }(z_{0} \mid  s_{0}) \prod _{t=1}^{T - 1} \mathbb {P}_{\theta }(b_t, z_t \mid  z_{t - 1}, s_t) \prod _{t = 0}^{T - 1} \pi _{\theta }(a_t \mid  s_t, z_t)\right ]
+.\end {align*}
+]]></fr:tex><html:p>Since we are only concerned with learning <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex>, we can disregard the <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> independent terms leaving</html:p><fr:tex display="block"><![CDATA[\begin {align*}
+\nabla _{\theta } \log  \mathbb {P}_{\theta }(\mathcal {H}, \xi ) &= \nabla _{\theta } \left [ \log \left [\eta _{\theta }(z_{0} \mid  s_{0}) \prod _{t=1}^{T - 1} \mathbb {P}_{\theta }(b_t, z_t \mid  z_{t - 1}, s_t) \prod _{t = 0}^{T - 1} \pi _{\theta }(a_t \mid  s_t, z_t)\right ] \right ]\\
+&= \nabla _{\theta } \log \left [\eta _{\theta }(z_{0} \mid  s_{0})\right ] + \sum _{t=1}^{T - 1} \nabla _{\theta } \log \left [\mathbb {P}_{\theta }(b_t, z_t \mid  z_{t - 1}, s_t)\right ] + \sum _{t = 0}^{T - 1} \nabla _{\theta } \log  \left [\pi _{\theta }(a_t \mid  s_t, z_t)\right ].
+\end {align*}]]></fr:tex>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(200, 55, 45, 0.85);
+  border-radius: var(--radius);
+  background-color: rgba(200, 55, 45, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> This requires samples <fr:tex display="inline"><![CDATA[(\mathcal {H}, \xi ) \sim  P_{\theta }(\mathcal {H}, \xi )]]></fr:tex>, but we only have samples <fr:tex display="inline"><![CDATA[\mathcal {H} \sim  P_{\theta }(\mathcal {H})]]></fr:tex>!!!</html:div>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(40, 150, 80, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(40, 150, 80, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span> We can use the trick from <fr:link href="/0088/" title="Expectation Maximization" uri="https://kellenkanarios.com/0088/" display-uri="0088" type="local">Expectation Maximization</fr:link>. Referred to in the paper as the <html:em>expectation gradient trick</html:em>. Namely,
+<fr:tex display="block"><![CDATA[\nabla _{\theta } \log  P_{\theta }(\mathcal {H}) = \mathbb {E}_{\xi  \sim  P_{\theta }(\xi  \mid  \mathcal {H})} \left [ \nabla _{\theta } \log  P_{\theta }(\mathcal {H}, \xi ) \right ]]]></fr:tex>
+</html:div>
+<html:p>Now it remains to compute the expectation from <fr:tex display="inline"><![CDATA[P_{\theta }(\xi  \mid  \mathcal {H})]]></fr:tex></html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+Note that <fr:tex display="inline"><![CDATA[P_{\theta }(\xi  \mid  \mathcal {H})]]></fr:tex> is a distribution over <fr:tex display="inline"><![CDATA[(K, \{0,1\})^{T} ]]></fr:tex> i.e. over each <fr:tex display="inline"><![CDATA[(z_t, b_t)]]></fr:tex>. To efficiently compute, we need to use <fr:link href="/F3T0/" title="Forward-backward algorithm" uri="https://kellenkanarios.com/F3T0/" display-uri="F3T0" type="local">Forward-backward algorithm</fr:link>.
+</html:div>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>22</fr:day></fr:date><fr:title text="Computing the expectation">Computing the expectation</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>For,</html:p>
+<fr:tex display="block"><![CDATA[\begin {aligned} u_t(z) &= \mathbb {P}_{\theta }(z_t = z | \xi ) \\ v_t(z) &= \mathbb {P}_{\theta }(b_t = 1, z_t = z | \xi ) \\ w_t(z) &= \mathbb {P}_{\theta }(z_t = z, b_{t+1} = 0 | \xi ). \end {aligned}]]></fr:tex>
+<html:p>We have that</html:p>
+<fr:tex display="block"><![CDATA[\nabla _{\theta } L[\theta ; \xi ] = \sum _{h \in  \mathcal {H}} \left ( \sum _{t=0}^{T-1} \left ( v_t(z) \nabla _{\theta } \log  \eta (z|s_t) + u_t(z) \nabla _{\theta } \log  \pi _h(a_t|s_t) \right ) + \sum _{t=0}^{T-2} \left ( (u_t(z) - w_t(z)) \nabla _{\theta } \log  \psi _h(s_{t+1}) + w_t(z) \nabla _{\theta } \log  (1 - \psi _h(s_{t+1})) \right ) \right ).]]></fr:tex>
+<html:p>Following the <fr:link href="/F3T0/" title="Forward-backward algorithm" uri="https://kellenkanarios.com/F3T0/" display-uri="F3T0" type="local">Forward-backward algorithm</fr:link>, we can get the posterior for the latent i.e. <fr:tex display="inline"><![CDATA[\mathbb {P}((z_{t}, b_{t}) \mid  \mathcal {H})]]></fr:tex>. We have the corresponding forward and backward components</html:p>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \phi _t(z, b) &= \mathbb {P}(s_{0}, a_{0}, \ldots , s_{t}, z_{t} = z, b_{t} = b) \\
+  \beta _t(z, b) &= \mathbb {P}(s_{t + 1}, a_{t + 1}, \ldots , s_{T} \mid  z_{t} = z, b_{t} = b),
+.\end {align*}]]></fr:tex>
+<html:p>which can then be written as</html:p>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \phi _t(z, b) &= \mathbb {P}(s_t, a_t \mid  z, b) \sum _{(z', b')} \phi _{t - 1}(z', b') \mathbb {P}(z, b \mid  z', b') \\
+  \beta _t(z, b) &= \sum _{(z', b')} \beta _{t + 1}(z', b') \mathbb {P}(s_{t + 1}, a_{t + 1} \mid  z', b')  \mathbb {P}(z', b' \mid  z, b)
+.\end {align*}]]></fr:tex>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Forward pass.</html:strong> For the forward pass, we have the initial condition</html:p>
+<fr:tex display="block"><![CDATA[\phi _0(z, b) = p_{0}(s_{0}) \delta _{\{b = 1\}} \eta  (z \mid  s_{0})]]></fr:tex>
+<html:p>Here <fr:tex display="inline"><![CDATA[(z', b')]]></fr:tex> ranges over the possible values of <fr:tex display="inline"><![CDATA[(z_{t - 1}, b_{t - 1})]]></fr:tex>. It is sufficient to expand the remaining two terms in terms of our generative model as defined above. First, note that <fr:tex display="inline"><![CDATA[(z_{t}, b_{t})]]></fr:tex> are independent of <fr:tex display="inline"><![CDATA[b_{t - 1}]]></fr:tex>. Therefore, we can drop the <fr:tex display="inline"><![CDATA[b_{t - 1}]]></fr:tex> term and are left with the following two cases:</html:p>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \mathbb {P}_{\theta }(z, b = 0 \mid  z') &= \delta _{\{z = z'\}} (1 - \psi _{\theta }(s_{t}, z')) \\
+  \mathbb {P}_{\theta }(z, b = 1 \mid  z') &= \eta _{\theta }(z \mid  s_{t}) \psi _{\theta }(s_{t}, z')
+.\end {align*}]]></fr:tex>
+<html:p>Plugging this in, we now have</html:p>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \phi _t(z, b) = \mathbb {P}_{\theta }(s_t, a_t \mid  z, b) \sum _{(z', b')} \phi _{t - 1}(z', b') \Big (&\eta _{\theta }(z \mid  s_{t}) \psi _{\theta }(s_{t}, z') \\
+  &+ \delta _{\{z = z'\}} (1 - \psi _{\theta }(s_{t}, z'))\Big )
+.\end {align*}]]></fr:tex>
+<html:p>It remains to find <fr:tex display="inline"><![CDATA[\mathbb {P}_{\theta }(s_t, a_t \mid  z, b)]]></fr:tex>. Once again, given <fr:tex display="inline"><![CDATA[z_t]]></fr:tex> we no longer care about <fr:tex display="inline"><![CDATA[b_t]]></fr:tex>. Therefore, this becomes</html:p>
+<fr:tex display="block"><![CDATA[\begin {align*}
+\mathbb {P}_{\theta }(s_t, a_t \mid  z) &= \pi _{\theta }(a_t \mid  s_t, z) p(s_t \mid  s_{t - 1}, a_{t - 1})
+.\end {align*}]]></fr:tex>
+<html:p>This gives us our final expression</html:p>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \phi _t(z, b) = &\pi _{\theta }(a_t \mid  s_t, z) p(s_t \mid  s_{t - 1}, a_{t - 1}) \\
+  &\times   \sum _{(z', b')} \phi _{t - 1}(z', b') \Big (\eta _{\theta }(z \mid  s_{t}) \psi _{\theta }(s_{t}, z') + \delta _{\{z = z'\}} (1 - \psi _{\theta }(s_{t}, z'))\Big )
+.\end {align*}]]></fr:tex>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+We have abused notation here, allowing <fr:tex display="inline"><![CDATA[\mathbb {P}(s_t, a_t \mid  z_t, b_t)]]></fr:tex> to depend on <fr:tex display="inline"><![CDATA[s_{t - 1}, a_{t - 1}]]></fr:tex>, etc. This is to align with the notation from <fr:link href="/F3T0/" title="Forward-backward algorithm" uri="https://kellenkanarios.com/F3T0/" display-uri="F3T0" type="local">Forward-backward algorithm</fr:link>. It makes no difference in practice as long as the backward dependence is finite / bounded. However, in practice you would want the history dependence to be small and here it is only one-step.
+</html:div>
+
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Backward pass.</html:strong> For the backward pass, we define the end term as</html:p>
+<fr:tex display="block"><![CDATA[\beta _{T-1}(z, b) = \pi (a_{T - 1} \mid  z, s_{T - 1}) p(s_{T} \mid  s_{T - 1}, a_{T - 1})]]></fr:tex>
+<html:p>Here <fr:tex display="inline"><![CDATA[(z', b')]]></fr:tex> ranges over the possible values of <fr:tex display="inline"><![CDATA[(z_{t + 1}, b_{t + 1})]]></fr:tex>. The other terms are analagous i.e.</html:p>
+<fr:tex display="block"><![CDATA[\begin {align*}
+  \mathbb {P}_{\theta }(z', b' = 0 \mid  z) &= \delta _{\{z' = z\}} (1 - \psi _{\theta }(s_{t + 1}, z)) \\
+  \mathbb {P}_{\theta }(z', b' = 1 \mid  z) &= \eta _{\theta }(z' \mid  s_{t + 1}) \psi _{\theta }(s_{t + 1}, z)
+.\end {align*}]]></fr:tex>
+<html:p>and</html:p>
+<fr:tex display="block"><![CDATA[\begin {align*}
+\mathbb {P}_{\theta }(s_{t + 1}, a_{t + 1} \mid  z') &= \pi _{\theta }(a_{t + 1} \mid  s_{t + 1}, z') p(s_{t + 1} \mid  s_t, a_t)
+.\end {align*}]]></fr:tex>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
             <fr:authors />
