@@ -92,6 +92,8 @@ window.addEventListener('load', function () {
       <li><strong style="font-family: var(--sans); font-weight: 500;">May. 2024.</strong> Our <span xmlns="" class="link local"><a href="/kanariosCostAwareBest2024/" title="Cost Aware Best Arm Identification [kanariosCostAwareBest2024]">paper</a></span> got accepted by <span xmlns="" class="link local"><a href="/rlc/" title="Reinforcement Learning Conference [rlc]">Reinforcement Learning Conference</a></span></li>
       <li><strong style="font-family: var(--sans); font-weight: 500;">January. 2024.</strong> I will be TAing <span xmlns="" class="link external"><a href="https://sites.google.com/view/intro-to-rl/home" title="">EECS 602</a></span></li></ul></details></section>
 
+  
+
   <hr xmlns="http://www.w3.org/1999/xhtml"></hr>
 
   
@@ -152,7 +154,9 @@ window.addEventListener('load', function () {
 <div class="metadata"><ul>
 <li class="meta-item">October 29, 2024</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This is my blog, in which I write about a variety of topics including computer science, mathematics, and more, ranging from long-form deep dives to short, self-contained notes. See <span xmlns="" class="link local"><a href="/007M/" title="Upcoming Blogs [007M]">upcoming blogs</a></span> and feel free to request! This blog also has a corresponding <span xmlns="" class="link external"><a href="/0002/atom.xml" title="">Atom feed</a></span>.</p><section lang="en" class="block"><details id="id14"><summary><header><h1>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This is my blog, in which I write about a variety of topics including computer science, mathematics, and more, ranging from long-form deep dives to short, self-contained notes. See <span xmlns="" class="link local"><a href="/007M/" title="Upcoming Blogs [007M]">upcoming blogs</a></span> and feel free to request! This blog also has a corresponding <span xmlns="" class="link external"><a href="/0002/atom.xml" title="">Atom feed</a></span>.</p>
+  
+<section lang="en" class="block"><details id="id14"><summary><header><h1>
 <span class="taxon"></span>Forward-backward algorithm <a class="slug" href="/F3T0/">[F3T0]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 21, 2026</li>
@@ -495,145 +499,154 @@ A key benefit of this algorithm is that it is entirely parallelizable across row
 <div class="metadata"><ul>
 <li class="meta-item">May 27, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">To understand the innovation of the backward pass in <span xmlns="" class="link local"><a href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness [daoFlashAttentionFastMemoryEfficient2022]">flash attention</a></span>, we must first find all of the gradients we must compute.</p>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The forward pass of <span xmlns="" class="link local"><a href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness [daoFlashAttentionFastMemoryEfficient2022]">flash attention</a></span> avoids materializing the \(N \times  N\) attention matrix by streaming an online softmax. The backward pass has to pull the same trick twice over, because the naive gradient computation wants <em>two</em> \(N \times  N\) matrices — \(\mathbf {P}\) and \(d\mathbf {P}\). Getting there means first writing down every gradient we need, then finding a way to recompute rather than store each one.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(70, 100, 150, 0.75);   border-radius: var(--radius);   background-color: rgba(70, 100, 150, 0.05);   "><span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</span> 
-Following the notation in the <span xmlns="" class="link local"><a href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness [daoFlashAttentionFastMemoryEfficient2022]">original paper</a></span>, we have the following matrices
-\[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V}\]
-Now suppose their is some scalar loss function \(\phi \). Then we define 
-\[\frac {\partial  \phi }{\partial  \mathbf {O}}, \frac {\partial  \phi }{\partial  \mathbf {K}}, \frac {\partial  \phi }{\partial  \mathbf {V}}  = d\mathbf {O}, d\mathbf {K}, d\mathbf {V}\]
+Following the notation in the <span xmlns="" class="link local"><a href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness [daoFlashAttentionFastMemoryEfficient2022]">original paper</a></span>,
+\[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V},\]
+where \(\mathbf {Q}, \mathbf {K}, \mathbf {V}, \mathbf {O}\) are \(N \times  d\) and \(\mathbf {S}, \mathbf {P}\) are \(N \times  N\). For a scalar loss \(\phi \) we abbreviate the gradient with respect to any matrix \(\mathbf {X}\) as
+\[d\mathbf {X} = \frac {\partial  \phi }{\partial  \mathbf {X}},\]
+and write \(\mathbf {L}_i\) for the softmax denominator of row \(i\) saved by the forward pass, so that \(\mathbf {P}_{ij} = \exp (\mathbf {Q}_i \cdot  \mathbf {K}_j) / \mathbf {L}_i\).
 </div>
-<p xmlns="http://www.w3.org/1999/xhtml">We will compute each gradient individually.</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>\(d\mathbf {P}\): this is just a straightforward application of the chain rule. In particular, \(\mathbf {O} = \mathbf {P} \mathbf {V}\) so that
-  \[
-     d\mathbf {P} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {P}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T
-    \]
-    <p>
-    To sanity check, let us look at the shapes. \(d\mathbf {O}\) is the partial with respect to the outputs \(O\), so we need an entry for each output and it is \(N \times  d\). \(V^T\) is \(d \times  N\), so that the result \(d\mathbf {P}\) is \(N \times  N\) as desired.
-    </p>
-    <p>Furthermore, we can see this by writing \(\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}\). Then</p>
-    \[
-      \begin {align*}
-       d\mathbf {P}_{ij} &amp;= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}}  \\
-                        &amp;= \sum _{i} d\mathbf {O}_{ik} \mathbf {V}_{jk} 
-      .\end {align*}
-    \]</li>
-  <li>\(d\mathbf {V}\): this is just the same as \(d\mathbf {P}\). In particular, \(\mathbf {O} = \mathbf {P} \mathbf {V}\) so that
-  \[
-     d\mathbf {V} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {V}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O} 
-    \]
-    <p>Furthermore, we can see this by writing \(\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}\). Then</p>
-    \[
-      \begin {align*}
-       d\mathbf {V}_{jk} &amp;= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}}  \\
-                        &amp;= \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} \\
-                        &amp;= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
-      .\end {align*}
-    \]</li>
-  <li>\(d\mathbf {S}\): now we apply chain rule with \(d\mathbf {P}\). However, we must take the gradient through the <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">softmax</a></span>. Exiting matrix notation hell, if we consider the scalar case. Let \(\mathbf {s}\) and \(\mathbf {p}\) just be rows. Then using the <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">scalar softmax derivation</a></span>
-    \[
-      \begin {align*}
-       d\mathbf {s}_j &amp;= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\  
-       &amp;= \sum _{i} d\mathbf {p}_i \cdot  (\delta _{ij}\mathbf {p}_i - \mathbf {p}_{ij}) \\
-       &amp;= d \mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
-      .\end {align*}
-      \]
-    Now if we rewrite this as the row vector, we get
-    \[
-      \begin {align*}
-        d\mathbf {S}_{k} &amp;= \mathbf {P}_{k} \odot  (d\mathbf {P}_{k} - \mathbf {P}_k \cdot  d\mathbf {P}_k)
-      .\end {align*}
-      \]
-    To get back to the full matrix, define \(\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i\) i.e. a vector whose \(i\)th entry is \(\mathbf {P}_i \cdot  d\mathbf {P}_i\). Then we have that
-    \[
-      \begin {align*}
-        d\mathbf {S} &amp;= \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D})
-      .\end {align*}
-      \]</li>
-  <li>\(d\mathbf {Q}\): To get \(d\mathbf {Q}\), we just apply the chain rule to \(d\mathbf {S}\). Since \(\mathbf {S} = \mathbf {Q} \mathbf {K}^T\),
-  \[
-    \begin {align*}
-       d\mathbf {Q}_{i} &amp;= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} \\
-                      &amp;= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {K}_{j}
-    .\end {align*}
-    \]</li>
-  <li>\(d\mathbf {K}\): Same as \(d\mathbf {Q}\) i.e.
-  \[
-    \begin {align*}
-       d\mathbf {K}_{j} &amp;= \sum _{j} d\mathbf {S}_{ij} \mathbf {Q}_{i} \\
-                      &amp;= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {Q}_{i}
-    .\end {align*}
-    \]</li></ol>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> \(\mathbf {P}\) and \(d\mathbf {P}\) are \(N \times  N\) matrices. Materializing this is equivalent to materialing the attention matrix in the forward pass.</div>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 160, 175, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 160, 175, 0.06);   "><span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</span> 
-  <em>recomputing</em> \(\mathbf {P}_{ij}\) and \(d\mathbf {P}_{ij}\).
-  <p>First, we can easily recompute \(\mathbf {P}_{ij}\) with \(\mathbf {Q}\) and \(\mathbf {K}\) (which are both \(N \times  d\) and must be resident in memory) via</p>
-  \[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}}\]
-  <p>We can apply the same trick to \(d\mathbf {P}_{ij}\) with \(d\mathbf {O}\) and \(\mathbf {V}\) (both \(N \times   d\)). Namely,</p>
-  \[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i}^T \mathbf {V}_j\]
-  <p><strong>Never need an \(N \times  N\) matrix</strong>.</p>
-</div>
-<p xmlns="http://www.w3.org/1999/xhtml">Now we can rewrite \(d\mathbf {Q}\) and \(d\mathbf {K}\) as
+<section lang="en" class="block hide-metadata"><details id="id29" open="open"><summary><header><h1>
+<span class="taxon"></span>The gradients we need for <span class="link local"><a href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness [daoFlashAttentionFastMemoryEfficient2022]">FlashAttention</a></span> <a class="slug" href="/4QZE/">[4QZE]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Everything downstream is chain rule; the only step with any content is differentiating through the <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">softmax</a></span>. We take the gradients in dependency order, starting from \(d\mathbf {O}\) which arrives from the layer above.</p>
+  <section lang="en" class="block hide-metadata"><details id="id30" open="open"><summary><header><h1>
+<span class="taxon"></span>\(d\mathbf {P}\) and \(d\mathbf {V}\) from \(\mathbf {O} = \mathbf {P}\mathbf {V}\)  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Both fall straight out of the product rule for matrices:</p>
 \[
-  d\mathbf {Q}_{i} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {K}_{j}
+  d\mathbf {P} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T,
+  \qquad 
+  d\mathbf {V} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O}.
 \]
-and
+<p xmlns="http://www.w3.org/1999/xhtml">The shapes are a useful sanity check. \(d\mathbf {O}\) has one entry per output, so it is \(N \times  d\); \(\mathbf {V}^T\) is \(d \times  N\); their product is \(N \times  N\), matching \(\mathbf {P}\). Likewise \(\mathbf {P}^T d\mathbf {O}\) is \(N \times  d\), matching \(\mathbf {V}\).</p>
+<p xmlns="http://www.w3.org/1999/xhtml">Componentwise, from \(\mathbf {O}_{ik} = \sum _j \mathbf {P}_{ij} \mathbf {V}_{jk}\),</p>
 \[
-  d\mathbf {K}_{j} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {Q}_{i}
-\]</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> \(\mathbf {D}\) requires computing the <strong>global</strong> dot product \(\mathbf {P}_i \cdot  d\mathbf {P}_i\).</div>
+  \begin {align*}
+    d\mathbf {P}_{ij} &amp;= \sum _{k} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk}, \\
+    d\mathbf {V}_{jk} &amp;= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}} = \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} = \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
+  .\end {align*}
+\]
+<p xmlns="http://www.w3.org/1999/xhtml">That last line is worth noting already: \(d\mathbf {V}\) never needs \(\mathbf {P}\) stored, only the ability to re-evaluate \(\mathbf {P}_{ij}\) from \(\mathbf {Q}\), \(\mathbf {K}\), and \(\mathbf {L}\).</p>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id31" open="open"><summary><header><h1>
+<span class="taxon"></span>\(d\mathbf {S}\) through the softmax  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Softmax acts row by row, so drop into the scalar case with \(\mathbf {s}\) and \(\mathbf {p}\) single rows. The <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">softmax Jacobian</a></span> is \(\partial  \mathbf {p}_i / \partial  \mathbf {s}_j = \mathbf {p}_i(\delta _{ij} - \mathbf {p}_j)\), giving</p>
+\[
+  \begin {align*}
+    d\mathbf {s}_j &amp;= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\
+                  &amp;= \sum _{i} d\mathbf {p}_i \cdot  \mathbf {p}_i (\delta _{ij} - \mathbf {p}_{j}) \\
+                  &amp;= d\mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
+  .\end {align*}
+\]
+<p xmlns="http://www.w3.org/1999/xhtml">As a row vector this is \(d\mathbf {s} = \mathbf {p} \odot  (d\mathbf {p} - \mathbf {p} \cdot  d\mathbf {p})\), where the subtracted term is the <em>scalar</em> \(\mathbf {p} \cdot  d\mathbf {p}\) broadcast across the row. Collecting those scalars into a column \(\mathbf {D}\) with \(\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i\) recovers the matrix form</p>
+\[d\mathbf {S} = \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D}).\]
+<p xmlns="http://www.w3.org/1999/xhtml">\(\mathbf {D}\) is the piece that will cause trouble later: it is a dot product over an entire row of \(\mathbf {P}\), which is exactly the thing we refuse to materialize.</p>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id32" open="open"><summary><header><h1>
+<span class="taxon"></span>\(d\mathbf {Q}\) and \(d\mathbf {K}\) from \(\mathbf {S} = \mathbf {Q}\mathbf {K}^T\)  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">One more chain rule, and the sums run over opposite indices:</p>
+\[
+  \begin {align*}
+     d\mathbf {Q}_{i} &amp;= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} = \sum _{j} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
+     d\mathbf {K}_{j} &amp;= \sum _{i} d\mathbf {S}_{ij} \mathbf {Q}_{i} = \sum _{i} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {Q}_{i}
+  .\end {align*}
+\]
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id33" open="open"><summary><header><h1>
+<span class="taxon"></span>Recomputing instead of storing  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Every gradient above is expressed through \(\mathbf {P}_{ij}\) and \(d\mathbf {P}_{ij}\), both \(N \times  N\). Materializing either one is exactly the quadratic memory cost the forward pass went to such lengths to avoid, so the backward pass has to be able to produce those entries on demand.</p>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 160, 175, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 160, 175, 0.06);   "><span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</span> 
-  <p>To get around this, we precompute \(\mathbf {D}\) using the \(\mathbf {O}\) values from the forward pass and the current \(d\mathbf {O}\) values. In particular,</p>
-  \[
-    \begin {align*}
-    \mathbf {D}_i &amp;= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
-    &amp;= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
-    &amp;= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{i}^{T} \mathbf {V}_{j} \\
-    &amp;= \sum _{j} d\mathbf {O}_{i}^{T} \left (\frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j}\right ) \\
-    &amp;=  d\mathbf {O}_{i}^{T} \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j} \\
-    &amp;= d\mathbf {O}_{i}^{T} \mathbf {O}_{i}
-    .\end {align*}
-    \]
-    Thus, we can compute \(\mathbf {D}_i\) directly from the vectors \(d\mathbf {O}_i\), \(\mathbf {O}_i\).
+Both are recoverable from the \(N \times  d\) tensors already resident in memory. The forward pass saved \(\mathbf {L}\), so
+\[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}},\]
+and \(d\mathbf {P}\) is just an inner product of two rows,
+\[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i} \cdot  \mathbf {V}_j.\]
+Neither ever requires an \(N \times  N\) intermediate.
 </div>
 
-  <hr xmlns="http://www.w3.org/1999/xhtml"></hr>
+<p xmlns="http://www.w3.org/1999/xhtml">Substituting both into the previous section leaves \(d\mathbf {Q}\) and \(d\mathbf {K}\) in terms of \(\mathbf {Q}\), \(\mathbf {K}\), \(\mathbf {V}\), \(d\mathbf {O}\), \(\mathbf {L}\), and \(\mathbf {D}\) alone:</p>
+\[
+\begin {align*}
+  d\mathbf {Q}_{i} &amp;= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
+  d\mathbf {K}_{j} &amp;= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {Q}_{i}.
+.\end {align*}
+\]
+</details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id29" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id34" open="open"><summary><header><h1>
+<span class="taxon"></span>Getting \(\mathbf {D}\) for free  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">One problem survives. \(\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i\) is a dot product over a full row, so computing it inside the streaming loop would mean a reduction over all \(j\) before any tile of \(d\mathbf {Q}_i\) could be finished. This is the same global dependency the online softmax was designed to break.</p>
+<p xmlns="http://www.w3.org/1999/xhtml">The way out is that the row sum has already been computed once, in the forward pass. Expanding and pulling \(d\mathbf {O}_i\) out of the sum:</p>
+\[
+  \begin {align*}
+  \mathbf {D}_i &amp;= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
+  &amp;= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
+  &amp;= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_{j}\right ) \\
+  &amp;=  d\mathbf {O}_{i} \cdot  \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \mathbf {V}_{j} \\
+  &amp;= d\mathbf {O}_{i} \cdot  \mathbf {O}_{i}
+  .\end {align*}
+\]
+<p xmlns="http://www.w3.org/1999/xhtml">The inner sum is precisely the definition of \(\mathbf {O}_i\). So \(\mathbf {D}\) is a single elementwise product of \(d\mathbf {O}\) and \(\mathbf {O}\) summed along the head dimension — one \(O(Nd)\) pass over tensors we already have, done once before the backward loop begins.</p>
+</details></section>
+</details></section>
+  <section lang="en" class="block hide-metadata"><details id="id35" open="open"><summary><header><h1>
 <span class="taxon"></span>Summary  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 27, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-<ul xmlns="http://www.w3.org/1999/xhtml"><li>In the forward pass,</li>
-  <ol><li>Compute and store \(\mathbf {O}\) values in memory.</li> 
-    <li>Compute and store \(\mathbf {L}\) values in memory</li></ol>
-  <li>Between the forward and backward pass,</li>
-  <ol><li>Compute \(d\mathbf {O}\). (This is done automatically in <span xmlns="" class="link local"><a href="/OGCRY/" title="JAX [OGCRY]">JAX</a></span>)</li>
-    <li>Use \(\mathbf {O}\) and \(d\mathbf {O}\) to compute \(\mathbf {D}\). \(O(n)\) memory.</li></ol>
-  <li>In the backward pass,</li>
-  <ol><li>Compute \(d\mathbf {V}_j\) via \(\mathbf {Q}, \mathbf {K}, d\mathbf {O}\). \(O(d)\) memory.</li>
-    <li>Compute \(d\mathbf {Q}_i\) via \(\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i\). \(O(d)\) memory.</li>
-    <li>Compute \(d\mathbf {K}_j\) via \(\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i\). \(O(d)\) memory.</li></ol></ul>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Forward pass.</strong> Store \(\mathbf {O}\) and the softmax denominators \(\mathbf {L}\), both \(O(Nd)\).</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Between the passes.</strong> Receive \(d\mathbf {O}\) from the layer above (automatic in <span xmlns="" class="link local"><a href="/OGCRY/" title="JAX [OGCRY]">JAX</a></span>), then precompute \(\mathbf {D}_i = d\mathbf {O}_i \cdot  \mathbf {O}_i\) in \(O(N)\) memory.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Backward pass.</strong> Stream over tiles, recomputing \(\mathbf {P}_{ij}\) from \(\mathbf {Q}, \mathbf {K}, \mathbf {L}\) and \(d\mathbf {P}_{ij}\) from \(d\mathbf {O}, \mathbf {V}\) as needed:</p>
+<ol xmlns="http://www.w3.org/1999/xhtml"><li>\(d\mathbf {V}_j = \sum _i \mathbf {P}_{ij} d\mathbf {O}_i\), accumulated over query tiles.</li>
+  <li>\(d\mathbf {Q}_i = \sum _j \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {K}_j\), accumulated over key tiles.</li>
+  <li>\(d\mathbf {K}_j = \sum _i \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {Q}_i\), accumulated over query tiles.</li></ol>
+<p xmlns="http://www.w3.org/1999/xhtml">Each accumulator is \(O(d)\) per row or column, so the whole backward pass stays linear in \(N\).</p>
 </details></section>
 </details></section>
   
-</details></section><section lang="en" class="block"><details id="id30"><summary><header><h1>
+</details></section><section lang="en" class="block"><details id="id36"><summary><header><h1>
 <span class="taxon"></span>Implementing Directory-based MESI in Murphi <a class="slug" href="/HHZO/">[HHZO]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">March 24, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This will also serve as a bit of notes from <span xmlns="" class="link external"><a href="https://pages.cs.wisc.edu/~markhill/papers/primer2020_2nd_edition.pdf" title="">A Primer on Memory Consistency and Cache Coherence</a></span></p><section lang="en" class="block hide-metadata"><details id="id31" open="open"><summary><header><h1>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/CMAL/" title="Murphi [CMAL]">Murphi</a></span> is an explicit-state model checker: you describe a system as guarded transition rules, state the invariants, and it enumerates every reachable interleaving looking for a violation. That makes it a natural fit for <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">cache coherence</a></span>, where the steady-state behavior is easy and the races are not. This post builds a <span xmlns="" class="link local"><a href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages [KIT8]">directory-based</a></span> <span xmlns="" class="link local"><a href="/30XT/" title="MESI protocol [30XT]">MESI protocol</a></span> in Murphi, starting from MSI and adding state every time the checker finds a way to break it.</p><p xmlns="http://www.w3.org/1999/xhtml">The state tables come from <span xmlns="" class="link external"><a href="https://pages.cs.wisc.edu/~markhill/papers/primer2020_2nd_edition.pdf" title="">A Primer on Memory Consistency and Cache Coherence</a></span>, which doubles as the source for these notes. The recurring lesson is that the published tables are not quite enough: every protocol below needs <span xmlns="" class="link local"><a href="/Z32G/" title="Directory protocols expose transient states because transactions span multiple hops [Z32G]">transient states</a></span> the tables leave implicit.</p><section lang="en" class="block hide-metadata"><details id="id37" open="open"><summary><header><h1>
 <span class="taxon"></span>Murphi <a class="slug" href="/CMAL/">[CMAL]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Syntactical things I need to remember from Murphi docs. Most things are straightforward, but there are a few things to note:</p><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id32" open="open"><summary><header><h1>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Syntactical things I need to remember from Murphi docs. Most things are straightforward, but there are a few things to note:</p><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id38" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Declarations  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>declaration</em> is a variable or a collection of variables that are used in the rules.</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id33" open="open"><summary><header><h1>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>declaration</em> is a variable or a collection of variables that are used in the rules.</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id39" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Rules  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 17, 2026</li>
@@ -643,12 +656,12 @@ and
     <li>For our use case, rules are used to define</li>
     <ol><li>Controller actions</li>
       <li>Receiving a request from the network</li>
-      <li>Retrying stalled requests</li></ol></ul></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id34" open="open"><summary><header><h1>
+      <li>Retrying stalled requests</li></ol></ul></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id40" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Startstates  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>startstate</em> is the intial configuration for all our declarations.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Must assign a value to every global variable</li></ul></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id35" open="open"><summary><header><h1>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>startstate</em> is the intial configuration for all our declarations.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Must assign a value to every global variable</li></ul></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id41" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Invariants  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 17, 2026</li>
@@ -658,158 +671,194 @@ and
        (i.e. conditional expressions are true, given the current values
        of the global variables).</li>
     <li>Choose one arbitrarily and execute the action, yielding a new state.</li></ol></details></section>
-  <section lang="en" class="block hide-metadata"><details id="id36" open="open"><summary><header><h1>
-<span class="taxon"></span>Starting with MSI  </h1>
+  <section lang="en" class="block hide-metadata"><details id="id42" open="open"><summary><header><h1>
+<span class="taxon"></span>Why three virtual channels  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">March 24, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">The first thing we need to do is understand all the things that can go awry.</p>
-<p xmlns="http://www.w3.org/1999/xhtml">First in the valid-invalid protocol example we were given they only have two <span xmlns="" class="link local"><a href="/DWV1/" title="Routing deadlock [DWV1]">virtual channels</a></span>. However, we need 3 channels to handle, request messages, <strong>forwarded</strong> messages, and response messages.</p>
-<p xmlns="http://www.w3.org/1999/xhtml">Let us briefly understand why this is the case. Detecting a deadlock is equivalent to detecting a cycle in a dependency graph, so it is sufficient to show a cyclic dependency.</p>
-<ul xmlns="http://www.w3.org/1999/xhtml"><li>If we issue a <code>GetS</code> this goes to the directory, giving us an edge N1 -&gt; D.</li>
-  <li>Then the directory issues a <code>Fwd-GetS</code> to the ownder, giving us the chain N1 -&gt; D -&gt; N2</li>
-  <li>The owner then needs to send data to the requester, giving us the chain N1 -&gt; D -&gt; N2 -&gt; N1.</li>
-  <li>Namely, the data must go through the same channel as all of the requests depending on it.</li></ul>
-<p xmlns="http://www.w3.org/1999/xhtml">To avoid this, we partition into 3 channels:</p>
-<ul xmlns="http://www.w3.org/1999/xhtml"><li>Request: GetS, GetM, PutM</li>
-  <li>Forwarded: Fwd-GetS, Fwd-GetM, PutAck, Inv</li>
-  <li>Response: InvAck, Data</li></ul>
-<p xmlns="http://www.w3.org/1999/xhtml">We directly enumerate these in our <code>MessageType</code> as </p>
-<pre xmlns="http://www.w3.org/1999/xhtml">  MessageType: enum {
-    GetS,           -- request for shared copy
-    GetM,           -- request for modified (exclusive) copy
-    PutS,           -- evict shared copy
-    PutM,           -- evict modified copy (w/ data)
+<p xmlns="http://www.w3.org/1999/xhtml">The valid-invalid protocol shipped with the Murphi docs uses two <span xmlns="" class="link local"><a href="/HUDE/" title="Virtual Channels [HUDE]">Virtual Channels</a></span>. A directory protocol needs three: one each for requests, forwarded requests, and responses. The reason is that <span xmlns="" class="link local"><a href="/DWV1/" title="Routing deadlock [DWV1]">deadlock is a cycle in the dependency graph</a></span>, so it suffices to exhibit one.</p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>A node issues <code>GetS</code> to the directory, giving an edge \(N_1 \to  D\).</li>
+  <li>The directory forwards <code>Fwd-GetS</code> to the owner, extending the chain to \(N_1 \to  D \to  N_2\).</li>
+  <li>The owner sends data back to the requester, closing the cycle \(N_1 \to  D \to  N_2 \to  N_1\).</li></ul>
+<p xmlns="http://www.w3.org/1999/xhtml">The data closing that cycle would travel on the same channel as the requests waiting behind it, so a full request buffer wedges the response that would drain it. Partitioning by message class breaks the cycle:</p>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li><strong>Request</strong>: <code>GetS</code>, <code>GetM</code>, <code>PutS</code>, <code>PutM</code></li>
+  <li><strong>Forwarded</strong>: <code>Fwd-GetS</code>, <code>Fwd-GetM</code>, <code>Inv</code>, <code>PutAck</code></li>
+  <li><strong>Response</strong>: <code>Data</code>, <code>InvAck</code></li></ul>
+<p xmlns="http://www.w3.org/1999/xhtml">These are enumerated directly in the model's <code>MessageType</code>.</p>
+<div xmlns="http://www.w3.org/1999/xhtml" class="code-figure"><div class="code-filename">msi.m</div><pre><code class="language-lua">MessageType: enum {
+  GetS,           -- request for shared copy
+  GetM,           -- request for modified (exclusive) copy
+  PutS,           -- evict shared copy
+  PutM,           -- evict modified copy (w/ data)
 
-    FwdGetS,        -- forwarded GetS to owner
-    FwdGetM,        -- forwarded GetM to owner
-    Inv,            -- invalidation request
+  FwdGetS,        -- forwarded GetS to owner
+  FwdGetM,        -- forwarded GetM to owner
+  Inv,            -- invalidation request
 
-    Data,           -- data response
-    InvAck,         -- invalidation acknowledgment
-    PutAck          -- put acknowledgment
-  };</pre>
-<strong xmlns="http://www.w3.org/1999/xhtml" style="font-family: var(--sans); font-weight: 500;">Cache controller.</strong> We will start with MSI cache controller, given by the following table:
-<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmifhoq7kszlwemrlvvy4yuuvuk6l6bjadkvsmzclbemz2tzxdt6bjm.png"></img></figure>
-<p xmlns="http://www.w3.org/1999/xhtml">Notably, we are missing some of the messages in the figures below. We can handle these based on the <code>AckCount</code></p>
-<pre xmlns="http://www.w3.org/1999/xhtml">  ProcState:
-    Record
-      state: enum { 
-        P_Invalid, P_Shared, P_Modified,       --stable states
-        PT_IS_D,      --sent GetS, waiting for Data
-        PT_IS_DI,     --sent GetS, got Inv, waiting for Data then go to I
-        PT_IM_AD,     --sent GetM (from I), waiting for Data and InvAcks
-        PT_SM_AD,     --sent GetM (from S), waiting for Data and InvAcks
-        PT_IM_A,      --got Data for GetM, waiting for remaining InvAcks
-        PT_MI_A,      --sent PutM, waiting for PutAck
-        PT_SI_A,      --sent PutS, waiting for PutAck
-        PT_II_A       --waiting for PutAck, already invalidated
-      };
-      val: Value;
-      ack: AckCount;  -- tracks InvAck count
-    End;</pre>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-The <code>load</code>, <code>store</code>, and <code>replacement</code> all only alter the states of the coherence protocol for the permanent states. Therefore, to simulate the system it is sufficient to only implement the rules that initiate these state transitions i.e. evict in modified state or load from invalid state.
-</div>
-
-<strong xmlns="http://www.w3.org/1999/xhtml" style="font-family: var(--sans); font-weight: 500;">Directory controller.</strong> Now for the directory controller:
-<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmiadmfswkegttky27zg2gxvkwag3pt72ur7qam2z6vufr6xlvujqca.png"></img>
-<figcaption></figcaption></figure>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-We actually end up adding a second transient state to the directory controller \(M^D\). This is to handle the <code>PutM</code>, <code>GetM</code> race described below.
-</div>
-
-<strong xmlns="http://www.w3.org/1999/xhtml" style="font-family: var(--sans); font-weight: 500;">Weird Races.</strong>
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
-When implementing the <code>PutM</code> rule to downgrade from modified to invalid. We must <strong>NOT</strong> get rid of the data until we have been acknowledged, so that we can still service forward requests. This is a transition to \(MI^A\). However, we can still receive the <code>PutAck</code> causing us to transition to \(I\) before servicing the <code>Fwd-GetM</code> request. This is lost data.
-</div>
-
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
-  We must add a \(M^D\) state to the directory controller. In this state, if we get a <code>PutM</code> request from a node that is not our current owner we stall and wait for data to arrive. For \(M^D\) to transition to \(M\), we must send the data back to the directory even though we are doing a three-hop, so that the directory knows the data has also been forwarded to the new owner. It is unclear to me the best way to do this without this state.
-</div>
-
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
- <p>The above solution causes a deadlock, where two processors both store miss and one load misses. The "winning processor" of the store will be the second one. The first one will get the data from the directory transitioning from \(IM^{AD} \to  IM^{A}\), but the second one will then trigger a <code>Fwd-GetM</code> overwriting the first.</p>
-
-<p>
-The load miss transitions to \(IS^D\). However, when it receives an <code>Inv</code> it stalls according to the above figure. This blocks the <code>Fwd-GetM</code> from reaching the other winning processor because they are on the same VC. Thus, we have a deadlock where the owner never gets the data.
-</p>
-</div>
-
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> We need to add another transient state not included in the figure. Namely, we add \(II^{A}\) that says we were in \(IS^{A}\), but we got invalidated and now we are waiting for our <code>PutAck</code> before we transition to \(I\).</div>
-
+  Data,           -- data response
+  InvAck,         -- invalidation acknowledgment
+  PutAck          -- put acknowledgment
+};</code></pre></div>
+</details></section>
+<section lang="en" class="block hide-metadata"><details id="id43" open="open"><summary><header><h1>
+<span class="taxon"></span>MSI in Murphi <a class="slug" href="/3HOD/">[3HOD]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">MESI is easier to reach through MSI, where there is less to get wrong and the races are already interesting enough.</p>
+  <section lang="en" class="block hide-metadata"><details id="id44" open="open"><summary><header><h1>
+<span class="taxon"></span>The cache controller  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">The starting point is the primer's MSI cache controller table.</p>
+<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmifhoq7kszlwemrlvvy4yuuvuk6l6bjadkvsmzclbemz2tzxdt6bjm.png"></img>
+<figcaption>MSI cache controller. Rows are states, columns are events.</figcaption></figure>
+<p xmlns="http://www.w3.org/1999/xhtml">Several table entries are left blank; those are resolved at runtime from the <code>AckCount</code>, which is why the per-processor record carries an <code>ack</code> field alongside the state.</p>
+<div xmlns="http://www.w3.org/1999/xhtml" class="code-figure"><div class="code-filename">msi.m</div><pre><code class="language-lua">ProcState:
+  Record
+    state: enum {
+      P_Invalid, P_Shared, P_Modified,   -- stable states
+      PT_IS_D,     -- sent GetS, waiting for Data
+      PT_IS_DI,    -- sent GetS, got Inv, waiting for Data then go to I
+      PT_IM_AD,    -- sent GetM (from I), waiting for Data and InvAcks
+      PT_SM_AD,    -- sent GetM (from S), waiting for Data and InvAcks
+      PT_IM_A,     -- got Data for GetM, waiting for remaining InvAcks
+      PT_MI_A,     -- sent PutM, waiting for PutAck
+      PT_SI_A,     -- sent PutS, waiting for PutAck
+      PT_II_A      -- waiting for PutAck, already invalidated
+    };
+    val: Value;
+    ack: AckCount;  -- tracks InvAck count
+  End;</code></pre></div>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-When the home directory is in \(M\) and we get a <code>GetS</code> we cannot clear owner as directed by figure. Otherwise in \(S^D\), we will not be able to tell if the <code>PutM</code> is from the owner and stall, so we only remove the owner once we have received the data.
+<code>load</code>, <code>store</code>, and <code>replacement</code> only move the protocol between stable states. To simulate the system it is therefore enough to implement the rules that <em>initiate</em> those transitions — evict from modified, load from invalid — and let the model checker drive the transient states from there.
 </div>
 
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id37" open="open"><summary><header><h1>
-<span class="taxon"></span>Moving to MESI  </h1>
+  <section lang="en" class="block hide-metadata"><details id="id45" open="open"><summary><header><h1>
+<span class="taxon"></span>The directory controller  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">March 24, 2026</li>
+<li class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-Aside from the modifications discussed above, the rest was straightforward and we now are ready to move on to MESI.
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Cache controller.</strong> We will start with MESI cache controller, given by the following table:
-</p>
-<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmia4fllqvr7nzhifqxwk5stk2kyje2tfokhddzfjkteyw4kbj6k25i.png"></img></figure>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Design choice 1.</strong> Since we allow immediate upgrade to \(M\), without forwarding, if E upgrades to M, then the value in the directory sent to the next <code>GetS / GetM</code> would not have updated value. It seems we must either
-<ol><li>not allow E to silently upgrade to M and then we do not need forwarding, or</li>
-  <li>allow E to silently upgrade to M and treat E as M basically and forward everything.</li></ol>
-Notably, neither of these have to write back on <code>PutE</code>, but we will go with 1 because that is how it is indicated in the figure.
-</p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Design Choice 2.</strong> In order to indicate that the directory received the first <code>GetS</code> we introduce a <code>ExclusiveData</code> message. Upon receiving, <code>ExclusiveData</code> in \(IS^D\) we transition to \(E\).</p>
+<p xmlns="http://www.w3.org/1999/xhtml">The directory side starts from the analogous table.</p>
+<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmiadmfswkegttky27zg2gxvkwag3pt72ur7qam2z6vufr6xlvujqca.png"></img>
+<figcaption>MSI directory controller.</figcaption></figure>
+<p xmlns="http://www.w3.org/1999/xhtml">This table is where the first real gap shows up. It gives the directory a single transient state, and the races below force a second one, \(M^D\).</p>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id46" open="open"><summary><header><h1>
+<span class="taxon"></span>Losing data to a PutM/Fwd-GetM race  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Consider the <code>PutM</code> rule that downgrades a cache from modified to invalid. The evicting cache must <strong>not</strong> drop the data when it sends <code>PutM</code>, because it may still have to service a forwarded request; it transitions to \(MI^A\) and keeps the value. But nothing stops the <code>PutAck</code> from arriving first, taking it to \(I\) before the <code>Fwd-GetM</code> shows up. The data is gone and the forwarded request has nobody to answer it.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Add the \(M^D\) state to the directory controller. While in \(M^D\), a <code>PutM</code> from a node that is not the current owner stalls until the data arrives. Leaving \(M^D\) for \(M\) requires the new owner to send data back to the directory even on a three-hop transaction, so the directory learns that the forward actually completed. I have not found a cleaner way to close this race without the extra state.</p>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id47" open="open"><summary><header><h1>
+<span class="taxon"></span>Deadlocking two stores against a load  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">The \(M^D\) fix introduces a deadlock of its own. Take two processors that store-miss and a third that load-misses. The second store wins at the directory: the first store gets data and moves \(IM^{AD} \to  IM^{A}\), then the second triggers a <code>Fwd-GetM</code> that takes ownership away from it.</p>
+<p xmlns="http://www.w3.org/1999/xhtml">Meanwhile the load miss sits in \(IS^D\). When its <code>Inv</code> arrives, the table says to stall — and because <code>Inv</code> and <code>Fwd-GetM</code> share the forwarded channel, that stall blocks the <code>Fwd-GetM</code> behind it. The winning processor never receives the data, and nothing ever drains the channel.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Another transient state absent from the table: \(II^A\), meaning "was in \(IS^A\), got invalidated, now waiting on <code>PutAck</code> before settling in \(I\)". The invalidation is processed rather than stalled, so the forwarded channel keeps moving.</p>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id48" open="open"><summary><header><h1>
+<span class="taxon"></span>Not clearing the owner too eagerly  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">One more correction to the table: when the home directory is in \(M\) and receives a <code>GetS</code>, it must not clear the owner field as the figure directs. Once in \(S^D\), the directory can no longer tell whether an incoming <code>PutM</code> came from the owner (and should stall) or from a stale node. The owner is only cleared once the data has actually arrived.</p>
+</details></section>
+</details></section><section lang="en" class="block hide-metadata"><details id="id49" open="open"><summary><header><h1>
+<span class="taxon"></span>MESI in Murphi <a class="slug" href="/QTSW/">[QTSW]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">With those states in place the rest of MSI is mechanical, and MESI is a short step from it — modulo two design choices and two more races.</p>
+  <section lang="en" class="block hide-metadata"><details id="id50" open="open"><summary><header><h1>
+<span class="taxon"></span>The cache controller  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmia4fllqvr7nzhifqxwk5stk2kyje2tfokhddzfjkteyw4kbj6k25i.png"></img>
+<figcaption>MESI cache controller.</figcaption></figure>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Silent upgrades.</strong> If a cache in \(E\) may upgrade to \(M\) silently, the directory never learns the line went dirty, and the value it hands to the next <code>GetS</code> or <code>GetM</code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat \(E\) exactly like \(M\), forwarding everything. Neither requires a writeback on <code>PutE</code>. I take the first, matching the table.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Signaling exclusivity.</strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <code>ExclusiveData</code> message: receiving it in \(IS^D\) lands the cache in \(E\) rather than \(S\). It turns out to also be the key to the second race below.</p>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-Once we have sent the <code>PutE</code>, or the <code>PutM</code> \(EI^A\) and \(MI^A\) are functionally the same. I include both for completeness but verified that transitioning directly to \(MI^A\) from \(E\) works the same.
+Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\) are functionally identical. Both appear above for completeness, but transitioning from \(E\) straight into \(MI^A\) verifies the same.
 </div>
 
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Directory controller.</strong> We start with the analagous table.</p>
-<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png"></img></figure>
-<p xmlns="http://www.w3.org/1999/xhtml">Similar to the cache controller, we also add a \(E^D\) state for completion that can be absorbed into \(M^D\) introduced in the MSI protocol.</p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Weird Races.</strong></p>
+</details></section>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> First processor does <code>GetS</code> and is in \(IS^D\) but the Home directory sends it exclusive data and is now in \(E\). Then second processor does <code>GetM</code> and Home issues <code>Fwd-GetM</code> to processor one, which arrives before data.</div>
+  <section lang="en" class="block hide-metadata"><details id="id51" open="open"><summary><header><h1>
+<span class="taxon"></span>The directory controller  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png"></img>
+<figcaption>MESI directory controller.</figcaption></figure>
+<p xmlns="http://www.w3.org/1999/xhtml">Symmetrically, the directory gains an \(E^D\) state, which for completeness is kept distinct from \(M^D\) but could be folded into it.</p>
+</details></section>
 
+  <section lang="en" class="block hide-metadata"><details id="id52" open="open"><summary><header><h1>
+<span class="taxon"></span>Forwards arriving before exclusive data  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">The first processor issues <code>GetS</code> and waits in \(IS^D\), while the home directory has already moved to \(E\) and sent it <code>ExclusiveData</code>. A second processor then issues <code>GetM</code>, and home's <code>Fwd-GetM</code> overtakes the data in flight.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Stall <code>Fwd-GetM</code> and <code>Fwd-GetS</code> in \(IS^D\) until the data lands. This is safe here because the data is on the response channel, which no stall can block.</p>
+</details></section>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Need to stall on <code>Fwd-GetM</code> and <code>Fwd-GetS</code> in \(IS^D\) until data arrives</div>
-
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> An even crazier race happens when we get invalidated before the <code>Fwd-GetM</code> or <code>Fwd-GetS</code> arrive. Due to our previous design decision, we transition to \(II^A\), where if we receive a <code>PutAck</code> we transition to invalid. This then loses the needed forward data.</div>
-
+  <section lang="en" class="block hide-metadata"><details id="id53" open="open"><summary><header><h1>
+<span class="taxon"></span>Losing exclusive data to an invalidation  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">The nastier version of the same race: the invalidation arrives before the forward. By the \(II^A\) rule inherited from MSI, a <code>PutAck</code> in that state drops the line to \(I\) — discarding data a forwarded request is about to ask for.</p>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
-  The timeline:
-  <ol><li><code>Proc_1</code> performs a load miss → \(IS^D\)</li>
-    <li><code>Home</code> receives first <code>GetS</code> from <code>Proc_1</code> → \(E\) and sends <code>ExclusiveData</code> to <code>Proc_1</code></li>
-    <li><code>Proc_2</code> issues <code>GetM</code> → \(IM^AD\)</li>
-    <li><code>Home</code> sends <code>Inv</code> to <code>Proc_1</code></li>
-    <li><code>Home</code> forwards <code>Fwd-GetM</code> to <code>Proc_1</code></li>
-    <li><code>Proc_1</code> receives <code>Inv</code> → \(II^D\)</li>
-    <li><code>Proc_1</code> receives <code>ExclusiveData</code> → \(I\)</li></ol>
-  Data is lost
+<ol><li><code>Proc_1</code> load-misses → \(IS^D\)</li>
+  <li><code>Home</code> takes the first <code>GetS</code> from <code>Proc_1</code> → \(E\), sends <code>ExclusiveData</code></li>
+  <li><code>Proc_2</code> issues <code>GetM</code> → \(IM^{AD}\)</li>
+  <li><code>Home</code> sends <code>Inv</code> to <code>Proc_1</code></li>
+  <li><code>Home</code> forwards <code>Fwd-GetM</code> to <code>Proc_1</code></li>
+  <li><code>Proc_1</code> receives <code>Inv</code> → \(II^D\)</li>
+  <li><code>Proc_1</code> receives <code>ExclusiveData</code> → \(I\), and the data is lost</li></ol>
 </div>
 
-
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
-  We once again have to use the <code>ExclusiveData</code> message. We can then see that we got <code>ExclusiveData</code> in \(II^D\) and transition to \(E\) instead of \(I\). \(E\) will then correctly handle the <code>Fwd-GetM</code> or <code>Fwd-GetS</code>.
-</div>
-
-
-<p xmlns="http://www.w3.org/1999/xhtml">We are left with the following state diagrams for the cache and directory controllers respectively</p>
-<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmif36mc6riik263rmccsazkkvtb5la47ocbsbm664xrm323b3jyufm.png"></img>
-<img width="100%" src="/bafkrmifqg6owj5m5bnsuqphk73uuwqzybmwczbbwx432u5j3zju3fe52i4.png"></img></figure>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> <code>ExclusiveData</code> pays for itself a second time. Because the message is distinguishable from ordinary <code>Data</code>, a cache receiving it in \(II^D\) knows it was the first reader and transitions to \(E\) instead of \(I\) — from which the pending <code>Fwd-GetM</code> or <code>Fwd-GetS</code> is handled correctly.</p>
 </details></section>
-</details></section><section lang="en" class="block"><details id="id38"><summary><header><h1>
+
+  <section lang="en" class="block hide-metadata"><details id="id54" open="open"><summary><header><h1>
+<span class="taxon"></span>The finished controllers  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 3, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">Folding all of the above in leaves these two state machines, which Murphi verifies exhaustively.</p>
+<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmif36mc6riik263rmccsazkkvtb5la47ocbsbm664xrm323b3jyufm.png"></img>
+<figcaption>Final MESI cache controller.</figcaption></figure>
+<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmifqg6owj5m5bnsuqphk73uuwqzybmwczbbwx432u5j3zju3fe52i4.png"></img>
+<figcaption>Final MESI directory controller.</figcaption></figure>
+</details></section>
+</details></section></details></section><section lang="en" class="block"><details id="id55"><summary><header><h1>
 <span class="taxon"></span>Expectation Maximization <a class="slug" href="/0088/">[0088]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 1, 2025</li>
@@ -833,7 +882,7 @@ for a <strong>fixed</strong> theta <strong>and</strong> \(q\). Therefore, <stron
 Note that the gradient is with respect to \(\theta \), where \(\theta \) is just the third argument to \(\mathsf {ELBO}\) as defined above. Notably, \(\theta _t\) will show up elsewhere later but will <strong>NOT</strong> be backpropagated through.
 </div>
 
-  <section lang="en" class="block hide-metadata"><details id="id39" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id56" open="open"><summary><header><h1>
 <span class="taxon"></span>Expectation  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 1, 2025</li>
@@ -891,7 +940,7 @@ Now this is all cool theoretically but how TF do we actually maximize this thing
 
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id40" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id57" open="open"><summary><header><h1>
 <span class="taxon"></span>Maximization  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 1, 2025</li>
@@ -904,7 +953,7 @@ Alternating between these steps yields the <em>expectation-maximization</em> alg
 </details></section>
 
   
-</details></section><section lang="en" class="block"><details id="id41"><summary><header><h1>
+</details></section><section lang="en" class="block"><details id="id58"><summary><header><h1>
 <span class="taxon"></span>Evidence Lower Bound <a class="slug" href="/0082/">[0082]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">June 30, 2025</li>
@@ -953,7 +1002,7 @@ Thus, to tighten the lower bound we can optimize \(q_{\phi }(z)\) to try to matc
 You may be wondering how we use this algorithmically to find \(\theta ^*\)? This will be the main idea of <span xmlns="" class="link local"><a href="/0088/" title="Expectation Maximization [0088]">expectation maximization</a></span>. Feel free to check it out!
 </p>
   
-</details></section><section lang="en" class="block"><details id="id42"><summary><header><h1>
+</details></section><section lang="en" class="block"><details id="id59"><summary><header><h1>
 <span class="taxon"></span>Rebuilding My (Neo)Vim Config From Scratch <a class="slug" href="/005F/">[005F]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">March 4, 2025</li>
@@ -961,7 +1010,7 @@ You may be wondering how we use this algorithmically to find \(\theta ^*\)? This
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">I used LazyVim for a long time, but I kept hitting a wall: understanding <em>how</em> LazyVim did something was consistently harder than if I had just written the thing myself. So I gave myself one day to rebuild from scratch, with the modest goal of first-class support for \(\TeX \), Python, Forester, and C/C++. That one-day sprint is long past, and the config has kept evolving since — this note describes where it landed, not the frantic first pass. The through-line is that almost everything now leans on Neovim's own primitives instead of a framework, which is exactly the transparency I was missing.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The whole config lives in my <span xmlns="" class="link external"><a href="https://github.com/kkanarios32/dotfiles" title="">dotfiles</a></span>. It is a thin <code>init.lua</code> that loads four modules — <code>config.lazy</code>, <code>config.options</code>, <code>config.keymaps</code>, and <code>core.lsp</code> — with the actual plugin specs under <code>lua/plugins/</code> and per-server LSP tables under <code>lsp/</code>.</div>
 
-  <section lang="en" class="block hide-metadata"><details id="id43" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id60" open="open"><summary><header><h1>
 <span class="taxon"></span>Sane defaults  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">March 4, 2025</li>
@@ -970,7 +1019,7 @@ You may be wondering how we use this algorithmically to find \(\theta ^*\)? This
 <p xmlns="http://www.w3.org/1999/xhtml">To my surprise, a lot of the behavior I had taken for granted turned out to be options LazyVim set internally. I was greeted on first launch by 8-space indents and a clipboard that would not survive a trip between terminal instances. So the first job was archaeology: I dug through LazyVim for every option I actually liked and copied them into <code>config/options.lua</code>. System clipboard, sensible folding via Treesitter (<code>foldexpr = v:lua.vim.treesitter.foldexpr()</code>), a global statusline, <code>conceallevel</code> for markup — the unglamorous foundation everything else sits on.</p>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id44" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id61" open="open"><summary><header><h1>
 <span class="taxon"></span>Plugin management  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">March 4, 2025</li>
@@ -979,7 +1028,7 @@ You may be wondering how we use this algorithmically to find \(\theta ^*\)? This
 <p xmlns="http://www.w3.org/1999/xhtml">The plugin manager is <code>lazy.nvim</code>, the de facto standard, and it genuinely just works. The bootstrap snippet from their docs clones it on first run, and after that every file under <code>lua/plugins/</code> that returns a spec table is imported automatically. No central manifest to keep in sync — a new file is a new plugin.</p>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id45" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id62" open="open"><summary><header><h1>
 <span class="taxon"></span>Native LSP, no framework  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">March 4, 2025</li>
@@ -993,7 +1042,7 @@ You may be wondering how we use this algorithmically to find \(\theta ^*\)? This
 <p xmlns="http://www.w3.org/1999/xhtml">A shared <code>LspAttach</code> autocommand in <code>core.lsp</code> binds the buffer-local LSP keymaps once, for every server: go-to-definition and friends route through <code>fzf-lua</code> pickers, and document highlighting, inlay-hint toggling, and native completion get enabled per-buffer based on what each client actually supports.</p>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id46" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id63" open="open"><summary><header><h1>
 <span class="taxon"></span>Forester finally has a <span class="link external"><a href="https://www.forester-notes.org/MZSF/index.xml" title="">real language server</a></span>  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">March 4, 2025</li>
@@ -1003,7 +1052,7 @@ You may be wondering how we use this algorithmically to find \(\theta ^*\)? This
 <p xmlns="http://www.w3.org/1999/xhtml">None of that survives, because Forester now ships an actual language server. My <code>lsp/forester.lua</code> just launches <code>forester lsp</code> and hands it the forest root. The one wrinkle worth recording: <code>forester</code> locates the forest by its process working directory and <em>ignores</em> the LSP <code>rootUri</code>, and Neovim does not spawn the server in <code>root_dir</code> by default. So the config resolves the nearest <code>forest.toml</code> and starts the RPC process with an explicit <code>cwd</code> — otherwise the server exits with status 1 whenever Neovim's cwd has no <code>forest.toml</code> (e.g. when I open a tree from <code>$HOME</code>). Reference completion — indispensable for writing this very blog — now flows through the standard LSP path with no shim in sight.</p>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id47" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id64" open="open"><summary><header><h1>
 <span class="taxon"></span>Completion  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">March 4, 2025</li>
@@ -1013,7 +1062,7 @@ You may be wondering how we use this algorithmically to find \(\theta ^*\)? This
 <p xmlns="http://www.w3.org/1999/xhtml">Layered on top is <code>supermaven-nvim</code> for AI ghost-text suggestions — accept-suggestion, accept-word, and clear bound to <code>&lt;C-l&gt;</code>, <code>&lt;C-j&gt;</code>, and <code>&lt;C-]&gt;</code>. It fills the role Copilot-style tools play elsewhere without getting in the way of the structured LSP and snippet completions.</p>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id48" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id65" open="open"><summary><header><h1>
 <span class="taxon"></span>Snippets  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">March 4, 2025</li>
@@ -1023,7 +1072,7 @@ You may be wondering how we use this algorithmically to find \(\theta ^*\)? This
 <p xmlns="http://www.w3.org/1999/xhtml">The trick I had wanted for years and can finally do: load LaTeX math snippets while inside math environments <em>in Forester</em>. The snippet plugin runs with <code>use_treesitter = true</code>, so it inspects the Forester Treesitter grammar, finds the node types for math environments, and only expands the math snippets when the cursor is actually inside one. Writing \(\TeX \) inside a <code>.tree</code> file feels exactly like writing it in a <code>.tex</code> file.</p>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id49" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id66" open="open"><summary><header><h1>
 <span class="taxon"></span>Formatting and linting  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">March 4, 2025</li>
@@ -1032,7 +1081,7 @@ You may be wondering how we use this algorithmically to find \(\theta ^*\)? This
 <p xmlns="http://www.w3.org/1999/xhtml">Formatting runs through <code>conform.nvim</code> on save. Python is handled by <code>ruff_format</code> followed by <code>pyink</code>, Lua by <code>stylua</code> — this replaced the old <code>black</code> + <code>isort</code> pairing, folding most of it into the same <code>ruff</code> that already runs as a language server. Formatting falls back to the LSP formatter when no dedicated tool is configured for a filetype.</p>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id50" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id67" open="open"><summary><header><h1>
 <span class="taxon"></span>Fuzzy finding and forest integration  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">March 4, 2025</li>
@@ -1042,7 +1091,7 @@ You may be wondering how we use this algorithmically to find \(\theta ^*\)? This
 <p xmlns="http://www.w3.org/1999/xhtml">The piece I am most fond of is <code>forester-new</code>, a local plugin that wires the editor into the forest's own note pipeline. It shells out to <code>scripts/new</code> so every tree gets the standard frontmatter and routing, then commands like <code>:ForesterNew</code>, <code>:ForesterStub</code>, <code>:ForesterCitek</code>, and <code>:ForesterTransient</code> handle the follow-through: creating a tree and inserting a <code>\transclude</code>, stubbing a concept and dropping a <code>[[id]]</code> link at the cursor, or — in visual mode — lifting a selection into a new tree and replacing it in place with the transclude. Stub-and-link without ever leaving the sentence, which is exactly the friction the forest workflow is supposed to remove.</p>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id51" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id68" open="open"><summary><header><h1>
 <span class="taxon"></span>Anki  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">March 4, 2025</li>
@@ -1052,8 +1101,32 @@ You may be wondering how we use this algorithmically to find \(\theta ^*\)? This
 </details></section>
 
   
+</details></section><section lang="en" class="block"><details id="id69"><summary><header><h1>
+<span class="taxon"></span><span class="link local"><a href="/NZBG/" title="Stack [NZBG]">Stack</a></span> vs. <span class="link local"><a href="/WLBG/" title="Heap [WLBG]">Heap</a></span> <a class="slug" href="/0025/">[0025]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">December 28, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">I often hear this question come up amongst performance-driven developers, and for the longest time I could never get a straight answer as to why the stack was so much better? After a long foray into the inner workings of how memory allocation is actually done, I think I finally have an answer. I do not want to forget this, so I am doing a quick write up here.</p>
+  <section lang="en" class="block hide-metadata"><details id="id70" open="open"><summary><header><h1>
+<span class="taxon"></span>Why stack is faster.  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">December 28, 2024</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+This all comes down to what happens during each memory allocation. Prior to actually running the program, the operating system allocates some amount of memory for both the stack and the heap (I think around 2-4MB?). When you allocate memory on the stack i.e. <code xmlns="http://www.w3.org/1999/xhtml">int x = 1;</code>
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>Stack just increments stack pointer.</li>
+    <li>Writes value to new address pointed to by stack pointer.</li></ul>
+When you allocate memory on the heap i.e. <code xmlns="http://www.w3.org/1999/xhtml">int *x = malloc(sizeof(int))</code>, we must instead choose how best to fulfill the request, which is a whole research direction in itself.
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>One such implementation is the <span xmlns="" class="link external"><a href="https://en.wikipedia.org/wiki/Buddy_memory_allocation" title="">buddy algorithm</a></span></li></ul>
+However, <code xmlns="http://www.w3.org/1999/xhtml">malloc</code> itself is not a system call and therefore is not terribly slow. A real issue occurs when we run out of pre-allocated heap memory. This requires <span class="link local"><a href="/A5S6/" title="Syscall mechanism [A5S6]">invoking a system call</a></span> like <code xmlns="http://www.w3.org/1999/xhtml">sbrk</code> to increment the size of the allocated memory for the heap.
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>If no available pages, OS must evict and write to disk...</li>
+      <li>Formally, this is known as "heap growth".</li></ul>
+Generally, if you know how much memory you need it is good practice to just allocated all up front to minimize any potential system calls. With this, the performance difference is not too drastic  :)
+</details></section>
+
+  
 </details></section></details></section>
-  <section lang="en" class="block hide-metadata"><details id="id52"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id71"><summary><header><h1>
 <span class="taxon"></span>What I've been thinking about <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 22, 2026</li>
@@ -1063,7 +1136,7 @@ You may be wondering how we use this algorithmically to find \(\theta ^*\)? This
   
   
   
-  <section lang="en" class="block"><details id="id53"><summary><header><h1>
+  <section lang="en" class="block"><details id="id72"><summary><header><h1>
 <span class="taxon"></span>XLA Compilation <a class="slug" href="/M74N/">[M74N]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 22, 2026</li>
@@ -1104,20 +1177,20 @@ As soon as python code is traced into jaxpr it is thrown away. Only HLO is input
 <figcaption>How memory is laid out based on XLA.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Execution.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Move tensors from CPU to HBM. Sharding is taken care of by PJIT if on TPU pod.</li>
   <li>Async: Immediately returns a <code>Future</code> JAX array while the hardware executes VLIW microcode asynchronously.</li>
   <li>Buffer management: Returns pointer to TPU memory. All handled lazily. Not copied back to CPU until <code>jax.block_until_ready()</code>.</li></ul></details></section>
-  <section lang="en" class="block"><details id="id54"><summary><header><h1>
+  <section lang="en" class="block"><details id="id73"><summary><header><h1>
 <span class="taxon"></span><span class="link local"><a href="/Z902/" title="Idea Purgatory [Z902]">Idea Purgatory</a></span>: Skills for Offline Goal-Conditioned RL <a class="slug" href="/47Y4/">[47Y4]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 23, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-  <section lang="en" class="block hide-metadata"><details id="id55" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id74" open="open"><summary><header><h1>
 <span class="taxon"></span>Background  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 23, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
   <p xmlns="http://www.w3.org/1999/xhtml">This idea is a combination of a few relevant papers in <em>offline skill learning</em>. Namely, the problem of how to learn re-usable, temporally-extended objects purely from offline data.</p>
-<section lang="en" class="block hide-metadata"><details id="id56" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id75" open="open"><summary><header><h1>
 <span class="taxon"></span><span class="link local"><a href="/005G/" title="Papers of a week [005G]">POTW</a></span>: <span class="link local"><a href="/foxMultiLevelDiscoveryDeep2017/" title="Multi-Level Discovery of Deep Options [foxMultiLevelDiscoveryDeep2017]">Multi-Level Discovery of Deep Options</a></span> <a class="slug" href="/ZUAG/">[ZUAG]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 22, 2026</li>
@@ -1154,7 +1227,7 @@ As soon as python code is traced into jaxpr it is thrown away. Only HLO is input
 Note that \(P_{\theta }(\xi  \mid  \mathcal {H})\) is a distribution over \((K, \{0,1\})^{T} \) i.e. over each \((z_t, b_t)\). To efficiently compute, we need to use <span xmlns="" class="link local"><a href="/F3T0/" title="Forward-backward algorithm [F3T0]">Forward-backward algorithm</a></span>.
 </div>
 
-  <section lang="en" class="block hide-metadata"><details id="id57" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id76" open="open"><summary><header><h1>
 <span class="taxon"></span>Computing the expectation  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 22, 2026</li>
@@ -1213,7 +1286,7 @@ We have abused notation here, allowing \(\mathbb {P}(s_t, a_t \mid  z_t, b_t)\) 
 .\end {align*}\]
 </details></section>
 </details></section>
-<section lang="en" class="block hide-metadata"><details id="id58" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id77" open="open"><summary><header><h1>
 <span class="taxon"></span><span class="link local"><a href="/005G/" title="Papers of a week [005G]">POTW</a></span>: <span class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">Learning Options via Compression</a></span> <a class="slug" href="/G27U/">[G27U]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 23, 2026</li>
@@ -1229,7 +1302,7 @@ We have abused notation here, allowing \(\mathbb {P}(s_t, a_t \mid  z_t, b_t)\) 
 <figcaption>How <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span> goes from input sequence to end skill labels.</figcaption></figure></details></section>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id59" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id78" open="open"><summary><header><h1>
 <span class="taxon"></span>Frankenstein-ing <span class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span> and <span class="link local"><a href="/foxMultiLevelDiscoveryDeep2017/" title="Multi-Level Discovery of Deep Options [foxMultiLevelDiscoveryDeep2017]">DDO</a></span>  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 23, 2026</li>
@@ -1264,7 +1337,7 @@ This is only a good idea for us because we do not need to use the <em>meta contr
   <li>Then, we minimize the deliberation cost subject to \(\mathcal {L}_{\text {likelihood}} \leq  C + \epsilon \)</li></ul>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id60" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id79" open="open"><summary><header><h1>
 <span class="taxon"></span>Implementation details  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 23, 2026</li>
@@ -1276,7 +1349,7 @@ This is only a good idea for us because we do not need to use the <em>meta contr
     <li>The <em>skill policy network</em> \(\pi _{\theta }(a \mid  s, z)\) is a standard Gaussian policy that take \(z\) as a one-hot encoding.</li></ul>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id61" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id80" open="open"><summary><header><h1>
 <span class="taxon"></span>Planning over learned skills  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 23, 2026</li>
@@ -1309,7 +1382,7 @@ This introduces a few changes and constraints on the final algorithm.
 <p>Note that it may be the case that the high-level policy learns to just choose \(z_g\) everytime, so we may want to penalize that decision somehow for \((s,g)\) pairs with large \(V(s,g)\). Intuitively, this would end up with a higher-level policy that best utilizes the temporally-extended skills to reach the nearby region of \(g\) then concedes to the lower-level policy.</p></p>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id62" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id81" open="open"><summary><header><h1>
 <span class="taxon"></span>Outstanding Problems / Future directions  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 23, 2026</li>
@@ -1321,7 +1394,7 @@ This introduces a few changes and constraints on the final algorithm.
 <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Conquering manipulation.</strong> In <span xmlns="" class="link local"><a href="/parkOGBenchBenchmarkingOffline2025/" title="OGBench: Benchmarking Offline Goal-Conditioned RL [parkOGBenchBenchmarkingOffline2025]">OGBench: Benchmarking Offline Goal-Conditioned RL</a></span>, they provide a suite of manipulation environments in addition to the standard locomotion. One such environment, is the manipulation equivalent of the <span xmlns="" class="link external"><a href="https://en.wikipedia.org/wiki/Lights_Out_(game)" title="">lights out game</a></span>. This is a great test-bed to separate <em>skill-learning</em> from <em>planning</em>. In particular, the <em>skill-learning</em> portion can be clearly decomposed into the pressing of each of the buttons. However, when directly trying to use the <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span> it is not able to distinguish between these skills.</p>
 <ul xmlns="http://www.w3.org/1999/xhtml"><li>On <code>puzzle 3x3</code> <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span> terminates every \(1.4\) steps because all the skills look similar.</li>
   <li>This is using the threshold \(\beta  &gt; 0.9\).</li></ul>
-<section lang="en" class="block hide-metadata" data-taxon="Conjecture"><details id="id63" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata" data-taxon="Conjecture"><details id="id82" open="open"><summary><header><h1>
 <span class="taxon">Conjecture. </span>  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 23, 2026</li>
@@ -1333,7 +1406,7 @@ Ideally, this would allow goal-dependent skills, where the goal is not the entir
 <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Get rid of weird threshold / turn into MPC-ish.</strong> Currently, when planning, we must tune the <code>value_threshold</code> for when we pass control to goal-conditioned policy. To get 89 percent on pointmaze we used -10. Instead of using a threshold, we could instead just treat the goal-conditioned policy as another skill, but the future state is just .</p></details></section>
 </details></section>
 </details></section>
-  <section lang="en" class="block"><details id="id64"><summary><header><h1>
+  <section lang="en" class="block"><details id="id83"><summary><header><h1>
 <span class="taxon"></span>MLIR <a class="slug" href="/IR7B/">[IR7B]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 15, 2026</li>
@@ -1354,14 +1427,14 @@ Ideally, this would allow goal-dependent skills, where the goal is not the entir
     <ul><li>However, XLA works by translating StableHLO to HLO, which is then optimized by XLA. HLO is NOT an MLIR dialect and therefore in order to use XLA your backend needs to have an appropriate conversion from HLO to an executable on their backend.</li>
       <li>This is what is done for trainium. Namely, the <span xmlns="" class="link external"><a href="https://awsdocs-neuron.readthedocs-hosted.com/en/latest/compiler/index.html" title="">neuronx-cc</a></span> compiler performs the translation from optimized HLO to optimized executable code on their ASIC.</li></ul>
     <li><span xmlns="" class="link local"><a href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations [tilletTritonIntermediateLanguage2019]">Triton</a></span> and the GPU backend for XLA are the LLVM + NVVM MLIR, which is the MLIR dialect for LLVM with added GPU instructions.</li></ul></ol></details></section>
-  <section lang="en" class="block"><details id="id65"><summary><header><h1>
+  <section lang="en" class="block"><details id="id84"><summary><header><h1>
 <span class="taxon"></span>TPU Ironwood <a class="slug" href="/ZYB7/">[ZYB7]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 22, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The newest generation <span xmlns="" class="link local"><a href="/NZZ7/" title="TPU Architecture [NZZ7]">TPU architecture</a></span>.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmibmdcecj3y6tcfzxhtuyvsoza7yfqm4iua5hdllesh656pbeu5ssy.png"></img>
 <figcaption>TPU Ironwood Architecture</figcaption></figure>
-  <section lang="en" class="block hide-metadata"><details id="id66" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id85" open="open"><summary><header><h1>
 <span class="taxon"></span>Scaling Ironwood  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 22, 2026</li>
@@ -1377,24 +1450,24 @@ Ideally, this would allow goal-dependent skills, where the goal is not the entir
       <li>OCS allows for slices without system shutdown (?)</li></ul>
 </details></section>
 </details></section>
-  <section lang="en" class="block" data-taxon="Definition"><details id="id67"><summary><header><h1>
+  <section lang="en" class="block" data-taxon="Definition"><details id="id86"><summary><header><h1>
 <span class="taxon">Definition. </span>Release consistency <a class="slug" href="/ZWHV/">[ZWHV]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 24, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/BCFG/" title="Relaxed consistency [BCFG]">Relaxed consistency</a></span> discipline that recovers data-race freedom (see <span xmlns="" class="link local"><a href="/P0NQ/" title="Data race [P0NQ]">Data race</a></span>) under <span xmlns="" class="link local"><a href="/WT44/" title="Relaxed memory order [WT44]">Relaxed memory order</a></span> not by issuing fewer fences, but by issuing <em>weaker</em> ones. The full-fence cost of <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span> is replaced by a pair of half-fences placed exactly at the boundaries of critical sections — acquire on entry, release on exit.</p><p xmlns="http://www.w3.org/1999/xhtml">The intuition is that correctness around a critical section only requires that work cannot <em>leak out</em> of it; work is free to <em>sink into</em> it. Half-fences encode exactly this asymmetry, which is why they are the right primitive for lock-based and lock-free synchronization alike.</p><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id68" open="open"><summary><header><h1>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/BCFG/" title="Relaxed consistency [BCFG]">Relaxed consistency</a></span> discipline that recovers data-race freedom (see <span xmlns="" class="link local"><a href="/P0NQ/" title="Data race [P0NQ]">Data race</a></span>) under <span xmlns="" class="link local"><a href="/WT44/" title="Relaxed memory order [WT44]">Relaxed memory order</a></span> not by issuing fewer fences, but by issuing <em>weaker</em> ones. The full-fence cost of <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span> is replaced by a pair of half-fences placed exactly at the boundaries of critical sections — acquire on entry, release on exit.</p><p xmlns="http://www.w3.org/1999/xhtml">The intuition is that correctness around a critical section only requires that work cannot <em>leak out</em> of it; work is free to <em>sink into</em> it. Half-fences encode exactly this asymmetry, which is why they are the right primitive for lock-based and lock-free synchronization alike.</p><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id87" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Full fence <a class="slug" href="/S80U/">[S80U]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 24, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> across which no memory operation may move in either direction. Prior accesses must become globally visible before any subsequent access may issue. x86's <code>mfence</code> is the canonical example — the hammer that drains the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> and serializes all prior memory operations against all subsequent ones.</p><p xmlns="http://www.w3.org/1999/xhtml">Full fences are the default ordering primitive under <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span> — every memory operation behaves as if a full fence sat on either side. They are also the only fence one needs to reason about correctness, which is why they are the building block for the half-fences of <span xmlns="" class="link local"><a href="/ZWHV/" title="Release consistency [ZWHV]">Release consistency</a></span>.</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id69" open="open"><summary><header><h1>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> across which no memory operation may move in either direction. Prior accesses must become globally visible before any subsequent access may issue. x86's <code>mfence</code> is the canonical example — the hammer that drains the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> and serializes all prior memory operations against all subsequent ones.</p><p xmlns="http://www.w3.org/1999/xhtml">Full fences are the default ordering primitive under <span xmlns="" class="link local"><a href="/OW4D/" title="Sequential consistency [OW4D]">Sequential consistency</a></span> — every memory operation behaves as if a full fence sat on either side. They are also the only fence one needs to reason about correctness, which is why they are the building block for the half-fences of <span xmlns="" class="link local"><a href="/ZWHV/" title="Release consistency [ZWHV]">Release consistency</a></span>.</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id88" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Half fence <a class="slug" href="/S5D0/">[S5D0]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 24, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> that constrains motion in only one direction, splitting the symmetric guarantee of a <span xmlns="" class="link local"><a href="/S80U/" title="Full fence [S80U]">Full fence</a></span> into two cheaper primitives:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><strong>Acquire</strong> — operations after the fence may not move above it. Used at the entry to a critical section: subsequent reads and writes cannot be hoisted before the lock is held.</li>
   <li><strong>Release</strong> — operations before the fence may not move below it. Used at the exit of a critical section: prior writes cannot be deferred past the unlock.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">The asymmetry is exactly the freedom one wants around a critical section: <em>expanding</em> the section is fine — work may sink into it (past acquire) or rise into it (before release) — but work may not leak out of it. This is the basis of <span xmlns="" class="link local"><a href="/ZWHV/" title="Release consistency [ZWHV]">Release consistency</a></span> and the reason C++ <code>std::atomic</code> exposes <code>memory_order_acquire</code> / <code>memory_order_release</code> as its core primitives.</p></details></section><p xmlns="http://www.w3.org/1999/xhtml">C++ <code>std::atomic</code> compiles to half-fences in the right places, which is why it is the standard primitive for portable lock-free code.</p></details></section>
-  <section lang="en" class="block"><details id="id70"><summary><header><h1>
+  <section lang="en" class="block"><details id="id89"><summary><header><h1>
 <span class="taxon"></span><span class="link local"><a href="/005G/" title="Papers of a week [005G]">POTW</a></span>: <span class="link local"><a href="/foxMultiLevelDiscoveryDeep2017/" title="Multi-Level Discovery of Deep Options [foxMultiLevelDiscoveryDeep2017]">Multi-Level Discovery of Deep Options</a></span> <a class="slug" href="/ZUAG/">[ZUAG]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 22, 2026</li>
@@ -1431,7 +1504,7 @@ Ideally, this would allow goal-dependent skills, where the goal is not the entir
 Note that \(P_{\theta }(\xi  \mid  \mathcal {H})\) is a distribution over \((K, \{0,1\})^{T} \) i.e. over each \((z_t, b_t)\). To efficiently compute, we need to use <span xmlns="" class="link local"><a href="/F3T0/" title="Forward-backward algorithm [F3T0]">Forward-backward algorithm</a></span>.
 </div>
 
-  <section lang="en" class="block hide-metadata"><details id="id71" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id90" open="open"><summary><header><h1>
 <span class="taxon"></span>Computing the expectation  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 22, 2026</li>
@@ -1490,7 +1563,7 @@ We have abused notation here, allowing \(\mathbb {P}(s_t, a_t \mid  z_t, b_t)\) 
 .\end {align*}\]
 </details></section>
 </details></section>
-  <section lang="en" class="block"><details id="id72"><summary><header><h1>
+  <section lang="en" class="block"><details id="id91"><summary><header><h1>
 <span class="taxon"></span>Computing FFN and MHA in parallel is free speedup <a class="slug" href="/ZAR4/">[ZAR4]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 16, 2026</li>
@@ -1500,7 +1573,7 @@ Another small trick is to parallelize computation. Traditionally, one computes t
 \[\mathbf {y} = \mathbf {x} + \mathrm {FFN}(\mathrm {LN}(\mathbf {x} + \mathrm {MHA}(\mathrm {LN}(\mathbf {x})))).\]
 However, this requires waiting for the \(\mathrm {MHA}\) to complete before performing the \(\mathrm {FFN}\) computation. It has been found that performing these in parallel does not cause any severe degradation in performance. Explicitly, instead they do
 \[\mathbf {y} = \mathbf {x} + \mathrm {FFN}(\mathrm {LN}(\mathbf {x})) + \mathrm {MHA}(\mathrm {LN}(\mathbf {x}))\]</p></details></section>
-  <section lang="en" class="block" data-taxon="Definition"><details id="id73"><summary><header><h1>
+  <section lang="en" class="block" data-taxon="Definition"><details id="id92"><summary><header><h1>
 <span class="taxon">Definition. </span>Task state segment <a class="slug" href="/ZAAT/">[ZAAT]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 15, 2026</li>
@@ -1508,7 +1581,7 @@ However, this requires waiting for the \(\mathrm {MHA}\) to complete before perf
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A small OS-allocated structure that the CPU reads to find the <em>kernel stack pointer</em> when it raises privilege. Its historical purpose — full task switching in hardware — is dead on modern x86-64; what survives is one essential field: <code>RSP0</code>, the address of the kernel stack to switch to on entry from ring 3.</p><p xmlns="http://www.w3.org/1999/xhtml">During the <span xmlns="" class="link local"><a href="/K325/" title="Hardware interrupt path [K325]">Hardware interrupt path</a></span>, the moment the CPU decides to push RIP/RSP/CS/RFLAGS, it reads <code>RSP0</code> from the current TSS (located via the GDT entry pointed at by the TR register) and switches RSP to that value <em>before</em> pushing. If the TSS were missing or pointed at user memory, the very first interrupt would either fault while trying to push, or push the user's registers onto attacker-controlled memory. So the TSS is set up at boot, before interrupts are enabled.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> This is why a kernel needs a per-CPU TSS, not a per-process one: <code>RSP0</code> is consulted on every transition into the kernel, and each CPU needs its own kernel stack to land on.</div>
 </details></section>
-  <section lang="en" class="block"><details id="id74"><summary><header><h1>
+  <section lang="en" class="block"><details id="id93"><summary><header><h1>
 <span class="taxon"></span>Directory protocols expose transient states because transactions span multiple hops <a class="slug" href="/Z32G/">[Z32G]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 11, 2026</li>
@@ -1520,7 +1593,7 @@ However, this requires waiting for the \(\mathrm {MHA}\) to complete before perf
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Never resolve these races with NACKs — they cause starvation. The <span xmlns="" class="link local"><a href="/HHZO/" title="Implementing Directory-based MESI in Murphi [HHZO]">Implementing Directory-based MESI in Murphi</a></span> Murphi implementation works through the channel-separation arguments that keep the transient-state space deadlock-free.</div>
 </details></section>
-  <section lang="en" class="block" data-taxon="Definition"><details id="id75"><summary><header><h1>
+  <section lang="en" class="block" data-taxon="Definition"><details id="id94"><summary><header><h1>
 <span class="taxon">Definition. </span>Crossbar <a class="slug" href="/YV5J/">[YV5J]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1530,13 +1603,13 @@ However, this requires waiting for the \(\mathrm {MHA}\) to complete before perf
   <li>Switch area grows as \(O(n \cdot  m)\) — the dominant cost as systems grow.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Crossbar router area scales as the <em>square</em> of the port count, which is why high-radix routers are dramatically more expensive than low-radix ones.</div>
 <p xmlns="http://www.w3.org/1999/xhtml">Crossbars are common as the inner switch of larger structured networks (<span xmlns="" class="link local"><a href="/YKAN/" title="Clos network [YKAN]">Clos network</a></span>, <span xmlns="" class="link local"><a href="/DFC7/" title="Fat tree [DFC7]">Fat tree</a></span>) — large flat crossbars are impractical at scale, but small crossbars are cheap.</p></details></section>
-  <section lang="en" class="block"><details id="id76"><summary><header><h1>
+  <section lang="en" class="block"><details id="id95"><summary><header><h1>
 <span class="taxon"></span>Page clustering <a class="slug" href="/YMHF/">[YMHF]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 11, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An amortization trick for the write side of <span xmlns="" class="link local"><a href="/HK73/" title="Page replacement [HK73]">page replacement</a></span>. Writing one dirty page to swap at a time pays a full disk I/O per eviction, and small random writes are the worst case for a disk. Page clustering batches them: the OS collects a group of dirty pages from the global dirty list and writes them out together in a single larger, more sequential I/O. The per-page cost of paging out falls because the fixed overhead of a disk write is spread across the whole batch.</p></details></section>
-  <section lang="en" class="block" data-taxon="Definition"><details id="id77"><summary><header><h1>
+  <section lang="en" class="block" data-taxon="Definition"><details id="id96"><summary><header><h1>
 <span class="taxon">Definition. </span>Clos network <a class="slug" href="/YKAN/">[YKAN]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1554,7 +1627,7 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> A <em>folded</em> Clos network — input and output stages combined, making \(n\) input ports and \(m\) output ports bidirectional — is structurally the same as a <span xmlns="" class="link local"><a href="/DFC7/" title="Fat tree [DFC7]">Fat tree</a></span>.</div>
 </details></section>
-  <section lang="en" class="block" data-taxon="Definition"><details id="id78"><summary><header><h1>
+  <section lang="en" class="block" data-taxon="Definition"><details id="id97"><summary><header><h1>
 <span class="taxon">Definition. </span>Interrupt descriptor table <a class="slug" href="/YK46/">[YK46]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 15, 2026</li>
@@ -1562,7 +1635,7 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The CPU's lookup table from <em>interrupt number</em> to <em>handler</em>. The OS allocates the IDT in memory, fills entry \(N\) with the address of the handler for interrupt \(N\), and points the IDTR register at the table's base. From then on the <span xmlns="" class="link local"><a href="/K325/" title="Hardware interrupt path [K325]">Hardware interrupt path</a></span> uses the IDT to dispatch every interrupt without any further software help.</p><p xmlns="http://www.w3.org/1999/xhtml">Each entry — a <em>gate descriptor</em> on x86 — carries enough information for the CPU to switch into the handler safely: the handler's linear address, the code segment to load (which sets the new privilege level, typically ring 0), and a type byte distinguishing interrupt gates (which mask further interrupts on entry) from trap gates (which don't). Entries 0–31 are reserved for CPU-defined exceptions (divide-by-zero, <span xmlns="" class="link local"><a href="/CXFM/" title="Page fault [CXFM]">Page fault</a></span>, double fault, ...); 32–255 are available for device IRQs and software interrupts.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The IDT is one of three OS-installed tables that the CPU consults transparently — the others are the GDT (segment descriptors) and the page tables. Each is a hardware contract: the OS lays bytes out in a format the silicon understands, then hands over a pointer.</div>
 </details></section>
-  <section lang="en" class="block"><details id="id79"><summary><header><h1>
+  <section lang="en" class="block"><details id="id98"><summary><header><h1>
 <span class="taxon"></span>exec() <a class="slug" href="/YHJR/">[YHJR]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1585,13 +1658,13 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
   exec(command);</code></pre>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The many variants — <code>execl</code>, <code>execle</code>, <code>execlp</code>, <code>execv</code>, <code>execvp</code>, <code>execvP</code> — differ in how they take arguments (list vs. vector), whether they use the <code>PATH</code> environment variable, and whether they take an explicit environment.</div>
 </details></section>
-  <section lang="en" class="block"><details id="id80"><summary><header><h1>
+  <section lang="en" class="block"><details id="id99"><summary><header><h1>
 <span class="taxon"></span>Transactional memory <a class="slug" href="/Y8JE/">[Y8JE]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An alternative to fine-grained <span xmlns="" class="link local"><a href="/Q2DT/" title="Locks [Q2DT]">Locks</a></span>: mark code regions as <em>transactions</em> that should appear atomic, execute them speculatively in parallel, and detect conflicts after the fact. Aims at the performance of fine-grained locking with the programming ergonomics of coarse-grained locking.</p>
-  <section lang="en" class="block hide-metadata"><details id="id81" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id100" open="open"><summary><header><h1>
 <span class="taxon"></span>Conflict detection  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1605,7 +1678,7 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 <p xmlns="http://www.w3.org/1999/xhtml">Eager detection can piggyback on the cache coherence protocol: add read/write bits to each cache line, set them during a transaction, and let a coherence invalidation signal a conflict.</p>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id82" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id101" open="open"><summary><header><h1>
 <span class="taxon"></span>Version management (rollback)  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1624,13 +1697,13 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 </details></section>
       </details></section>
     
-    <section lang="en" class="block hide-metadata"><details id="id83" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id102" open="open"><summary><header><h1>
 <span class="taxon"></span>Related  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
-        <section lang="en" class="block" data-taxon="Conference"><details id="id84"><summary><header><h1>
+        <section lang="en" class="block" data-taxon="Conference"><details id="id103"><summary><header><h1>
 <span class="taxon">Conference. </span>Reinforcement Learning Conference <a class="slug" href="/rlc/">[rlc]</a> </h1>
 <div class="metadata"><ul><li class="meta-item"><a class="link external" href="https://rl-conference.cc/">https://rl-conference.cc/</a></li></ul></div></header></summary></details></section>
-        <section lang="en" class="block" data-taxon="Institute"><details id="id85"><summary><header><h1>
+        <section lang="en" class="block" data-taxon="Institute"><details id="id104"><summary><header><h1>
 <span class="taxon">Institute. </span>University of Michigan <a class="slug" href="/umich/">[umich]</a> </h1>
 <div class="metadata"><ul><li class="meta-item"><a class="link external" href="https://umich.edu/">https://umich.edu/</a></li></ul></div></header></summary></details></section>
       </details></section>

@@ -419,7 +419,7 @@ such that <code>\mathbf {o}_{i,n}' = \mathbf {o}_n</code></p>
   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
 A key benefit of this algorithm is that it is entirely parallelizable across rows. This means that we can loop across entire <a href="https://kellenkanarios.com/OGCRV/">tiles</a> like in the GEMM case.
 </div>
-</section><section><header><h2>Flash Attention (Bwd)</h2></header><p>To understand the innovation of the backward pass in <a href="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/">flash attention</a>, we must first find all of the gradients we must compute.</p>
+</section><section><header><h2>Flash Attention (Bwd)</h2></header><p>The forward pass of <a href="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/">flash attention</a> avoids materializing the <code>N \times  N</code> attention matrix by streaming an online softmax. The backward pass has to pull the same trick twice over, because the naive gradient computation wants <em>two</em> <code>N \times  N</code> matrices — <code>\mathbf {P}</code> and <code>d\mathbf {P}</code>. Getting there means first writing down every gradient we need, then finding a way to recompute rather than store each one.</p>
  <div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
   padding: 0.5em 1.1em 0.5em 1.2em;
@@ -427,108 +427,57 @@ A key benefit of this algorithm is that it is entirely parallelizable across row
   border-radius: var(--radius);
   background-color: rgba(70, 100, 150, 0.05);
   "><span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</span> 
-Following the notation in the <a href="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/">original paper</a>, we have the following matrices
-<code>\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V}</code>
-Now suppose their is some scalar loss function <code>\phi </code>. Then we define 
-<code>\frac {\partial  \phi }{\partial  \mathbf {O}}, \frac {\partial  \phi }{\partial  \mathbf {K}}, \frac {\partial  \phi }{\partial  \mathbf {V}}  = d\mathbf {O}, d\mathbf {K}, d\mathbf {V}</code>
+Following the notation in the <a href="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/">original paper</a>,
+<code>\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V},</code>
+where <code>\mathbf {Q}, \mathbf {K}, \mathbf {V}, \mathbf {O}</code> are <code>N \times  d</code> and <code>\mathbf {S}, \mathbf {P}</code> are <code>N \times  N</code>. For a scalar loss <code>\phi </code> we abbreviate the gradient with respect to any matrix <code>\mathbf {X}</code> as
+<code>d\mathbf {X} = \frac {\partial  \phi }{\partial  \mathbf {X}},</code>
+and write <code>\mathbf {L}_i</code> for the softmax denominator of row <code>i</code> saved by the forward pass, so that <code>\mathbf {P}_{ij} = \exp (\mathbf {Q}_i \cdot  \mathbf {K}_j) / \mathbf {L}_i</code>.
 </div>
-<p>We will compute each gradient individually.</p><ol><li><code>d\mathbf {P}</code>: this is just a straightforward application of the chain rule. In particular, <code>\mathbf {O} = \mathbf {P} \mathbf {V}</code> so that
-  <code>
-     d\mathbf {P} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {P}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T
-    </code>
-    <p>
-    To sanity check, let us look at the shapes. <code>d\mathbf {O}</code> is the partial with respect to the outputs <code>O</code>, so we need an entry for each output and it is <code>N \times  d</code>. <code>V^T</code> is <code>d \times  N</code>, so that the result <code>d\mathbf {P}</code> is <code>N \times  N</code> as desired.
-    </p>
-    <p>Furthermore, we can see this by writing <code>\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}</code>. Then</p>
-    <code>
-      \begin {align*}
-       d\mathbf {P}_{ij} &amp;= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}}  \\
-                        &amp;= \sum _{i} d\mathbf {O}_{ik} \mathbf {V}_{jk} 
-      .\end {align*}
-    </code></li>
-  <li><code>d\mathbf {V}</code>: this is just the same as <code>d\mathbf {P}</code>. In particular, <code>\mathbf {O} = \mathbf {P} \mathbf {V}</code> so that
-  <code>
-     d\mathbf {V} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {V}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O} 
-    </code>
-    <p>Furthermore, we can see this by writing <code>\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}</code>. Then</p>
-    <code>
-      \begin {align*}
-       d\mathbf {V}_{jk} &amp;= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}}  \\
-                        &amp;= \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} \\
-                        &amp;= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
-      .\end {align*}
-    </code></li>
-  <li><code>d\mathbf {S}</code>: now we apply chain rule with <code>d\mathbf {P}</code>. However, we must take the gradient through the <a href="https://kellenkanarios.com/C00V/">softmax</a>. Exiting matrix notation hell, if we consider the scalar case. Let <code>\mathbf {s}</code> and <code>\mathbf {p}</code> just be rows. Then using the <a href="https://kellenkanarios.com/C00V/">scalar softmax derivation</a>
-    <code>
-      \begin {align*}
-       d\mathbf {s}_j &amp;= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\  
-       &amp;= \sum _{i} d\mathbf {p}_i \cdot  (\delta _{ij}\mathbf {p}_i - \mathbf {p}_{ij}) \\
-       &amp;= d \mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
-      .\end {align*}
-      </code>
-    Now if we rewrite this as the row vector, we get
-    <code>
-      \begin {align*}
-        d\mathbf {S}_{k} &amp;= \mathbf {P}_{k} \odot  (d\mathbf {P}_{k} - \mathbf {P}_k \cdot  d\mathbf {P}_k)
-      .\end {align*}
-      </code>
-    To get back to the full matrix, define <code>\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i</code> i.e. a vector whose <code>i</code>th entry is <code>\mathbf {P}_i \cdot  d\mathbf {P}_i</code>. Then we have that
-    <code>
-      \begin {align*}
-        d\mathbf {S} &amp;= \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D})
-      .\end {align*}
-      </code></li>
-  <li><code>d\mathbf {Q}</code>: To get <code>d\mathbf {Q}</code>, we just apply the chain rule to <code>d\mathbf {S}</code>. Since <code>\mathbf {S} = \mathbf {Q} \mathbf {K}^T</code>,
-  <code>
-    \begin {align*}
-       d\mathbf {Q}_{i} &amp;= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} \\
-                      &amp;= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {K}_{j}
-    .\end {align*}
-    </code></li>
-  <li><code>d\mathbf {K}</code>: Same as <code>d\mathbf {Q}</code> i.e.
-  <code>
-    \begin {align*}
-       d\mathbf {K}_{j} &amp;= \sum _{j} d\mathbf {S}_{ij} \mathbf {Q}_{i} \\
-                      &amp;= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {Q}_{i}
-    .\end {align*}
-    </code></li></ol>
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 55, 45, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(200, 55, 45, 0.06);
-  "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> <code>\mathbf {P}</code> and <code>d\mathbf {P}</code> are <code>N \times  N</code> matrices. Materializing this is equivalent to materialing the attention matrix in the forward pass.</div>
-
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(0, 160, 175, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(0, 160, 175, 0.06);
-  "><span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</span> 
-  <em>recomputing</em> <code>\mathbf {P}_{ij}</code> and <code>d\mathbf {P}_{ij}</code>.
-  <p>First, we can easily recompute <code>\mathbf {P}_{ij}</code> with <code>\mathbf {Q}</code> and <code>\mathbf {K}</code> (which are both <code>N \times  d</code> and must be resident in memory) via</p>
-  <code>\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}}</code>
-  <p>We can apply the same trick to <code>d\mathbf {P}_{ij}</code> with <code>d\mathbf {O}</code> and <code>\mathbf {V}</code> (both <code>N \times   d</code>). Namely,</p>
-  <code>d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i}^T \mathbf {V}_j</code>
-  <p><strong>Never need an <code>N \times  N</code> matrix</strong>.</p>
-</div>
-<p>Now we can rewrite <code>d\mathbf {Q}</code> and <code>d\mathbf {K}</code> as
+<section><header><h3>The gradients we need for <a href="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/">FlashAttention</a></h3></header><p>Everything downstream is chain rule; the only step with any content is differentiating through the <a href="https://kellenkanarios.com/C00V/">softmax</a>. We take the gradients in dependency order, starting from <code>d\mathbf {O}</code> which arrives from the layer above.</p>
+  <section><header><h4><code>d\mathbf {P}</code> and <code>d\mathbf {V}</code> from <code>\mathbf {O} = \mathbf {P}\mathbf {V}</code></h4></header>
+<p>Both fall straight out of the product rule for matrices:</p>
 <code>
-  d\mathbf {Q}_{i} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {K}_{j}
+  d\mathbf {P} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T,
+  \qquad 
+  d\mathbf {V} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O}.
 </code>
-and
+<p>The shapes are a useful sanity check. <code>d\mathbf {O}</code> has one entry per output, so it is <code>N \times  d</code>; <code>\mathbf {V}^T</code> is <code>d \times  N</code>; their product is <code>N \times  N</code>, matching <code>\mathbf {P}</code>. Likewise <code>\mathbf {P}^T d\mathbf {O}</code> is <code>N \times  d</code>, matching <code>\mathbf {V}</code>.</p>
+<p>Componentwise, from <code>\mathbf {O}_{ik} = \sum _j \mathbf {P}_{ij} \mathbf {V}_{jk}</code>,</p>
 <code>
-  d\mathbf {K}_{j} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {Q}_{i}
-</code></p>
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 55, 45, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(200, 55, 45, 0.06);
-  "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> <code>\mathbf {D}</code> requires computing the <strong>global</strong> dot product <code>\mathbf {P}_i \cdot  d\mathbf {P}_i</code>.</div>
+  \begin {align*}
+    d\mathbf {P}_{ij} &amp;= \sum _{k} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk}, \\
+    d\mathbf {V}_{jk} &amp;= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}} = \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} = \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
+  .\end {align*}
+</code>
+<p>That last line is worth noting already: <code>d\mathbf {V}</code> never needs <code>\mathbf {P}</code> stored, only the ability to re-evaluate <code>\mathbf {P}_{ij}</code> from <code>\mathbf {Q}</code>, <code>\mathbf {K}</code>, and <code>\mathbf {L}</code>.</p>
+</section>
+
+  <section><header><h4><code>d\mathbf {S}</code> through the softmax</h4></header>
+<p>Softmax acts row by row, so drop into the scalar case with <code>\mathbf {s}</code> and <code>\mathbf {p}</code> single rows. The <a href="https://kellenkanarios.com/C00V/">softmax Jacobian</a> is <code>\partial  \mathbf {p}_i / \partial  \mathbf {s}_j = \mathbf {p}_i(\delta _{ij} - \mathbf {p}_j)</code>, giving</p>
+<code>
+  \begin {align*}
+    d\mathbf {s}_j &amp;= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\
+                  &amp;= \sum _{i} d\mathbf {p}_i \cdot  \mathbf {p}_i (\delta _{ij} - \mathbf {p}_{j}) \\
+                  &amp;= d\mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
+  .\end {align*}
+</code>
+<p>As a row vector this is <code>d\mathbf {s} = \mathbf {p} \odot  (d\mathbf {p} - \mathbf {p} \cdot  d\mathbf {p})</code>, where the subtracted term is the <em>scalar</em> <code>\mathbf {p} \cdot  d\mathbf {p}</code> broadcast across the row. Collecting those scalars into a column <code>\mathbf {D}</code> with <code>\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i</code> recovers the matrix form</p>
+<code>d\mathbf {S} = \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D}).</code>
+<p><code>\mathbf {D}</code> is the piece that will cause trouble later: it is a dot product over an entire row of <code>\mathbf {P}</code>, which is exactly the thing we refuse to materialize.</p>
+</section>
+
+  <section><header><h4><code>d\mathbf {Q}</code> and <code>d\mathbf {K}</code> from <code>\mathbf {S} = \mathbf {Q}\mathbf {K}^T</code></h4></header>
+<p>One more chain rule, and the sums run over opposite indices:</p>
+<code>
+  \begin {align*}
+     d\mathbf {Q}_{i} &amp;= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} = \sum _{j} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
+     d\mathbf {K}_{j} &amp;= \sum _{i} d\mathbf {S}_{ij} \mathbf {Q}_{i} = \sum _{i} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {Q}_{i}
+  .\end {align*}
+</code>
+</section>
+
+  <section><header><h4>Recomputing instead of storing</h4></header>
+<p>Every gradient above is expressed through <code>\mathbf {P}_{ij}</code> and <code>d\mathbf {P}_{ij}</code>, both <code>N \times  N</code>. Materializing either one is exactly the quadratic memory cost the forward pass went to such lengths to avoid, so the backward pass has to be able to produce those entries on demand.</p>
 
  <div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
@@ -537,33 +486,45 @@ and
   border-radius: var(--radius);
   background-color: rgba(0, 160, 175, 0.06);
   "><span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</span> 
-  <p>To get around this, we precompute <code>\mathbf {D}</code> using the <code>\mathbf {O}</code> values from the forward pass and the current <code>d\mathbf {O}</code> values. In particular,</p>
-  <code>
-    \begin {align*}
-    \mathbf {D}_i &amp;= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
-    &amp;= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
-    &amp;= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{i}^{T} \mathbf {V}_{j} \\
-    &amp;= \sum _{j} d\mathbf {O}_{i}^{T} \left (\frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j}\right ) \\
-    &amp;=  d\mathbf {O}_{i}^{T} \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j} \\
-    &amp;= d\mathbf {O}_{i}^{T} \mathbf {O}_{i}
-    .\end {align*}
-    </code>
-    Thus, we can compute <code>\mathbf {D}_i</code> directly from the vectors <code>d\mathbf {O}_i</code>, <code>\mathbf {O}_i</code>.
+Both are recoverable from the <code>N \times  d</code> tensors already resident in memory. The forward pass saved <code>\mathbf {L}</code>, so
+<code>\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}},</code>
+and <code>d\mathbf {P}</code> is just an inner product of two rows,
+<code>d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i} \cdot  \mathbf {V}_j.</code>
+Neither ever requires an <code>N \times  N</code> intermediate.
 </div>
 
-  <hr />
+<p>Substituting both into the previous section leaves <code>d\mathbf {Q}</code> and <code>d\mathbf {K}</code> in terms of <code>\mathbf {Q}</code>, <code>\mathbf {K}</code>, <code>\mathbf {V}</code>, <code>d\mathbf {O}</code>, <code>\mathbf {L}</code>, and <code>\mathbf {D}</code> alone:</p>
+<code>
+\begin {align*}
+  d\mathbf {Q}_{i} &amp;= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
+  d\mathbf {K}_{j} &amp;= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {Q}_{i}.
+.\end {align*}
+</code>
+</section>
 
+  <section><header><h4>Getting <code>\mathbf {D}</code> for free</h4></header>
+<p>One problem survives. <code>\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i</code> is a dot product over a full row, so computing it inside the streaming loop would mean a reduction over all <code>j</code> before any tile of <code>d\mathbf {Q}_i</code> could be finished. This is the same global dependency the online softmax was designed to break.</p>
+<p>The way out is that the row sum has already been computed once, in the forward pass. Expanding and pulling <code>d\mathbf {O}_i</code> out of the sum:</p>
+<code>
+  \begin {align*}
+  \mathbf {D}_i &amp;= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
+  &amp;= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
+  &amp;= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_{j}\right ) \\
+  &amp;=  d\mathbf {O}_{i} \cdot  \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \mathbf {V}_{j} \\
+  &amp;= d\mathbf {O}_{i} \cdot  \mathbf {O}_{i}
+  .\end {align*}
+</code>
+<p>The inner sum is precisely the definition of <code>\mathbf {O}_i</code>. So <code>\mathbf {D}</code> is a single elementwise product of <code>d\mathbf {O}</code> and <code>\mathbf {O}</code> summed along the head dimension — one <code>O(Nd)</code> pass over tensors we already have, done once before the backward loop begins.</p>
+</section>
+</section>
   <section><header><h3>Summary</h3></header>
-<ul><li>In the forward pass,</li>
-  <ol><li>Compute and store <code>\mathbf {O}</code> values in memory.</li> 
-    <li>Compute and store <code>\mathbf {L}</code> values in memory</li></ol>
-  <li>Between the forward and backward pass,</li>
-  <ol><li>Compute <code>d\mathbf {O}</code>. (This is done automatically in <a href="https://kellenkanarios.com/OGCRY/">JAX</a>)</li>
-    <li>Use <code>\mathbf {O}</code> and <code>d\mathbf {O}</code> to compute <code>\mathbf {D}</code>. <code>O(n)</code> memory.</li></ol>
-  <li>In the backward pass,</li>
-  <ol><li>Compute <code>d\mathbf {V}_j</code> via <code>\mathbf {Q}, \mathbf {K}, d\mathbf {O}</code>. <code>O(d)</code> memory.</li>
-    <li>Compute <code>d\mathbf {Q}_i</code> via <code>\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i</code>. <code>O(d)</code> memory.</li>
-    <li>Compute <code>d\mathbf {K}_j</code> via <code>\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i</code>. <code>O(d)</code> memory.</li></ol></ul>
+<p><strong style="font-family: var(--sans); font-weight: 500;">Forward pass.</strong> Store <code>\mathbf {O}</code> and the softmax denominators <code>\mathbf {L}</code>, both <code>O(Nd)</code>.</p>
+<p><strong style="font-family: var(--sans); font-weight: 500;">Between the passes.</strong> Receive <code>d\mathbf {O}</code> from the layer above (automatic in <a href="https://kellenkanarios.com/OGCRY/">JAX</a>), then precompute <code>\mathbf {D}_i = d\mathbf {O}_i \cdot  \mathbf {O}_i</code> in <code>O(N)</code> memory.</p>
+<p><strong style="font-family: var(--sans); font-weight: 500;">Backward pass.</strong> Stream over tiles, recomputing <code>\mathbf {P}_{ij}</code> from <code>\mathbf {Q}, \mathbf {K}, \mathbf {L}</code> and <code>d\mathbf {P}_{ij}</code> from <code>d\mathbf {O}, \mathbf {V}</code> as needed:</p>
+<ol><li><code>d\mathbf {V}_j = \sum _i \mathbf {P}_{ij} d\mathbf {O}_i</code>, accumulated over query tiles.</li>
+  <li><code>d\mathbf {Q}_i = \sum _j \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {K}_j</code>, accumulated over key tiles.</li>
+  <li><code>d\mathbf {K}_j = \sum _i \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {Q}_i</code>, accumulated over query tiles.</li></ol>
+<p>Each accumulator is <code>O(d)</code> per row or column, so the whole backward pass stays linear in <code>N</code>.</p>
 </section>
 </section>
   <div class="comments">
@@ -587,7 +548,7 @@ and
     <id>https://kellenkanarios.com/HHZO/</id>
     <content type="xhtml">
       <div xmlns="http://www.w3.org/1999/xhtml">
-<p>This will also serve as a bit of notes from <a href="https://pages.cs.wisc.edu/~markhill/papers/primer2020_2nd_edition.pdf">A Primer on Memory Consistency and Cache Coherence</a></p><section><header><h2>Murphi</h2></header><p>Syntactical things I need to remember from Murphi docs. Most things are straightforward, but there are a few things to note:</p><section><header><h3>Declarations</h3></header><p>A <em>declaration</em> is a variable or a collection of variables that are used in the rules.</p></section><section><header><h3>Rules</h3></header><p>A <em>rule</em> is a transition from one state to another</p><ul><li>Each rule can optionally have an initial condition required to be fired</li>
+<p><a href="https://kellenkanarios.com/CMAL/">Murphi</a> is an explicit-state model checker: you describe a system as guarded transition rules, state the invariants, and it enumerates every reachable interleaving looking for a violation. That makes it a natural fit for <a href="https://kellenkanarios.com/GA7N/">cache coherence</a>, where the steady-state behavior is easy and the races are not. This post builds a <a href="https://kellenkanarios.com/KIT8/">directory-based</a> <a href="https://kellenkanarios.com/30XT/">MESI protocol</a> in Murphi, starting from MSI and adding state every time the checker finds a way to break it.</p><p>The state tables come from <a href="https://pages.cs.wisc.edu/~markhill/papers/primer2020_2nd_edition.pdf">A Primer on Memory Consistency and Cache Coherence</a>, which doubles as the source for these notes. The recurring lesson is that the published tables are not quite enough: every protocol below needs <a href="https://kellenkanarios.com/Z32G/">transient states</a> the tables leave implicit.</p><section><header><h2>Murphi</h2></header><p>Syntactical things I need to remember from Murphi docs. Most things are straightforward, but there are a few things to note:</p><section><header><h3>Declarations</h3></header><p>A <em>declaration</em> is a variable or a collection of variables that are used in the rules.</p></section><section><header><h3>Rules</h3></header><p>A <em>rule</em> is a transition from one state to another</p><ul><li>Each rule can optionally have an initial condition required to be fired</li>
     <li>We can easily define rules for all the processors or collection of <code>n</code> things with <code>ruleset</code>.</li>
     <li>For our use case, rules are used to define</li>
     <ol><li>Controller actions</li>
@@ -597,66 +558,53 @@ and
        (i.e. conditional expressions are true, given the current values
        of the global variables).</li>
     <li>Choose one arbitrarily and execute the action, yielding a new state.</li></ol></section>
-  <section><header><h2>Starting with MSI</h2></header>
-<p>The first thing we need to do is understand all the things that can go awry.</p>
-<p>First in the valid-invalid protocol example we were given they only have two <a href="https://kellenkanarios.com/DWV1/">virtual channels</a>. However, we need 3 channels to handle, request messages, <strong>forwarded</strong> messages, and response messages.</p>
-<p>Let us briefly understand why this is the case. Detecting a deadlock is equivalent to detecting a cycle in a dependency graph, so it is sufficient to show a cyclic dependency.</p>
-<ul><li>If we issue a <code>GetS</code> this goes to the directory, giving us an edge N1 -&gt; D.</li>
-  <li>Then the directory issues a <code>Fwd-GetS</code> to the ownder, giving us the chain N1 -&gt; D -&gt; N2</li>
-  <li>The owner then needs to send data to the requester, giving us the chain N1 -&gt; D -&gt; N2 -&gt; N1.</li>
-  <li>Namely, the data must go through the same channel as all of the requests depending on it.</li></ul>
-<p>To avoid this, we partition into 3 channels:</p>
-<ul><li>Request: GetS, GetM, PutM</li>
-  <li>Forwarded: Fwd-GetS, Fwd-GetM, PutAck, Inv</li>
-  <li>Response: InvAck, Data</li></ul>
-<p>We directly enumerate these in our <code>MessageType</code> as </p>
-<pre><![CDATA[  MessageType: enum {
-    GetS,           -- request for shared copy
-    GetM,           -- request for modified (exclusive) copy
-    PutS,           -- evict shared copy
-    PutM,           -- evict modified copy (w/ data)
+  <section><header><h2>Why three virtual channels</h2></header>
+<p>The valid-invalid protocol shipped with the Murphi docs uses two <a href="https://kellenkanarios.com/HUDE/">Virtual Channels</a>. A directory protocol needs three: one each for requests, forwarded requests, and responses. The reason is that <a href="https://kellenkanarios.com/DWV1/">deadlock is a cycle in the dependency graph</a>, so it suffices to exhibit one.</p>
+<ul><li>A node issues <code>GetS</code> to the directory, giving an edge <code>N_1 \to  D</code>.</li>
+  <li>The directory forwards <code>Fwd-GetS</code> to the owner, extending the chain to <code>N_1 \to  D \to  N_2</code>.</li>
+  <li>The owner sends data back to the requester, closing the cycle <code>N_1 \to  D \to  N_2 \to  N_1</code>.</li></ul>
+<p>The data closing that cycle would travel on the same channel as the requests waiting behind it, so a full request buffer wedges the response that would drain it. Partitioning by message class breaks the cycle:</p>
+<ul><li><strong>Request</strong>: <code>GetS</code>, <code>GetM</code>, <code>PutS</code>, <code>PutM</code></li>
+  <li><strong>Forwarded</strong>: <code>Fwd-GetS</code>, <code>Fwd-GetM</code>, <code>Inv</code>, <code>PutAck</code></li>
+  <li><strong>Response</strong>: <code>Data</code>, <code>InvAck</code></li></ul>
+<p>These are enumerated directly in the model's <code>MessageType</code>.</p>
+<div class="code-figure"><div class="code-filename">msi.m</div><pre><code class="language-lua">MessageType: enum {
+  GetS,           -- request for shared copy
+  GetM,           -- request for modified (exclusive) copy
+  PutS,           -- evict shared copy
+  PutM,           -- evict modified copy (w/ data)
 
-    FwdGetS,        -- forwarded GetS to owner
-    FwdGetM,        -- forwarded GetM to owner
-    Inv,            -- invalidation request
+  FwdGetS,        -- forwarded GetS to owner
+  FwdGetM,        -- forwarded GetM to owner
+  Inv,            -- invalidation request
 
-    Data,           -- data response
-    InvAck,         -- invalidation acknowledgment
-    PutAck          -- put acknowledgment
-  };]]></pre>
-<strong style="font-family: var(--sans); font-weight: 500;">Cache controller.</strong> We will start with MSI cache controller, given by the following table:
-<figure><img width="100%" src="https://kellenkanarios.com/bafkrmifhoq7kszlwemrlvvy4yuuvuk6l6bjadkvsmzclbemz2tzxdt6bjm.png" /></figure>
-<p>Notably, we are missing some of the messages in the figures below. We can handle these based on the <code>AckCount</code></p>
-<pre><![CDATA[  ProcState:
-    Record
-      state: enum { 
-        P_Invalid, P_Shared, P_Modified,       --stable states
-        PT_IS_D,      --sent GetS, waiting for Data
-        PT_IS_DI,     --sent GetS, got Inv, waiting for Data then go to I
-        PT_IM_AD,     --sent GetM (from I), waiting for Data and InvAcks
-        PT_SM_AD,     --sent GetM (from S), waiting for Data and InvAcks
-        PT_IM_A,      --got Data for GetM, waiting for remaining InvAcks
-        PT_MI_A,      --sent PutM, waiting for PutAck
-        PT_SI_A,      --sent PutS, waiting for PutAck
-        PT_II_A       --waiting for PutAck, already invalidated
-      };
-      val: Value;
-      ack: AckCount;  -- tracks InvAck count
-    End;]]></pre>
-
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-The <code>load</code>, <code>store</code>, and <code>replacement</code> all only alter the states of the coherence protocol for the permanent states. Therefore, to simulate the system it is sufficient to only implement the rules that initiate these state transitions i.e. evict in modified state or load from invalid state.
-</div>
-
-<strong style="font-family: var(--sans); font-weight: 500;">Directory controller.</strong> Now for the directory controller:
-<figure><img width="100%" src="https://kellenkanarios.com/bafkrmiadmfswkegttky27zg2gxvkwag3pt72ur7qam2z6vufr6xlvujqca.png" />
-<figcaption /></figure>
+  Data,           -- data response
+  InvAck,         -- invalidation acknowledgment
+  PutAck          -- put acknowledgment
+};</code></pre></div>
+</section>
+<section><header><h2>MSI in Murphi</h2></header><p>MESI is easier to reach through MSI, where there is less to get wrong and the races are already interesting enough.</p>
+  <section><header><h3>The cache controller</h3></header>
+<p>The starting point is the primer's MSI cache controller table.</p>
+<figure><img width="100%" src="https://kellenkanarios.com/bafkrmifhoq7kszlwemrlvvy4yuuvuk6l6bjadkvsmzclbemz2tzxdt6bjm.png" />
+<figcaption>MSI cache controller. Rows are states, columns are events.</figcaption></figure>
+<p>Several table entries are left blank; those are resolved at runtime from the <code>AckCount</code>, which is why the per-processor record carries an <code>ack</code> field alongside the state.</p>
+<div class="code-figure"><div class="code-filename">msi.m</div><pre><code class="language-lua">ProcState:
+  Record
+    state: enum {
+      P_Invalid, P_Shared, P_Modified,   -- stable states
+      PT_IS_D,     -- sent GetS, waiting for Data
+      PT_IS_DI,    -- sent GetS, got Inv, waiting for Data then go to I
+      PT_IM_AD,    -- sent GetM (from I), waiting for Data and InvAcks
+      PT_SM_AD,    -- sent GetM (from S), waiting for Data and InvAcks
+      PT_IM_A,     -- got Data for GetM, waiting for remaining InvAcks
+      PT_MI_A,     -- sent PutM, waiting for PutAck
+      PT_SI_A,     -- sent PutS, waiting for PutAck
+      PT_II_A      -- waiting for PutAck, already invalidated
+    };
+    val: Value;
+    ack: AckCount;  -- tracks InvAck count
+  End;</code></pre></div>
 
  <div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
@@ -665,80 +613,38 @@ The <code>load</code>, <code>store</code>, and <code>replacement</code> all only
   border-radius: var(--radius);
   background-color: rgba(90, 90, 110, 0.05);
   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-We actually end up adding a second transient state to the directory controller <code>M^D</code>. This is to handle the <code>PutM</code>, <code>GetM</code> race described below.
-</div>
-
-<strong style="font-family: var(--sans); font-weight: 500;">Weird Races.</strong>
-
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 55, 45, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(200, 55, 45, 0.06);
-  "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
-When implementing the <code>PutM</code> rule to downgrade from modified to invalid. We must <strong>NOT</strong> get rid of the data until we have been acknowledged, so that we can still service forward requests. This is a transition to <code>MI^A</code>. However, we can still receive the <code>PutAck</code> causing us to transition to <code>I</code> before servicing the <code>Fwd-GetM</code> request. This is lost data.
-</div>
-
-
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(40, 150, 80, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(40, 150, 80, 0.06);
-  "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
-  We must add a <code>M^D</code> state to the directory controller. In this state, if we get a <code>PutM</code> request from a node that is not our current owner we stall and wait for data to arrive. For <code>M^D</code> to transition to <code>M</code>, we must send the data back to the directory even though we are doing a three-hop, so that the directory knows the data has also been forwarded to the new owner. It is unclear to me the best way to do this without this state.
-</div>
-
-
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 55, 45, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(200, 55, 45, 0.06);
-  "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
- <p>The above solution causes a deadlock, where two processors both store miss and one load misses. The "winning processor" of the store will be the second one. The first one will get the data from the directory transitioning from <code>IM^{AD} \to  IM^{A}</code>, but the second one will then trigger a <code>Fwd-GetM</code> overwriting the first.</p>
-
-<p>
-The load miss transitions to <code>IS^D</code>. However, when it receives an <code>Inv</code> it stalls according to the above figure. This blocks the <code>Fwd-GetM</code> from reaching the other winning processor because they are on the same VC. Thus, we have a deadlock where the owner never gets the data.
-</p>
-</div>
-
-
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(40, 150, 80, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(40, 150, 80, 0.06);
-  "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> We need to add another transient state not included in the figure. Namely, we add <code>II^{A}</code> that says we were in <code>IS^{A}</code>, but we got invalidated and now we are waiting for our <code>PutAck</code> before we transition to <code>I</code>.</div>
-
-
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-When the home directory is in <code>M</code> and we get a <code>GetS</code> we cannot clear owner as directed by figure. Otherwise in <code>S^D</code>, we will not be able to tell if the <code>PutM</code> is from the owner and stall, so we only remove the owner once we have received the data.
+<code>load</code>, <code>store</code>, and <code>replacement</code> only move the protocol between stable states. To simulate the system it is therefore enough to implement the rules that <em>initiate</em> those transitions — evict from modified, load from invalid — and let the model checker drive the transient states from there.
 </div>
 
 </section>
 
-  <section><header><h2>Moving to MESI</h2></header>
-Aside from the modifications discussed above, the rest was straightforward and we now are ready to move on to MESI.
-<p><strong style="font-family: var(--sans); font-weight: 500;">Cache controller.</strong> We will start with MESI cache controller, given by the following table:
-</p>
-<figure><img width="100%" src="https://kellenkanarios.com/bafkrmia4fllqvr7nzhifqxwk5stk2kyje2tfokhddzfjkteyw4kbj6k25i.png" /></figure>
-<p><strong style="font-family: var(--sans); font-weight: 500;">Design choice 1.</strong> Since we allow immediate upgrade to <code>M</code>, without forwarding, if E upgrades to M, then the value in the directory sent to the next <code>GetS / GetM</code> would not have updated value. It seems we must either
-<ol><li>not allow E to silently upgrade to M and then we do not need forwarding, or</li>
-  <li>allow E to silently upgrade to M and treat E as M basically and forward everything.</li></ol>
-Notably, neither of these have to write back on <code>PutE</code>, but we will go with 1 because that is how it is indicated in the figure.
-</p>
-<p><strong style="font-family: var(--sans); font-weight: 500;">Design Choice 2.</strong> In order to indicate that the directory received the first <code>GetS</code> we introduce a <code>ExclusiveData</code> message. Upon receiving, <code>ExclusiveData</code> in <code>IS^D</code> we transition to <code>E</code>.</p>
+  <section><header><h3>The directory controller</h3></header>
+<p>The directory side starts from the analogous table.</p>
+<figure><img width="100%" src="https://kellenkanarios.com/bafkrmiadmfswkegttky27zg2gxvkwag3pt72ur7qam2z6vufr6xlvujqca.png" />
+<figcaption>MSI directory controller.</figcaption></figure>
+<p>This table is where the first real gap shows up. It gives the directory a single transient state, and the races below force a second one, <code>M^D</code>.</p>
+</section>
+
+  <section><header><h3>Losing data to a PutM/Fwd-GetM race</h3></header>
+<p>Consider the <code>PutM</code> rule that downgrades a cache from modified to invalid. The evicting cache must <strong>not</strong> drop the data when it sends <code>PutM</code>, because it may still have to service a forwarded request; it transitions to <code>MI^A</code> and keeps the value. But nothing stops the <code>PutAck</code> from arriving first, taking it to <code>I</code> before the <code>Fwd-GetM</code> shows up. The data is gone and the forwarded request has nobody to answer it.</p>
+<p><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Add the <code>M^D</code> state to the directory controller. While in <code>M^D</code>, a <code>PutM</code> from a node that is not the current owner stalls until the data arrives. Leaving <code>M^D</code> for <code>M</code> requires the new owner to send data back to the directory even on a three-hop transaction, so the directory learns that the forward actually completed. I have not found a cleaner way to close this race without the extra state.</p>
+</section>
+
+  <section><header><h3>Deadlocking two stores against a load</h3></header>
+<p>The <code>M^D</code> fix introduces a deadlock of its own. Take two processors that store-miss and a third that load-misses. The second store wins at the directory: the first store gets data and moves <code>IM^{AD} \to  IM^{A}</code>, then the second triggers a <code>Fwd-GetM</code> that takes ownership away from it.</p>
+<p>Meanwhile the load miss sits in <code>IS^D</code>. When its <code>Inv</code> arrives, the table says to stall — and because <code>Inv</code> and <code>Fwd-GetM</code> share the forwarded channel, that stall blocks the <code>Fwd-GetM</code> behind it. The winning processor never receives the data, and nothing ever drains the channel.</p>
+<p><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Another transient state absent from the table: <code>II^A</code>, meaning "was in <code>IS^A</code>, got invalidated, now waiting on <code>PutAck</code> before settling in <code>I</code>". The invalidation is processed rather than stalled, so the forwarded channel keeps moving.</p>
+</section>
+
+  <section><header><h3>Not clearing the owner too eagerly</h3></header>
+<p>One more correction to the table: when the home directory is in <code>M</code> and receives a <code>GetS</code>, it must not clear the owner field as the figure directs. Once in <code>S^D</code>, the directory can no longer tell whether an incoming <code>PutM</code> came from the owner (and should stall) or from a stale node. The owner is only cleared once the data has actually arrived.</p>
+</section>
+</section><section><header><h2>MESI in Murphi</h2></header><p>With those states in place the rest of MSI is mechanical, and MESI is a short step from it — modulo two design choices and two more races.</p>
+  <section><header><h3>The cache controller</h3></header>
+<figure><img width="100%" src="https://kellenkanarios.com/bafkrmia4fllqvr7nzhifqxwk5stk2kyje2tfokhddzfjkteyw4kbj6k25i.png" />
+<figcaption>MESI cache controller.</figcaption></figure>
+<p><strong style="font-family: var(--sans); font-weight: 500;">Silent upgrades.</strong> If a cache in <code>E</code> may upgrade to <code>M</code> silently, the directory never learns the line went dirty, and the value it hands to the next <code>GetS</code> or <code>GetM</code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat <code>E</code> exactly like <code>M</code>, forwarding everything. Neither requires a writeback on <code>PutE</code>. I take the first, matching the table.</p>
+<p><strong style="font-family: var(--sans); font-weight: 500;">Signaling exclusivity.</strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <code>ExclusiveData</code> message: receiving it in <code>IS^D</code> lands the cache in <code>E</code> rather than <code>S</code>. It turns out to also be the key to the second race below.</p>
 
  <div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
@@ -747,40 +653,24 @@ Notably, neither of these have to write back on <code>PutE</code>, but we will g
   border-radius: var(--radius);
   background-color: rgba(90, 90, 110, 0.05);
   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-Once we have sent the <code>PutE</code>, or the <code>PutM</code> <code>EI^A</code> and <code>MI^A</code> are functionally the same. I include both for completeness but verified that transitioning directly to <code>MI^A</code> from <code>E</code> works the same.
+Once <code>PutE</code> or <code>PutM</code> has been sent, <code>EI^A</code> and <code>MI^A</code> are functionally identical. Both appear above for completeness, but transitioning from <code>E</code> straight into <code>MI^A</code> verifies the same.
 </div>
 
-<p><strong style="font-family: var(--sans); font-weight: 500;">Directory controller.</strong> We start with the analagous table.</p>
-<figure><img width="100%" src="https://kellenkanarios.com/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png" /></figure>
-<p>Similar to the cache controller, we also add a <code>E^D</code> state for completion that can be absorbed into <code>M^D</code> introduced in the MSI protocol.</p>
-<p><strong style="font-family: var(--sans); font-weight: 500;">Weird Races.</strong></p>
+</section>
 
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 55, 45, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(200, 55, 45, 0.06);
-  "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> First processor does <code>GetS</code> and is in <code>IS^D</code> but the Home directory sends it exclusive data and is now in <code>E</code>. Then second processor does <code>GetM</code> and Home issues <code>Fwd-GetM</code> to processor one, which arrives before data.</div>
+  <section><header><h3>The directory controller</h3></header>
+<figure><img width="100%" src="https://kellenkanarios.com/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png" />
+<figcaption>MESI directory controller.</figcaption></figure>
+<p>Symmetrically, the directory gains an <code>E^D</code> state, which for completeness is kept distinct from <code>M^D</code> but could be folded into it.</p>
+</section>
 
+  <section><header><h3>Forwards arriving before exclusive data</h3></header>
+<p>The first processor issues <code>GetS</code> and waits in <code>IS^D</code>, while the home directory has already moved to <code>E</code> and sent it <code>ExclusiveData</code>. A second processor then issues <code>GetM</code>, and home's <code>Fwd-GetM</code> overtakes the data in flight.</p>
+<p><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Stall <code>Fwd-GetM</code> and <code>Fwd-GetS</code> in <code>IS^D</code> until the data lands. This is safe here because the data is on the response channel, which no stall can block.</p>
+</section>
 
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(40, 150, 80, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(40, 150, 80, 0.06);
-  "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Need to stall on <code>Fwd-GetM</code> and <code>Fwd-GetS</code> in <code>IS^D</code> until data arrives</div>
-
-
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 55, 45, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(200, 55, 45, 0.06);
-  "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> An even crazier race happens when we get invalidated before the <code>Fwd-GetM</code> or <code>Fwd-GetS</code> arrive. Due to our previous design decision, we transition to <code>II^A</code>, where if we receive a <code>PutAck</code> we transition to invalid. This then loses the needed forward data.</div>
-
+  <section><header><h3>Losing exclusive data to an invalidation</h3></header>
+<p>The nastier version of the same race: the invalidation arrives before the forward. By the <code>II^A</code> rule inherited from MSI, a <code>PutAck</code> in that state drops the line to <code>I</code> — discarding data a forwarded request is about to ask for.</p>
 
  <div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
@@ -789,34 +679,26 @@ Once we have sent the <code>PutE</code>, or the <code>PutM</code> <code>EI^A</co
   border-radius: var(--radius);
   background-color: rgba(60, 90, 180, 0.05);
   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
-  The timeline:
-  <ol><li><code>Proc_1</code> performs a load miss → <code>IS^D</code></li>
-    <li><code>Home</code> receives first <code>GetS</code> from <code>Proc_1</code> → <code>E</code> and sends <code>ExclusiveData</code> to <code>Proc_1</code></li>
-    <li><code>Proc_2</code> issues <code>GetM</code> → <code>IM^AD</code></li>
-    <li><code>Home</code> sends <code>Inv</code> to <code>Proc_1</code></li>
-    <li><code>Home</code> forwards <code>Fwd-GetM</code> to <code>Proc_1</code></li>
-    <li><code>Proc_1</code> receives <code>Inv</code> → <code>II^D</code></li>
-    <li><code>Proc_1</code> receives <code>ExclusiveData</code> → <code>I</code></li></ol>
-  Data is lost
+<ol><li><code>Proc_1</code> load-misses → <code>IS^D</code></li>
+  <li><code>Home</code> takes the first <code>GetS</code> from <code>Proc_1</code> → <code>E</code>, sends <code>ExclusiveData</code></li>
+  <li><code>Proc_2</code> issues <code>GetM</code> → <code>IM^{AD}</code></li>
+  <li><code>Home</code> sends <code>Inv</code> to <code>Proc_1</code></li>
+  <li><code>Home</code> forwards <code>Fwd-GetM</code> to <code>Proc_1</code></li>
+  <li><code>Proc_1</code> receives <code>Inv</code> → <code>II^D</code></li>
+  <li><code>Proc_1</code> receives <code>ExclusiveData</code> → <code>I</code>, and the data is lost</li></ol>
 </div>
 
-
- <div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(40, 150, 80, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(40, 150, 80, 0.06);
-  "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> 
-  We once again have to use the <code>ExclusiveData</code> message. We can then see that we got <code>ExclusiveData</code> in <code>II^D</code> and transition to <code>E</code> instead of <code>I</code>. <code>E</code> will then correctly handle the <code>Fwd-GetM</code> or <code>Fwd-GetS</code>.
-</div>
-
-
-<p>We are left with the following state diagrams for the cache and directory controllers respectively</p>
-<figure><img width="100%" src="https://kellenkanarios.com/bafkrmif36mc6riik263rmccsazkkvtb5la47ocbsbm664xrm323b3jyufm.png" />
-<img width="100%" src="https://kellenkanarios.com/bafkrmifqg6owj5m5bnsuqphk73uuwqzybmwczbbwx432u5j3zju3fe52i4.png" /></figure>
+<p><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> <code>ExclusiveData</code> pays for itself a second time. Because the message is distinguishable from ordinary <code>Data</code>, a cache receiving it in <code>II^D</code> knows it was the first reader and transitions to <code>E</code> instead of <code>I</code> — from which the pending <code>Fwd-GetM</code> or <code>Fwd-GetS</code> is handled correctly.</p>
 </section>
-      </div>
+
+  <section><header><h3>The finished controllers</h3></header>
+<p>Folding all of the above in leaves these two state machines, which Murphi verifies exhaustively.</p>
+<figure><img width="100%" src="https://kellenkanarios.com/bafkrmif36mc6riik263rmccsazkkvtb5la47ocbsbm664xrm323b3jyufm.png" />
+<figcaption>Final MESI cache controller.</figcaption></figure>
+<figure><img width="100%" src="https://kellenkanarios.com/bafkrmifqg6owj5m5bnsuqphk73uuwqzybmwczbbwx432u5j3zju3fe52i4.png" />
+<figcaption>Final MESI directory controller.</figcaption></figure>
+</section>
+</section>      </div>
     </content>
   </entry>
   <entry>
@@ -1120,6 +1002,40 @@ You may be wondering how we use this algorithmically to find <code>\theta ^*</co
   <hr />
 
     <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="nvim" theme="boxy-light" crossorigin="anonymous" async="" />
+  </div>
+      </div>
+    </content>
+  </entry>
+  <entry>
+    <title>Stack vs. Heap</title>
+    <published>2024-12-28T00:00:00Z</published>
+    <updated>2024-12-28T00:00:00Z</updated>
+    <author>
+      <name>Kellen Kanarios</name>
+      <uri>https://kellenkanarios.com/kellenkanarios/</uri>
+    </author>
+    <link rel="alternate" type="text/html" href="https://kellenkanarios.com/0025/" />
+    <id>https://kellenkanarios.com/0025/</id>
+    <content type="xhtml">
+      <div xmlns="http://www.w3.org/1999/xhtml">
+<p>I often hear this question come up amongst performance-driven developers, and for the longest time I could never get a straight answer as to why the stack was so much better? After a long foray into the inner workings of how memory allocation is actually done, I think I finally have an answer. I do not want to forget this, so I am doing a quick write up here.</p>
+  <section><header><h2>Why stack is faster.</h2></header>
+This all comes down to what happens during each memory allocation. Prior to actually running the program, the operating system allocates some amount of memory for both the stack and the heap (I think around 2-4MB?). When you allocate memory on the stack i.e. <code>int x = 1;</code>
+<ul><li>Stack just increments stack pointer.</li>
+    <li>Writes value to new address pointed to by stack pointer.</li></ul>
+When you allocate memory on the heap i.e. <code>int *x = malloc(sizeof(int))</code>, we must instead choose how best to fulfill the request, which is a whole research direction in itself.
+<ul><li>One such implementation is the <a href="https://en.wikipedia.org/wiki/Buddy_memory_allocation">buddy algorithm</a></li></ul>
+However, <code>malloc</code> itself is not a system call and therefore is not terribly slow. A real issue occurs when we run out of pre-allocated heap memory. This requires <a href="https://kellenkanarios.com/A5S6/">invoking a system call</a> like <code>sbrk</code> to increment the size of the allocated memory for the heap.
+<ul><li>If no available pages, OS must evict and write to disk...</li>
+      <li>Formally, this is known as "heap growth".</li></ul>
+Generally, if you know how much memory you need it is good practice to just allocated all up front to minimize any potential system calls. With this, the performance difference is not too drastic <![CDATA[ :)]]>
+</section>
+
+  <div class="comments">
+    
+  <hr />
+
+    <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
   </div>
       </div>
     </content>

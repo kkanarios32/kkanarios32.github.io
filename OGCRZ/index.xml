@@ -17,7 +17,7 @@
     <fr:route>/OGCRZ/</fr:route>
     <fr:title text="Flash Attention (Bwd)">Flash Attention (Bwd)</fr:title>
   </fr:frontmatter>
-  <fr:mainmatter><html:p>To understand the innovation of the backward pass in <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">flash attention</fr:link>, we must first find all of the gradients we must compute.</html:p>
+  <fr:mainmatter><html:p>The forward pass of <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">flash attention</fr:link> avoids materializing the <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> attention matrix by streaming an online softmax. The backward pass has to pull the same trick twice over, because the naive gradient computation wants <html:em>two</html:em> <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrices — <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>. Getting there means first writing down every gradient we need, then finding a way to recompute rather than store each one.</html:p>
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
   padding: 0.5em 1.1em 0.5em 1.2em;
@@ -25,108 +25,57 @@
   border-radius: var(--radius);
   background-color: rgba(70, 100, 150, 0.05);
   "><html:span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</html:span> 
-Following the notation in the <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">original paper</fr:link>, we have the following matrices
-<fr:tex display="block"><![CDATA[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex>
-Now suppose their is some scalar loss function <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. Then we define 
-<fr:tex display="block"><![CDATA[\frac {\partial  \phi }{\partial  \mathbf {O}}, \frac {\partial  \phi }{\partial  \mathbf {K}}, \frac {\partial  \phi }{\partial  \mathbf {V}}  = d\mathbf {O}, d\mathbf {K}, d\mathbf {V}]]></fr:tex>
+Following the notation in the <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">original paper</fr:link>,
+<fr:tex display="block"><![CDATA[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V},]]></fr:tex>
+where <fr:tex display="inline"><![CDATA[\mathbf {Q}, \mathbf {K}, \mathbf {V}, \mathbf {O}]]></fr:tex> are <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {S}, \mathbf {P}]]></fr:tex> are <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>. For a scalar loss <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex> we abbreviate the gradient with respect to any matrix <fr:tex display="inline"><![CDATA[\mathbf {X}]]></fr:tex> as
+<fr:tex display="block"><![CDATA[d\mathbf {X} = \frac {\partial  \phi }{\partial  \mathbf {X}},]]></fr:tex>
+and write <fr:tex display="inline"><![CDATA[\mathbf {L}_i]]></fr:tex> for the softmax denominator of row <fr:tex display="inline"><![CDATA[i]]></fr:tex> saved by the forward pass, so that <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij} = \exp (\mathbf {Q}_i \cdot  \mathbf {K}_j) / \mathbf {L}_i]]></fr:tex>.
 </html:div>
-<html:p>We will compute each gradient individually.</html:p><html:ol><html:li><fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>: this is just a straightforward application of the chain rule. In particular, <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex> so that
-  <fr:tex display="block"><![CDATA[
-     d\mathbf {P} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {P}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T
-    ]]></fr:tex>
-    <html:p>
-    To sanity check, let us look at the shapes. <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> is the partial with respect to the outputs <fr:tex display="inline"><![CDATA[O]]></fr:tex>, so we need an entry for each output and it is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>. <fr:tex display="inline"><![CDATA[V^T]]></fr:tex> is <fr:tex display="inline"><![CDATA[d \times  N]]></fr:tex>, so that the result <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> is <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> as desired.
-    </html:p>
-    <html:p>Furthermore, we can see this by writing <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>. Then</html:p>
-    <fr:tex display="block"><![CDATA[
-      \begin {align*}
-       d\mathbf {P}_{ij} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}}  \\
-                        &= \sum _{i} d\mathbf {O}_{ik} \mathbf {V}_{jk} 
-      .\end {align*}
-    ]]></fr:tex></html:li>
-  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex>: this is just the same as <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>. In particular, <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex> so that
-  <fr:tex display="block"><![CDATA[
-     d\mathbf {V} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {V}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O} 
-    ]]></fr:tex>
-    <html:p>Furthermore, we can see this by writing <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>. Then</html:p>
-    <fr:tex display="block"><![CDATA[
-      \begin {align*}
-       d\mathbf {V}_{jk} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}}  \\
-                        &= \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} \\
-                        &= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
-      .\end {align*}
-    ]]></fr:tex></html:li>
-  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex>: now we apply chain rule with <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>. However, we must take the gradient through the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax</fr:link>. Exiting matrix notation hell, if we consider the scalar case. Let <fr:tex display="inline"><![CDATA[\mathbf {s}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex> just be rows. Then using the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">scalar softmax derivation</fr:link>
-    <fr:tex display="block"><![CDATA[
-      \begin {align*}
-       d\mathbf {s}_j &= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\  
-       &= \sum _{i} d\mathbf {p}_i \cdot  (\delta _{ij}\mathbf {p}_i - \mathbf {p}_{ij}) \\
-       &= d \mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
-      .\end {align*}
-      ]]></fr:tex>
-    Now if we rewrite this as the row vector, we get
-    <fr:tex display="block"><![CDATA[
-      \begin {align*}
-        d\mathbf {S}_{k} &= \mathbf {P}_{k} \odot  (d\mathbf {P}_{k} - \mathbf {P}_k \cdot  d\mathbf {P}_k)
-      .\end {align*}
-      ]]></fr:tex>
-    To get back to the full matrix, define <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> i.e. a vector whose <fr:tex display="inline"><![CDATA[i]]></fr:tex>th entry is <fr:tex display="inline"><![CDATA[\mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex>. Then we have that
-    <fr:tex display="block"><![CDATA[
-      \begin {align*}
-        d\mathbf {S} &= \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D})
-      .\end {align*}
-      ]]></fr:tex></html:li>
-  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex>: To get <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex>, we just apply the chain rule to <fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex>. Since <fr:tex display="inline"><![CDATA[\mathbf {S} = \mathbf {Q} \mathbf {K}^T]]></fr:tex>,
-  <fr:tex display="block"><![CDATA[
-    \begin {align*}
-       d\mathbf {Q}_{i} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} \\
-                      &= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {K}_{j}
-    .\end {align*}
-    ]]></fr:tex></html:li>
-  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex>: Same as <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> i.e.
-  <fr:tex display="block"><![CDATA[
-    \begin {align*}
-       d\mathbf {K}_{j} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {Q}_{i} \\
-                      &= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {Q}_{i}
-    .\end {align*}
-    ]]></fr:tex></html:li></html:ol>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 55, 45, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(200, 55, 45, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> are <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrices. Materializing this is equivalent to materialing the attention matrix in the forward pass.</html:div>
-
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(0, 160, 175, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(0, 160, 175, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</html:span> 
-  <html:em>recomputing</html:em> <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex>.
-  <html:p>First, we can easily recompute <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> with <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex> (which are both <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> and must be resident in memory) via</html:p>
-  <fr:tex display="block"><![CDATA[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}}]]></fr:tex>
-  <html:p>We can apply the same trick to <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex> with <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex> (both <fr:tex display="inline"><![CDATA[N \times   d]]></fr:tex>). Namely,</html:p>
-  <fr:tex display="block"><![CDATA[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i}^T \mathbf {V}_j]]></fr:tex>
-  <html:p><html:strong>Never need an <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrix</html:strong>.</html:p>
-</html:div>
-<html:p>Now we can rewrite <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> as
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/4QZE/</fr:uri><fr:display-uri>4QZE</fr:display-uri><fr:route>/4QZE/</fr:route><fr:title text="The gradients we need for FlashAttention">The gradients we need for <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">FlashAttention</fr:link></fr:title></fr:frontmatter><fr:mainmatter><html:p>Everything downstream is chain rule; the only step with any content is differentiating through the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax</fr:link>. We take the gradients in dependency order, starting from <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> which arrives from the layer above.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {P} and d\mathbf {V} from \mathbf {O} = \mathbf {P}\mathbf {V}"><fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P}\mathbf {V}]]></fr:tex></fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Both fall straight out of the product rule for matrices:</html:p>
 <fr:tex display="block"><![CDATA[
-  d\mathbf {Q}_{i} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {K}_{j}
+  d\mathbf {P} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T,
+  \qquad 
+  d\mathbf {V} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O}.
 ]]></fr:tex>
-and
+<html:p>The shapes are a useful sanity check. <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> has one entry per output, so it is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>; <fr:tex display="inline"><![CDATA[\mathbf {V}^T]]></fr:tex> is <fr:tex display="inline"><![CDATA[d \times  N]]></fr:tex>; their product is <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>, matching <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex>. Likewise <fr:tex display="inline"><![CDATA[\mathbf {P}^T d\mathbf {O}]]></fr:tex> is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>, matching <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex>.</html:p>
+<html:p>Componentwise, from <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _j \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>,</html:p>
 <fr:tex display="block"><![CDATA[
-  d\mathbf {K}_{j} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {Q}_{i}
-]]></fr:tex></html:p>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 55, 45, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(200, 55, 45, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> requires computing the <html:strong>global</html:strong> dot product <fr:tex display="inline"><![CDATA[\mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex>.</html:div>
+  \begin {align*}
+    d\mathbf {P}_{ij} &= \sum _{k} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk}, \\
+    d\mathbf {V}_{jk} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}} = \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} = \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
+  .\end {align*}
+]]></fr:tex>
+<html:p>That last line is worth noting already: <fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex> never needs <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> stored, only the ability to re-evaluate <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex>, and <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {S} through the softmax"><fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex> through the softmax</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Softmax acts row by row, so drop into the scalar case with <fr:tex display="inline"><![CDATA[\mathbf {s}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex> single rows. The <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax Jacobian</fr:link> is <fr:tex display="inline"><![CDATA[\partial  \mathbf {p}_i / \partial  \mathbf {s}_j = \mathbf {p}_i(\delta _{ij} - \mathbf {p}_j)]]></fr:tex>, giving</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+    d\mathbf {s}_j &= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\
+                  &= \sum _{i} d\mathbf {p}_i \cdot  \mathbf {p}_i (\delta _{ij} - \mathbf {p}_{j}) \\
+                  &= d\mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
+  .\end {align*}
+]]></fr:tex>
+<html:p>As a row vector this is <fr:tex display="inline"><![CDATA[d\mathbf {s} = \mathbf {p} \odot  (d\mathbf {p} - \mathbf {p} \cdot  d\mathbf {p})]]></fr:tex>, where the subtracted term is the <html:em>scalar</html:em> <fr:tex display="inline"><![CDATA[\mathbf {p} \cdot  d\mathbf {p}]]></fr:tex> broadcast across the row. Collecting those scalars into a column <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> with <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> recovers the matrix form</html:p>
+<fr:tex display="block"><![CDATA[d\mathbf {S} = \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D}).]]></fr:tex>
+<html:p><fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> is the piece that will cause trouble later: it is a dot product over an entire row of <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex>, which is exactly the thing we refuse to materialize.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {Q} and d\mathbf {K} from \mathbf {S} = \mathbf {Q}\mathbf {K}^T"><fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {S} = \mathbf {Q}\mathbf {K}^T]]></fr:tex></fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>One more chain rule, and the sums run over opposite indices:</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+     d\mathbf {Q}_{i} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} = \sum _{j} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
+     d\mathbf {K}_{j} &= \sum _{i} d\mathbf {S}_{ij} \mathbf {Q}_{i} = \sum _{i} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {Q}_{i}
+  .\end {align*}
+]]></fr:tex>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Recomputing instead of storing">Recomputing instead of storing</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Every gradient above is expressed through <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex>, both <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>. Materializing either one is exactly the quadratic memory cost the forward pass went to such lengths to avoid, so the backward pass has to be able to produce those entries on demand.</html:p>
 
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
@@ -135,33 +84,45 @@ and
   border-radius: var(--radius);
   background-color: rgba(0, 160, 175, 0.06);
   "><html:span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</html:span> 
-  <html:p>To get around this, we precompute <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> using the <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> values from the forward pass and the current <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> values. In particular,</html:p>
-  <fr:tex display="block"><![CDATA[
-    \begin {align*}
-    \mathbf {D}_i &= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
-    &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
-    &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{i}^{T} \mathbf {V}_{j} \\
-    &= \sum _{j} d\mathbf {O}_{i}^{T} \left (\frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j}\right ) \\
-    &=  d\mathbf {O}_{i}^{T} \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j} \\
-    &= d\mathbf {O}_{i}^{T} \mathbf {O}_{i}
-    .\end {align*}
-    ]]></fr:tex>
-    Thus, we can compute <fr:tex display="inline"><![CDATA[\mathbf {D}_i]]></fr:tex> directly from the vectors <fr:tex display="inline"><![CDATA[d\mathbf {O}_i]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {O}_i]]></fr:tex>.
+Both are recoverable from the <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> tensors already resident in memory. The forward pass saved <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, so
+<fr:tex display="block"><![CDATA[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}},]]></fr:tex>
+and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> is just an inner product of two rows,
+<fr:tex display="block"><![CDATA[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i} \cdot  \mathbf {V}_j.]]></fr:tex>
+Neither ever requires an <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> intermediate.
 </html:div>
 
-  <html:hr />
+<html:p>Substituting both into the previous section leaves <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> in terms of <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex>, <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, and <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> alone:</html:p>
+<fr:tex display="block"><![CDATA[
+\begin {align*}
+  d\mathbf {Q}_{i} &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
+  d\mathbf {K}_{j} &= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {Q}_{i}.
+.\end {align*}
+]]></fr:tex>
+</fr:mainmatter></fr:tree>
 
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Getting \mathbf {D} for free">Getting <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> for free</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>One problem survives. <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> is a dot product over a full row, so computing it inside the streaming loop would mean a reduction over all <fr:tex display="inline"><![CDATA[j]]></fr:tex> before any tile of <fr:tex display="inline"><![CDATA[d\mathbf {Q}_i]]></fr:tex> could be finished. This is the same global dependency the online softmax was designed to break.</html:p>
+<html:p>The way out is that the row sum has already been computed once, in the forward pass. Expanding and pulling <fr:tex display="inline"><![CDATA[d\mathbf {O}_i]]></fr:tex> out of the sum:</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+  \mathbf {D}_i &= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
+  &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
+  &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_{j}\right ) \\
+  &=  d\mathbf {O}_{i} \cdot  \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \mathbf {V}_{j} \\
+  &= d\mathbf {O}_{i} \cdot  \mathbf {O}_{i}
+  .\end {align*}
+]]></fr:tex>
+<html:p>The inner sum is precisely the definition of <fr:tex display="inline"><![CDATA[\mathbf {O}_i]]></fr:tex>. So <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> is a single elementwise product of <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> summed along the head dimension — one <fr:tex display="inline"><![CDATA[O(Nd)]]></fr:tex> pass over tensors we already have, done once before the backward loop begins.</html:p>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:title text="Summary">Summary</fr:title></fr:frontmatter><fr:mainmatter>
-<html:ul><html:li>In the forward pass,</html:li>
-  <html:ol><html:li>Compute and store <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> values in memory.</html:li> 
-    <html:li>Compute and store <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex> values in memory</html:li></html:ol>
-  <html:li>Between the forward and backward pass,</html:li>
-  <html:ol><html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex>. (This is done automatically in <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link>)</html:li>
-    <html:li>Use <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> to compute <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> memory.</html:li></html:ol>
-  <html:li>In the backward pass,</html:li>
-  <html:ol><html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {V}_j]]></fr:tex> via <fr:tex display="inline"><![CDATA[\mathbf {Q}, \mathbf {K}, d\mathbf {O}]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> memory.</html:li>
-    <html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {Q}_i]]></fr:tex> via <fr:tex display="inline"><![CDATA[\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> memory.</html:li>
-    <html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {K}_j]]></fr:tex> via <fr:tex display="inline"><![CDATA[\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> memory.</html:li></html:ol></html:ul>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Forward pass.</html:strong> Store <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> and the softmax denominators <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, both <fr:tex display="inline"><![CDATA[O(Nd)]]></fr:tex>.</html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Between the passes.</html:strong> Receive <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> from the layer above (automatic in <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link>), then precompute <fr:tex display="inline"><![CDATA[\mathbf {D}_i = d\mathbf {O}_i \cdot  \mathbf {O}_i]]></fr:tex> in <fr:tex display="inline"><![CDATA[O(N)]]></fr:tex> memory.</html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Backward pass.</html:strong> Stream over tiles, recomputing <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {Q}, \mathbf {K}, \mathbf {L}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex> from <fr:tex display="inline"><![CDATA[d\mathbf {O}, \mathbf {V}]]></fr:tex> as needed:</html:p>
+<html:ol><html:li><fr:tex display="inline"><![CDATA[d\mathbf {V}_j = \sum _i \mathbf {P}_{ij} d\mathbf {O}_i]]></fr:tex>, accumulated over query tiles.</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {Q}_i = \sum _j \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {K}_j]]></fr:tex>, accumulated over key tiles.</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {K}_j = \sum _i \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {Q}_i]]></fr:tex>, accumulated over query tiles.</html:li></html:ol>
+<html:p>Each accumulator is <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> per row or column, so the whole backward pass stays linear in <fr:tex display="inline"><![CDATA[N]]></fr:tex>.</html:p>
 </fr:mainmatter></fr:tree>
 </fr:mainmatter>
   <fr:backmatter>
@@ -419,7 +380,7 @@ such that <fr:tex display="inline"><![CDATA[\mathbf {o}_{i,n}' = \mathbf {o}_n]]
   "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
 A key benefit of this algorithm is that it is entirely parallelizable across rows. This means that we can loop across entire <fr:link href="/OGCRV/" title="Memory Tiling (GPU)" uri="https://kellenkanarios.com/OGCRV/" display-uri="OGCRV" type="local">tiles</fr:link> like in the GEMM case.
 </html:div>
-</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:uri>https://kellenkanarios.com/OGCRZ/</fr:uri><fr:display-uri>OGCRZ</fr:display-uri><fr:route>/OGCRZ/</fr:route><fr:title text="Flash Attention (Bwd)">Flash Attention (Bwd)</fr:title></fr:frontmatter><fr:mainmatter><html:p>To understand the innovation of the backward pass in <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">flash attention</fr:link>, we must first find all of the gradients we must compute.</html:p>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:uri>https://kellenkanarios.com/OGCRZ/</fr:uri><fr:display-uri>OGCRZ</fr:display-uri><fr:route>/OGCRZ/</fr:route><fr:title text="Flash Attention (Bwd)">Flash Attention (Bwd)</fr:title></fr:frontmatter><fr:mainmatter><html:p>The forward pass of <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">flash attention</fr:link> avoids materializing the <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> attention matrix by streaming an online softmax. The backward pass has to pull the same trick twice over, because the naive gradient computation wants <html:em>two</html:em> <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrices — <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>. Getting there means first writing down every gradient we need, then finding a way to recompute rather than store each one.</html:p>
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
   padding: 0.5em 1.1em 0.5em 1.2em;
@@ -427,108 +388,57 @@ A key benefit of this algorithm is that it is entirely parallelizable across row
   border-radius: var(--radius);
   background-color: rgba(70, 100, 150, 0.05);
   "><html:span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</html:span> 
-Following the notation in the <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">original paper</fr:link>, we have the following matrices
-<fr:tex display="block"><![CDATA[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex>
-Now suppose their is some scalar loss function <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. Then we define 
-<fr:tex display="block"><![CDATA[\frac {\partial  \phi }{\partial  \mathbf {O}}, \frac {\partial  \phi }{\partial  \mathbf {K}}, \frac {\partial  \phi }{\partial  \mathbf {V}}  = d\mathbf {O}, d\mathbf {K}, d\mathbf {V}]]></fr:tex>
+Following the notation in the <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">original paper</fr:link>,
+<fr:tex display="block"><![CDATA[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V},]]></fr:tex>
+where <fr:tex display="inline"><![CDATA[\mathbf {Q}, \mathbf {K}, \mathbf {V}, \mathbf {O}]]></fr:tex> are <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {S}, \mathbf {P}]]></fr:tex> are <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>. For a scalar loss <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex> we abbreviate the gradient with respect to any matrix <fr:tex display="inline"><![CDATA[\mathbf {X}]]></fr:tex> as
+<fr:tex display="block"><![CDATA[d\mathbf {X} = \frac {\partial  \phi }{\partial  \mathbf {X}},]]></fr:tex>
+and write <fr:tex display="inline"><![CDATA[\mathbf {L}_i]]></fr:tex> for the softmax denominator of row <fr:tex display="inline"><![CDATA[i]]></fr:tex> saved by the forward pass, so that <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij} = \exp (\mathbf {Q}_i \cdot  \mathbf {K}_j) / \mathbf {L}_i]]></fr:tex>.
 </html:div>
-<html:p>We will compute each gradient individually.</html:p><html:ol><html:li><fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>: this is just a straightforward application of the chain rule. In particular, <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex> so that
-  <fr:tex display="block"><![CDATA[
-     d\mathbf {P} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {P}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T
-    ]]></fr:tex>
-    <html:p>
-    To sanity check, let us look at the shapes. <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> is the partial with respect to the outputs <fr:tex display="inline"><![CDATA[O]]></fr:tex>, so we need an entry for each output and it is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>. <fr:tex display="inline"><![CDATA[V^T]]></fr:tex> is <fr:tex display="inline"><![CDATA[d \times  N]]></fr:tex>, so that the result <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> is <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> as desired.
-    </html:p>
-    <html:p>Furthermore, we can see this by writing <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>. Then</html:p>
-    <fr:tex display="block"><![CDATA[
-      \begin {align*}
-       d\mathbf {P}_{ij} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}}  \\
-                        &= \sum _{i} d\mathbf {O}_{ik} \mathbf {V}_{jk} 
-      .\end {align*}
-    ]]></fr:tex></html:li>
-  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex>: this is just the same as <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>. In particular, <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P} \mathbf {V}]]></fr:tex> so that
-  <fr:tex display="block"><![CDATA[
-     d\mathbf {V} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {V}} = \frac {\partial  \phi (\mathbf {O})}{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O} 
-    ]]></fr:tex>
-    <html:p>Furthermore, we can see this by writing <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _{j} \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>. Then</html:p>
-    <fr:tex display="block"><![CDATA[
-      \begin {align*}
-       d\mathbf {V}_{jk} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}}  \\
-                        &= \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} \\
-                        &= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
-      .\end {align*}
-    ]]></fr:tex></html:li>
-  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex>: now we apply chain rule with <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>. However, we must take the gradient through the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax</fr:link>. Exiting matrix notation hell, if we consider the scalar case. Let <fr:tex display="inline"><![CDATA[\mathbf {s}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex> just be rows. Then using the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">scalar softmax derivation</fr:link>
-    <fr:tex display="block"><![CDATA[
-      \begin {align*}
-       d\mathbf {s}_j &= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\  
-       &= \sum _{i} d\mathbf {p}_i \cdot  (\delta _{ij}\mathbf {p}_i - \mathbf {p}_{ij}) \\
-       &= d \mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
-      .\end {align*}
-      ]]></fr:tex>
-    Now if we rewrite this as the row vector, we get
-    <fr:tex display="block"><![CDATA[
-      \begin {align*}
-        d\mathbf {S}_{k} &= \mathbf {P}_{k} \odot  (d\mathbf {P}_{k} - \mathbf {P}_k \cdot  d\mathbf {P}_k)
-      .\end {align*}
-      ]]></fr:tex>
-    To get back to the full matrix, define <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> i.e. a vector whose <fr:tex display="inline"><![CDATA[i]]></fr:tex>th entry is <fr:tex display="inline"><![CDATA[\mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex>. Then we have that
-    <fr:tex display="block"><![CDATA[
-      \begin {align*}
-        d\mathbf {S} &= \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D})
-      .\end {align*}
-      ]]></fr:tex></html:li>
-  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex>: To get <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex>, we just apply the chain rule to <fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex>. Since <fr:tex display="inline"><![CDATA[\mathbf {S} = \mathbf {Q} \mathbf {K}^T]]></fr:tex>,
-  <fr:tex display="block"><![CDATA[
-    \begin {align*}
-       d\mathbf {Q}_{i} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} \\
-                      &= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {K}_{j}
-    .\end {align*}
-    ]]></fr:tex></html:li>
-  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex>: Same as <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> i.e.
-  <fr:tex display="block"><![CDATA[
-    \begin {align*}
-       d\mathbf {K}_{j} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {Q}_{i} \\
-                      &= \sum _{j} \mathbf {P}_{ij} \cdot  (d\mathbf {P}_{ij} - \mathbf {D}_i) \mathbf {Q}_{i}
-    .\end {align*}
-    ]]></fr:tex></html:li></html:ol>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 55, 45, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(200, 55, 45, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> are <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrices. Materializing this is equivalent to materialing the attention matrix in the forward pass.</html:div>
-
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(0, 160, 175, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(0, 160, 175, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</html:span> 
-  <html:em>recomputing</html:em> <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex>.
-  <html:p>First, we can easily recompute <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> with <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex> (which are both <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> and must be resident in memory) via</html:p>
-  <fr:tex display="block"><![CDATA[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}}]]></fr:tex>
-  <html:p>We can apply the same trick to <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex> with <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex> (both <fr:tex display="inline"><![CDATA[N \times   d]]></fr:tex>). Namely,</html:p>
-  <fr:tex display="block"><![CDATA[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i}^T \mathbf {V}_j]]></fr:tex>
-  <html:p><html:strong>Never need an <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrix</html:strong>.</html:p>
-</html:div>
-<html:p>Now we can rewrite <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> as
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/4QZE/</fr:uri><fr:display-uri>4QZE</fr:display-uri><fr:route>/4QZE/</fr:route><fr:title text="The gradients we need for FlashAttention">The gradients we need for <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">FlashAttention</fr:link></fr:title></fr:frontmatter><fr:mainmatter><html:p>Everything downstream is chain rule; the only step with any content is differentiating through the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax</fr:link>. We take the gradients in dependency order, starting from <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> which arrives from the layer above.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {P} and d\mathbf {V} from \mathbf {O} = \mathbf {P}\mathbf {V}"><fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P}\mathbf {V}]]></fr:tex></fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Both fall straight out of the product rule for matrices:</html:p>
 <fr:tex display="block"><![CDATA[
-  d\mathbf {Q}_{i} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {K}_{j}
+  d\mathbf {P} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T,
+  \qquad 
+  d\mathbf {V} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O}.
 ]]></fr:tex>
-and
+<html:p>The shapes are a useful sanity check. <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> has one entry per output, so it is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>; <fr:tex display="inline"><![CDATA[\mathbf {V}^T]]></fr:tex> is <fr:tex display="inline"><![CDATA[d \times  N]]></fr:tex>; their product is <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>, matching <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex>. Likewise <fr:tex display="inline"><![CDATA[\mathbf {P}^T d\mathbf {O}]]></fr:tex> is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>, matching <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex>.</html:p>
+<html:p>Componentwise, from <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _j \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>,</html:p>
 <fr:tex display="block"><![CDATA[
-  d\mathbf {K}_{j} = \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  (d\mathbf {O}_{i}^T \mathbf {V}_j - \mathbf {D}_i) \mathbf {Q}_{i}
-]]></fr:tex></html:p>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 55, 45, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(200, 55, 45, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> requires computing the <html:strong>global</html:strong> dot product <fr:tex display="inline"><![CDATA[\mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex>.</html:div>
+  \begin {align*}
+    d\mathbf {P}_{ij} &= \sum _{k} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk}, \\
+    d\mathbf {V}_{jk} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}} = \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} = \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
+  .\end {align*}
+]]></fr:tex>
+<html:p>That last line is worth noting already: <fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex> never needs <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> stored, only the ability to re-evaluate <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex>, and <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {S} through the softmax"><fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex> through the softmax</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Softmax acts row by row, so drop into the scalar case with <fr:tex display="inline"><![CDATA[\mathbf {s}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex> single rows. The <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax Jacobian</fr:link> is <fr:tex display="inline"><![CDATA[\partial  \mathbf {p}_i / \partial  \mathbf {s}_j = \mathbf {p}_i(\delta _{ij} - \mathbf {p}_j)]]></fr:tex>, giving</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+    d\mathbf {s}_j &= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\
+                  &= \sum _{i} d\mathbf {p}_i \cdot  \mathbf {p}_i (\delta _{ij} - \mathbf {p}_{j}) \\
+                  &= d\mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
+  .\end {align*}
+]]></fr:tex>
+<html:p>As a row vector this is <fr:tex display="inline"><![CDATA[d\mathbf {s} = \mathbf {p} \odot  (d\mathbf {p} - \mathbf {p} \cdot  d\mathbf {p})]]></fr:tex>, where the subtracted term is the <html:em>scalar</html:em> <fr:tex display="inline"><![CDATA[\mathbf {p} \cdot  d\mathbf {p}]]></fr:tex> broadcast across the row. Collecting those scalars into a column <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> with <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> recovers the matrix form</html:p>
+<fr:tex display="block"><![CDATA[d\mathbf {S} = \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D}).]]></fr:tex>
+<html:p><fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> is the piece that will cause trouble later: it is a dot product over an entire row of <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex>, which is exactly the thing we refuse to materialize.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {Q} and d\mathbf {K} from \mathbf {S} = \mathbf {Q}\mathbf {K}^T"><fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {S} = \mathbf {Q}\mathbf {K}^T]]></fr:tex></fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>One more chain rule, and the sums run over opposite indices:</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+     d\mathbf {Q}_{i} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} = \sum _{j} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
+     d\mathbf {K}_{j} &= \sum _{i} d\mathbf {S}_{ij} \mathbf {Q}_{i} = \sum _{i} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {Q}_{i}
+  .\end {align*}
+]]></fr:tex>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Recomputing instead of storing">Recomputing instead of storing</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Every gradient above is expressed through <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex>, both <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>. Materializing either one is exactly the quadratic memory cost the forward pass went to such lengths to avoid, so the backward pass has to be able to produce those entries on demand.</html:p>
 
  <html:div class="jms-callout" style="
   margin: 1em 0 1em 0.25em;
@@ -537,33 +447,45 @@ and
   border-radius: var(--radius);
   background-color: rgba(0, 160, 175, 0.06);
   "><html:span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</html:span> 
-  <html:p>To get around this, we precompute <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> using the <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> values from the forward pass and the current <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> values. In particular,</html:p>
-  <fr:tex display="block"><![CDATA[
-    \begin {align*}
-    \mathbf {D}_i &= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
-    &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
-    &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{i}^{T} \mathbf {V}_{j} \\
-    &= \sum _{j} d\mathbf {O}_{i}^{T} \left (\frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j}\right ) \\
-    &=  d\mathbf {O}_{i}^{T} \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \cdot  \mathbf {V}_{j} \\
-    &= d\mathbf {O}_{i}^{T} \mathbf {O}_{i}
-    .\end {align*}
-    ]]></fr:tex>
-    Thus, we can compute <fr:tex display="inline"><![CDATA[\mathbf {D}_i]]></fr:tex> directly from the vectors <fr:tex display="inline"><![CDATA[d\mathbf {O}_i]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {O}_i]]></fr:tex>.
+Both are recoverable from the <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> tensors already resident in memory. The forward pass saved <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, so
+<fr:tex display="block"><![CDATA[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}},]]></fr:tex>
+and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> is just an inner product of two rows,
+<fr:tex display="block"><![CDATA[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i} \cdot  \mathbf {V}_j.]]></fr:tex>
+Neither ever requires an <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> intermediate.
 </html:div>
 
-  <html:hr />
+<html:p>Substituting both into the previous section leaves <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> in terms of <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex>, <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, and <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> alone:</html:p>
+<fr:tex display="block"><![CDATA[
+\begin {align*}
+  d\mathbf {Q}_{i} &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
+  d\mathbf {K}_{j} &= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {Q}_{i}.
+.\end {align*}
+]]></fr:tex>
+</fr:mainmatter></fr:tree>
 
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Getting \mathbf {D} for free">Getting <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> for free</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>One problem survives. <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> is a dot product over a full row, so computing it inside the streaming loop would mean a reduction over all <fr:tex display="inline"><![CDATA[j]]></fr:tex> before any tile of <fr:tex display="inline"><![CDATA[d\mathbf {Q}_i]]></fr:tex> could be finished. This is the same global dependency the online softmax was designed to break.</html:p>
+<html:p>The way out is that the row sum has already been computed once, in the forward pass. Expanding and pulling <fr:tex display="inline"><![CDATA[d\mathbf {O}_i]]></fr:tex> out of the sum:</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+  \mathbf {D}_i &= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
+  &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
+  &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_{j}\right ) \\
+  &=  d\mathbf {O}_{i} \cdot  \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \mathbf {V}_{j} \\
+  &= d\mathbf {O}_{i} \cdot  \mathbf {O}_{i}
+  .\end {align*}
+]]></fr:tex>
+<html:p>The inner sum is precisely the definition of <fr:tex display="inline"><![CDATA[\mathbf {O}_i]]></fr:tex>. So <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> is a single elementwise product of <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> summed along the head dimension — one <fr:tex display="inline"><![CDATA[O(Nd)]]></fr:tex> pass over tensors we already have, done once before the backward loop begins.</html:p>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:title text="Summary">Summary</fr:title></fr:frontmatter><fr:mainmatter>
-<html:ul><html:li>In the forward pass,</html:li>
-  <html:ol><html:li>Compute and store <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> values in memory.</html:li> 
-    <html:li>Compute and store <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex> values in memory</html:li></html:ol>
-  <html:li>Between the forward and backward pass,</html:li>
-  <html:ol><html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex>. (This is done automatically in <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link>)</html:li>
-    <html:li>Use <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> to compute <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(n)]]></fr:tex> memory.</html:li></html:ol>
-  <html:li>In the backward pass,</html:li>
-  <html:ol><html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {V}_j]]></fr:tex> via <fr:tex display="inline"><![CDATA[\mathbf {Q}, \mathbf {K}, d\mathbf {O}]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> memory.</html:li>
-    <html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {Q}_i]]></fr:tex> via <fr:tex display="inline"><![CDATA[\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> memory.</html:li>
-    <html:li>Compute <fr:tex display="inline"><![CDATA[d\mathbf {K}_j]]></fr:tex> via <fr:tex display="inline"><![CDATA[\mathbf {Q}_i, \mathbf {K}_j, \mathbf {L}_i, \mathbf {D}_i]]></fr:tex>. <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> memory.</html:li></html:ol></html:ul>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Forward pass.</html:strong> Store <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> and the softmax denominators <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, both <fr:tex display="inline"><![CDATA[O(Nd)]]></fr:tex>.</html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Between the passes.</html:strong> Receive <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> from the layer above (automatic in <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link>), then precompute <fr:tex display="inline"><![CDATA[\mathbf {D}_i = d\mathbf {O}_i \cdot  \mathbf {O}_i]]></fr:tex> in <fr:tex display="inline"><![CDATA[O(N)]]></fr:tex> memory.</html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Backward pass.</html:strong> Stream over tiles, recomputing <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {Q}, \mathbf {K}, \mathbf {L}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex> from <fr:tex display="inline"><![CDATA[d\mathbf {O}, \mathbf {V}]]></fr:tex> as needed:</html:p>
+<html:ol><html:li><fr:tex display="inline"><![CDATA[d\mathbf {V}_j = \sum _i \mathbf {P}_{ij} d\mathbf {O}_i]]></fr:tex>, accumulated over query tiles.</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {Q}_i = \sum _j \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {K}_j]]></fr:tex>, accumulated over key tiles.</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {K}_j = \sum _i \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {Q}_i]]></fr:tex>, accumulated over query tiles.</html:li></html:ol>
+<html:p>Each accumulator is <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> per row or column, so the whole backward pass stays linear in <fr:tex display="inline"><![CDATA[N]]></fr:tex>.</html:p>
 </fr:mainmatter></fr:tree>
 </fr:mainmatter></fr:tree>
   <html:div class="comments">
@@ -615,68 +537,6 @@ and
   color: 33691e;
   font-style: italic;
   ">🌱 Stub — this concept is referenced but not yet written.</html:div>
-</fr:mainmatter>
-        </fr:tree>
-        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
-          <fr:frontmatter>
-            <fr:authors>
-              <fr:author>
-                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
-              </fr:author>
-            </fr:authors>
-            <fr:date>
-              <fr:year>2025</fr:year>
-              <fr:month>7</fr:month>
-              <fr:day>14</fr:day>
-            </fr:date>
-            <fr:uri>https://kellenkanarios.com/C00V/</fr:uri>
-            <fr:display-uri>C00V</fr:display-uri>
-            <fr:route>/C00V/</fr:route>
-            <fr:title text="Softmax">Softmax</fr:title>
-            <fr:taxon>Definition</fr:taxon>
-          </fr:frontmatter>
-          <fr:mainmatter><html:p>The softmax function <fr:tex display="inline"><![CDATA[\mathrm {softmax}: \mathbb {R}^d \to  \mathbb {R}^d]]></fr:tex> is defined by
-<fr:tex display="block"><![CDATA[\mathrm {softmax}(\mathbf {x})_i = \frac {e^{x_i}}{\sum _{j = 1}^{d} e^{x_j}}]]></fr:tex></html:p>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(140, 60, 170, 0.8);
-  border-radius: var(--radius);
-  background-color: rgba(140, 60, 170, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(140, 60, 170, 0.8);">Claim.</html:span> 
-  The Jacobian of the softmax function for <fr:tex display="inline"><![CDATA[\mathbf {y} = \mathrm {softmax}(\mathbf {x})]]></fr:tex> is given by
-  <fr:tex display="block"><![CDATA[
-    \begin {align*}
-      \frac {\partial  y_i}{\partial  x_j} = y_i(\delta _{ij} - y_j),
-    \end {align*}
-  ]]></fr:tex>
-  or, in matrix form,
-  <fr:tex display="block"><![CDATA[
-    \begin {align*}
-      J = \mathrm {diag}(\mathbf {y}) - \mathbf {y}\mathbf {y}^\top .
-    \end {align*}
-  ]]></fr:tex>
-</html:div>
-
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(0, 0, 0, 0.4);
-  border-radius: var(--radius);
-  background-color: rgba(0, 0, 0, 0.03);
-  "><html:span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</html:span> 
-    Write <fr:tex display="inline"><![CDATA[y_i = e^{x_i} / S]]></fr:tex> with <fr:tex display="inline"><![CDATA[S = \sum _{k=1}^{d} e^{x_k}]]></fr:tex>, so that <fr:tex display="inline"><![CDATA[\partial  S / \partial  x_j = e^{x_j}]]></fr:tex>. By the quotient rule,
-<fr:tex display="block"><![CDATA[
-    \begin {align*}
-      \frac {\partial  y_i}{\partial  x_j}
-        &= \frac {\delta _{ij} e^{x_i} S - e^{x_i} e^{x_j}}{S^2} \\
-        &= \delta _{ij}\frac {e^{x_i}}{S} - \frac {e^{x_i}}{S}\frac {e^{x_j}}{S} \\
-        &= \delta _{ij} y_i - y_i y_j \\
-        &= y_i(\delta _{ij} - y_j).
-    \end {align*}
-]]></fr:tex>
-    Collecting these entries into a matrix, the diagonal contributes <fr:tex display="inline"><![CDATA[y_i]]></fr:tex> along <fr:tex display="inline"><![CDATA[\mathrm {diag}(\mathbf {y})]]></fr:tex> and the <fr:tex display="inline"><![CDATA[-y_i y_j]]></fr:tex> term is the outer product <fr:tex display="inline"><![CDATA[\mathbf {y}\mathbf {y}^\top ]]></fr:tex>, giving <fr:tex display="inline"><![CDATA[J = \mathrm {diag}(\mathbf {y}) - \mathbf {y}\mathbf {y}^\top ]]></fr:tex>.
-</html:div>
 </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>
