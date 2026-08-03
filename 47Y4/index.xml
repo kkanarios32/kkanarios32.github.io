@@ -570,7 +570,410 @@ Ideally, this would allow goal-dependent skills, where the goal is not the entir
   
   
   
+  <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/QTSW/</fr:uri><fr:display-uri>QTSW</fr:display-uri><fr:route>/QTSW/</fr:route><fr:title text="MESI in Murphi">MESI in Murphi</fr:title></fr:frontmatter><fr:mainmatter><html:p>With those states in place the rest of MSI is mechanical, and MESI is a short step from it — modulo two design choices and two more races.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The cache controller">The cache controller</fr:title></fr:frontmatter><fr:mainmatter>
+<html:figure><html:img width="100%" src="/bafkrmia4fllqvr7nzhifqxwk5stk2kyje2tfokhddzfjkteyw4kbj6k25i.png" />
+<html:figcaption>MESI cache controller.</html:figcaption></html:figure>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Silent upgrades.</html:strong> If a cache in <fr:tex display="inline"><![CDATA[E]]></fr:tex> may upgrade to <fr:tex display="inline"><![CDATA[M]]></fr:tex> silently, the directory never learns the line went dirty, and the value it hands to the next <html:code>GetS</html:code> or <html:code>GetM</html:code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat <fr:tex display="inline"><![CDATA[E]]></fr:tex> exactly like <fr:tex display="inline"><![CDATA[M]]></fr:tex>, forwarding everything. Neither requires a writeback on <html:code>PutE</html:code>. I take the first, matching the table.</html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Signaling exclusivity.</html:strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <html:code>ExclusiveData</html:code> message: receiving it in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> lands the cache in <fr:tex display="inline"><![CDATA[E]]></fr:tex> rather than <fr:tex display="inline"><![CDATA[S]]></fr:tex>. It turns out to also be the key to the second race below.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+Once <html:code>PutE</html:code> or <html:code>PutM</html:code> has been sent, <fr:tex display="inline"><![CDATA[EI^A]]></fr:tex> and <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> are functionally identical. Both appear above for completeness, but transitioning from <fr:tex display="inline"><![CDATA[E]]></fr:tex> straight into <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> verifies the same.
+</html:div>
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The directory controller">The directory controller</fr:title></fr:frontmatter><fr:mainmatter>
+<html:figure><html:img width="100%" src="/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png" />
+<html:figcaption>MESI directory controller.</html:figcaption></html:figure>
+<html:p>Symmetrically, the directory gains an <fr:tex display="inline"><![CDATA[E^D]]></fr:tex> state, which for completeness is kept distinct from <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> but could be folded into it.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Forwards arriving before exclusive data">Forwards arriving before exclusive data</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The first processor issues <html:code>GetS</html:code> and waits in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex>, while the home directory has already moved to <fr:tex display="inline"><![CDATA[E]]></fr:tex> and sent it <html:code>ExclusiveData</html:code>. A second processor then issues <html:code>GetM</html:code>, and home's <html:code>Fwd-GetM</html:code> overtakes the data in flight.</html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Fix.</html:strong> Stall <html:code>Fwd-GetM</html:code> and <html:code>Fwd-GetS</html:code> in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> until the data lands. This is safe here because the data is on the response channel, which no stall can block.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Losing exclusive data to an invalidation">Losing exclusive data to an invalidation</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The nastier version of the same race: the invalidation arrives before the forward. By the <fr:tex display="inline"><![CDATA[II^A]]></fr:tex> rule inherited from MSI, a <html:code>PutAck</html:code> in that state drops the line to <fr:tex display="inline"><![CDATA[I]]></fr:tex> — discarding data a forwarded request is about to ask for.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(60, 90, 180, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(60, 90, 180, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
+<html:ol><html:li><html:code>Proc_1</html:code> load-misses → <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex></html:li>
+  <html:li><html:code>Home</html:code> takes the first <html:code>GetS</html:code> from <html:code>Proc_1</html:code> → <fr:tex display="inline"><![CDATA[E]]></fr:tex>, sends <html:code>ExclusiveData</html:code></html:li>
+  <html:li><html:code>Proc_2</html:code> issues <html:code>GetM</html:code> → <fr:tex display="inline"><![CDATA[IM^{AD}]]></fr:tex></html:li>
+  <html:li><html:code>Home</html:code> sends <html:code>Inv</html:code> to <html:code>Proc_1</html:code></html:li>
+  <html:li><html:code>Home</html:code> forwards <html:code>Fwd-GetM</html:code> to <html:code>Proc_1</html:code></html:li>
+  <html:li><html:code>Proc_1</html:code> receives <html:code>Inv</html:code> → <fr:tex display="inline"><![CDATA[II^D]]></fr:tex></html:li>
+  <html:li><html:code>Proc_1</html:code> receives <html:code>ExclusiveData</html:code> → <fr:tex display="inline"><![CDATA[I]]></fr:tex>, and the data is lost</html:li></html:ol>
+</html:div>
+
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Fix.</html:strong> <html:code>ExclusiveData</html:code> pays for itself a second time. Because the message is distinguishable from ordinary <html:code>Data</html:code>, a cache receiving it in <fr:tex display="inline"><![CDATA[II^D]]></fr:tex> knows it was the first reader and transitions to <fr:tex display="inline"><![CDATA[E]]></fr:tex> instead of <fr:tex display="inline"><![CDATA[I]]></fr:tex> — from which the pending <html:code>Fwd-GetM</html:code> or <html:code>Fwd-GetS</html:code> is handled correctly.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The finished controllers">The finished controllers</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Folding all of the above in leaves these two state machines, which Murphi verifies exhaustively.</html:p>
+<html:figure><html:img width="100%" src="/bafkrmif36mc6riik263rmccsazkkvtb5la47ocbsbm664xrm323b3jyufm.png" />
+<html:figcaption>Final MESI cache controller.</html:figcaption></html:figure>
+<html:figure><html:img width="100%" src="/bafkrmifqg6owj5m5bnsuqphk73uuwqzybmwczbbwx432u5j3zju3fe52i4.png" />
+<html:figcaption>Final MESI directory controller.</html:figcaption></html:figure>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
   <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/Q30B/</fr:uri><fr:display-uri>Q30B</fr:display-uri><fr:route>/Q30B/</fr:route><fr:title text="Kernel Synthesis">Kernel Synthesis</fr:title></fr:frontmatter><fr:mainmatter><html:p>A backlink accumulator for notes / references on pure synthesis approaches to kernel generation.</html:p></fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:uri>https://kellenkanarios.com/OGCRZ/</fr:uri><fr:display-uri>OGCRZ</fr:display-uri><fr:route>/OGCRZ/</fr:route><fr:title text="Flash Attention (Bwd)">Flash Attention (Bwd)</fr:title></fr:frontmatter><fr:mainmatter><html:p>The forward pass of <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">flash attention</fr:link> avoids materializing the <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> attention matrix by streaming an online softmax. The backward pass has to pull the same trick twice over, because the naive gradient computation wants <html:em>two</html:em> <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrices — <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>. Getting there means first writing down every gradient we need, then finding a way to recompute rather than store each one.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(70, 100, 150, 0.75);
+  border-radius: var(--radius);
+  background-color: rgba(70, 100, 150, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</html:span> 
+Following the notation in the <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">original paper</fr:link>,
+<fr:tex display="block"><![CDATA[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V},]]></fr:tex>
+where <fr:tex display="inline"><![CDATA[\mathbf {Q}, \mathbf {K}, \mathbf {V}, \mathbf {O}]]></fr:tex> are <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {S}, \mathbf {P}]]></fr:tex> are <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>. For a scalar loss <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex> we abbreviate the gradient with respect to any matrix <fr:tex display="inline"><![CDATA[\mathbf {X}]]></fr:tex> as
+<fr:tex display="block"><![CDATA[d\mathbf {X} = \frac {\partial  \phi }{\partial  \mathbf {X}},]]></fr:tex>
+and write <fr:tex display="inline"><![CDATA[\mathbf {L}_i]]></fr:tex> for the softmax denominator of row <fr:tex display="inline"><![CDATA[i]]></fr:tex> saved by the forward pass, so that <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij} = \exp (\mathbf {Q}_i \cdot  \mathbf {K}_j) / \mathbf {L}_i]]></fr:tex>.
+</html:div>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/4QZE/</fr:uri><fr:display-uri>4QZE</fr:display-uri><fr:route>/4QZE/</fr:route><fr:title text="The gradients we need for FlashAttention">The gradients we need for <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">FlashAttention</fr:link></fr:title></fr:frontmatter><fr:mainmatter><html:p>Everything downstream is chain rule; the only step with any content is differentiating through the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax</fr:link>. We take the gradients in dependency order, starting from <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> which arrives from the layer above.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {P} and d\mathbf {V} from \mathbf {O} = \mathbf {P}\mathbf {V}"><fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P}\mathbf {V}]]></fr:tex></fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Both fall straight out of the product rule for matrices:</html:p>
+<fr:tex display="block"><![CDATA[
+  d\mathbf {P} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T,
+  \qquad 
+  d\mathbf {V} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O}.
+]]></fr:tex>
+<html:p>The shapes are a useful sanity check. <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> has one entry per output, so it is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>; <fr:tex display="inline"><![CDATA[\mathbf {V}^T]]></fr:tex> is <fr:tex display="inline"><![CDATA[d \times  N]]></fr:tex>; their product is <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>, matching <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex>. Likewise <fr:tex display="inline"><![CDATA[\mathbf {P}^T d\mathbf {O}]]></fr:tex> is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>, matching <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex>.</html:p>
+<html:p>Componentwise, from <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _j \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>,</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+    d\mathbf {P}_{ij} &= \sum _{k} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk}, \\
+    d\mathbf {V}_{jk} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}} = \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} = \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
+  .\end {align*}
+]]></fr:tex>
+<html:p>That last line is worth noting already: <fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex> never needs <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> stored, only the ability to re-evaluate <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex>, and <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {S} through the softmax"><fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex> through the softmax</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Softmax acts row by row, so drop into the scalar case with <fr:tex display="inline"><![CDATA[\mathbf {s}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex> single rows. The <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax Jacobian</fr:link> is <fr:tex display="inline"><![CDATA[\partial  \mathbf {p}_i / \partial  \mathbf {s}_j = \mathbf {p}_i(\delta _{ij} - \mathbf {p}_j)]]></fr:tex>, giving</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+    d\mathbf {s}_j &= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\
+                  &= \sum _{i} d\mathbf {p}_i \cdot  \mathbf {p}_i (\delta _{ij} - \mathbf {p}_{j}) \\
+                  &= d\mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
+  .\end {align*}
+]]></fr:tex>
+<html:p>As a row vector this is <fr:tex display="inline"><![CDATA[d\mathbf {s} = \mathbf {p} \odot  (d\mathbf {p} - \mathbf {p} \cdot  d\mathbf {p})]]></fr:tex>, where the subtracted term is the <html:em>scalar</html:em> <fr:tex display="inline"><![CDATA[\mathbf {p} \cdot  d\mathbf {p}]]></fr:tex> broadcast across the row. Collecting those scalars into a column <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> with <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> recovers the matrix form</html:p>
+<fr:tex display="block"><![CDATA[d\mathbf {S} = \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D}).]]></fr:tex>
+<html:p><fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> is the piece that will cause trouble later: it is a dot product over an entire row of <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex>, which is exactly the thing we refuse to materialize.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {Q} and d\mathbf {K} from \mathbf {S} = \mathbf {Q}\mathbf {K}^T"><fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {S} = \mathbf {Q}\mathbf {K}^T]]></fr:tex></fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>One more chain rule, and the sums run over opposite indices:</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+     d\mathbf {Q}_{i} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} = \sum _{j} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
+     d\mathbf {K}_{j} &= \sum _{i} d\mathbf {S}_{ij} \mathbf {Q}_{i} = \sum _{i} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {Q}_{i}
+  .\end {align*}
+]]></fr:tex>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Recomputing instead of storing">Recomputing instead of storing</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Every gradient above is expressed through <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex>, both <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>. Materializing either one is exactly the quadratic memory cost the forward pass went to such lengths to avoid, so the backward pass has to be able to produce those entries on demand.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(0, 160, 175, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(0, 160, 175, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</html:span> 
+Both are recoverable from the <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> tensors already resident in memory. The forward pass saved <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, so
+<fr:tex display="block"><![CDATA[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}},]]></fr:tex>
+and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> is just an inner product of two rows,
+<fr:tex display="block"><![CDATA[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i} \cdot  \mathbf {V}_j.]]></fr:tex>
+Neither ever requires an <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> intermediate.
+</html:div>
+
+<html:p>Substituting both into the previous section leaves <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> in terms of <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex>, <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, and <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> alone:</html:p>
+<fr:tex display="block"><![CDATA[
+\begin {align*}
+  d\mathbf {Q}_{i} &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
+  d\mathbf {K}_{j} &= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {Q}_{i}.
+.\end {align*}
+]]></fr:tex>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Getting \mathbf {D} for free">Getting <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> for free</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>One problem survives. <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> is a dot product over a full row, so computing it inside the streaming loop would mean a reduction over all <fr:tex display="inline"><![CDATA[j]]></fr:tex> before any tile of <fr:tex display="inline"><![CDATA[d\mathbf {Q}_i]]></fr:tex> could be finished. This is the same global dependency the online softmax was designed to break.</html:p>
+<html:p>The way out is that the row sum has already been computed once, in the forward pass. Expanding and pulling <fr:tex display="inline"><![CDATA[d\mathbf {O}_i]]></fr:tex> out of the sum:</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+  \mathbf {D}_i &= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
+  &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
+  &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_{j}\right ) \\
+  &=  d\mathbf {O}_{i} \cdot  \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \mathbf {V}_{j} \\
+  &= d\mathbf {O}_{i} \cdot  \mathbf {O}_{i}
+  .\end {align*}
+]]></fr:tex>
+<html:p>The inner sum is precisely the definition of <fr:tex display="inline"><![CDATA[\mathbf {O}_i]]></fr:tex>. So <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> is a single elementwise product of <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> summed along the head dimension — one <fr:tex display="inline"><![CDATA[O(Nd)]]></fr:tex> pass over tensors we already have, done once before the backward loop begins.</html:p>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:title text="Summary">Summary</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Forward pass.</html:strong> Store <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> and the softmax denominators <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, both <fr:tex display="inline"><![CDATA[O(Nd)]]></fr:tex>.</html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Between the passes.</html:strong> Receive <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> from the layer above (automatic in <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link>), then precompute <fr:tex display="inline"><![CDATA[\mathbf {D}_i = d\mathbf {O}_i \cdot  \mathbf {O}_i]]></fr:tex> in <fr:tex display="inline"><![CDATA[O(N)]]></fr:tex> memory.</html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Backward pass.</html:strong> Stream over tiles, recomputing <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {Q}, \mathbf {K}, \mathbf {L}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex> from <fr:tex display="inline"><![CDATA[d\mathbf {O}, \mathbf {V}]]></fr:tex> as needed:</html:p>
+<html:ol><html:li><fr:tex display="inline"><![CDATA[d\mathbf {V}_j = \sum _i \mathbf {P}_{ij} d\mathbf {O}_i]]></fr:tex>, accumulated over query tiles.</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {Q}_i = \sum _j \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {K}_j]]></fr:tex>, accumulated over key tiles.</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {K}_j = \sum _i \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {Q}_i]]></fr:tex>, accumulated over query tiles.</html:li></html:ol>
+<html:p>Each accumulator is <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> per row or column, so the whole backward pass stays linear in <fr:tex display="inline"><![CDATA[N]]></fr:tex>.</html:p>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:uri>https://kellenkanarios.com/HHZO/</fr:uri><fr:display-uri>HHZO</fr:display-uri><fr:route>/HHZO/</fr:route><fr:title text="Implementing Directory-based MESI in Murphi">Implementing Directory-based MESI in Murphi</fr:title></fr:frontmatter><fr:mainmatter><html:p><fr:link href="/CMAL/" title="Murphi" uri="https://kellenkanarios.com/CMAL/" display-uri="CMAL" type="local">Murphi</fr:link> is an explicit-state model checker: you describe a system as guarded transition rules, state the invariants, and it enumerates every reachable interleaving looking for a violation. That makes it a natural fit for <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">cache coherence</fr:link>, where the steady-state behavior is easy and the races are not. This post builds a <fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory-based</fr:link> <fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link> in Murphi, starting from MSI and adding state every time the checker finds a way to break it.</html:p><html:p>The state tables come from <fr:link href="https://pages.cs.wisc.edu/~markhill/papers/primer2020_2nd_edition.pdf" type="external">A Primer on Memory Consistency and Cache Coherence</fr:link>, which doubles as the source for these notes. The recurring lesson is that the published tables are not quite enough: every protocol below needs <fr:link href="/Z32G/" title="Directory protocols expose transient states because transactions span multiple hops" uri="https://kellenkanarios.com/Z32G/" display-uri="Z32G" type="local">transient states</fr:link> the tables leave implicit.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>17</fr:day></fr:date><fr:uri>https://kellenkanarios.com/CMAL/</fr:uri><fr:display-uri>CMAL</fr:display-uri><fr:route>/CMAL/</fr:route><fr:title text="Murphi">Murphi</fr:title></fr:frontmatter><fr:mainmatter><html:p>Syntactical things I need to remember from Murphi docs. Most things are straightforward, but there are a few things to note:</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>17</fr:day></fr:date><fr:title text="Declarations">Declarations</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>A <html:em>declaration</html:em> is a variable or a collection of variables that are used in the rules.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>17</fr:day></fr:date><fr:title text="Rules">Rules</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>A <html:em>rule</html:em> is a transition from one state to another</html:p><html:ul><html:li>Each rule can optionally have an initial condition required to be fired</html:li>
+    <html:li>We can easily define rules for all the processors or collection of <fr:tex display="inline"><![CDATA[n]]></fr:tex> things with <html:code>ruleset</html:code>.</html:li>
+    <html:li>For our use case, rules are used to define</html:li>
+    <html:ol><html:li>Controller actions</html:li>
+      <html:li>Receiving a request from the network</html:li>
+      <html:li>Retrying stalled requests</html:li></html:ol></html:ul></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>17</fr:day></fr:date><fr:title text="Startstates">Startstates</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>A <html:em>startstate</html:em> is the intial configuration for all our declarations.</html:p><html:ul><html:li>Must assign a value to every global variable</html:li></html:ul></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>17</fr:day></fr:date><fr:title text="Invariants">Invariants</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>An <html:em>invariant</html:em> is something that Murphi checks to ensure is true at all possible configurations of the system.</html:p></fr:mainmatter></fr:tree><html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Overview straight from the docs.</html:strong> Repeat forever:
+</html:p><html:ol><html:li>Find all rules whose conditions are true in the current state.
+       (i.e. conditional expressions are true, given the current values
+       of the global variables).</html:li>
+    <html:li>Choose one arbitrarily and execute the action, yielding a new state.</html:li></html:ol></fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:title text="Why three virtual channels">Why three virtual channels</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The valid-invalid protocol shipped with the Murphi docs uses two <fr:link href="/HUDE/" title="Virtual Channels" uri="https://kellenkanarios.com/HUDE/" display-uri="HUDE" type="local">Virtual Channels</fr:link>. A directory protocol needs three: one each for requests, forwarded requests, and responses. The reason is that <fr:link href="/DWV1/" title="Routing deadlock" uri="https://kellenkanarios.com/DWV1/" display-uri="DWV1" type="local">deadlock is a cycle in the dependency graph</fr:link>, so it suffices to exhibit one.</html:p>
+<html:ul><html:li>A node issues <html:code>GetS</html:code> to the directory, giving an edge <fr:tex display="inline"><![CDATA[N_1 \to  D]]></fr:tex>.</html:li>
+  <html:li>The directory forwards <html:code>Fwd-GetS</html:code> to the owner, extending the chain to <fr:tex display="inline"><![CDATA[N_1 \to  D \to  N_2]]></fr:tex>.</html:li>
+  <html:li>The owner sends data back to the requester, closing the cycle <fr:tex display="inline"><![CDATA[N_1 \to  D \to  N_2 \to  N_1]]></fr:tex>.</html:li></html:ul>
+<html:p>The data closing that cycle would travel on the same channel as the requests waiting behind it, so a full request buffer wedges the response that would drain it. Partitioning by message class breaks the cycle:</html:p>
+<html:ul><html:li><html:strong>Request</html:strong>: <html:code>GetS</html:code>, <html:code>GetM</html:code>, <html:code>PutS</html:code>, <html:code>PutM</html:code></html:li>
+  <html:li><html:strong>Forwarded</html:strong>: <html:code>Fwd-GetS</html:code>, <html:code>Fwd-GetM</html:code>, <html:code>Inv</html:code>, <html:code>PutAck</html:code></html:li>
+  <html:li><html:strong>Response</html:strong>: <html:code>Data</html:code>, <html:code>InvAck</html:code></html:li></html:ul>
+<html:p>These are enumerated directly in the model's <html:code>MessageType</html:code>.</html:p>
+<html:div class="code-figure"><html:div class="code-filename">msi.m</html:div><html:pre><html:code class="language-lua">MessageType: enum {
+  GetS,           -- request for shared copy
+  GetM,           -- request for modified (exclusive) copy
+  PutS,           -- evict shared copy
+  PutM,           -- evict modified copy (w/ data)
+
+  FwdGetS,        -- forwarded GetS to owner
+  FwdGetM,        -- forwarded GetM to owner
+  Inv,            -- invalidation request
+
+  Data,           -- data response
+  InvAck,         -- invalidation acknowledgment
+  PutAck          -- put acknowledgment
+};</html:code></html:pre></html:div>
+</fr:mainmatter></fr:tree>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/3HOD/</fr:uri><fr:display-uri>3HOD</fr:display-uri><fr:route>/3HOD/</fr:route><fr:title text="MSI in Murphi">MSI in Murphi</fr:title></fr:frontmatter><fr:mainmatter><html:p>MESI is easier to reach through MSI, where there is less to get wrong and the races are already interesting enough.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The cache controller">The cache controller</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The starting point is the primer's MSI cache controller table.</html:p>
+<html:figure><html:img width="100%" src="/bafkrmifhoq7kszlwemrlvvy4yuuvuk6l6bjadkvsmzclbemz2tzxdt6bjm.png" />
+<html:figcaption>MSI cache controller. Rows are states, columns are events.</html:figcaption></html:figure>
+<html:p>Several table entries are left blank; those are resolved at runtime from the <html:code>AckCount</html:code>, which is why the per-processor record carries an <html:code>ack</html:code> field alongside the state.</html:p>
+<html:div class="code-figure"><html:div class="code-filename">msi.m</html:div><html:pre><html:code class="language-lua">ProcState:
+  Record
+    state: enum {
+      P_Invalid, P_Shared, P_Modified,   -- stable states
+      PT_IS_D,     -- sent GetS, waiting for Data
+      PT_IS_DI,    -- sent GetS, got Inv, waiting for Data then go to I
+      PT_IM_AD,    -- sent GetM (from I), waiting for Data and InvAcks
+      PT_SM_AD,    -- sent GetM (from S), waiting for Data and InvAcks
+      PT_IM_A,     -- got Data for GetM, waiting for remaining InvAcks
+      PT_MI_A,     -- sent PutM, waiting for PutAck
+      PT_SI_A,     -- sent PutS, waiting for PutAck
+      PT_II_A      -- waiting for PutAck, already invalidated
+    };
+    val: Value;
+    ack: AckCount;  -- tracks InvAck count
+  End;</html:code></html:pre></html:div>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+<html:code>load</html:code>, <html:code>store</html:code>, and <html:code>replacement</html:code> only move the protocol between stable states. To simulate the system it is therefore enough to implement the rules that <html:em>initiate</html:em> those transitions — evict from modified, load from invalid — and let the model checker drive the transient states from there.
+</html:div>
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The directory controller">The directory controller</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The directory side starts from the analogous table.</html:p>
+<html:figure><html:img width="100%" src="/bafkrmiadmfswkegttky27zg2gxvkwag3pt72ur7qam2z6vufr6xlvujqca.png" />
+<html:figcaption>MSI directory controller.</html:figcaption></html:figure>
+<html:p>This table is where the first real gap shows up. It gives the directory a single transient state, and the races below force a second one, <fr:tex display="inline"><![CDATA[M^D]]></fr:tex>.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Losing data to a PutM/Fwd-GetM race">Losing data to a PutM/Fwd-GetM race</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Consider the <html:code>PutM</html:code> rule that downgrades a cache from modified to invalid. The evicting cache must <html:strong>not</html:strong> drop the data when it sends <html:code>PutM</html:code>, because it may still have to service a forwarded request; it transitions to <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> and keeps the value. But nothing stops the <html:code>PutAck</html:code> from arriving first, taking it to <fr:tex display="inline"><![CDATA[I]]></fr:tex> before the <html:code>Fwd-GetM</html:code> shows up. The data is gone and the forwarded request has nobody to answer it.</html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Fix.</html:strong> Add the <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> state to the directory controller. While in <fr:tex display="inline"><![CDATA[M^D]]></fr:tex>, a <html:code>PutM</html:code> from a node that is not the current owner stalls until the data arrives. Leaving <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> for <fr:tex display="inline"><![CDATA[M]]></fr:tex> requires the new owner to send data back to the directory even on a three-hop transaction, so the directory learns that the forward actually completed. I have not found a cleaner way to close this race without the extra state.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Deadlocking two stores against a load">Deadlocking two stores against a load</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> fix introduces a deadlock of its own. Take two processors that store-miss and a third that load-misses. The second store wins at the directory: the first store gets data and moves <fr:tex display="inline"><![CDATA[IM^{AD} \to  IM^{A}]]></fr:tex>, then the second triggers a <html:code>Fwd-GetM</html:code> that takes ownership away from it.</html:p>
+<html:p>Meanwhile the load miss sits in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex>. When its <html:code>Inv</html:code> arrives, the table says to stall — and because <html:code>Inv</html:code> and <html:code>Fwd-GetM</html:code> share the forwarded channel, that stall blocks the <html:code>Fwd-GetM</html:code> behind it. The winning processor never receives the data, and nothing ever drains the channel.</html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Fix.</html:strong> Another transient state absent from the table: <fr:tex display="inline"><![CDATA[II^A]]></fr:tex>, meaning "was in <fr:tex display="inline"><![CDATA[IS^A]]></fr:tex>, got invalidated, now waiting on <html:code>PutAck</html:code> before settling in <fr:tex display="inline"><![CDATA[I]]></fr:tex>". The invalidation is processed rather than stalled, so the forwarded channel keeps moving.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Not clearing the owner too eagerly">Not clearing the owner too eagerly</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>One more correction to the table: when the home directory is in <fr:tex display="inline"><![CDATA[M]]></fr:tex> and receives a <html:code>GetS</html:code>, it must not clear the owner field as the figure directs. Once in <fr:tex display="inline"><![CDATA[S^D]]></fr:tex>, the directory can no longer tell whether an incoming <html:code>PutM</html:code> came from the owner (and should stall) or from a stale node. The owner is only cleared once the data has actually arrived.</html:p>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/QTSW/</fr:uri><fr:display-uri>QTSW</fr:display-uri><fr:route>/QTSW/</fr:route><fr:title text="MESI in Murphi">MESI in Murphi</fr:title></fr:frontmatter><fr:mainmatter><html:p>With those states in place the rest of MSI is mechanical, and MESI is a short step from it — modulo two design choices and two more races.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The cache controller">The cache controller</fr:title></fr:frontmatter><fr:mainmatter>
+<html:figure><html:img width="100%" src="/bafkrmia4fllqvr7nzhifqxwk5stk2kyje2tfokhddzfjkteyw4kbj6k25i.png" />
+<html:figcaption>MESI cache controller.</html:figcaption></html:figure>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Silent upgrades.</html:strong> If a cache in <fr:tex display="inline"><![CDATA[E]]></fr:tex> may upgrade to <fr:tex display="inline"><![CDATA[M]]></fr:tex> silently, the directory never learns the line went dirty, and the value it hands to the next <html:code>GetS</html:code> or <html:code>GetM</html:code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat <fr:tex display="inline"><![CDATA[E]]></fr:tex> exactly like <fr:tex display="inline"><![CDATA[M]]></fr:tex>, forwarding everything. Neither requires a writeback on <html:code>PutE</html:code>. I take the first, matching the table.</html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Signaling exclusivity.</html:strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <html:code>ExclusiveData</html:code> message: receiving it in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> lands the cache in <fr:tex display="inline"><![CDATA[E]]></fr:tex> rather than <fr:tex display="inline"><![CDATA[S]]></fr:tex>. It turns out to also be the key to the second race below.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+Once <html:code>PutE</html:code> or <html:code>PutM</html:code> has been sent, <fr:tex display="inline"><![CDATA[EI^A]]></fr:tex> and <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> are functionally identical. Both appear above for completeness, but transitioning from <fr:tex display="inline"><![CDATA[E]]></fr:tex> straight into <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> verifies the same.
+</html:div>
+
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The directory controller">The directory controller</fr:title></fr:frontmatter><fr:mainmatter>
+<html:figure><html:img width="100%" src="/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png" />
+<html:figcaption>MESI directory controller.</html:figcaption></html:figure>
+<html:p>Symmetrically, the directory gains an <fr:tex display="inline"><![CDATA[E^D]]></fr:tex> state, which for completeness is kept distinct from <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> but could be folded into it.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Forwards arriving before exclusive data">Forwards arriving before exclusive data</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The first processor issues <html:code>GetS</html:code> and waits in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex>, while the home directory has already moved to <fr:tex display="inline"><![CDATA[E]]></fr:tex> and sent it <html:code>ExclusiveData</html:code>. A second processor then issues <html:code>GetM</html:code>, and home's <html:code>Fwd-GetM</html:code> overtakes the data in flight.</html:p>
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Fix.</html:strong> Stall <html:code>Fwd-GetM</html:code> and <html:code>Fwd-GetS</html:code> in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> until the data lands. This is safe here because the data is on the response channel, which no stall can block.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Losing exclusive data to an invalidation">Losing exclusive data to an invalidation</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>The nastier version of the same race: the invalidation arrives before the forward. By the <fr:tex display="inline"><![CDATA[II^A]]></fr:tex> rule inherited from MSI, a <html:code>PutAck</html:code> in that state drops the line to <fr:tex display="inline"><![CDATA[I]]></fr:tex> — discarding data a forwarded request is about to ask for.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(60, 90, 180, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(60, 90, 180, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
+<html:ol><html:li><html:code>Proc_1</html:code> load-misses → <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex></html:li>
+  <html:li><html:code>Home</html:code> takes the first <html:code>GetS</html:code> from <html:code>Proc_1</html:code> → <fr:tex display="inline"><![CDATA[E]]></fr:tex>, sends <html:code>ExclusiveData</html:code></html:li>
+  <html:li><html:code>Proc_2</html:code> issues <html:code>GetM</html:code> → <fr:tex display="inline"><![CDATA[IM^{AD}]]></fr:tex></html:li>
+  <html:li><html:code>Home</html:code> sends <html:code>Inv</html:code> to <html:code>Proc_1</html:code></html:li>
+  <html:li><html:code>Home</html:code> forwards <html:code>Fwd-GetM</html:code> to <html:code>Proc_1</html:code></html:li>
+  <html:li><html:code>Proc_1</html:code> receives <html:code>Inv</html:code> → <fr:tex display="inline"><![CDATA[II^D]]></fr:tex></html:li>
+  <html:li><html:code>Proc_1</html:code> receives <html:code>ExclusiveData</html:code> → <fr:tex display="inline"><![CDATA[I]]></fr:tex>, and the data is lost</html:li></html:ol>
+</html:div>
+
+<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Fix.</html:strong> <html:code>ExclusiveData</html:code> pays for itself a second time. Because the message is distinguishable from ordinary <html:code>Data</html:code>, a cache receiving it in <fr:tex display="inline"><![CDATA[II^D]]></fr:tex> knows it was the first reader and transitions to <fr:tex display="inline"><![CDATA[E]]></fr:tex> instead of <fr:tex display="inline"><![CDATA[I]]></fr:tex> — from which the pending <html:code>Fwd-GetM</html:code> or <html:code>Fwd-GetS</html:code> is handled correctly.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The finished controllers">The finished controllers</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Folding all of the above in leaves these two state machines, which Murphi verifies exhaustively.</html:p>
+<html:figure><html:img width="100%" src="/bafkrmif36mc6riik263rmccsazkkvtb5la47ocbsbm664xrm323b3jyufm.png" />
+<html:figcaption>Final MESI cache controller.</html:figcaption></html:figure>
+<html:figure><html:img width="100%" src="/bafkrmifqg6owj5m5bnsuqphk73uuwqzybmwczbbwx432u5j3zju3fe52i4.png" />
+<html:figcaption>Final MESI directory controller.</html:figcaption></html:figure>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree></fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/4QZE/</fr:uri><fr:display-uri>4QZE</fr:display-uri><fr:route>/4QZE/</fr:route><fr:title text="The gradients we need for FlashAttention">The gradients we need for <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">FlashAttention</fr:link></fr:title></fr:frontmatter><fr:mainmatter><html:p>Everything downstream is chain rule; the only step with any content is differentiating through the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax</fr:link>. We take the gradients in dependency order, starting from <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> which arrives from the layer above.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {P} and d\mathbf {V} from \mathbf {O} = \mathbf {P}\mathbf {V}"><fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P}\mathbf {V}]]></fr:tex></fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Both fall straight out of the product rule for matrices:</html:p>
+<fr:tex display="block"><![CDATA[
+  d\mathbf {P} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T,
+  \qquad 
+  d\mathbf {V} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O}.
+]]></fr:tex>
+<html:p>The shapes are a useful sanity check. <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> has one entry per output, so it is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>; <fr:tex display="inline"><![CDATA[\mathbf {V}^T]]></fr:tex> is <fr:tex display="inline"><![CDATA[d \times  N]]></fr:tex>; their product is <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>, matching <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex>. Likewise <fr:tex display="inline"><![CDATA[\mathbf {P}^T d\mathbf {O}]]></fr:tex> is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>, matching <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex>.</html:p>
+<html:p>Componentwise, from <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _j \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>,</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+    d\mathbf {P}_{ij} &= \sum _{k} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk}, \\
+    d\mathbf {V}_{jk} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}} = \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} = \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
+  .\end {align*}
+]]></fr:tex>
+<html:p>That last line is worth noting already: <fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex> never needs <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> stored, only the ability to re-evaluate <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex>, and <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {S} through the softmax"><fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex> through the softmax</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Softmax acts row by row, so drop into the scalar case with <fr:tex display="inline"><![CDATA[\mathbf {s}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex> single rows. The <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax Jacobian</fr:link> is <fr:tex display="inline"><![CDATA[\partial  \mathbf {p}_i / \partial  \mathbf {s}_j = \mathbf {p}_i(\delta _{ij} - \mathbf {p}_j)]]></fr:tex>, giving</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+    d\mathbf {s}_j &= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\
+                  &= \sum _{i} d\mathbf {p}_i \cdot  \mathbf {p}_i (\delta _{ij} - \mathbf {p}_{j}) \\
+                  &= d\mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
+  .\end {align*}
+]]></fr:tex>
+<html:p>As a row vector this is <fr:tex display="inline"><![CDATA[d\mathbf {s} = \mathbf {p} \odot  (d\mathbf {p} - \mathbf {p} \cdot  d\mathbf {p})]]></fr:tex>, where the subtracted term is the <html:em>scalar</html:em> <fr:tex display="inline"><![CDATA[\mathbf {p} \cdot  d\mathbf {p}]]></fr:tex> broadcast across the row. Collecting those scalars into a column <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> with <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> recovers the matrix form</html:p>
+<fr:tex display="block"><![CDATA[d\mathbf {S} = \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D}).]]></fr:tex>
+<html:p><fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> is the piece that will cause trouble later: it is a dot product over an entire row of <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex>, which is exactly the thing we refuse to materialize.</html:p>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {Q} and d\mathbf {K} from \mathbf {S} = \mathbf {Q}\mathbf {K}^T"><fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {S} = \mathbf {Q}\mathbf {K}^T]]></fr:tex></fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>One more chain rule, and the sums run over opposite indices:</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+     d\mathbf {Q}_{i} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} = \sum _{j} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
+     d\mathbf {K}_{j} &= \sum _{i} d\mathbf {S}_{ij} \mathbf {Q}_{i} = \sum _{i} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {Q}_{i}
+  .\end {align*}
+]]></fr:tex>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Recomputing instead of storing">Recomputing instead of storing</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>Every gradient above is expressed through <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex>, both <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>. Materializing either one is exactly the quadratic memory cost the forward pass went to such lengths to avoid, so the backward pass has to be able to produce those entries on demand.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(0, 160, 175, 0.9);
+  border-radius: var(--radius);
+  background-color: rgba(0, 160, 175, 0.06);
+  "><html:span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</html:span> 
+Both are recoverable from the <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> tensors already resident in memory. The forward pass saved <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, so
+<fr:tex display="block"><![CDATA[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}},]]></fr:tex>
+and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> is just an inner product of two rows,
+<fr:tex display="block"><![CDATA[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i} \cdot  \mathbf {V}_j.]]></fr:tex>
+Neither ever requires an <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> intermediate.
+</html:div>
+
+<html:p>Substituting both into the previous section leaves <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> in terms of <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex>, <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, and <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> alone:</html:p>
+<fr:tex display="block"><![CDATA[
+\begin {align*}
+  d\mathbf {Q}_{i} &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
+  d\mathbf {K}_{j} &= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {Q}_{i}.
+.\end {align*}
+]]></fr:tex>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Getting \mathbf {D} for free">Getting <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> for free</fr:title></fr:frontmatter><fr:mainmatter>
+<html:p>One problem survives. <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> is a dot product over a full row, so computing it inside the streaming loop would mean a reduction over all <fr:tex display="inline"><![CDATA[j]]></fr:tex> before any tile of <fr:tex display="inline"><![CDATA[d\mathbf {Q}_i]]></fr:tex> could be finished. This is the same global dependency the online softmax was designed to break.</html:p>
+<html:p>The way out is that the row sum has already been computed once, in the forward pass. Expanding and pulling <fr:tex display="inline"><![CDATA[d\mathbf {O}_i]]></fr:tex> out of the sum:</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+  \mathbf {D}_i &= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
+  &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
+  &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_{j}\right ) \\
+  &=  d\mathbf {O}_{i} \cdot  \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \mathbf {V}_{j} \\
+  &= d\mathbf {O}_{i} \cdot  \mathbf {O}_{i}
+  .\end {align*}
+]]></fr:tex>
+<html:p>The inner sum is precisely the definition of <fr:tex display="inline"><![CDATA[\mathbf {O}_i]]></fr:tex>. So <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> is a single elementwise product of <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> summed along the head dimension — one <fr:tex display="inline"><![CDATA[O(Nd)]]></fr:tex> pass over tensors we already have, done once before the backward loop begins.</html:p>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
   <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>23</fr:day></fr:date><fr:uri>https://kellenkanarios.com/47Y4/</fr:uri><fr:display-uri>47Y4</fr:display-uri><fr:route>/47Y4/</fr:route><fr:title text="Idea Purgatory: Skills for Offline Goal-Conditioned RL"><fr:link href="/Z902/" title="Idea Purgatory" uri="https://kellenkanarios.com/Z902/" display-uri="Z902" type="local">Idea Purgatory</fr:link>: Skills for Offline Goal-Conditioned RL</fr:title></fr:frontmatter><fr:mainmatter>
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>23</fr:day></fr:date><fr:title text="Background">Background</fr:title></fr:frontmatter><fr:mainmatter>
   <html:p>This idea is a combination of a few relevant papers in <html:em>offline skill learning</html:em>. Namely, the problem of how to learn re-usable, temporally-extended objects purely from offline data.</html:p>
@@ -792,55 +1195,7 @@ Ideally, this would allow goal-dependent skills, where the goal is not the entir
 <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Get rid of weird threshold / turn into MPC-ish.</html:strong> Currently, when planning, we must tune the <html:code>value_threshold</html:code> for when we pass control to goal-conditioned policy. To get 89 percent on pointmaze we used -10. Instead of using a threshold, we could instead just treat the goal-conditioned policy as another skill. Furthermore, they could be seen as our primitive actions i.e. during planning we take the next state as the immediate next state instead of just jumping to goal (which would obv always be taken).</html:p></fr:mainmatter></fr:tree>
 </fr:mainmatter></fr:tree>
 </fr:mainmatter></fr:tree>
-  <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2024</fr:year><fr:month>12</fr:month><fr:day>28</fr:day></fr:date><fr:uri>https://kellenkanarios.com/0025/</fr:uri><fr:display-uri>0025</fr:display-uri><fr:route>/0025/</fr:route><fr:title text="Stack vs. Heap"><fr:link href="/NZBG/" title="Stack" uri="https://kellenkanarios.com/NZBG/" display-uri="NZBG" type="local">Stack</fr:link> vs. <fr:link href="/WLBG/" title="Heap" uri="https://kellenkanarios.com/WLBG/" display-uri="WLBG" type="local">Heap</fr:link></fr:title></fr:frontmatter><fr:mainmatter><html:p>I often hear this question come up amongst performance-driven developers, and for the longest time I could never get a straight answer as to why the stack was so much better? After a long foray into the inner workings of how memory allocation is actually done, I think I finally have an answer. I do not want to forget this, so I am doing a quick write up here.</html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2024</fr:year><fr:month>12</fr:month><fr:day>28</fr:day></fr:date><fr:title text="Why stack is faster.">Why stack is faster.</fr:title></fr:frontmatter><fr:mainmatter>
-This all comes down to what happens during each memory allocation. Prior to actually running the program, the operating system allocates some amount of memory for both the stack and the heap (I think around 2-4MB?). When you allocate memory on the stack i.e. <html:code>int x = 1;</html:code>
-<html:ul><html:li>Stack just increments stack pointer.</html:li>
-    <html:li>Writes value to new address pointed to by stack pointer.</html:li></html:ul>
-When you allocate memory on the heap i.e. <html:code>int *x = malloc(sizeof(int))</html:code>, we must instead choose how best to fulfill the request, which is a whole research direction in itself.
-<html:ul><html:li>One such implementation is the <fr:link href="https://en.wikipedia.org/wiki/Buddy_memory_allocation" type="external">buddy algorithm</fr:link></html:li></html:ul>
-However, <html:code>malloc</html:code> itself is not a system call and therefore is not terribly slow. A real issue occurs when we run out of pre-allocated heap memory. This requires <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">invoking a system call</fr:link> like <html:code>sbrk</html:code> to increment the size of the allocated memory for the heap.
-<html:ul><html:li>If no available pages, OS must evict and write to disk...</html:li>
-      <html:li>Formally, this is known as "heap growth".</html:li></html:ul>
-Generally, if you know how much memory you need it is good practice to just allocated all up front to minimize any potential system calls. With this, the performance difference is not too drastic <![CDATA[ :)]]>
-</fr:mainmatter></fr:tree>
-</fr:mainmatter></fr:tree>
-  <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:uri>https://kellenkanarios.com/HHZO/</fr:uri><fr:display-uri>HHZO</fr:display-uri><fr:route>/HHZO/</fr:route><fr:title text="Implementing Directory-based MESI in Murphi">Implementing Directory-based MESI in Murphi</fr:title></fr:frontmatter><fr:mainmatter><html:p><fr:link href="/CMAL/" title="Murphi" uri="https://kellenkanarios.com/CMAL/" display-uri="CMAL" type="local">Murphi</fr:link> is an explicit-state model checker: you describe a system as guarded transition rules, state the invariants, and it enumerates every reachable interleaving looking for a violation. That makes it a natural fit for <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">cache coherence</fr:link>, where the steady-state behavior is easy and the races are not. This post builds a <fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory-based</fr:link> <fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link> in Murphi, starting from MSI and adding state every time the checker finds a way to break it.</html:p><html:p>The state tables come from <fr:link href="https://pages.cs.wisc.edu/~markhill/papers/primer2020_2nd_edition.pdf" type="external">A Primer on Memory Consistency and Cache Coherence</fr:link>, which doubles as the source for these notes. The recurring lesson is that the published tables are not quite enough: every protocol below needs <fr:link href="/Z32G/" title="Directory protocols expose transient states because transactions span multiple hops" uri="https://kellenkanarios.com/Z32G/" display-uri="Z32G" type="local">transient states</fr:link> the tables leave implicit.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>17</fr:day></fr:date><fr:uri>https://kellenkanarios.com/CMAL/</fr:uri><fr:display-uri>CMAL</fr:display-uri><fr:route>/CMAL/</fr:route><fr:title text="Murphi">Murphi</fr:title></fr:frontmatter><fr:mainmatter><html:p>Syntactical things I need to remember from Murphi docs. Most things are straightforward, but there are a few things to note:</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>17</fr:day></fr:date><fr:title text="Declarations">Declarations</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>A <html:em>declaration</html:em> is a variable or a collection of variables that are used in the rules.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>17</fr:day></fr:date><fr:title text="Rules">Rules</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>A <html:em>rule</html:em> is a transition from one state to another</html:p><html:ul><html:li>Each rule can optionally have an initial condition required to be fired</html:li>
-    <html:li>We can easily define rules for all the processors or collection of <fr:tex display="inline"><![CDATA[n]]></fr:tex> things with <html:code>ruleset</html:code>.</html:li>
-    <html:li>For our use case, rules are used to define</html:li>
-    <html:ol><html:li>Controller actions</html:li>
-      <html:li>Receiving a request from the network</html:li>
-      <html:li>Retrying stalled requests</html:li></html:ol></html:ul></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>17</fr:day></fr:date><fr:title text="Startstates">Startstates</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>A <html:em>startstate</html:em> is the intial configuration for all our declarations.</html:p><html:ul><html:li>Must assign a value to every global variable</html:li></html:ul></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>17</fr:day></fr:date><fr:title text="Invariants">Invariants</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>An <html:em>invariant</html:em> is something that Murphi checks to ensure is true at all possible configurations of the system.</html:p></fr:mainmatter></fr:tree><html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Overview straight from the docs.</html:strong> Repeat forever:
-</html:p><html:ol><html:li>Find all rules whose conditions are true in the current state.
-       (i.e. conditional expressions are true, given the current values
-       of the global variables).</html:li>
-    <html:li>Choose one arbitrarily and execute the action, yielding a new state.</html:li></html:ol></fr:mainmatter></fr:tree>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>24</fr:day></fr:date><fr:title text="Why three virtual channels">Why three virtual channels</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>The valid-invalid protocol shipped with the Murphi docs uses two <fr:link href="/HUDE/" title="Virtual Channels" uri="https://kellenkanarios.com/HUDE/" display-uri="HUDE" type="local">Virtual Channels</fr:link>. A directory protocol needs three: one each for requests, forwarded requests, and responses. The reason is that <fr:link href="/DWV1/" title="Routing deadlock" uri="https://kellenkanarios.com/DWV1/" display-uri="DWV1" type="local">deadlock is a cycle in the dependency graph</fr:link>, so it suffices to exhibit one.</html:p>
-<html:ul><html:li>A node issues <html:code>GetS</html:code> to the directory, giving an edge <fr:tex display="inline"><![CDATA[N_1 \to  D]]></fr:tex>.</html:li>
-  <html:li>The directory forwards <html:code>Fwd-GetS</html:code> to the owner, extending the chain to <fr:tex display="inline"><![CDATA[N_1 \to  D \to  N_2]]></fr:tex>.</html:li>
-  <html:li>The owner sends data back to the requester, closing the cycle <fr:tex display="inline"><![CDATA[N_1 \to  D \to  N_2 \to  N_1]]></fr:tex>.</html:li></html:ul>
-<html:p>The data closing that cycle would travel on the same channel as the requests waiting behind it, so a full request buffer wedges the response that would drain it. Partitioning by message class breaks the cycle:</html:p>
-<html:ul><html:li><html:strong>Request</html:strong>: <html:code>GetS</html:code>, <html:code>GetM</html:code>, <html:code>PutS</html:code>, <html:code>PutM</html:code></html:li>
-  <html:li><html:strong>Forwarded</html:strong>: <html:code>Fwd-GetS</html:code>, <html:code>Fwd-GetM</html:code>, <html:code>Inv</html:code>, <html:code>PutAck</html:code></html:li>
-  <html:li><html:strong>Response</html:strong>: <html:code>Data</html:code>, <html:code>InvAck</html:code></html:li></html:ul>
-<html:p>These are enumerated directly in the model's <html:code>MessageType</html:code>.</html:p>
-<html:div class="code-figure"><html:div class="code-filename">msi.m</html:div><html:pre><html:code class="language-lua">MessageType: enum {
-  GetS,           -- request for shared copy
-  GetM,           -- request for modified (exclusive) copy
-  PutS,           -- evict shared copy
-  PutM,           -- evict modified copy (w/ data)
-
-  FwdGetS,        -- forwarded GetS to owner
-  FwdGetM,        -- forwarded GetM to owner
-  Inv,            -- invalidation request
-
-  Data,           -- data response
-  InvAck,         -- invalidation acknowledgment
-  PutAck          -- put acknowledgment
-};</html:code></html:pre></html:div>
-</fr:mainmatter></fr:tree>
-<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/3HOD/</fr:uri><fr:display-uri>3HOD</fr:display-uri><fr:route>/3HOD/</fr:route><fr:title text="MSI in Murphi">MSI in Murphi</fr:title></fr:frontmatter><fr:mainmatter><html:p>MESI is easier to reach through MSI, where there is less to get wrong and the races are already interesting enough.</html:p>
+  <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/3HOD/</fr:uri><fr:display-uri>3HOD</fr:display-uri><fr:route>/3HOD/</fr:route><fr:title text="MSI in Murphi">MSI in Murphi</fr:title></fr:frontmatter><fr:mainmatter><html:p>MESI is easier to reach through MSI, where there is less to get wrong and the races are already interesting enough.</html:p>
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The cache controller">The cache controller</fr:title></fr:frontmatter><fr:mainmatter>
 <html:p>The starting point is the primer's MSI cache controller table.</html:p>
 <html:figure><html:img width="100%" src="/bafkrmifhoq7kszlwemrlvvy4yuuvuk6l6bjadkvsmzclbemz2tzxdt6bjm.png" />
@@ -896,66 +1251,20 @@ Generally, if you know how much memory you need it is good practice to just allo
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Not clearing the owner too eagerly">Not clearing the owner too eagerly</fr:title></fr:frontmatter><fr:mainmatter>
 <html:p>One more correction to the table: when the home directory is in <fr:tex display="inline"><![CDATA[M]]></fr:tex> and receives a <html:code>GetS</html:code>, it must not clear the owner field as the figure directs. Once in <fr:tex display="inline"><![CDATA[S^D]]></fr:tex>, the directory can no longer tell whether an incoming <html:code>PutM</html:code> came from the owner (and should stall) or from a stale node. The owner is only cleared once the data has actually arrived.</html:p>
 </fr:mainmatter></fr:tree>
-</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/QTSW/</fr:uri><fr:display-uri>QTSW</fr:display-uri><fr:route>/QTSW/</fr:route><fr:title text="MESI in Murphi">MESI in Murphi</fr:title></fr:frontmatter><fr:mainmatter><html:p>With those states in place the rest of MSI is mechanical, and MESI is a short step from it — modulo two design choices and two more races.</html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The cache controller">The cache controller</fr:title></fr:frontmatter><fr:mainmatter>
-<html:figure><html:img width="100%" src="/bafkrmia4fllqvr7nzhifqxwk5stk2kyje2tfokhddzfjkteyw4kbj6k25i.png" />
-<html:figcaption>MESI cache controller.</html:figcaption></html:figure>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Silent upgrades.</html:strong> If a cache in <fr:tex display="inline"><![CDATA[E]]></fr:tex> may upgrade to <fr:tex display="inline"><![CDATA[M]]></fr:tex> silently, the directory never learns the line went dirty, and the value it hands to the next <html:code>GetS</html:code> or <html:code>GetM</html:code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat <fr:tex display="inline"><![CDATA[E]]></fr:tex> exactly like <fr:tex display="inline"><![CDATA[M]]></fr:tex>, forwarding everything. Neither requires a writeback on <html:code>PutE</html:code>. I take the first, matching the table.</html:p>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Signaling exclusivity.</html:strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <html:code>ExclusiveData</html:code> message: receiving it in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> lands the cache in <fr:tex display="inline"><![CDATA[E]]></fr:tex> rather than <fr:tex display="inline"><![CDATA[S]]></fr:tex>. It turns out to also be the key to the second race below.</html:p>
-
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
-Once <html:code>PutE</html:code> or <html:code>PutM</html:code> has been sent, <fr:tex display="inline"><![CDATA[EI^A]]></fr:tex> and <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> are functionally identical. Both appear above for completeness, but transitioning from <fr:tex display="inline"><![CDATA[E]]></fr:tex> straight into <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> verifies the same.
-</html:div>
-
 </fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The directory controller">The directory controller</fr:title></fr:frontmatter><fr:mainmatter>
-<html:figure><html:img width="100%" src="/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png" />
-<html:figcaption>MESI directory controller.</html:figcaption></html:figure>
-<html:p>Symmetrically, the directory gains an <fr:tex display="inline"><![CDATA[E^D]]></fr:tex> state, which for completeness is kept distinct from <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> but could be folded into it.</html:p>
+  <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2024</fr:year><fr:month>12</fr:month><fr:day>28</fr:day></fr:date><fr:uri>https://kellenkanarios.com/0025/</fr:uri><fr:display-uri>0025</fr:display-uri><fr:route>/0025/</fr:route><fr:title text="Stack vs. Heap"><fr:link href="/NZBG/" title="Stack" uri="https://kellenkanarios.com/NZBG/" display-uri="NZBG" type="local">Stack</fr:link> vs. <fr:link href="/WLBG/" title="Heap" uri="https://kellenkanarios.com/WLBG/" display-uri="WLBG" type="local">Heap</fr:link></fr:title></fr:frontmatter><fr:mainmatter><html:p>I often hear this question come up amongst performance-driven developers, and for the longest time I could never get a straight answer as to why the stack was so much better? After a long foray into the inner workings of how memory allocation is actually done, I think I finally have an answer. I do not want to forget this, so I am doing a quick write up here.</html:p>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2024</fr:year><fr:month>12</fr:month><fr:day>28</fr:day></fr:date><fr:title text="Why stack is faster.">Why stack is faster.</fr:title></fr:frontmatter><fr:mainmatter>
+This all comes down to what happens during each memory allocation. Prior to actually running the program, the operating system allocates some amount of memory for both the stack and the heap (I think around 2-4MB?). When you allocate memory on the stack i.e. <html:code>int x = 1;</html:code>
+<html:ul><html:li>Stack just increments stack pointer.</html:li>
+    <html:li>Writes value to new address pointed to by stack pointer.</html:li></html:ul>
+When you allocate memory on the heap i.e. <html:code>int *x = malloc(sizeof(int))</html:code>, we must instead choose how best to fulfill the request, which is a whole research direction in itself.
+<html:ul><html:li>One such implementation is the <fr:link href="https://en.wikipedia.org/wiki/Buddy_memory_allocation" type="external">buddy algorithm</fr:link></html:li></html:ul>
+However, <html:code>malloc</html:code> itself is not a system call and therefore is not terribly slow. A real issue occurs when we run out of pre-allocated heap memory. This requires <fr:link href="/A5S6/" title="Syscall mechanism" uri="https://kellenkanarios.com/A5S6/" display-uri="A5S6" type="local">invoking a system call</fr:link> like <html:code>sbrk</html:code> to increment the size of the allocated memory for the heap.
+<html:ul><html:li>If no available pages, OS must evict and write to disk...</html:li>
+      <html:li>Formally, this is known as "heap growth".</html:li></html:ul>
+Generally, if you know how much memory you need it is good practice to just allocated all up front to minimize any potential system calls. With this, the performance difference is not too drastic <![CDATA[ :)]]>
 </fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Forwards arriving before exclusive data">Forwards arriving before exclusive data</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>The first processor issues <html:code>GetS</html:code> and waits in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex>, while the home directory has already moved to <fr:tex display="inline"><![CDATA[E]]></fr:tex> and sent it <html:code>ExclusiveData</html:code>. A second processor then issues <html:code>GetM</html:code>, and home's <html:code>Fwd-GetM</html:code> overtakes the data in flight.</html:p>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Fix.</html:strong> Stall <html:code>Fwd-GetM</html:code> and <html:code>Fwd-GetS</html:code> in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> until the data lands. This is safe here because the data is on the response channel, which no stall can block.</html:p>
 </fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Losing exclusive data to an invalidation">Losing exclusive data to an invalidation</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>The nastier version of the same race: the invalidation arrives before the forward. By the <fr:tex display="inline"><![CDATA[II^A]]></fr:tex> rule inherited from MSI, a <html:code>PutAck</html:code> in that state drops the line to <fr:tex display="inline"><![CDATA[I]]></fr:tex> — discarding data a forwarded request is about to ask for.</html:p>
-
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(60, 90, 180, 0.8);
-  border-radius: var(--radius);
-  background-color: rgba(60, 90, 180, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
-<html:ol><html:li><html:code>Proc_1</html:code> load-misses → <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex></html:li>
-  <html:li><html:code>Home</html:code> takes the first <html:code>GetS</html:code> from <html:code>Proc_1</html:code> → <fr:tex display="inline"><![CDATA[E]]></fr:tex>, sends <html:code>ExclusiveData</html:code></html:li>
-  <html:li><html:code>Proc_2</html:code> issues <html:code>GetM</html:code> → <fr:tex display="inline"><![CDATA[IM^{AD}]]></fr:tex></html:li>
-  <html:li><html:code>Home</html:code> sends <html:code>Inv</html:code> to <html:code>Proc_1</html:code></html:li>
-  <html:li><html:code>Home</html:code> forwards <html:code>Fwd-GetM</html:code> to <html:code>Proc_1</html:code></html:li>
-  <html:li><html:code>Proc_1</html:code> receives <html:code>Inv</html:code> → <fr:tex display="inline"><![CDATA[II^D]]></fr:tex></html:li>
-  <html:li><html:code>Proc_1</html:code> receives <html:code>ExclusiveData</html:code> → <fr:tex display="inline"><![CDATA[I]]></fr:tex>, and the data is lost</html:li></html:ol>
-</html:div>
-
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Fix.</html:strong> <html:code>ExclusiveData</html:code> pays for itself a second time. Because the message is distinguishable from ordinary <html:code>Data</html:code>, a cache receiving it in <fr:tex display="inline"><![CDATA[II^D]]></fr:tex> knows it was the first reader and transitions to <fr:tex display="inline"><![CDATA[E]]></fr:tex> instead of <fr:tex display="inline"><![CDATA[I]]></fr:tex> — from which the pending <html:code>Fwd-GetM</html:code> or <html:code>Fwd-GetS</html:code> is handled correctly.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The finished controllers">The finished controllers</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Folding all of the above in leaves these two state machines, which Murphi verifies exhaustively.</html:p>
-<html:figure><html:img width="100%" src="/bafkrmif36mc6riik263rmccsazkkvtb5la47ocbsbm664xrm323b3jyufm.png" />
-<html:figcaption>Final MESI cache controller.</html:figcaption></html:figure>
-<html:figure><html:img width="100%" src="/bafkrmifqg6owj5m5bnsuqphk73uuwqzybmwczbbwx432u5j3zju3fe52i4.png" />
-<html:figcaption>Final MESI directory controller.</html:figcaption></html:figure>
-</fr:mainmatter></fr:tree>
-</fr:mainmatter></fr:tree></fr:mainmatter></fr:tree>
   <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>25</fr:day></fr:date><fr:uri>https://kellenkanarios.com/R0PM/</fr:uri><fr:display-uri>R0PM</fr:display-uri><fr:route>/R0PM/</fr:route><fr:title text="Flash Attention (v1)">Flash Attention (v1)</fr:title></fr:frontmatter><fr:mainmatter><html:p>This will be a brief tour through all the fundamentals needed to understand the first instantiation of <html:em>FlashAttention</html:em> as introduced in <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness</fr:link>.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:uri>https://kellenkanarios.com/PI7N/</fr:uri><fr:display-uri>PI7N</fr:display-uri><fr:route>/PI7N/</fr:route><fr:title text="Online Softmax">Online Softmax</fr:title></fr:frontmatter><fr:mainmatter><html:p>This covers the math behind the online softmax algorithm required by <fr:link href="/R0PM/" title="Flash Attention (v1)" uri="https://kellenkanarios.com/R0PM/" display-uri="R0PM" type="local">Flash Attention (v1)</fr:link>.</html:p>
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>20</fr:day></fr:date><fr:title text="Safe softmax">Safe softmax</fr:title></fr:frontmatter><fr:mainmatter>
 <html:p>The first thing we must consider is numerical precision. Namely, the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">original softmax</fr:link> operation is given by</html:p>
@@ -1223,315 +1532,6 @@ Neither ever requires an <fr:tex display="inline"><![CDATA[N \times  N]]></fr:te
 
     <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
   </html:div>
-</fr:mainmatter></fr:tree>
-  <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:uri>https://kellenkanarios.com/OGCRZ/</fr:uri><fr:display-uri>OGCRZ</fr:display-uri><fr:route>/OGCRZ/</fr:route><fr:title text="Flash Attention (Bwd)">Flash Attention (Bwd)</fr:title></fr:frontmatter><fr:mainmatter><html:p>The forward pass of <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">flash attention</fr:link> avoids materializing the <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> attention matrix by streaming an online softmax. The backward pass has to pull the same trick twice over, because the naive gradient computation wants <html:em>two</html:em> <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> matrices — <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex>. Getting there means first writing down every gradient we need, then finding a way to recompute rather than store each one.</html:p>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(70, 100, 150, 0.75);
-  border-radius: var(--radius);
-  background-color: rgba(70, 100, 150, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</html:span> 
-Following the notation in the <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">original paper</fr:link>,
-<fr:tex display="block"><![CDATA[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V},]]></fr:tex>
-where <fr:tex display="inline"><![CDATA[\mathbf {Q}, \mathbf {K}, \mathbf {V}, \mathbf {O}]]></fr:tex> are <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {S}, \mathbf {P}]]></fr:tex> are <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>. For a scalar loss <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex> we abbreviate the gradient with respect to any matrix <fr:tex display="inline"><![CDATA[\mathbf {X}]]></fr:tex> as
-<fr:tex display="block"><![CDATA[d\mathbf {X} = \frac {\partial  \phi }{\partial  \mathbf {X}},]]></fr:tex>
-and write <fr:tex display="inline"><![CDATA[\mathbf {L}_i]]></fr:tex> for the softmax denominator of row <fr:tex display="inline"><![CDATA[i]]></fr:tex> saved by the forward pass, so that <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij} = \exp (\mathbf {Q}_i \cdot  \mathbf {K}_j) / \mathbf {L}_i]]></fr:tex>.
-</html:div>
-<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/4QZE/</fr:uri><fr:display-uri>4QZE</fr:display-uri><fr:route>/4QZE/</fr:route><fr:title text="The gradients we need for FlashAttention">The gradients we need for <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">FlashAttention</fr:link></fr:title></fr:frontmatter><fr:mainmatter><html:p>Everything downstream is chain rule; the only step with any content is differentiating through the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax</fr:link>. We take the gradients in dependency order, starting from <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> which arrives from the layer above.</html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {P} and d\mathbf {V} from \mathbf {O} = \mathbf {P}\mathbf {V}"><fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P}\mathbf {V}]]></fr:tex></fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Both fall straight out of the product rule for matrices:</html:p>
-<fr:tex display="block"><![CDATA[
-  d\mathbf {P} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T,
-  \qquad 
-  d\mathbf {V} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O}.
-]]></fr:tex>
-<html:p>The shapes are a useful sanity check. <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> has one entry per output, so it is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>; <fr:tex display="inline"><![CDATA[\mathbf {V}^T]]></fr:tex> is <fr:tex display="inline"><![CDATA[d \times  N]]></fr:tex>; their product is <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>, matching <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex>. Likewise <fr:tex display="inline"><![CDATA[\mathbf {P}^T d\mathbf {O}]]></fr:tex> is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>, matching <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex>.</html:p>
-<html:p>Componentwise, from <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _j \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>,</html:p>
-<fr:tex display="block"><![CDATA[
-  \begin {align*}
-    d\mathbf {P}_{ij} &= \sum _{k} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk}, \\
-    d\mathbf {V}_{jk} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}} = \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} = \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
-  .\end {align*}
-]]></fr:tex>
-<html:p>That last line is worth noting already: <fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex> never needs <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> stored, only the ability to re-evaluate <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex>, and <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {S} through the softmax"><fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex> through the softmax</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Softmax acts row by row, so drop into the scalar case with <fr:tex display="inline"><![CDATA[\mathbf {s}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex> single rows. The <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax Jacobian</fr:link> is <fr:tex display="inline"><![CDATA[\partial  \mathbf {p}_i / \partial  \mathbf {s}_j = \mathbf {p}_i(\delta _{ij} - \mathbf {p}_j)]]></fr:tex>, giving</html:p>
-<fr:tex display="block"><![CDATA[
-  \begin {align*}
-    d\mathbf {s}_j &= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\
-                  &= \sum _{i} d\mathbf {p}_i \cdot  \mathbf {p}_i (\delta _{ij} - \mathbf {p}_{j}) \\
-                  &= d\mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
-  .\end {align*}
-]]></fr:tex>
-<html:p>As a row vector this is <fr:tex display="inline"><![CDATA[d\mathbf {s} = \mathbf {p} \odot  (d\mathbf {p} - \mathbf {p} \cdot  d\mathbf {p})]]></fr:tex>, where the subtracted term is the <html:em>scalar</html:em> <fr:tex display="inline"><![CDATA[\mathbf {p} \cdot  d\mathbf {p}]]></fr:tex> broadcast across the row. Collecting those scalars into a column <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> with <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> recovers the matrix form</html:p>
-<fr:tex display="block"><![CDATA[d\mathbf {S} = \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D}).]]></fr:tex>
-<html:p><fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> is the piece that will cause trouble later: it is a dot product over an entire row of <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex>, which is exactly the thing we refuse to materialize.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {Q} and d\mathbf {K} from \mathbf {S} = \mathbf {Q}\mathbf {K}^T"><fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {S} = \mathbf {Q}\mathbf {K}^T]]></fr:tex></fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>One more chain rule, and the sums run over opposite indices:</html:p>
-<fr:tex display="block"><![CDATA[
-  \begin {align*}
-     d\mathbf {Q}_{i} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} = \sum _{j} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
-     d\mathbf {K}_{j} &= \sum _{i} d\mathbf {S}_{ij} \mathbf {Q}_{i} = \sum _{i} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {Q}_{i}
-  .\end {align*}
-]]></fr:tex>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Recomputing instead of storing">Recomputing instead of storing</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Every gradient above is expressed through <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex>, both <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>. Materializing either one is exactly the quadratic memory cost the forward pass went to such lengths to avoid, so the backward pass has to be able to produce those entries on demand.</html:p>
-
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(0, 160, 175, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(0, 160, 175, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</html:span> 
-Both are recoverable from the <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> tensors already resident in memory. The forward pass saved <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, so
-<fr:tex display="block"><![CDATA[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}},]]></fr:tex>
-and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> is just an inner product of two rows,
-<fr:tex display="block"><![CDATA[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i} \cdot  \mathbf {V}_j.]]></fr:tex>
-Neither ever requires an <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> intermediate.
-</html:div>
-
-<html:p>Substituting both into the previous section leaves <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> in terms of <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex>, <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, and <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> alone:</html:p>
-<fr:tex display="block"><![CDATA[
-\begin {align*}
-  d\mathbf {Q}_{i} &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
-  d\mathbf {K}_{j} &= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {Q}_{i}.
-.\end {align*}
-]]></fr:tex>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Getting \mathbf {D} for free">Getting <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> for free</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>One problem survives. <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> is a dot product over a full row, so computing it inside the streaming loop would mean a reduction over all <fr:tex display="inline"><![CDATA[j]]></fr:tex> before any tile of <fr:tex display="inline"><![CDATA[d\mathbf {Q}_i]]></fr:tex> could be finished. This is the same global dependency the online softmax was designed to break.</html:p>
-<html:p>The way out is that the row sum has already been computed once, in the forward pass. Expanding and pulling <fr:tex display="inline"><![CDATA[d\mathbf {O}_i]]></fr:tex> out of the sum:</html:p>
-<fr:tex display="block"><![CDATA[
-  \begin {align*}
-  \mathbf {D}_i &= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
-  &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
-  &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_{j}\right ) \\
-  &=  d\mathbf {O}_{i} \cdot  \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \mathbf {V}_{j} \\
-  &= d\mathbf {O}_{i} \cdot  \mathbf {O}_{i}
-  .\end {align*}
-]]></fr:tex>
-<html:p>The inner sum is precisely the definition of <fr:tex display="inline"><![CDATA[\mathbf {O}_i]]></fr:tex>. So <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> is a single elementwise product of <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> summed along the head dimension — one <fr:tex display="inline"><![CDATA[O(Nd)]]></fr:tex> pass over tensors we already have, done once before the backward loop begins.</html:p>
-</fr:mainmatter></fr:tree>
-</fr:mainmatter></fr:tree>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>27</fr:day></fr:date><fr:title text="Summary">Summary</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Forward pass.</html:strong> Store <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> and the softmax denominators <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, both <fr:tex display="inline"><![CDATA[O(Nd)]]></fr:tex>.</html:p>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Between the passes.</html:strong> Receive <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> from the layer above (automatic in <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link>), then precompute <fr:tex display="inline"><![CDATA[\mathbf {D}_i = d\mathbf {O}_i \cdot  \mathbf {O}_i]]></fr:tex> in <fr:tex display="inline"><![CDATA[O(N)]]></fr:tex> memory.</html:p>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Backward pass.</html:strong> Stream over tiles, recomputing <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {Q}, \mathbf {K}, \mathbf {L}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex> from <fr:tex display="inline"><![CDATA[d\mathbf {O}, \mathbf {V}]]></fr:tex> as needed:</html:p>
-<html:ol><html:li><fr:tex display="inline"><![CDATA[d\mathbf {V}_j = \sum _i \mathbf {P}_{ij} d\mathbf {O}_i]]></fr:tex>, accumulated over query tiles.</html:li>
-  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {Q}_i = \sum _j \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {K}_j]]></fr:tex>, accumulated over key tiles.</html:li>
-  <html:li><fr:tex display="inline"><![CDATA[d\mathbf {K}_j = \sum _i \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {Q}_i]]></fr:tex>, accumulated over query tiles.</html:li></html:ol>
-<html:p>Each accumulator is <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> per row or column, so the whole backward pass stays linear in <fr:tex display="inline"><![CDATA[N]]></fr:tex>.</html:p>
-</fr:mainmatter></fr:tree>
-</fr:mainmatter></fr:tree>
-  <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/4QZE/</fr:uri><fr:display-uri>4QZE</fr:display-uri><fr:route>/4QZE/</fr:route><fr:title text="The gradients we need for FlashAttention">The gradients we need for <fr:link href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" uri="https://kellenkanarios.com/daoFlashAttentionFastMemoryEfficient2022/" display-uri="daoFlashAttentionFastMemoryEfficient2022" type="local">FlashAttention</fr:link></fr:title></fr:frontmatter><fr:mainmatter><html:p>Everything downstream is chain rule; the only step with any content is differentiating through the <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax</fr:link>. We take the gradients in dependency order, starting from <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> which arrives from the layer above.</html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {P} and d\mathbf {V} from \mathbf {O} = \mathbf {P}\mathbf {V}"><fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {O} = \mathbf {P}\mathbf {V}]]></fr:tex></fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Both fall straight out of the product rule for matrices:</html:p>
-<fr:tex display="block"><![CDATA[
-  d\mathbf {P} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {P}} = d\mathbf {O} \mathbf {V}^T,
-  \qquad 
-  d\mathbf {V} = \frac {\partial  \phi }{\partial  \mathbf {O}} \frac {\partial  \mathbf {O}}{\partial  \mathbf {V}} = \mathbf {P}^T d\mathbf {O}.
-]]></fr:tex>
-<html:p>The shapes are a useful sanity check. <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> has one entry per output, so it is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>; <fr:tex display="inline"><![CDATA[\mathbf {V}^T]]></fr:tex> is <fr:tex display="inline"><![CDATA[d \times  N]]></fr:tex>; their product is <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>, matching <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex>. Likewise <fr:tex display="inline"><![CDATA[\mathbf {P}^T d\mathbf {O}]]></fr:tex> is <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex>, matching <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex>.</html:p>
-<html:p>Componentwise, from <fr:tex display="inline"><![CDATA[\mathbf {O}_{ik} = \sum _j \mathbf {P}_{ij} \mathbf {V}_{jk}]]></fr:tex>,</html:p>
-<fr:tex display="block"><![CDATA[
-  \begin {align*}
-    d\mathbf {P}_{ij} &= \sum _{k} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {P}_{ij}} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk}, \\
-    d\mathbf {V}_{jk} &= \sum _{i} \frac {\partial  \phi }{\partial  \mathbf {O}_{ik}} \cdot  \frac {\partial  \mathbf {O}_{ik}}{\partial  \mathbf {V}_{jk}} = \sum _{i} d\mathbf {O}_{ik} \mathbf {P}_{ij} = \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {O}_{ik}
-  .\end {align*}
-]]></fr:tex>
-<html:p>That last line is worth noting already: <fr:tex display="inline"><![CDATA[d\mathbf {V}]]></fr:tex> never needs <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex> stored, only the ability to re-evaluate <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex>, and <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {S} through the softmax"><fr:tex display="inline"><![CDATA[d\mathbf {S}]]></fr:tex> through the softmax</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Softmax acts row by row, so drop into the scalar case with <fr:tex display="inline"><![CDATA[\mathbf {s}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {p}]]></fr:tex> single rows. The <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax Jacobian</fr:link> is <fr:tex display="inline"><![CDATA[\partial  \mathbf {p}_i / \partial  \mathbf {s}_j = \mathbf {p}_i(\delta _{ij} - \mathbf {p}_j)]]></fr:tex>, giving</html:p>
-<fr:tex display="block"><![CDATA[
-  \begin {align*}
-    d\mathbf {s}_j &= \sum _{i} d\mathbf {p}_i \cdot  \frac {\partial  \mathbf {p}_i}{\partial  \mathbf {s}_j} \\
-                  &= \sum _{i} d\mathbf {p}_i \cdot  \mathbf {p}_i (\delta _{ij} - \mathbf {p}_{j}) \\
-                  &= d\mathbf {p}_{j} \mathbf {p}_{j} - \mathbf {p}_{j}\sum _{i} d\mathbf {p}_{i} \mathbf {p}_{i}
-  .\end {align*}
-]]></fr:tex>
-<html:p>As a row vector this is <fr:tex display="inline"><![CDATA[d\mathbf {s} = \mathbf {p} \odot  (d\mathbf {p} - \mathbf {p} \cdot  d\mathbf {p})]]></fr:tex>, where the subtracted term is the <html:em>scalar</html:em> <fr:tex display="inline"><![CDATA[\mathbf {p} \cdot  d\mathbf {p}]]></fr:tex> broadcast across the row. Collecting those scalars into a column <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> with <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> recovers the matrix form</html:p>
-<fr:tex display="block"><![CDATA[d\mathbf {S} = \mathbf {P} \odot  (d\mathbf {P} - \mathbf {D}).]]></fr:tex>
-<html:p><fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> is the piece that will cause trouble later: it is a dot product over an entire row of <fr:tex display="inline"><![CDATA[\mathbf {P}]]></fr:tex>, which is exactly the thing we refuse to materialize.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="d\mathbf {Q} and d\mathbf {K} from \mathbf {S} = \mathbf {Q}\mathbf {K}^T"><fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> from <fr:tex display="inline"><![CDATA[\mathbf {S} = \mathbf {Q}\mathbf {K}^T]]></fr:tex></fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>One more chain rule, and the sums run over opposite indices:</html:p>
-<fr:tex display="block"><![CDATA[
-  \begin {align*}
-     d\mathbf {Q}_{i} &= \sum _{j} d\mathbf {S}_{ij} \mathbf {K}_{j} = \sum _{j} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
-     d\mathbf {K}_{j} &= \sum _{i} d\mathbf {S}_{ij} \mathbf {Q}_{i} = \sum _{i} \mathbf {P}_{ij} \left (d\mathbf {P}_{ij} - \mathbf {D}_i\right ) \mathbf {Q}_{i}
-  .\end {align*}
-]]></fr:tex>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Recomputing instead of storing">Recomputing instead of storing</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Every gradient above is expressed through <fr:tex display="inline"><![CDATA[\mathbf {P}_{ij}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {P}_{ij}]]></fr:tex>, both <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex>. Materializing either one is exactly the quadratic memory cost the forward pass went to such lengths to avoid, so the backward pass has to be able to produce those entries on demand.</html:p>
-
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(0, 160, 175, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(0, 160, 175, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</html:span> 
-Both are recoverable from the <fr:tex display="inline"><![CDATA[N \times  d]]></fr:tex> tensors already resident in memory. The forward pass saved <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, so
-<fr:tex display="block"><![CDATA[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}},]]></fr:tex>
-and <fr:tex display="inline"><![CDATA[d\mathbf {P}]]></fr:tex> is just an inner product of two rows,
-<fr:tex display="block"><![CDATA[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i} \cdot  \mathbf {V}_j.]]></fr:tex>
-Neither ever requires an <fr:tex display="inline"><![CDATA[N \times  N]]></fr:tex> intermediate.
-</html:div>
-
-<html:p>Substituting both into the previous section leaves <fr:tex display="inline"><![CDATA[d\mathbf {Q}]]></fr:tex> and <fr:tex display="inline"><![CDATA[d\mathbf {K}]]></fr:tex> in terms of <fr:tex display="inline"><![CDATA[\mathbf {Q}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {K}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {V}]]></fr:tex>, <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex>, <fr:tex display="inline"><![CDATA[\mathbf {L}]]></fr:tex>, and <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> alone:</html:p>
-<fr:tex display="block"><![CDATA[
-\begin {align*}
-  d\mathbf {Q}_{i} &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {K}_{j}, \\
-  d\mathbf {K}_{j} &= \sum _{i} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_j - \mathbf {D}_i\right ) \mathbf {Q}_{i}.
-.\end {align*}
-]]></fr:tex>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Getting \mathbf {D} for free">Getting <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> for free</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>One problem survives. <fr:tex display="inline"><![CDATA[\mathbf {D}_i = \mathbf {P}_i \cdot  d\mathbf {P}_i]]></fr:tex> is a dot product over a full row, so computing it inside the streaming loop would mean a reduction over all <fr:tex display="inline"><![CDATA[j]]></fr:tex> before any tile of <fr:tex display="inline"><![CDATA[d\mathbf {Q}_i]]></fr:tex> could be finished. This is the same global dependency the online softmax was designed to break.</html:p>
-<html:p>The way out is that the row sum has already been computed once, in the forward pass. Expanding and pulling <fr:tex display="inline"><![CDATA[d\mathbf {O}_i]]></fr:tex> out of the sum:</html:p>
-<fr:tex display="block"><![CDATA[
-  \begin {align*}
-  \mathbf {D}_i &= \mathbf {P}_{i} \cdot  d\mathbf {P}_{i}  \\
-  &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} d\mathbf {P}_{ij} \\
-  &= \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \left (d\mathbf {O}_{i} \cdot  \mathbf {V}_{j}\right ) \\
-  &=  d\mathbf {O}_{i} \cdot  \sum _{j} \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}} \mathbf {V}_{j} \\
-  &= d\mathbf {O}_{i} \cdot  \mathbf {O}_{i}
-  .\end {align*}
-]]></fr:tex>
-<html:p>The inner sum is precisely the definition of <fr:tex display="inline"><![CDATA[\mathbf {O}_i]]></fr:tex>. So <fr:tex display="inline"><![CDATA[\mathbf {D}]]></fr:tex> is a single elementwise product of <fr:tex display="inline"><![CDATA[d\mathbf {O}]]></fr:tex> and <fr:tex display="inline"><![CDATA[\mathbf {O}]]></fr:tex> summed along the head dimension — one <fr:tex display="inline"><![CDATA[O(Nd)]]></fr:tex> pass over tensors we already have, done once before the backward loop begins.</html:p>
-</fr:mainmatter></fr:tree>
-</fr:mainmatter></fr:tree>
-  <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/3HOD/</fr:uri><fr:display-uri>3HOD</fr:display-uri><fr:route>/3HOD/</fr:route><fr:title text="MSI in Murphi">MSI in Murphi</fr:title></fr:frontmatter><fr:mainmatter><html:p>MESI is easier to reach through MSI, where there is less to get wrong and the races are already interesting enough.</html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The cache controller">The cache controller</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>The starting point is the primer's MSI cache controller table.</html:p>
-<html:figure><html:img width="100%" src="/bafkrmifhoq7kszlwemrlvvy4yuuvuk6l6bjadkvsmzclbemz2tzxdt6bjm.png" />
-<html:figcaption>MSI cache controller. Rows are states, columns are events.</html:figcaption></html:figure>
-<html:p>Several table entries are left blank; those are resolved at runtime from the <html:code>AckCount</html:code>, which is why the per-processor record carries an <html:code>ack</html:code> field alongside the state.</html:p>
-<html:div class="code-figure"><html:div class="code-filename">msi.m</html:div><html:pre><html:code class="language-lua">ProcState:
-  Record
-    state: enum {
-      P_Invalid, P_Shared, P_Modified,   -- stable states
-      PT_IS_D,     -- sent GetS, waiting for Data
-      PT_IS_DI,    -- sent GetS, got Inv, waiting for Data then go to I
-      PT_IM_AD,    -- sent GetM (from I), waiting for Data and InvAcks
-      PT_SM_AD,    -- sent GetM (from S), waiting for Data and InvAcks
-      PT_IM_A,     -- got Data for GetM, waiting for remaining InvAcks
-      PT_MI_A,     -- sent PutM, waiting for PutAck
-      PT_SI_A,     -- sent PutS, waiting for PutAck
-      PT_II_A      -- waiting for PutAck, already invalidated
-    };
-    val: Value;
-    ack: AckCount;  -- tracks InvAck count
-  End;</html:code></html:pre></html:div>
-
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
-<html:code>load</html:code>, <html:code>store</html:code>, and <html:code>replacement</html:code> only move the protocol between stable states. To simulate the system it is therefore enough to implement the rules that <html:em>initiate</html:em> those transitions — evict from modified, load from invalid — and let the model checker drive the transient states from there.
-</html:div>
-
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The directory controller">The directory controller</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>The directory side starts from the analogous table.</html:p>
-<html:figure><html:img width="100%" src="/bafkrmiadmfswkegttky27zg2gxvkwag3pt72ur7qam2z6vufr6xlvujqca.png" />
-<html:figcaption>MSI directory controller.</html:figcaption></html:figure>
-<html:p>This table is where the first real gap shows up. It gives the directory a single transient state, and the races below force a second one, <fr:tex display="inline"><![CDATA[M^D]]></fr:tex>.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Losing data to a PutM/Fwd-GetM race">Losing data to a PutM/Fwd-GetM race</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Consider the <html:code>PutM</html:code> rule that downgrades a cache from modified to invalid. The evicting cache must <html:strong>not</html:strong> drop the data when it sends <html:code>PutM</html:code>, because it may still have to service a forwarded request; it transitions to <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> and keeps the value. But nothing stops the <html:code>PutAck</html:code> from arriving first, taking it to <fr:tex display="inline"><![CDATA[I]]></fr:tex> before the <html:code>Fwd-GetM</html:code> shows up. The data is gone and the forwarded request has nobody to answer it.</html:p>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Fix.</html:strong> Add the <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> state to the directory controller. While in <fr:tex display="inline"><![CDATA[M^D]]></fr:tex>, a <html:code>PutM</html:code> from a node that is not the current owner stalls until the data arrives. Leaving <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> for <fr:tex display="inline"><![CDATA[M]]></fr:tex> requires the new owner to send data back to the directory even on a three-hop transaction, so the directory learns that the forward actually completed. I have not found a cleaner way to close this race without the extra state.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Deadlocking two stores against a load">Deadlocking two stores against a load</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>The <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> fix introduces a deadlock of its own. Take two processors that store-miss and a third that load-misses. The second store wins at the directory: the first store gets data and moves <fr:tex display="inline"><![CDATA[IM^{AD} \to  IM^{A}]]></fr:tex>, then the second triggers a <html:code>Fwd-GetM</html:code> that takes ownership away from it.</html:p>
-<html:p>Meanwhile the load miss sits in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex>. When its <html:code>Inv</html:code> arrives, the table says to stall — and because <html:code>Inv</html:code> and <html:code>Fwd-GetM</html:code> share the forwarded channel, that stall blocks the <html:code>Fwd-GetM</html:code> behind it. The winning processor never receives the data, and nothing ever drains the channel.</html:p>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Fix.</html:strong> Another transient state absent from the table: <fr:tex display="inline"><![CDATA[II^A]]></fr:tex>, meaning "was in <fr:tex display="inline"><![CDATA[IS^A]]></fr:tex>, got invalidated, now waiting on <html:code>PutAck</html:code> before settling in <fr:tex display="inline"><![CDATA[I]]></fr:tex>". The invalidation is processed rather than stalled, so the forwarded channel keeps moving.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Not clearing the owner too eagerly">Not clearing the owner too eagerly</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>One more correction to the table: when the home directory is in <fr:tex display="inline"><![CDATA[M]]></fr:tex> and receives a <html:code>GetS</html:code>, it must not clear the owner field as the figure directs. Once in <fr:tex display="inline"><![CDATA[S^D]]></fr:tex>, the directory can no longer tell whether an incoming <html:code>PutM</html:code> came from the owner (and should stall) or from a stale node. The owner is only cleared once the data has actually arrived.</html:p>
-</fr:mainmatter></fr:tree>
-</fr:mainmatter></fr:tree>
-  <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:uri>https://kellenkanarios.com/QTSW/</fr:uri><fr:display-uri>QTSW</fr:display-uri><fr:route>/QTSW/</fr:route><fr:title text="MESI in Murphi">MESI in Murphi</fr:title></fr:frontmatter><fr:mainmatter><html:p>With those states in place the rest of MSI is mechanical, and MESI is a short step from it — modulo two design choices and two more races.</html:p>
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The cache controller">The cache controller</fr:title></fr:frontmatter><fr:mainmatter>
-<html:figure><html:img width="100%" src="/bafkrmia4fllqvr7nzhifqxwk5stk2kyje2tfokhddzfjkteyw4kbj6k25i.png" />
-<html:figcaption>MESI cache controller.</html:figcaption></html:figure>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Silent upgrades.</html:strong> If a cache in <fr:tex display="inline"><![CDATA[E]]></fr:tex> may upgrade to <fr:tex display="inline"><![CDATA[M]]></fr:tex> silently, the directory never learns the line went dirty, and the value it hands to the next <html:code>GetS</html:code> or <html:code>GetM</html:code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat <fr:tex display="inline"><![CDATA[E]]></fr:tex> exactly like <fr:tex display="inline"><![CDATA[M]]></fr:tex>, forwarding everything. Neither requires a writeback on <html:code>PutE</html:code>. I take the first, matching the table.</html:p>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Signaling exclusivity.</html:strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <html:code>ExclusiveData</html:code> message: receiving it in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> lands the cache in <fr:tex display="inline"><![CDATA[E]]></fr:tex> rather than <fr:tex display="inline"><![CDATA[S]]></fr:tex>. It turns out to also be the key to the second race below.</html:p>
-
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
-Once <html:code>PutE</html:code> or <html:code>PutM</html:code> has been sent, <fr:tex display="inline"><![CDATA[EI^A]]></fr:tex> and <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> are functionally identical. Both appear above for completeness, but transitioning from <fr:tex display="inline"><![CDATA[E]]></fr:tex> straight into <fr:tex display="inline"><![CDATA[MI^A]]></fr:tex> verifies the same.
-</html:div>
-
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The directory controller">The directory controller</fr:title></fr:frontmatter><fr:mainmatter>
-<html:figure><html:img width="100%" src="/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png" />
-<html:figcaption>MESI directory controller.</html:figcaption></html:figure>
-<html:p>Symmetrically, the directory gains an <fr:tex display="inline"><![CDATA[E^D]]></fr:tex> state, which for completeness is kept distinct from <fr:tex display="inline"><![CDATA[M^D]]></fr:tex> but could be folded into it.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Forwards arriving before exclusive data">Forwards arriving before exclusive data</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>The first processor issues <html:code>GetS</html:code> and waits in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex>, while the home directory has already moved to <fr:tex display="inline"><![CDATA[E]]></fr:tex> and sent it <html:code>ExclusiveData</html:code>. A second processor then issues <html:code>GetM</html:code>, and home's <html:code>Fwd-GetM</html:code> overtakes the data in flight.</html:p>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Fix.</html:strong> Stall <html:code>Fwd-GetM</html:code> and <html:code>Fwd-GetS</html:code> in <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex> until the data lands. This is safe here because the data is on the response channel, which no stall can block.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="Losing exclusive data to an invalidation">Losing exclusive data to an invalidation</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>The nastier version of the same race: the invalidation arrives before the forward. By the <fr:tex display="inline"><![CDATA[II^A]]></fr:tex> rule inherited from MSI, a <html:code>PutAck</html:code> in that state drops the line to <fr:tex display="inline"><![CDATA[I]]></fr:tex> — discarding data a forwarded request is about to ask for.</html:p>
-
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(60, 90, 180, 0.8);
-  border-radius: var(--radius);
-  background-color: rgba(60, 90, 180, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
-<html:ol><html:li><html:code>Proc_1</html:code> load-misses → <fr:tex display="inline"><![CDATA[IS^D]]></fr:tex></html:li>
-  <html:li><html:code>Home</html:code> takes the first <html:code>GetS</html:code> from <html:code>Proc_1</html:code> → <fr:tex display="inline"><![CDATA[E]]></fr:tex>, sends <html:code>ExclusiveData</html:code></html:li>
-  <html:li><html:code>Proc_2</html:code> issues <html:code>GetM</html:code> → <fr:tex display="inline"><![CDATA[IM^{AD}]]></fr:tex></html:li>
-  <html:li><html:code>Home</html:code> sends <html:code>Inv</html:code> to <html:code>Proc_1</html:code></html:li>
-  <html:li><html:code>Home</html:code> forwards <html:code>Fwd-GetM</html:code> to <html:code>Proc_1</html:code></html:li>
-  <html:li><html:code>Proc_1</html:code> receives <html:code>Inv</html:code> → <fr:tex display="inline"><![CDATA[II^D]]></fr:tex></html:li>
-  <html:li><html:code>Proc_1</html:code> receives <html:code>ExclusiveData</html:code> → <fr:tex display="inline"><![CDATA[I]]></fr:tex>, and the data is lost</html:li></html:ol>
-</html:div>
-
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Fix.</html:strong> <html:code>ExclusiveData</html:code> pays for itself a second time. Because the message is distinguishable from ordinary <html:code>Data</html:code>, a cache receiving it in <fr:tex display="inline"><![CDATA[II^D]]></fr:tex> knows it was the first reader and transitions to <fr:tex display="inline"><![CDATA[E]]></fr:tex> instead of <fr:tex display="inline"><![CDATA[I]]></fr:tex> — from which the pending <html:code>Fwd-GetM</html:code> or <html:code>Fwd-GetS</html:code> is handled correctly.</html:p>
-</fr:mainmatter></fr:tree>
-
-  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>3</fr:day></fr:date><fr:title text="The finished controllers">The finished controllers</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p>Folding all of the above in leaves these two state machines, which Murphi verifies exhaustively.</html:p>
-<html:figure><html:img width="100%" src="/bafkrmif36mc6riik263rmccsazkkvtb5la47ocbsbm664xrm323b3jyufm.png" />
-<html:figcaption>Final MESI cache controller.</html:figcaption></html:figure>
-<html:figure><html:img width="100%" src="/bafkrmifqg6owj5m5bnsuqphk73uuwqzybmwczbbwx432u5j3zju3fe52i4.png" />
-<html:figcaption>Final MESI directory controller.</html:figcaption></html:figure>
-</fr:mainmatter></fr:tree>
 </fr:mainmatter></fr:tree>
   <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/ZUAG/</fr:uri><fr:display-uri>ZUAG</fr:display-uri><fr:route>/ZUAG/</fr:route><fr:title text="POTW: Multi-Level Discovery of Deep Options"><fr:link href="/005G/" title="Papers of a week" uri="https://kellenkanarios.com/005G/" display-uri="005G" type="local">POTW</fr:link>: <fr:link href="/foxMultiLevelDiscoveryDeep2017/" title="Multi-Level Discovery of Deep Options" uri="https://kellenkanarios.com/foxMultiLevelDiscoveryDeep2017/" display-uri="foxMultiLevelDiscoveryDeep2017" type="local">Multi-Level Discovery of Deep Options</fr:link></fr:title></fr:frontmatter><fr:mainmatter><html:p>The setup for <html:em><fr:link href="/foxMultiLevelDiscoveryDeep2017/" title="Multi-Level Discovery of Deep Options" uri="https://kellenkanarios.com/foxMultiLevelDiscoveryDeep2017/" display-uri="foxMultiLevelDiscoveryDeep2017" type="local">Multi-Level Discovery of Deep Options</fr:link></html:em>:</html:p><html:ul><html:li>We have a <html:em>meta-controller</html:em> that outputs the <html:em>skill</html:em> <fr:tex display="inline"><![CDATA[z]]></fr:tex> given the state <fr:tex display="inline"><![CDATA[s]]></fr:tex> i.e. <fr:tex display="inline"><![CDATA[z_t \sim  \eta (\cdot  \mid  s_t)]]></fr:tex></html:li>
   <html:li>We have the <html:em>skill</html:em>, which is a skill-conditioned policy <fr:tex display="inline"><![CDATA[a_t \sim  \pi (\cdot  \mid  s_t, z_t)]]></fr:tex></html:li>

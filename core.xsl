@@ -41,17 +41,24 @@
     </xsl:if>
   </xsl:template>
 
-  <!-- The Buttondown subscribe form (emitted by \subscribe in base-macros)
-       gets the same treatment, and for the same reason: Forester embeds a
-       tree's full content wherever it is transcluded or hover-previewed, so
-       without this the form on the Blog page also turns up on the home page,
-       the about page, and every index that links to it. Render it only when
-       its containing tree is the top-level document tree. This cannot live in
-       the macro — it depends on where the tree sits in the document, which is
-       only known here. -->
-  <xsl:template match="html:form[@class = 'embeddable-buttondown-form']">
+  <!-- The subscribe block (emitted by \subscribe in base-macros) gets the same
+       treatment, and for the same reason: Forester embeds a tree's full content
+       wherever it is transcluded or hover-previewed, so without this the block
+       on the Blog page also turns up on the home page, the about page, and
+       every index that links to it. Render it only when its containing tree is
+       the top-level document tree. This cannot live in the macro — it depends
+       on where the tree sits in the document, which is only known here.
+
+       Guard the wrapper, not the <form> inside it. An earlier version matched
+       the form alone, which was sufficient only while the form was the whole
+       visible block; once the divider, heading, and description moved out into
+       a wrapper alongside it, they sailed straight past the guard and every
+       page transcluding the blog grew a stray `Subscribe by email` heading
+       with no form beneath it. Suppressing the wrapper stops its descendants
+       being processed at all, so the whole block travels as one unit. -->
+  <xsl:template match="html:div[@class = 'subscribe-block']">
     <xsl:if test="not(ancestor::f:tree[1]/parent::*)">
-      <xsl:element namespace="http://www.w3.org/1999/xhtml" name="form">
+      <xsl:element namespace="http://www.w3.org/1999/xhtml" name="div">
         <xsl:apply-templates select="@* | node()" />
       </xsl:element>
     </xsl:if>
