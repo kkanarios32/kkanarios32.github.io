@@ -91,13 +91,27 @@ document.addEventListener('keydown', function(e) {
         <ninja-keys placeholder="Start typing a note title or ID"></ninja-keys>
 
         <xsl:if test="not(/f:tree[@root = 'true'])">
+          <!-- Back-to-home chrome, on every page but the root. The chevron is
+               an inline SVG rather than a guillemet or an arrow character: at
+               this size a text arrow sets differently in every fallback font
+               and never optically aligns with the label. Inline keeps the
+               theme free of an icon font or any external request, which
+               matters because these pages are transformed in the browser.
+               aria-hidden on the glyph leaves "Home" as the accessible name.
+
+               The xmlns on the <svg> is load-bearing. Literal elements written
+               inside the <html> above inherit its XHTML namespace, and these
+               pages are served as XML, so namespaces are matched strictly — an
+               <svg> left in the XHTML namespace parses as an unknown inline
+               element and paints nothing at all. -->
           <header class="header">
             <nav class="nav">
-              <div class="logo">
-                <a href="{/f:tree/@base-url}index.html" title="Home">
-                  <xsl:text>« Home</xsl:text>
-                </a>
-              </div>
+              <a class="home-link" href="{/f:tree/@base-url}index.html">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span>Home</span>
+              </a>
             </nav>
           </header>
         </xsl:if>
