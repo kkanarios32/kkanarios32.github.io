@@ -336,6 +336,21 @@ math {
  font-size: 1.12em;
 }
 
+/* Display math is the one thing on the site that reliably outgrows a phone.
+   KaTeX ships .katex-display as a plain centred block with no overflow of its
+   own, so a wide equation pushes the whole article past the viewport instead of
+   scrolling within its own line. Give it a scroll container.
+
+   The vertical padding is not decoration. Setting overflow-x on one axis forces
+   the other out of `visible`, so without room to spare the tall parts of an
+   equation — fraction bars, big operators, limits — get clipped by the very box
+   that makes it scrollable. */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5em 0;
+}
+
 mrow:hover {
  background-color: rgba(0, 100, 255, 0.04);
 }
@@ -454,6 +469,7 @@ footer h2 {
     grid-column: 1;
   }
 
+
   #grid-wrapper>nav {
     display: none;
     transition: ease all .2s;
@@ -535,8 +551,18 @@ body>header {
   max-width: 90ex;
 }
 
+/* min-width: 0 is load-bearing, not tidying. A grid item defaults to
+   min-width: auto, so it refuses to shrink below the intrinsic width of its
+   widest content — a display equation, say. The article then grows past the
+   viewport, and because #grid-wrapper centres its column the excess spills
+   equally off both edges. A browser can only scroll to overflow on the end
+   side, so the left half becomes unreachable and the page reads as a fixed,
+   zoomed-in view of the centre with no way to pan. This lets the article
+   shrink to the viewport and hands the problem to the inner scroll containers
+   (pre, .katex-display), which is where it belongs. */
 #grid-wrapper>article {
   max-width: 90ex;
+  min-width: 0;
 }
 
 details>summary>header {
