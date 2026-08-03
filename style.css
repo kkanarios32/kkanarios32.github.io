@@ -364,6 +364,12 @@ mrow:hover {
   display: none;
 }
 
+/* Index entries have no <details>, so their header hangs directly off the
+   section — same rule, one level shallower. */
+.block.index-entry.hide-metadata>header>.metadata {
+  display: none;
+}
+
 article>section>details>summary>header>h1>.taxon {
   display: block;
   font-size: .9em;
@@ -554,6 +560,46 @@ section.block>details[open] {
 
 .link-list>section.block>details {
   margin-bottom: .25em;
+}
+
+/* Index entries — the listing rows emitted by tree.xsl's index-entry rule for
+   a collapsed transclusion inside a \meta{index}{true} page. They render the
+   same heading a collapsed <details> would, minus the <details>, so these
+   mirror the collapsed-entry rules above one level shallower. */
+section.block.index-entry {
+  margin-bottom: 0.4em;
+  /* Set at body size (12pt) rather than the 13pt a collapsed <details> heading
+     uses: a listing row should read as a peer of the prose, not as a heading.
+     Dropping below body size is what makes the metadata line strain, since it
+     carries no size of its own — sizing the section rather than the h1 is what
+     keeps the title and that metadata line in proportion. */
+  font-size: 12pt;
+}
+
+.link-list>section.block.index-entry {
+  margin-bottom: .25em;
+}
+
+.index-entry>header {
+  display: inline;
+}
+
+.index-entry h1 {
+  font-size: inherit;
+  display: inline;
+}
+
+/* No underline on the title. Dotting every row turns a listing into visual
+   noise, and unlike an inline prose link the row does not need to announce
+   itself — the whole column is navigation, and the slug beside each title is
+   already a link. The hover tint carries the affordance. */
+a.index-entry-link {
+  box-shadow: none;
+  text-decoration: none;
+}
+
+a.index-entry-link:hover {
+  background-color: rgba(0, 100, 255, .1);
 }
 
 nav#toc {
@@ -889,4 +935,26 @@ ol li ol li ol {
 .info {
  background-color: #bbb;
  color: white;
+}
+
+/* The two rules below belong with \subscribe and the home page's profile
+   figure, both of which style themselves inline. They live here only because
+   :hover and @media cannot be expressed in a style attribute. */
+
+.embeddable-buttondown-form input[type="submit"]:hover {
+  background-color: rgba(60, 90, 180, 0.1);
+}
+
+/* Narrow screens: the profile figure floats right at 30% of the column, which
+   below roughly 700px leaves a picture too small to read beside a text column
+   too narrow to set. Drop the float and let it run full width above the prose. */
+@media only screen and (max-width: 700px) {
+  .profile-figure {
+    float: none !important;
+    width: 100% !important;
+    max-width: 18em;
+    margin-left: auto !important;
+    margin-right: auto;
+    margin-bottom: 1em !important;
+  }
 }

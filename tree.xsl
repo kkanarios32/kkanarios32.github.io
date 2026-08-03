@@ -242,8 +242,29 @@ document.addEventListener('keydown', function(e) {
     </ul>
   </xsl:template>
 
+  <!-- On an index page (\meta{index}{true}), a collapsed entry's title links to
+       the entry's own page instead of unfolding it in place. The decision is
+       made here rather than in a separate mode so the whole f:frontmatter
+       template — taxon, slug, date, author — is reused untouched; only the
+       title's rendering changes. See the index-entry rule on f:tree below for
+       the conditions, which this repeats. -->
   <xsl:template match="f:frontmatter/f:title">
-    <xsl:apply-templates />
+    <xsl:variable name="is-index-entry" select="
+      ../../@expanded = 'false'
+      and not(../../@show-heading = 'false')
+      and not(../f:meta[@name = 'index'] = 'true')
+      and not(ancestor::f:backmatter)
+      and ../../ancestor::f:tree[1]/f:frontmatter/f:meta[@name = 'index'] = 'true'" />
+    <xsl:choose>
+      <xsl:when test="$is-index-entry and ../f:route">
+        <a class="index-entry-link" href="{../f:route}">
+          <xsl:apply-templates />
+        </a>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:apply-templates />
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
   <xsl:template match="f:mainmatter">
@@ -322,6 +343,7 @@ document.addEventListener('keydown', function(e) {
             <xsl:apply-templates select="f:meta[@name='source']" />
             <xsl:apply-templates select="f:meta[@name='slides']" />
             <xsl:apply-templates select="f:meta[@name='paper']" />
+            <xsl:apply-templates select="f:meta[@name='poster']" />
             <xsl:apply-templates select="f:meta[@name='video']" />
           </ul>
           </xsl:if>
@@ -340,6 +362,7 @@ document.addEventListener('keydown', function(e) {
             <xsl:apply-templates select="f:meta[@name='external']" />
             <xsl:apply-templates select="f:meta[@name='slides']" />
             <xsl:apply-templates select="f:meta[@name='paper']" />
+            <xsl:apply-templates select="f:meta[@name='poster']" />
             <xsl:apply-templates select="f:meta[@name='video']" />
           </ul>
           </xsl:if>
@@ -443,6 +466,48 @@ document.addEventListener('keydown', function(e) {
        card transcluded into a note's mainmatter still renders — this only
        suppresses cards appearing as backlinks. -->
   <xsl:template match="f:backmatter//f:tree[normalize-space(f:frontmatter/f:taxon) = 'Card']" priority="10">
+  </xsl:template>
+
+  <!-- Index-page entries. A tree marked \meta{index}{true} is a navigation page
+       — the home page, 0002 Blog, RCNT — rather than a piece of writing, and
+       its collapsed entries are a listing, not content folded away. Render
+       those as their usual heading (taxon, linked title, slug, date, author)
+       with no <details>, so clicking navigates to the entry instead of
+       unfolding it in place.
+
+       Nothing that was visible becomes hidden. The rule fires only on entries
+       the page already renders collapsed (@expanded='false'), so anything
+       transcluded expanded keeps its body. An index page nested inside another
+       index page is exempt via the f:meta test — that is what keeps the home
+       page's Research subtree an expandable block while the papers listed
+       under it become links. Backlink context in f:backmatter is exempt too,
+       and the page's own top-level rendering is untouched.
+
+       Higher priority than the general f:tree rule below, whose pattern also
+       matches these. The f:frontmatter/f:title template above repeats these
+       conditions to decide whether to wrap the title in a link. -->
+  <xsl:template priority="5" match="f:tree[
+    @expanded = 'false'
+    and not(@show-heading = 'false')
+    and not(f:frontmatter/f:meta[@name = 'index'] = 'true')
+    and not(ancestor::f:backmatter)
+    and ancestor::f:tree[1]/f:frontmatter/f:meta[@name = 'index'] = 'true']">
+    <section>
+      <xsl:choose>
+        <xsl:when test="@show-metadata = 'false'">
+          <xsl:attribute name="class">block index-entry hide-metadata</xsl:attribute>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:attribute name="class">block index-entry</xsl:attribute>
+        </xsl:otherwise>
+      </xsl:choose>
+      <xsl:if test="f:frontmatter/f:taxon">
+        <xsl:attribute name="data-taxon">
+          <xsl:value-of select="f:frontmatter/f:taxon" />
+        </xsl:attribute>
+      </xsl:if>
+      <xsl:apply-templates select="f:frontmatter" />
+    </section>
   </xsl:template>
 
   <xsl:template match="f:tree[f:mainmatter[*] or not(@hidden-when-empty = 'true')]">
