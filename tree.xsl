@@ -378,6 +378,10 @@ document.addEventListener('keydown', function(e) {
             <xsl:apply-templates select="f:meta[@name='paper']" />
             <xsl:apply-templates select="f:meta[@name='poster']" />
             <xsl:apply-templates select="f:meta[@name='video']" />
+            <!-- Last in the line: the date and author say what this is, the
+                 reading time says what it costs, which is what a reader
+                 deciding whether to open it wants read to them last. -->
+            <xsl:apply-templates select="f:meta[@name='reading-time'][. = 'true']" />
           </ul>
           </xsl:if>
         </div>

@@ -11,7 +11,7 @@ window.addEventListener('load', function () {
           </script><title>Directory-based coherence scales by replacing broadcasts with point-to-point messages</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon"></span>Directory-based coherence scales by replacing broadcasts with point-to-point messages <a class="slug" href="/KIT8/">[KIT8]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">May 12, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
     <p xmlns="http://www.w3.org/1999/xhtml">A scalable <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">Cache coherence</a></span> organization for systems too large for a shared bus. Each memory address has a <em>home node</em>; the home node maintains a <em>directory</em> entry listing which caches currently hold copies and in what state. Coherence transactions are point-to-point messages routed via the directory rather than broadcasts. The directory is itself distributed — each node owns the entries for the addresses in its local DRAM, and a physical address uniquely identifies its home — so there is no central bottleneck.</p>
@@ -28,7 +28,7 @@ window.addEventListener('load', function () {
         <section lang="en" class="block"><details id="id3"><summary><header><h1>
 <span class="taxon"></span>Directory protocols expose transient states because transactions span multiple hops <a class="slug" href="/Z32G/">[Z32G]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">July 11, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 11, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Because a <span xmlns="" class="link local"><a href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages [KIT8]">directory</a></span> transaction takes several hops (requestor → home → owner → …), a line spends observable time in <em>transient states</em> between the stable ones — e.g. \(\mathrm {MI}^{A}\) ("modified, going to invalid, waiting on an acknowledgment"). These are not an implementation detail to wave away: concurrent transactions to the same line race, and the protocol must define a correct outcome for every interleaving. That combinatorial state space is what makes directory protocols hard to get right.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> L holds a dirty copy and starts a writeback to home H. Concurrently R sends a read to H. R sits in \(\mathrm {S}^{D}\) ("shared, waiting for data") until the race resolves.
@@ -40,7 +40,7 @@ window.addEventListener('load', function () {
         <section lang="en" class="block"><details id="id4"><summary><header><h1>
 <span class="taxon"></span>Sparse directories keep coherence metadata from scaling with memory <a class="slug" href="/QSWW/">[QSWW]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">July 11, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 11, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
             <p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages [KIT8]">directory</a></span> must remember which caches hold each line, and the naive encoding — a sharer bitmap per cache line — does not scale: at 256 nodes that is 32 bytes of metadata per line, so roughly half of memory goes to coherence bookkeeping. Two ideas bring it back down. <em>Limited-sharer encoding</em> exploits the fact that most lines have ≤4 sharers: track those exactly and fall back to broadcast for the rare widely-shared line. <em>Sparse directories</em> go further and cache the directory entries themselves — an entry missing from the directory cache means nobody holds the line at all, and evicting an entry invalidates the corresponding lines. The directory then scales with the number of <em>actively cached</em> lines rather than with total memory.</p>
@@ -48,7 +48,7 @@ window.addEventListener('load', function () {
         <section lang="en" class="block"><details id="id5"><summary><header><h1>
 <span class="taxon"></span>Snoop-based coherence keeps caches consistent by watching a shared bus <a class="slug" href="/8C2H/">[8C2H]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">May 12, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">Cache coherence</a></span> family where every cache watches (<em>snoops</em>) a shared bus. When one cache issues a coherence transaction (e.g. requests permission to read or write a line), every other cache sees it and updates its local state accordingly. No central directory needed; the bus itself is the coordination mechanism.</p><p xmlns="http://www.w3.org/1999/xhtml">The simplest snoop-based protocol is <em>valid-invalid</em>:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Invalid + load → BusRd to gain read permission; transition to valid.</li>
   <li>Invalid + store → no transition (write-through assumed; the bus carries the write).</li>
@@ -58,7 +58,7 @@ window.addEventListener('load', function () {
         <section lang="en" class="block"><details id="id6"><summary><header><h1>
 <span class="taxon"></span>Cache coherence <a class="slug" href="/GA7N/">[GA7N]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">May 12, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
             <p xmlns="http://www.w3.org/1999/xhtml">In a <span xmlns="" class="link local"><a href="/JRP0/" title="Multicore [JRP0]">Multicore</a></span> system where every core has its own <span xmlns="" class="link local"><a href="/KBYI/" title="Cache hierarchy [KBYI]">Cache hierarchy</a></span>, the same memory address can live in multiple caches simultaneously. A <em>cache coherence</em> protocol is the mechanism that keeps those copies consistent — propagating writes, invalidating stale copies, and preserving two invariants:</p>
@@ -73,22 +73,23 @@ window.addEventListener('load', function () {
         <section lang="en" class="block"><details id="id7"><summary><header><h1>
 <span class="taxon"></span>Implementing Directory-based MESI in Murphi <a class="slug" href="/HHZO/">[HHZO]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">March 24, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">March 24, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+<li class="meta-item">9 min read</li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/CMAL/" title="Murphi [CMAL]">Murphi</a></span> is an explicit-state model checker: you describe a system as guarded transition rules, state the invariants, and it enumerates every reachable interleaving looking for a violation. That makes it a natural fit for <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">cache coherence</a></span>, where the steady-state behavior is easy and the races are not. This post builds a <span xmlns="" class="link local"><a href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages [KIT8]">directory-based</a></span> <span xmlns="" class="link local"><a href="/30XT/" title="MESI protocol [30XT]">MESI protocol</a></span> in Murphi, starting from MSI and adding state every time the checker finds a way to break it.</p><p xmlns="http://www.w3.org/1999/xhtml">The state tables come from <span xmlns="" class="link external"><a href="https://pages.cs.wisc.edu/~markhill/papers/primer2020_2nd_edition.pdf" title="">A Primer on Memory Consistency and Cache Coherence</a></span>, which doubles as the source for these notes. The recurring lesson is that the published tables are not quite enough: every protocol below needs <span xmlns="" class="link local"><a href="/Z32G/" title="Directory protocols expose transient states because transactions span multiple hops [Z32G]">transient states</a></span> the tables leave implicit.</p><section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
 <span class="taxon"></span>Murphi <a class="slug" href="/CMAL/">[CMAL]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">July 17, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Syntactical things I need to remember from Murphi docs. Most things are straightforward, but there are a few things to note:</p><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id9" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Declarations  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">July 17, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>declaration</em> is a variable or a collection of variables that are used in the rules.</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id10" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Rules  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">July 17, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>rule</em> is a transition from one state to another</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Each rule can optionally have an initial condition required to be fired</li>
     <li>We can easily define rules for all the processors or collection of \(n\) things with <code>ruleset</code>.</li>
@@ -98,12 +99,12 @@ window.addEventListener('load', function () {
       <li>Retrying stalled requests</li></ol></ul></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id11" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Startstates  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">July 17, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>startstate</em> is the intial configuration for all our declarations.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Must assign a value to every global variable</li></ul></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id12" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Invariants  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">July 17, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An <em>invariant</em> is something that Murphi checks to ensure is true at all possible configurations of the system.</p></details></section><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Overview straight from the docs.</strong> Repeat forever:
 </p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Find all rules whose conditions are true in the current state.
@@ -113,7 +114,7 @@ window.addEventListener('load', function () {
   <section lang="en" class="block hide-metadata"><details id="id13" open="open"><summary><header><h1>
 <span class="taxon"></span>Why three virtual channels  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">March 24, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">March 24, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The valid-invalid protocol shipped with the Murphi docs uses two <span xmlns="" class="link local"><a href="/HUDE/" title="Virtual Channels [HUDE]">Virtual Channels</a></span>. A directory protocol needs three: one each for requests, forwarded requests, and responses. The reason is that <span xmlns="" class="link local"><a href="/DWV1/" title="Routing deadlock [DWV1]">deadlock is a cycle in the dependency graph</a></span>, so it suffices to exhibit one.</p>
@@ -143,13 +144,13 @@ window.addEventListener('load', function () {
 <section lang="en" class="block hide-metadata"><details id="id14" open="open"><summary><header><h1>
 <span class="taxon"></span>MSI in Murphi <a class="slug" href="/3HOD/">[3HOD]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">MESI is easier to reach through MSI, where there is less to get wrong and the races are already interesting enough.</p>
   <section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
 <span class="taxon"></span>The cache controller  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The starting point is the primer's MSI cache controller table.</p>
@@ -182,7 +183,7 @@ window.addEventListener('load', function () {
   <section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
 <span class="taxon"></span>The directory controller  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The directory side starts from the analogous table.</p>
@@ -194,7 +195,7 @@ window.addEventListener('load', function () {
   <section lang="en" class="block hide-metadata"><details id="id17" open="open"><summary><header><h1>
 <span class="taxon"></span>Losing data to a PutM/Fwd-GetM race  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">Consider the <code>PutM</code> rule that downgrades a cache from modified to invalid. The evicting cache must <strong>not</strong> drop the data when it sends <code>PutM</code>, because it may still have to service a forwarded request; it transitions to \(MI^A\) and keeps the value. But nothing stops the <code>PutAck</code> from arriving first, taking it to \(I\) before the <code>Fwd-GetM</code> shows up. The data is gone and the forwarded request has nobody to answer it.</p>
@@ -204,7 +205,7 @@ window.addEventListener('load', function () {
   <section lang="en" class="block hide-metadata"><details id="id18" open="open"><summary><header><h1>
 <span class="taxon"></span>Deadlocking two stores against a load  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The \(M^D\) fix introduces a deadlock of its own. Take two processors that store-miss and a third that load-misses. The second store wins at the directory: the first store gets data and moves \(IM^{AD} \to  IM^{A}\), then the second triggers a <code>Fwd-GetM</code> that takes ownership away from it.</p>
@@ -215,7 +216,7 @@ window.addEventListener('load', function () {
   <section lang="en" class="block hide-metadata"><details id="id19" open="open"><summary><header><h1>
 <span class="taxon"></span>Not clearing the owner too eagerly  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">One more correction to the table: when the home directory is in \(M\) and receives a <code>GetS</code>, it must not clear the owner field as the figure directs. Once in \(S^D\), the directory can no longer tell whether an incoming <code>PutM</code> came from the owner (and should stall) or from a stale node. The owner is only cleared once the data has actually arrived.</p>
@@ -223,13 +224,13 @@ window.addEventListener('load', function () {
 </details></section><section lang="en" class="block hide-metadata"><details id="id20" open="open"><summary><header><h1>
 <span class="taxon"></span>MESI in Murphi <a class="slug" href="/QTSW/">[QTSW]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">With those states in place the rest of MSI is mechanical, and MESI is a short step from it — modulo two design choices and two more races.</p>
   <section lang="en" class="block hide-metadata"><details id="id21" open="open"><summary><header><h1>
 <span class="taxon"></span>The cache controller  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmia4fllqvr7nzhifqxwk5stk2kyje2tfokhddzfjkteyw4kbj6k25i.png"></img>
@@ -246,7 +247,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   <section lang="en" class="block hide-metadata"><details id="id22" open="open"><summary><header><h1>
 <span class="taxon"></span>The directory controller  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png"></img>
@@ -257,7 +258,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   <section lang="en" class="block hide-metadata"><details id="id23" open="open"><summary><header><h1>
 <span class="taxon"></span>Forwards arriving before exclusive data  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The first processor issues <code>GetS</code> and waits in \(IS^D\), while the home directory has already moved to \(E\) and sent it <code>ExclusiveData</code>. A second processor then issues <code>GetM</code>, and home's <code>Fwd-GetM</code> overtakes the data in flight.</p>
@@ -267,7 +268,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   <section lang="en" class="block hide-metadata"><details id="id24" open="open"><summary><header><h1>
 <span class="taxon"></span>Losing exclusive data to an invalidation  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The nastier version of the same race: the invalidation arrives before the forward. By the \(II^A\) rule inherited from MSI, a <code>PutAck</code> in that state drops the line to \(I\) — discarding data a forwarded request is about to ask for.</p>
@@ -288,7 +289,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   <section lang="en" class="block hide-metadata"><details id="id25" open="open"><summary><header><h1>
 <span class="taxon"></span>The finished controllers  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">Folding all of the above in leaves these two state machines, which Murphi verifies exhaustively.</p>
@@ -305,7 +306,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
         <section lang="en" class="block"><details id="id27"><summary><header><h1>
 <span class="taxon"></span>Migratory-sharing optimization collapses read-then-write into one coherence transaction <a class="slug" href="/20SW/">[20SW]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">July 11, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 11, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A common access pattern is <em>migratory</em>: a core reads a line and then writes it — think a lock or a hand-off variable that passes from core to core. Handled naively this costs two <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">cache-coherence</a></span> transactions: a read miss that fetches the line shared, then a write miss that upgrades it to modified. <em>Upgrade-miss detection</em> spots the pattern and, on the read miss, transitions the line straight to a migratory-exclusive state, so the following write is silent — one transaction instead of two.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The same optimization <em>hurts</em> producer–consumer sharing, where one core writes and several read. There the right move on a read miss is to <em>downgrade</em> the previous writer rather than invalidate it, so later readers source the line from the last writer instead of racing to own it. The lesson generalizes: coherence optimizations are workload-shaped — a win for one sharing pattern is a loss for another.</div>
@@ -313,7 +314,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
         <section lang="en" class="block"><details id="id28"><summary><header><h1>
 <span class="taxon"></span>Directory protocols expose transient states because transactions span multiple hops <a class="slug" href="/Z32G/">[Z32G]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">July 11, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 11, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Because a <span xmlns="" class="link local"><a href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages [KIT8]">directory</a></span> transaction takes several hops (requestor → home → owner → …), a line spends observable time in <em>transient states</em> between the stable ones — e.g. \(\mathrm {MI}^{A}\) ("modified, going to invalid, waiting on an acknowledgment"). These are not an implementation detail to wave away: concurrent transactions to the same line race, and the protocol must define a correct outcome for every interleaving. That combinatorial state space is what makes directory protocols hard to get right.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> L holds a dirty copy and starts a writeback to home H. Concurrently R sends a read to H. R sits in \(\mathrm {S}^{D}\) ("shared, waiting for data") until the race resolves.
@@ -325,7 +326,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
         <section lang="en" class="block"><details id="id29"><summary><header><h1>
 <span class="taxon"></span>Sparse directories keep coherence metadata from scaling with memory <a class="slug" href="/QSWW/">[QSWW]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">July 11, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 11, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
             <p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages [KIT8]">directory</a></span> must remember which caches hold each line, and the naive encoding — a sharer bitmap per cache line — does not scale: at 256 nodes that is 32 bytes of metadata per line, so roughly half of memory goes to coherence bookkeeping. Two ideas bring it back down. <em>Limited-sharer encoding</em> exploits the fact that most lines have ≤4 sharers: track those exactly and fall back to broadcast for the rare widely-shared line. <em>Sparse directories</em> go further and cache the directory entries themselves — an entry missing from the directory cache means nobody holds the line at all, and evicting an entry invalidates the corresponding lines. The directory then scales with the number of <em>actively cached</em> lines rather than with total memory.</p>
@@ -333,7 +334,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
         <section lang="en" class="block"><details id="id30"><summary><header><h1>
 <span class="taxon"></span>Snoop-based coherence keeps caches consistent by watching a shared bus <a class="slug" href="/8C2H/">[8C2H]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">May 12, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">Cache coherence</a></span> family where every cache watches (<em>snoops</em>) a shared bus. When one cache issues a coherence transaction (e.g. requests permission to read or write a line), every other cache sees it and updates its local state accordingly. No central directory needed; the bus itself is the coordination mechanism.</p><p xmlns="http://www.w3.org/1999/xhtml">The simplest snoop-based protocol is <em>valid-invalid</em>:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Invalid + load → BusRd to gain read permission; transition to valid.</li>
   <li>Invalid + store → no transition (write-through assumed; the bus carries the write).</li>
@@ -343,7 +344,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
         <section lang="en" class="block"><details id="id31"><summary><header><h1>
 <span class="taxon"></span>Cache coherence <a class="slug" href="/GA7N/">[GA7N]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">May 12, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
             <p xmlns="http://www.w3.org/1999/xhtml">In a <span xmlns="" class="link local"><a href="/JRP0/" title="Multicore [JRP0]">Multicore</a></span> system where every core has its own <span xmlns="" class="link local"><a href="/KBYI/" title="Cache hierarchy [KBYI]">Cache hierarchy</a></span>, the same memory address can live in multiple caches simultaneously. A <em>cache coherence</em> protocol is the mechanism that keeps those copies consistent — propagating writes, invalidating stale copies, and preserving two invariants:</p>
@@ -358,22 +359,23 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
         <section lang="en" class="block"><details id="id32"><summary><header><h1>
 <span class="taxon"></span>Implementing Directory-based MESI in Murphi <a class="slug" href="/HHZO/">[HHZO]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">March 24, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">March 24, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+<li class="meta-item">9 min read</li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/CMAL/" title="Murphi [CMAL]">Murphi</a></span> is an explicit-state model checker: you describe a system as guarded transition rules, state the invariants, and it enumerates every reachable interleaving looking for a violation. That makes it a natural fit for <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">cache coherence</a></span>, where the steady-state behavior is easy and the races are not. This post builds a <span xmlns="" class="link local"><a href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages [KIT8]">directory-based</a></span> <span xmlns="" class="link local"><a href="/30XT/" title="MESI protocol [30XT]">MESI protocol</a></span> in Murphi, starting from MSI and adding state every time the checker finds a way to break it.</p><p xmlns="http://www.w3.org/1999/xhtml">The state tables come from <span xmlns="" class="link external"><a href="https://pages.cs.wisc.edu/~markhill/papers/primer2020_2nd_edition.pdf" title="">A Primer on Memory Consistency and Cache Coherence</a></span>, which doubles as the source for these notes. The recurring lesson is that the published tables are not quite enough: every protocol below needs <span xmlns="" class="link local"><a href="/Z32G/" title="Directory protocols expose transient states because transactions span multiple hops [Z32G]">transient states</a></span> the tables leave implicit.</p><section lang="en" class="block hide-metadata"><details id="id33" open="open"><summary><header><h1>
 <span class="taxon"></span>Murphi <a class="slug" href="/CMAL/">[CMAL]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">July 17, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Syntactical things I need to remember from Murphi docs. Most things are straightforward, but there are a few things to note:</p><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id34" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Declarations  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">July 17, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>declaration</em> is a variable or a collection of variables that are used in the rules.</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id35" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Rules  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">July 17, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>rule</em> is a transition from one state to another</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Each rule can optionally have an initial condition required to be fired</li>
     <li>We can easily define rules for all the processors or collection of \(n\) things with <code>ruleset</code>.</li>
@@ -383,12 +385,12 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
       <li>Retrying stalled requests</li></ol></ul></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id36" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Startstates  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">July 17, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>startstate</em> is the intial configuration for all our declarations.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Must assign a value to every global variable</li></ul></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id37" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Invariants  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">July 17, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An <em>invariant</em> is something that Murphi checks to ensure is true at all possible configurations of the system.</p></details></section><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Overview straight from the docs.</strong> Repeat forever:
 </p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Find all rules whose conditions are true in the current state.
@@ -398,7 +400,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   <section lang="en" class="block hide-metadata"><details id="id38" open="open"><summary><header><h1>
 <span class="taxon"></span>Why three virtual channels  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">March 24, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">March 24, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The valid-invalid protocol shipped with the Murphi docs uses two <span xmlns="" class="link local"><a href="/HUDE/" title="Virtual Channels [HUDE]">Virtual Channels</a></span>. A directory protocol needs three: one each for requests, forwarded requests, and responses. The reason is that <span xmlns="" class="link local"><a href="/DWV1/" title="Routing deadlock [DWV1]">deadlock is a cycle in the dependency graph</a></span>, so it suffices to exhibit one.</p>
@@ -428,13 +430,13 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
 <section lang="en" class="block hide-metadata"><details id="id39" open="open"><summary><header><h1>
 <span class="taxon"></span>MSI in Murphi <a class="slug" href="/3HOD/">[3HOD]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">MESI is easier to reach through MSI, where there is less to get wrong and the races are already interesting enough.</p>
   <section lang="en" class="block hide-metadata"><details id="id40" open="open"><summary><header><h1>
 <span class="taxon"></span>The cache controller  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The starting point is the primer's MSI cache controller table.</p>
@@ -467,7 +469,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   <section lang="en" class="block hide-metadata"><details id="id41" open="open"><summary><header><h1>
 <span class="taxon"></span>The directory controller  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The directory side starts from the analogous table.</p>
@@ -479,7 +481,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   <section lang="en" class="block hide-metadata"><details id="id42" open="open"><summary><header><h1>
 <span class="taxon"></span>Losing data to a PutM/Fwd-GetM race  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">Consider the <code>PutM</code> rule that downgrades a cache from modified to invalid. The evicting cache must <strong>not</strong> drop the data when it sends <code>PutM</code>, because it may still have to service a forwarded request; it transitions to \(MI^A\) and keeps the value. But nothing stops the <code>PutAck</code> from arriving first, taking it to \(I\) before the <code>Fwd-GetM</code> shows up. The data is gone and the forwarded request has nobody to answer it.</p>
@@ -489,7 +491,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   <section lang="en" class="block hide-metadata"><details id="id43" open="open"><summary><header><h1>
 <span class="taxon"></span>Deadlocking two stores against a load  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The \(M^D\) fix introduces a deadlock of its own. Take two processors that store-miss and a third that load-misses. The second store wins at the directory: the first store gets data and moves \(IM^{AD} \to  IM^{A}\), then the second triggers a <code>Fwd-GetM</code> that takes ownership away from it.</p>
@@ -500,7 +502,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   <section lang="en" class="block hide-metadata"><details id="id44" open="open"><summary><header><h1>
 <span class="taxon"></span>Not clearing the owner too eagerly  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">One more correction to the table: when the home directory is in \(M\) and receives a <code>GetS</code>, it must not clear the owner field as the figure directs. Once in \(S^D\), the directory can no longer tell whether an incoming <code>PutM</code> came from the owner (and should stall) or from a stale node. The owner is only cleared once the data has actually arrived.</p>
@@ -508,13 +510,13 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
 </details></section><section lang="en" class="block hide-metadata"><details id="id45" open="open"><summary><header><h1>
 <span class="taxon"></span>MESI in Murphi <a class="slug" href="/QTSW/">[QTSW]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">With those states in place the rest of MSI is mechanical, and MESI is a short step from it — modulo two design choices and two more races.</p>
   <section lang="en" class="block hide-metadata"><details id="id46" open="open"><summary><header><h1>
 <span class="taxon"></span>The cache controller  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmia4fllqvr7nzhifqxwk5stk2kyje2tfokhddzfjkteyw4kbj6k25i.png"></img>
@@ -531,7 +533,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   <section lang="en" class="block hide-metadata"><details id="id47" open="open"><summary><header><h1>
 <span class="taxon"></span>The directory controller  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png"></img>
@@ -542,7 +544,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   <section lang="en" class="block hide-metadata"><details id="id48" open="open"><summary><header><h1>
 <span class="taxon"></span>Forwards arriving before exclusive data  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The first processor issues <code>GetS</code> and waits in \(IS^D\), while the home directory has already moved to \(E\) and sent it <code>ExclusiveData</code>. A second processor then issues <code>GetM</code>, and home's <code>Fwd-GetM</code> overtakes the data in flight.</p>
@@ -552,7 +554,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   <section lang="en" class="block hide-metadata"><details id="id49" open="open"><summary><header><h1>
 <span class="taxon"></span>Losing exclusive data to an invalidation  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The nastier version of the same race: the invalidation arrives before the forward. By the \(II^A\) rule inherited from MSI, a <code>PutAck</code> in that state drops the line to \(I\) — discarding data a forwarded request is about to ask for.</p>
@@ -573,7 +575,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   <section lang="en" class="block hide-metadata"><details id="id50" open="open"><summary><header><h1>
 <span class="taxon"></span>The finished controllers  </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 3, 2026</li>
+<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">Folding all of the above in leaves these two state machines, which Murphi verifies exhaustively.</p>
