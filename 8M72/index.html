@@ -1,5 +1,5 @@
 <!DOCTYPE html PUBLIC "" "">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script src="/highlightjs-line-numbers.min.js"></script><script>
 window.addEventListener('load', function () {
   if (!window.hljs) return;
@@ -11,7 +11,7 @@ window.addEventListener('load', function () {
           </script><title>Buddy allocation</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon"></span>Buddy allocation <a class="slug" href="/8M72/">[8M72]</a> </h1>
 <div class="metadata"><ul>
-<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">May 12, 2026</li>
+<li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An allocator for memory of total size \(2^n\) that maintains a binary-tree of free blocks at every power-of-two size. To service a request, walk down to the smallest block \(\geq \) requested size; if no block of that size exists, split a larger one (and its "buddy" becomes free). On free, check whether the freed block's buddy is also free, and if so, coalesce upward — recursively.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="50%" src="/bafkrmigwzou6llta75hya6llhd6ixa6gjzeoyjqecitht2op5xxutkjgnu.png"></img>
   <figcaption>Memory of size \(2^n\) organized as a buddy system.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml">The key trick is that buddies differ by exactly one bit in their address at each level. To check whether a block's buddy is free, flip that bit and consult a bitmap. To coalesce upward, mask off the bit and recurse.</p>
@@ -24,7 +24,7 @@ window.addEventListener('load', function () {
         <section lang="en" class="block"><details id="id3"><summary><header><h1>
 <span class="taxon"></span>Free-space management <a class="slug" href="/67X5/">[67X5]</a> </h1>
 <div class="metadata"><ul>
-<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">July 29, 2025</li>
+<li class="meta-item">July 29, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
             <p xmlns="http://www.w3.org/1999/xhtml">Once we have an <span xmlns="" class="link local"><a href="/7MH4/" title="Address space [7MH4]">Address space</a></span>, we still have to actually allocate physical bytes within it. Free-space management is the discipline of tracking which bytes are free, picking which free chunk to satisfy a request, and merging adjacent freed chunks back together. Two fragmentation hazards to watch:</p>
@@ -34,7 +34,7 @@ window.addEventListener('load', function () {
             <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
 <span class="taxon"></span>Malloc placement policies <a class="slug" href="/1ABF/">[1ABF]</a> </h1>
 <div class="metadata"><ul>
-<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">May 12, 2026</li>
+<li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
                 <p xmlns="http://www.w3.org/1999/xhtml">Given a <em>free list</em> of unallocated memory chunks and a request of size \(n\), which chunk do you carve the allocation out of? Different answers trade off fragmentation against search time.</p>
@@ -47,7 +47,7 @@ window.addEventListener('load', function () {
             <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
 <span class="taxon"></span>Segregated lists <a class="slug" href="/FB66/">[FB66]</a> </h1>
 <div class="metadata"><ul>
-<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">May 12, 2026</li>
+<li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A data-structure-level optimization for allocators that maintains separate free lists per common object size. Instead of one global free list scanned by <span xmlns="" class="link local"><a href="/1ABF/" title="Malloc placement policies [1ABF]">Malloc placement policies</a></span>, you keep a list per size class. Allocations of that size pop straight off the matching list — no search.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Grow a per-size list by requesting larger segments from the main allocator and chopping them up.</li>
   <li>Drain back to the main list when no references remain.</li>
@@ -57,7 +57,7 @@ window.addEventListener('load', function () {
             <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
 <span class="taxon"></span>Buddy allocation <a class="slug" href="/8M72/">[8M72]</a> </h1>
 <div class="metadata"><ul>
-<li xmlns:html="http://www.w3.org/1999/xhtml" class="meta-item">May 12, 2026</li>
+<li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An allocator for memory of total size \(2^n\) that maintains a binary-tree of free blocks at every power-of-two size. To service a request, walk down to the smallest block \(\geq \) requested size; if no block of that size exists, split a larger one (and its "buddy" becomes free). On free, check whether the freed block's buddy is also free, and if so, coalesce upward — recursively.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="50%" src="/bafkrmigwzou6llta75hya6llhd6ixa6gjzeoyjqecitht2op5xxutkjgnu.png"></img>
   <figcaption>Memory of size \(2^n\) organized as a buddy system.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml">The key trick is that buddies differ by exactly one bit in their address at each level. To check whether a block's buddy is free, flip that bit and consult a bitmap. To coalesce upward, mask off the bit and recurse.</p>

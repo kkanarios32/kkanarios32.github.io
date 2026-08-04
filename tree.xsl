@@ -2,7 +2,8 @@
 <!-- SPDX-License-Identifier: CC0-1.0 -->
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-  xmlns:f="http://www.forester-notes.org">
+  xmlns:f="http://www.forester-notes.org"
+  xmlns:html="http://www.w3.org/1999/xhtml">
 
   <xsl:key name="tree-with-uri" match="/f:tree/f:mainmatter//f:tree" use="f:frontmatter/f:uri/text()" />
 
@@ -553,6 +554,29 @@ document.addEventListener('keydown', function(e) {
         </xsl:attribute>
       </xsl:if>
 
+      <!-- A collapsed listing should say what it is, not just what it is called.
+           The home page folds Research and Blog away, and a fold hides the one
+           sentence that explains the listing along with the entries it
+           explains — leaving two bare headings, and revealing the description
+           only once the reader has already committed to opening it.
+
+           So an index page transcluded collapsed keeps its opening paragraph in
+           the summary. Its first \p is a description of the listing by
+           convention, which makes it exactly the right thing to leave showing.
+
+           Deliberately narrow, on two counts. It fires only on a collapsed tree
+           that is itself an index page, so it never lifts a paragraph out of an
+           article: the entries within a listing are ordinary trees, and they
+           keep rendering as bare headings. And it skips f:backmatter, where
+           index pages turn up constantly as backlinks — "what links here" is a
+           reference, not a listing being browsed, and describing each row there
+           would bury the link the reader came for. -->
+      <xsl:variable name="listing-blurb" select="
+        f:mainmatter/*[1][self::html:p]
+                      [../../@expanded = 'false']
+                      [../../f:frontmatter/f:meta[@name = 'index'] = 'true']
+                      [not(../../ancestor::f:backmatter)]" />
+
       <xsl:choose>
         <xsl:when test="not(@show-heading='false')">
           <details id="{generate-id(.)}">
@@ -563,8 +587,19 @@ document.addEventListener('keydown', function(e) {
             </xsl:if>
             <summary>
               <xsl:apply-templates select="f:frontmatter" />
+              <xsl:apply-templates select="$listing-blurb" />
             </summary>
-            <xsl:apply-templates select="f:mainmatter" />
+            <xsl:choose>
+              <!-- The blurb was lifted into the summary above; rendering
+                   f:mainmatter wholesale here would print it a second time
+                   the moment the listing is opened. -->
+              <xsl:when test="$listing-blurb">
+                <xsl:apply-templates select="f:mainmatter/*[position() &gt; 1]" />
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:apply-templates select="f:mainmatter" />
+              </xsl:otherwise>
+            </xsl:choose>
             <xsl:apply-templates select="f:frontmatter/f:meta[@name='bibtex']" />
           </details>
         </xsl:when>

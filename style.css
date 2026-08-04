@@ -574,6 +574,23 @@ details>summary>header {
   display: inline;
 }
 
+/* The one-line description a collapsed listing keeps visible — see the
+   listing-blurb variable in tree.xsl. The header above it is inline, so this
+   already starts its own line; it only wants its top margin pulled in so the
+   heading and its description read as one unit rather than two. Below it, just
+   enough to keep two stacked collapsed listings from touching. */
+details>summary>p {
+  margin: .2em 0 .35em 0;
+}
+
+/* Opened, the paragraph is no longer the last thing in the block — it now sits
+   directly above the rows it describes, and needs the ordinary paragraph space
+   under it that it had back when it rendered in the body. Without this the
+   description and the first entry read as one run of text. */
+details[open]>summary>p {
+  margin-bottom: 1em;
+}
+
 a.heading-link {
   box-shadow: none;
 }
@@ -668,6 +685,41 @@ a.index-entry-link {
 
 a.index-entry-link:hover {
   background-color: rgba(0, 100, 255, .1);
+}
+
+/* No taxon prefix on a listing row. A taxon classifies something you are
+   reading; in a listing you are choosing what to read, and the page has
+   already said what the list is — "Reference. Motion-Planning via …" under a
+   heading that reads "Research" spends its first ten characters restating it.
+   Applies to every listing, so the stray "Definition." in the recently-edited
+   listing goes too; nowhere else currently shows a taxon in a row. */
+.index-entry h1 > .taxon {
+  display: none;
+}
+
+/* Reference rows carry more than any other kind: a thumbnail, a title long
+   enough to wrap, and three stacked metadata lines (year, authors, links).
+   Left at the 12pt a blog row uses they become the heaviest thing on the home
+   page, which inverts the emphasis — the listing should be scannable, not
+   dominant. One step down evens the two listings out. */
+section.block.index-entry[data-taxon="Reference"] {
+  font-size: 11pt;
+}
+
+/* Smaller thumbnails in a listing than on the reference's own page, where the
+   figure is the subject rather than an identifying glance. */
+.index-entry .frontmatter-image img {
+  width: 60px;
+}
+
+/* A reference's slug is its citekey, and citekeys are built to be unique and
+   greppable rather than short — [kanariosMotionPlanningContrastiveReinforcement2025]
+   runs longer than most of the titles it trails. Drop it from listing rows
+   only: the title beside it already links to the same page, so the row loses
+   nothing but the noise, and the reference's own page still shows it. Blog
+   slugs like [005F] are short and stay. */
+.index-entry[data-taxon="Reference"] > header > h1 > a.slug {
+  display: none;
 }
 
 nav#toc {
