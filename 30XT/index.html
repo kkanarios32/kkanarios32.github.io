@@ -76,7 +76,7 @@ window.addEventListener('load', function () {
 <div class="metadata"><ul>
 <li class="meta-item">March 24, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-<li class="meta-item">9 min read</li>
+<li class="meta-item">13 min read</li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/CMAL/" title="Murphi [CMAL]">Murphi</a></span> is an explicit-state model checker: you describe a system as guarded transition rules, state the invariants, and it enumerates every reachable interleaving looking for a violation. That makes it a natural fit for <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">cache coherence</a></span>, where the steady-state behavior is easy and the races are not. This post builds a <span xmlns="" class="link local"><a href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages [KIT8]">directory-based</a></span> <span xmlns="" class="link local"><a href="/30XT/" title="MESI protocol [30XT]">MESI protocol</a></span> in Murphi, starting from MSI and adding state every time the checker finds a way to break it.</p><p xmlns="http://www.w3.org/1999/xhtml">The state tables come from <span xmlns="" class="link external"><a href="https://pages.cs.wisc.edu/~markhill/papers/primer2020_2nd_edition.pdf" title="">A Primer on Memory Consistency and Cache Coherence</a></span>, which doubles as the source for these notes. The recurring lesson is that the published tables are not quite enough: every protocol below needs <span xmlns="" class="link local"><a href="/Z32G/" title="Directory protocols expose transient states because transactions span multiple hops [Z32G]">transient states</a></span> the tables leave implicit.</p><section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
 <span class="taxon"></span>Murphi <a class="slug" href="/CMAL/">[CMAL]</a> </h1>
 <div class="metadata"><ul>
@@ -102,16 +102,20 @@ window.addEventListener('load', function () {
 <div class="metadata"><ul>
 <li class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>startstate</em> is the intial configuration for all our declarations.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Must assign a value to every global variable</li></ul></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id11" open="open"><summary><header><h1>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <em>startstate</em> is the intial configuration for all our declarations.</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id11" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Invariants  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An <em>invariant</em> is something that Murphi checks to ensure is true at all possible configurations of the system.</p></details></section><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Overview straight from the docs.</strong> Repeat forever:
-</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Find all rules whose conditions are true in the current state.
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An <em>invariant</em> is something that Murphi checks to ensure is true at all possible configurations of the system.</p></details></section><div xmlns="http://www.w3.org/1999/xhtml" style="margin-top: -0.5rem;"></div>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 100, 255, 0.7);   border-radius: var(--radius);   background-color: rgba(0, 100, 255, 0.05);   "><span style="font-weight: 600; color: rgba(0, 100, 255, 0.7);">Algorithm.</span> 
+<em>Repeat forever:</em>
+<ol><li>Find all rules whose conditions are true in the current state.
        (i.e. conditional expressions are true, given the current values
        of the global variables).</li>
-    <li>Choose one arbitrarily and execute the action, yielding a new state.</li></ol></details></section>
+    <li>Choose one arbitrarily and execute the action, yielding a new state.</li></ol>
+</div>
+</details></section>
   <section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
 <span class="taxon"></span>Why three virtual channels  </h1>
 <div class="metadata"><ul>
@@ -155,9 +159,338 @@ window.addEventListener('load', function () {
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The starting point is the primer's MSI cache controller table.</p>
-<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmifhoq7kszlwemrlvvy4yuuvuk6l6bjadkvsmzclbemz2tzxdt6bjm.png"></img>
-<figcaption>MSI cache controller. Rows are states, columns are events.</figcaption></figure>
-<p xmlns="http://www.w3.org/1999/xhtml">Several table entries are left blank; those are resolved at runtime from the <code>AckCount</code>, which is why the per-processor record carries an <code>ack</code> field alongside the state.</p>
+<figure xmlns="http://www.w3.org/1999/xhtml"><div style="     overflow-x: auto;     max-width: 100%;     margin-bottom: 1em;   ">
+    <table style="       width: 100%;       border-collapse: collapse;       font-size: 0.72em;       line-height: 1.25;       margin-bottom: 0;     ">
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">load</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">store</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">replacement</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>Fwd-GetS</code></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>Fwd-GetM</code></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>Inv</code></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>Put-Ack</code></th>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(I\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>GetS</code> → Dir / \(IS^D\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>GetM</code> → Dir / \(IM^{AD}\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(IS^D\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(IM^{AD}\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(IM^A\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(S\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">hit</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>GetM</code> → Dir / \(SM^{AD}\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>PutS</code> → Dir / \(SI^A\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Inv-Ack</code> → Req / \(I\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(SM^{AD}\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">hit</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Inv-Ack</code> → Req / \(IM^{AD}\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(SM^A\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">hit</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(M\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">hit</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">hit</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>PutM</code>+data → Dir / \(MI^A\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → Req + Dir / \(S\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → Req / \(I\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(MI^A\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → Req + Dir / \(SI^A\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → Req / \(II^A\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(I\)</span></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(SI^A\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Inv-Ack</code> → Req / \(II^A\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(I\)</span></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(II^A\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(I\)</span></td>
+</tr>
+
+</table>
+  </div>
+
+<figcaption>MSI cache controller, requests and forwards. Rows are states, columns are events, and each cell reads <em>action</em>/<em>next state</em>: \(\to \) is "send to", a bare is "no action", an absent next state means "stay put", and a shaded cell is one the table leaves empty.</figcaption></figure>
+<p xmlns="http://www.w3.org/1999/xhtml">The response arrivals split off into their own table, because only a transient state can be waiting on one.</p>
+<figure xmlns="http://www.w3.org/1999/xhtml"><div style="     overflow-x: auto;     max-width: 100%;     margin-bottom: 1em;   ">
+    <table style="       width: 100%;       border-collapse: collapse;       font-size: 0.72em;       line-height: 1.25;       margin-bottom: 0;     ">
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">Data (ack=0)</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">Data (ack&gt;0)</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">Data from owner</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>Inv-Ack</code></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>Last-Inv-Ack</code></th>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(IS^D\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(S\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(S\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(IM^{AD}\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(M\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(IM^A\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(M\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap"><code>ack--</code></span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(IM^A\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap"><code>ack--</code></span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(M\)</span></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(SM^{AD}\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(M\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(SM^A\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(M\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap"><code>ack--</code></span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(SM^A\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap"><code>ack--</code></span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(M\)</span></td>
+</tr>
+
+</table>
+  </div>
+
+<figcaption>MSI cache controller, responses. Data comes from the directory unless the column says otherwise; the stable states are omitted, since none of them can be waiting on a response.</figcaption></figure>
+<p xmlns="http://www.w3.org/1999/xhtml">Several entries here are left blank; those are resolved at runtime from the <code>AckCount</code>, which is why the per-processor record carries an <code>ack</code> field alongside the state.</p>
 <div xmlns="http://www.w3.org/1999/xhtml" class="code-figure"><div class="code-filename">msi.m</div><pre><code class="language-lua">ProcState:
   Record
     state: enum {
@@ -176,7 +509,7 @@ window.addEventListener('load', function () {
   End;</code></pre></div>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
-<code>load</code>, <code>store</code>, and <code>replacement</code> only move the protocol between stable states. To simulate the system it is therefore enough to implement the rules that <em>initiate</em> those transitions — evict from modified, load from invalid — and let the model checker drive the transient states from there.
+<code>load</code>, <code>store</code>, and <code>replacement</code> only move the protocol between stable states. To simulate the system it is therefore enough to implement the rules that <em>initiate</em> those transitions evict from modified, load from invalid, and let the model checker drive the transient states from there.
 </div>
 
 </details></section>
@@ -188,8 +521,138 @@ window.addEventListener('load', function () {
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The directory side starts from the analogous table.</p>
-<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmiadmfswkegttky27zg2gxvkwag3pt72ur7qam2z6vufr6xlvujqca.png"></img>
-<figcaption>MSI directory controller.</figcaption></figure>
+<figure xmlns="http://www.w3.org/1999/xhtml"><div style="     overflow-x: auto;     max-width: 100%;     margin-bottom: 1em;   ">
+    <table style="       width: 100%;       border-collapse: collapse;       font-size: 0.72em;       line-height: 1.25;       margin-bottom: 0;     ">
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>GetS</code></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>GetM</code></th>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(I\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → Req, add Req to Sharers / \(S\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → Req, Owner := Req / \(M\)</td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(S\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → Req, add Req to Sharers</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → Req, <code>Inv</code> → Sharers, clear Sharers, Owner := Req / \(M\)</td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(M\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Fwd-GetS</code> → Owner, add Owner + Req to Sharers, <em>clear Owner</em> / \(S^D\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Fwd-GetM</code> → Owner, Owner := Req</td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(S^D\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+</tr>
+
+</table>
+  </div>
+
+<figcaption>MSI directory controller, coherence requests. The italicized <em>clear Owner</em> in \(M\)/<code>GetS</code> is the table's, and is wrong (see below).</figcaption></figure>
+<figure xmlns="http://www.w3.org/1999/xhtml"><div style="     overflow-x: auto;     max-width: 100%;     margin-bottom: 1em;   ">
+    <table style="       width: 100%;       border-collapse: collapse;       font-size: 0.72em;       line-height: 1.25;       margin-bottom: 0;     ">
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 4px 2px;     text-align: left;     vertical-align: bottom;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;     writing-mode: vertical-rl;     transform: rotate(180deg);   "><code>PutS</code>-NotLast</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 4px 2px;     text-align: left;     vertical-align: bottom;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;     writing-mode: vertical-rl;     transform: rotate(180deg);   "><code>PutS</code>-Last</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 4px 2px;     text-align: left;     vertical-align: bottom;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;     writing-mode: vertical-rl;     transform: rotate(180deg);   "><code>PutM</code> from Owner</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 4px 2px;     text-align: left;     vertical-align: bottom;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;     writing-mode: vertical-rl;     transform: rotate(180deg);   "><code>PutM</code> from Non-Owner</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 4px 2px;     text-align: left;     vertical-align: bottom;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;     writing-mode: vertical-rl;     transform: rotate(180deg);   ">Data</th>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(I\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(S\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">remove Req from Sharers, <code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">remove Req from Sharers, <code>Put-Ack</code> → Req / \(I\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">remove Req from Sharers, <code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(M\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → memory, clear Owner, <code>Put-Ack</code> → Req / \(I\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(S^D\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">remove Req from Sharers, <code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">remove Req from Sharers, <code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">remove Req from Sharers, <code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → memory / \(S\)</td>
+</tr>
+
+</table>
+  </div>
+
+<figcaption>MSI directory controller, evictions and data. A <code>PutM</code> always carries the line with it; one from a node that is not the current owner is stale and needs only an acknowledgment.</figcaption></figure>
 <p xmlns="http://www.w3.org/1999/xhtml">This table is where the first real gap shows up. It gives the directory a single transient state, and the races below force a second one, \(M^D\).</p>
 </details></section>
 
@@ -227,15 +690,393 @@ window.addEventListener('load', function () {
 <div class="metadata"><ul>
 <li class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">With those states in place the rest of MSI is mechanical, and MESI is a short step from it — modulo two design choices and two more races.</p>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">With those states in place the rest of MSI is mechanical, and MESI is a short step from it (modulo two design choices and two more races).</p>
   <section lang="en" class="block hide-metadata"><details id="id20" open="open"><summary><header><h1>
 <span class="taxon"></span>The cache controller  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmia4fllqvr7nzhifqxwk5stk2kyje2tfokhddzfjkteyw4kbj6k25i.png"></img>
-<figcaption>MESI cache controller.</figcaption></figure>
+<figure xmlns="http://www.w3.org/1999/xhtml"><div style="     overflow-x: auto;     max-width: 100%;     margin-bottom: 1em;   ">
+    <table style="       width: 100%;       border-collapse: collapse;       font-size: 0.72em;       line-height: 1.25;       margin-bottom: 0;     ">
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">load</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">store</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">replacement</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>Fwd-GetS</code></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>Fwd-GetM</code></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>Inv</code></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>Put-Ack</code></th>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(I\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>GetS</code> → Dir / \(IS^D\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>GetM</code> → Dir / \(IM^{AD}\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(IS^D\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(IM^{AD}\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(IM^A\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(S\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">hit</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>GetM</code> → Dir / \(SM^{AD}\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>PutS</code> → Dir / \(SI^A\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Inv-Ack</code> → Req / \(I\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(SM^{AD}\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">hit</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Inv-Ack</code> → Req / \(IM^{AD}\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(SM^A\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">hit</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(M\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">hit</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">hit</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>PutM</code>+data → Dir / \(MI^A\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → Req + Dir / \(S\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → Req / \(I\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><strong>\(E\)</strong></th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong>hit</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong><span style="white-space: nowrap">hit / \(M\)</span></strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong><code>PutE</code> (no data) → Dir / \(EI^A\)</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong>data → Req + Dir / \(S\)</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong>data → Req / \(I\)</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(MI^A\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → Req + Dir / \(SI^A\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → Req / \(II^A\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(I\)</span></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><strong>\(EI^A\)</strong></th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong>stall</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong>stall</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong>stall</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong>data → Req + Dir / \(SI^A\)</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong>data → Req / \(II^A\)</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong><span style="white-space: nowrap">-/\(I\)</span></strong></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(SI^A\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Inv-Ack</code> → Req / \(II^A\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(I\)</span></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(II^A\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(I\)</span></td>
+</tr>
+
+</table>
+  </div>
+
+<figcaption>MESI cache controller, requests and forwards. Bold marks what MESI adds to MSI here, the \(E\) and \(EI^A\) rows.</figcaption></figure>
+<figure xmlns="http://www.w3.org/1999/xhtml"><div style="     overflow-x: auto;     max-width: 100%;     margin-bottom: 1em;   ">
+    <table style="       width: 100%;       border-collapse: collapse;       font-size: 0.72em;       line-height: 1.25;       margin-bottom: 0;     ">
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>ExclusiveData</code></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">Data (ack=0)</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">Data (ack&gt;0)</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">Data from owner</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>Inv-Ack</code></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>Last-Inv-Ack</code></th>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(IS^D\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong><span style="white-space: nowrap">-/\(E\)</span></strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(S\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(S\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(IM^{AD}\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(M\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(IM^A\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(M\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap"><code>ack--</code></span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(IM^A\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap"><code>ack--</code></span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(M\)</span></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(SM^{AD}\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(M\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(SM^A\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(M\)</span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap"><code>ack--</code></span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(SM^A\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap"><code>ack--</code></span></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><span style="white-space: nowrap">-/\(M\)</span></td>
+</tr>
+
+</table>
+  </div>
+
+<figcaption>MESI cache controller, responses, again over the transient states only. The whole of MESI's addition here is one cell: <code>ExclusiveData</code> landing in \(IS^D\) gives \(E\) instead of \(S\).</figcaption></figure>
 <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Silent upgrades.</strong> If a cache in \(E\) may upgrade to \(M\) silently, the directory never learns the line went dirty, and the value it hands to the next <code>GetS</code> or <code>GetM</code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat \(E\) exactly like \(M\), forwarding everything. Neither requires a writeback on <code>PutE</code>. I take the first, matching the table.</p>
 <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Signaling exclusivity.</strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <code>ExclusiveData</code> message: receiving it in \(IS^D\) lands the cache in \(E\) rather than \(S\). It turns out to also be the key to the second race below.</p>
 
@@ -251,8 +1092,186 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
 <li class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-<figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmidbkxksvipiebdmkvvv27z5zth3oir5tf23olkw3w6w4hhwqttrem.png"></img>
-<figcaption>MESI directory controller.</figcaption></figure>
+<figure xmlns="http://www.w3.org/1999/xhtml"><div style="     overflow-x: auto;     max-width: 100%;     margin-bottom: 1em;   ">
+    <table style="       width: 100%;       border-collapse: collapse;       font-size: 0.72em;       line-height: 1.25;       margin-bottom: 0;     ">
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>GetS</code></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><code>GetM</code></th>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(I\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong><code>ExclusiveData</code> → Req, Owner := Req / \(E\)</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → Req, Owner := Req / \(M\)</td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(S\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → Req, add Req to Sharers</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → Req, <code>Inv</code> → Sharers, clear Sharers, Owner := Req / \(M\)</td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><strong>\(E\)</strong></th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong><code>Fwd-GetS</code> → Owner, add Owner + Req to Sharers, <em>clear Owner</em> / \(S^D\)</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong><code>Fwd-GetM</code> → Owner, Owner := Req / \(M\)</strong></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(M\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Fwd-GetS</code> → Owner, add Owner + Req to Sharers, <em>clear Owner</em> / \(S^D\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Fwd-GetM</code> → Owner, Owner := Req</td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(S^D\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">stall</td>
+</tr>
+
+</table>
+  </div>
+
+<figcaption>MESI directory controller, coherence requests. Bold marks what MESI adds; the italicized <em>clear Owner</em> entries inherit the MSI table's error.</figcaption></figure>
+<figure xmlns="http://www.w3.org/1999/xhtml"><div style="     overflow-x: auto;     max-width: 100%;     margin-bottom: 1em;   ">
+    <table style="       width: 100%;       border-collapse: collapse;       font-size: 0.72em;       line-height: 1.25;       margin-bottom: 0;     ">
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "></th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 4px 2px;     text-align: left;     vertical-align: bottom;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;     writing-mode: vertical-rl;     transform: rotate(180deg);   "><code>PutS</code>-NotLast</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 4px 2px;     text-align: left;     vertical-align: bottom;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;     writing-mode: vertical-rl;     transform: rotate(180deg);   "><code>PutS</code>-Last</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 4px 2px;     text-align: left;     vertical-align: bottom;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;     writing-mode: vertical-rl;     transform: rotate(180deg);   "><code>PutM</code> from Owner</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 4px 2px;     text-align: left;     vertical-align: bottom;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;     writing-mode: vertical-rl;     transform: rotate(180deg);   "><code>PutM</code> from Non-Owner</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 4px 2px;     text-align: left;     vertical-align: bottom;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;     writing-mode: vertical-rl;     transform: rotate(180deg);   "><code>PutE</code> from Owner</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 4px 2px;     text-align: left;     vertical-align: bottom;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;     writing-mode: vertical-rl;     transform: rotate(180deg);   "><code>PutE</code> from Non-Owner</th>
+
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 4px 2px;     text-align: left;     vertical-align: bottom;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;     writing-mode: vertical-rl;     transform: rotate(180deg);   ">Data</th>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(I\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong><code>Put-Ack</code> → Req</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(S\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">remove Req from Sharers, <code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">remove Req from Sharers, <code>Put-Ack</code> → Req / \(I\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">remove Req from Sharers, <code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong>remove Req from Sharers, <code>Put-Ack</code> → Req</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   "><strong>\(E\)</strong></th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong><code>Put-Ack</code> → Req</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong><code>Put-Ack</code> → Req</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong>data → memory, <code>Put-Ack</code> → Req, clear Owner / \(I\)</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong><code>Put-Ack</code> → Req</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong><code>Put-Ack</code> → Req, clear Owner / \(I\)</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong><code>Put-Ack</code> → Req</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(M\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → memory, <code>Put-Ack</code> → Req, clear Owner / \(I\)</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong><code>Put-Ack</code> → Req</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+</tr>
+
+
+  <tr>
+  <th style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     text-align: left;     vertical-align: top;     font-family: var(--sans);     font-weight: 600;     white-space: nowrap;   ">\(S^D\)</th>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">remove Req from Sharers, <code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">remove Req from Sharers, <code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">remove Req from Sharers, <code>Put-Ack</code> → Req</td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     background-color: rgba(0, 128, 128, 0.12);   "></td>
+ 
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   "><strong>remove Req from Sharers, <code>Put-Ack</code> → Req</strong></td>
+
+  <td style="     border: 1px solid rgb(200, 200, 200);     padding: 2px 5px;     vertical-align: top;     text-align: left;   ">data → memory / \(S\)</td>
+</tr>
+
+</table>
+  </div>
+
+<figcaption>MESI directory controller, evictions and data. A <code>PutM</code> carries the line with it; a <code>PutE</code> never does, since \(E\) is clean, which is why only the <code>PutM</code> column writes back.</figcaption></figure>
 <p xmlns="http://www.w3.org/1999/xhtml">Symmetrically, the directory gains an \(E^D\) state, which for completeness is kept distinct from \(M^D\) but could be folded into it.</p>
 </details></section>
 
@@ -272,7 +1291,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
 <li class="meta-item">August 3, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">The nastier version of the same race: the invalidation arrives before the forward. By the \(II^A\) rule inherited from MSI, a <code>PutAck</code> in that state drops the line to \(I\) — discarding data a forwarded request is about to ask for.</p>
+<p xmlns="http://www.w3.org/1999/xhtml">The nastier version of the same race: the invalidation arrives before the forward. By the \(II^A\) rule inherited from MSI, a <code>PutAck</code> in that state drops the line to \(I\). This discards data a forwarded request is about to ask for.</p>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
 <ol><li><code>Proc_1</code> load-misses → \(IS^D\)</li>
@@ -284,7 +1303,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   <li><code>Proc_1</code> receives <code>ExclusiveData</code> → \(I\), and the data is lost</li></ol>
 </div>
 
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> <code>ExclusiveData</code> pays for itself a second time. Because the message is distinguishable from ordinary <code>Data</code>, a cache receiving it in \(II^D\) knows it was the first reader and transitions to \(E\) instead of \(I\) — from which the pending <code>Fwd-GetM</code> or <code>Fwd-GetS</code> is handled correctly.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> <code>ExclusiveData</code> pays for itself a second time. Because the message is distinguishable from ordinary <code>Data</code>, a cache receiving it in \(II^D\) knows it was the first reader and transitions to \(E\) instead of \(I\). There, the pending <code>Fwd-GetM</code> or <code>Fwd-GetS</code> is handled correctly.</p>
 </details></section>
 
   <section lang="en" class="block hide-metadata"><details id="id24" open="open"><summary><header><h1>

@@ -360,6 +360,91 @@ struct proc {
   "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> I/O-bound jobs are commonly handled by splitting a job into its non-I/O segments and scheduling them individually — turning one long-but-mostly-blocked job into many short, runnable ones.</html:div>
 </fr:mainmatter></fr:tree></fr:mainmatter>
         </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>1</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/007Y/</fr:uri>
+            <fr:display-uri>007Y</fr:display-uri>
+            <fr:route>/007Y/</fr:route>
+            <fr:title text="TPE Process Interlude">TPE Process Interlude</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The Unix <fr:link href="/JJ45/" title="Process API" uri="https://kellenkanarios.com/JJ45/" display-uri="JJ45" type="local">Process API</fr:link> in concrete form: three syscalls that between them let you spawn, synchronize with, and replace processes, plus the asynchronous-event mechanism that ties them together.</html:p><fr:tree show-metadata="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/O1S9/</fr:uri><fr:display-uri>O1S9</fr:display-uri><fr:route>/O1S9/</fr:route><fr:title text="fork()">fork()</fr:title></fr:frontmatter><fr:mainmatter><html:p>The Unix system call that duplicates the calling <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>. After <html:code>fork()</html:code> returns, two processes exist where there was one. The child gets its own copy of:</html:p><html:ol><html:li>Address space.</html:li>
+  <html:li>General-purpose registers.</html:li>
+  <html:li>Program counter — the child returns from <html:code>fork()</html:code> at the same instruction the parent does.</html:li></html:ol><html:p>The two processes are distinguished by <html:code>fork()</html:code>'s return value:</html:p><html:pre><html:code class="language-c"><![CDATA[int main()
+  int rc = fork();
+  if (rc < 0)
+    printf("error with fork");
+  else if (rc == 0)
+    printf("in child");
+  else
+    printf("in parent");        // rc holds child PID]]></html:code></html:pre>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Which process is scheduled first after <html:code>fork()</html:code> is non-deterministic. Use <fr:link href="/J6VZ/" title="wait()" uri="https://kellenkanarios.com/J6VZ/" display-uri="J6VZ" type="local">wait()</fr:link> if you need ordering.</html:div>
+
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> The copy is logical, not physical: real implementations use <fr:link href="/DEJB/" title="Copy-on-write" uri="https://kellenkanarios.com/DEJB/" display-uri="DEJB" type="local">Copy-on-write</fr:link> so the duplicated address space only allocates fresh pages when one side writes to them.</html:div>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/J6VZ/</fr:uri><fr:display-uri>J6VZ</fr:display-uri><fr:route>/J6VZ/</fr:route><fr:title text="wait()">wait()</fr:title></fr:frontmatter><fr:mainmatter><html:p>Blocks the calling <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link> until one of its children terminates. The OS marks the child's PCB <html:code>ZOMBIE</html:code> on exit, keeping enough state (exit status, resource usage) for the parent to retrieve via <html:code>wait()</html:code>; only when the parent collects it is the child fully reaped.</html:p><html:p><html:code>wait()</html:code> returns the PID of the child that died. Variant <html:code>waitpid(pid, ...)</html:code> blocks on a specific child — useful when a parent has multiple children and only one is interesting.</html:p><html:p>Used to enforce ordering between parent and child code paths after <fr:link href="/O1S9/" title="fork()" uri="https://kellenkanarios.com/O1S9/" display-uri="O1S9" type="local">fork()</fr:link>, or to know when an <fr:link href="/YHJR/" title="exec()" uri="https://kellenkanarios.com/YHJR/" display-uri="YHJR" type="local">exec()</fr:link>'d program finishes.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Calling <html:code>wait()</html:code> with no children to wait on returns <html:code>-1</html:code>.</html:div>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/YHJR/</fr:uri><fr:display-uri>YHJR</fr:display-uri><fr:route>/YHJR/</fr:route><fr:title text="exec()">exec()</fr:title></fr:frontmatter><fr:mainmatter><html:p>Replaces the calling <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>'s program with a new executable. <html:code>exec()</html:code> does not return on success — the original code, data, stack, and heap are discarded and the new program runs in their place. The PID is unchanged.</html:p><html:p>What <html:code>exec()</html:code> does internally:</html:p><html:ol><html:li>Loads the new executable's code and static data, overwriting the current.</html:li>
+  <html:li>Re-initializes stack and heap.</html:li>
+  <html:li>Jumps to the new program's entry point with arguments passed as <html:code>argv</html:code>.</html:li></html:ol><html:p>The canonical Unix pattern is <html:code>fork()</html:code> then <html:code>exec()</html:code> — the shell uses this to launch a command without becoming that command:</html:p><html:pre><html:code class="language-c"><![CDATA[int main()
+  while (true) {
+    command = getcommand();
+    int rc = fork();
+    if (rc < 0)
+      printf("error with fork");
+    else if (rc == 0)
+      exec(command);            // child becomes the command
+    else
+      int rc = wait(NULL);      // parent waits for it
+  }]]></html:code></html:pre><html:p>Redirection is implemented by opening a file in the child between <html:code>fork()</html:code> and <html:code>exec()</html:code>, attached to <html:code>STDOUT_FILENO</html:code>:</html:p><html:pre><html:code class="language-c"><![CDATA[if (rc == 0)
+  close(STDOUT_FILENO);
+  open("output.txt");
+  exec(command);]]></html:code></html:pre>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(90, 90, 110, 0.7);
+  border-radius: var(--radius);
+  background-color: rgba(90, 90, 110, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> The many variants — <html:code>execl</html:code>, <html:code>execle</html:code>, <html:code>execlp</html:code>, <html:code>execv</html:code>, <html:code>execvp</html:code>, <html:code>execvP</html:code> — differ in how they take arguments (list vs. vector), whether they use the <html:code>PATH</html:code> environment variable, and whether they take an explicit environment.</html:div>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/9V3H/</fr:uri><fr:display-uri>9V3H</fr:display-uri><fr:route>/9V3H/</fr:route><fr:title text="Unix signals">Unix signals</fr:title></fr:frontmatter><fr:mainmatter><html:p>An asynchronous notification delivered to a <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>. A process sends a signal with <html:code>kill(pid, signum)</html:code> (the name is misleading — most signals don't kill); the recipient can install a handler with <html:code>signal(signum, handler)</html:code> to "catch" it, otherwise the default action runs (often termination).</html:p><html:p>Signals are the OS's mechanism for events the recipient didn't ask to be told about: <html:code>SIGINT</html:code> from Ctrl-C, <html:code>SIGSEGV</html:code> from a <fr:link href="/CXFM/" title="Page fault" uri="https://kellenkanarios.com/CXFM/" display-uri="CXFM" type="local">Page fault</fr:link> on an invalid page, <html:code>SIGCHLD</html:code> when a child exits, <html:code>SIGTERM</html:code> from an administrative kill.</html:p><html:p>Who can signal whom depends on the <html:em>user</html:em> owning the process — a user can signal their own processes; the <html:em>superuser</html:em> can signal any process.</html:p></fr:mainmatter></fr:tree>
+ <html:div class="jms-callout" style="
+  margin: 1em 0 1em 0.25em;
+  padding: 0.5em 1.1em 0.5em 1.2em;
+  border-left: 4px solid rgba(60, 90, 180, 0.8);
+  border-radius: var(--radius);
+  background-color: rgba(60, 90, 180, 0.05);
+  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
+Combining <html:code>fork()</html:code> and <html:code>exec()</html:code> is where the true power lies — together they implement an entire shell. The worked examples and homework live in <fr:link href="/W4DQ/" title="Three Easy Pieces: Exercises" uri="https://kellenkanarios.com/W4DQ/" display-uri="W4DQ" type="local">Three Easy Pieces: Exercises</fr:link> under the <html:em>Process Interlude</html:em> section.
+</html:div>
+</fr:mainmatter>
+        </fr:tree>
       </fr:mainmatter>
     </fr:tree>
     <fr:tree show-metadata="false" hidden-when-empty="true">

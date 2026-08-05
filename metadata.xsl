@@ -169,6 +169,19 @@
     </li>
   </xsl:template>
 
+  <!-- Kept distinct from \meta{paper} rather than folded into it: for a
+       workshop or conference paper the OpenReview page is not the PDF, it is
+       the reviews, the discussion, and the decision alongside it. Naming the
+       host is the whole point — a reader who knows what OpenReview is knows
+       what they will find there, and a bare "Paper" would hide it. -->
+  <xsl:template match="f:meta[@name='openreview']">
+    <li class="meta-item">
+      <a class="link external" href="{.}">
+        <xsl:text>OpenReview</xsl:text>
+      </a>
+    </li>
+  </xsl:template>
+
   <xsl:template match="f:meta[@name='poster']">
     <li class="meta-item">
       <a class="link external" href="{.}">
