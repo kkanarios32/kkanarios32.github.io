@@ -15,28 +15,6 @@
  font-size: 1.15em !important;
 }
 
-/* inria-sans-300 - latin_latin-ext */
-@font-face {
-  font-display: swap;
-  /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Facebook Sans';
-  font-style: normal;
-  font-weight: 300;
-  src: url('fonts/FacebookSansLight.woff2') format('woff2');
-  /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
-}
-
-/* inria-sans-300italic - latin_latin-ext */
-@font-face {
-  font-display: swap;
-  /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Facebook Sans';
-  font-style: italic;
-  font-weight: 300;
-  src: url('fonts/FacebookSansLightItalic.woff2') format('woff2');
-  /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
-}
-
 /* XCharter — serif body text. Michael Sharpe's extension of Bitstream Charter.
    License: theme/LICENSES/Bitstream-Charter.txt (font files) + theme/LICENSES/XCharter.txt */
 @font-face {
@@ -90,52 +68,7 @@
   src: url('fonts/HankenGrotesk-Italic-Variable.woff2') format('woff2-variations');
 }
 
-/* inria-sans-regular - latin_latin-ext */
-@font-face {
-  font-display: swap;
-  /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Facebook Sans';
-  font-style: normal;
-  font-weight: 400;
-  src: url('fonts/FacebookSansRegular.woff2') format('woff2');
-  /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
-}
-
-/* inria-sans-italic - latin_latin-ext */
-@font-face {
-  font-display: swap;
-  /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Facebook Sans';
-  font-style: italic;
-  font-weight: 400;
-  src: url('fonts/FacebookSansItalic.woff2') format('woff2');
-  /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
-}
-
-/* inria-sans-700 - latin_latin-ext */
-@font-face {
-  font-display: swap;
-  /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Facebook Sans';
-  font-style: normal;
-  font-weight: 700;
-  src: url('fonts/FacebookSansBold.woff2') format('woff2');
-  /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
-}
-
-/* inria-sans-700italic - latin_latin-ext */
-@font-face {
-  font-display: swap;
-  /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Facebook Sans';
-  font-style: italic;
-  font-weight: 700;
-  src: url('fonts/FacebookSansBoldItalic.woff2') format('woff2');
-  /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
-}
-
 :root {
-  --content-gap: 15px;
   --radius: 5px;
   /* Sans family for structural chrome — titles, wordmark, TOC, metadata, and
      the \paragraph run-in labels. Swap this one value to change the site's
@@ -319,6 +252,7 @@ body {
   font-family: XCharter, Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
   font-size: 12pt;
   line-height: 1.55;
+  hyphens: auto;
   /* Nothing set a bottom margin anywhere, so every page ended flush with its
      last line. That is worst under the subscribe block, where the field's
      baseline rule would sit a few pixels off the viewport edge on a short
@@ -418,30 +352,14 @@ section section[data-taxon="Person"]>details>summary>header>h1>.taxon {
   display: none;
 }
 
-/* Spaced-repetition cards (trees/cards/, \taxon{Card}). Paint the whole card —
-   question (title) and answer (body) — as one blue block with a card icon, so
-   it reads as a self-contained flashcard inline and when transcluded into the
-   concept it tests. */
-.block[data-taxon="Card"] {
-  background-color: aliceblue;
-  border-left: 4px solid steelblue;
-  border-radius: 4px;
-  padding: 2px 12px 6px;
-  margin-bottom: 1em;
-}
-
-.block[data-taxon="Card"]>details>summary>header>h1 {
-  font-family: XCharter, Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
-  font-weight: normal;
-}
-
-.block[data-taxon="Card"]>details>summary>header>h1>.taxon {
-  color: steelblue;
-}
-
-.block[data-taxon="Card"]>details>summary>header>h1>.taxon::before {
-  content: "🗂️ ";
-}
+/* Spaced-repetition cards (trees/cards/, \taxon{Card}) carry no block styling
+   of their own. They used to be painted as a blue flashcard, question and
+   answer together, which fought with every other taxon on the page and gave
+   away the answer besides. A card is structurally an exercise — a question
+   whose answer you should attempt before reading — so it now renders like
+   one: an ordinary taxon heading with the answer behind \foldout's triangle
+   (see \prompt in base-macros). Nothing to style here; the fold-out rules
+   below do the work. */
 
 footer>section {
   margin-bottom: 1em;
@@ -592,10 +510,6 @@ details[open]>summary>p {
   margin-bottom: 1em;
 }
 
-a.heading-link {
-  box-shadow: none;
-}
-
 details h1 {
   font-size: 13pt;
   display: inline;
@@ -608,11 +522,6 @@ section .block[data-taxon] details>summary>header>h1 {
 span.taxon {
   color: #444;
   font-weight: 500;
-}
-
-
-.link-list>section>details>summary>header h1 {
-  font-size: 12pt;
 }
 
 
@@ -643,9 +552,45 @@ section.block>details[open] {
   margin-bottom: 1em;
 }
 
+/* Fold-outs — \foldout in base-macros, the block a proof, a solution, or a
+   card's answer hides behind. On an index page a collapsed entry needs no
+   affordance: the page is visibly a list of things to open. Mid-article it
+   needs one, because the theme hides the browser's own disclosure marker
+   everywhere (details>summary::marker above) and a bare label reading
+   "Solution" looks like it introduces the solution rather than conceals it —
+   a reader scrolls past the thing they came for.
 
-.link-list>section.block>details {
-  margin-bottom: .25em;
+   The glyph is the whole of what lives here, because it is the whole of what
+   an inline style cannot do: it depends on whether the <details> is open, and
+   no inline style can see state. Typography stays on the macro, where the
+   accent is — a folded label is its callout's label, not a piece of chrome, so
+   it keeps that callout's color and weight and the triangle inherits them. */
+.foldout {
+  cursor: pointer;
+}
+
+.foldout::before {
+  content: "▸";
+  display: inline-block;
+  /* Fixed box so the label does not shift sideways when the glyph swaps. */
+  width: 1.1em;
+}
+
+details[open]>summary>.foldout::before {
+  content: "▾";
+}
+
+/* A fold-out is a bare <details>, not a subtree, so it carries none of the
+   spacing section.block>details supplies. Standing on its own in the body it
+   still wants a paragraph's worth of room; inside a callout it wants none,
+   because the callout's own padding is already the gap and any margin here
+   shows up as a strip of tint below the last line. */
+details:has(>summary>.foldout) {
+  margin-bottom: 1em;
+}
+
+.jms-callout>details:has(>summary>.foldout) {
+  margin-bottom: 0;
 }
 
 /* Index entries — the listing rows emitted by tree.xsl's index-entry rule for
@@ -660,10 +605,6 @@ section.block.index-entry {
      carries no size of its own — sizing the section rather than the h1 is what
      keeps the title and that metadata line in proportion. */
   font-size: 12pt;
-}
-
-.link-list>section.block.index-entry {
-  margin-bottom: .25em;
 }
 
 .index-entry>header {
@@ -837,24 +778,8 @@ ninja-keys::part(ninja-action) {
   white-space: nowrap;
 }
 
-body {
-  hyphens: auto;
-}
-
 table {
   margin-bottom: 1em;
-}
-
-table.macros {
-  overflow-x: visible;
-  overflow-y: visible;
-  font-size: 0.9em;
-}
-
-table.macros td {
-  padding-left: 5pt;
-  padding-right: 15pt;
-  vertical-align: baseline;
 }
 
 th {
@@ -865,98 +790,6 @@ th,
 td {
   padding: 0 15px;
   vertical-align: top;
-}
-
-td.macro-name,
-td.macro-body {
-  white-space: nowrap;
-}
-
-td.macro-doc {
-  font-size: .9em;
-}
-
-.enclosing.macro-scope>.enclosing {
-  border-radius: 2px;
-}
-
-.enclosing.macro-scope>.enclosing:hover {
-  background-color: rgba(0, 100, 255, 0.1);
-}
-
-[aria-label][role~="tooltip"]::after {
-  font-family: var(--sans);
-}
-
-.tooltip {
-  position: relative;
-}
-
-.inline.tooltip {
-  display: inline-block;
-}
-
-.display.tooltip {
-  display: block;
-}
-
-
-/* The tooltip class is applied to the span element that is the tooltip */
-
-.tooltip .tooltiptext {
-  visibility: hidden;
-  white-space: nowrap;
-  min-width: fit-content;
-  background-color: black;
-  color: #fff;
-  padding-left: 5px;
-  padding-top: 5px;
-  padding-right: 10px;
-  border-radius: 6px;
-  position: absolute;
-  z-index: 1;
-  top: 100%;
-  left: 50%;
-  margin-left: -60px;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.tooltip .tooltiptext::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-}
-
-
-/* Show the tooltip */
-
-.tooltip:hover .tooltiptext {
-  visibility: visible;
-  opacity: 1;
-}
-
-.tooltiptext a {
-  color: white
-}
-
-.macro-doc {
-  font-style: italic;
-}
-
-.macro-name {
-  white-space: nowrap;
-}
-
-.macro-is-private {
-  color: var(--secondary);
-}
-
-blockquote {
-  border-inline-start: 1px solid var(--secondary);
 }
 
 a.slug:hover,
@@ -977,10 +810,6 @@ a {
 
 .nowrap {
   white-space: nowrap;
-}
-
-.nocite {
-  display: none
 }
 
 blockquote {

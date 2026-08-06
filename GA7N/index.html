@@ -79,7 +79,11 @@ window.addEventListener('load', function () {
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> If a transaction touches more cache lines than the cache holds, the tracking overflows.</div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Fall back to software transactional memory (STM) on overflow — a hybrid scheme that keeps hardware fast-path for common cases.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span></summary>Fall back to software transactional memory (STM) on overflow — a hybrid scheme that keeps hardware fast-path for common cases.</details>
+</div>
+
 </details></section>
 </details></section>
 
@@ -446,7 +450,11 @@ release(lock):
   <li>Same bank, different words: serialize.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> How to avoid bank conflicts?</div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> Change the access pattern so threads hit different banks (often by transposing or by adding padding to break the stride that causes the conflict).</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span></summary>Change the access pattern so threads hit different banks (often by transposing or by adding padding to break the stride that causes the conflict).</details>
+</div>
+
 </details></section>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The GPU memory hierarchy is software-managed at L1 (shared memory) and coherent only at L2 — by restricting L1 to local-to-block scope, the architecture sidesteps the cost of a global <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">Cache coherence</a></span> protocol on a thousand-way-parallel chip.</div>
 <section lang="en" class="block hide-metadata"><details id="id45" open="open"><summary><header><h1>
@@ -460,7 +468,11 @@ release(lock):
 <p xmlns="http://www.w3.org/1999/xhtml">Coalescing is why memory layout matters so much for GPU code. The standard idiom is <em>structure-of-arrays</em> (SoA) instead of <em>array-of-structures</em> (AoS): threads accessing the same field of consecutive records hit consecutive bytes, which coalesce; threads accessing the same struct don't.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> Should you always cache on the GPU?</div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> No. If you're memory-bound and have no <span xmlns="" class="link local"><a href="/PMP9/" title="Spatial locality [PMP9]">Spatial locality</a></span>, cache is wasted on data you won't reuse. CUDA exposes the option to disable L1 caching for these cases, which lets misaligned loads transfer only the bytes needed instead of full cache lines.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span></summary>No. If you're memory-bound and have no <span xmlns="" class="link local"><a href="/PMP9/" title="Spatial locality [PMP9]">Spatial locality</a></span>, cache is wasted on data you won't reuse. CUDA exposes the option to disable L1 caching for these cases, which lets misaligned loads transfer only the bytes needed instead of full cache lines.</details>
+</div>
+
 </details></section></details></section>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Use GPUs for parallel parts where throughput dominates. Use CPUs for sequential parts where latency dominates — the <span xmlns="" class="link local"><a href="/RJEB/" title="ILP vs TLP [RJEB]">ILP vs TLP</a></span> axis is the right frame for deciding which.</div>
 <section lang="en" class="block hide-metadata"><details id="id46" open="open"><summary><header><h1>
@@ -530,7 +542,11 @@ Unlike fully-connected cannot batch self-attention because it depends on the ind
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Has lower memory capacity (fewer GB) due to added processing units (PU).
 </div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Use Compute eXpress Link (CXL) to do memory expansion to get high memory bandwidth + expend memory capacity.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span></summary>Use Compute eXpress Link (CXL) to do memory expansion to get high memory bandwidth + expend memory capacity.</details>
+</div>
+
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
 Put high use operations i.e. vector multiplication, element-wise multiplication in PIM module (99% usage). Put more complicated operations on PNM accelerator. TODO: ISAs for each specified on slides (not available yet).
@@ -676,7 +692,11 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
   <li>Channel load drops further for non-uniform traffic that respects the natural partitioning.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> <em>Zero path diversity.</em> There is exactly one path between any source and destination. A single hot link wedges traffic.</div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Add <em>shuffle stages</em> that permute paths after each routing stage, so the same source-destination pair can be reached by multiple routes.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span></summary>Add <em>shuffle stages</em> that permute paths after each routing stage, so the same source-destination pair can be reached by multiple routes.</details>
+</div>
+
 </details></section>
 <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id67" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Clos network <a class="slug" href="/YKAN/">[YKAN]</a> </h1>
@@ -685,14 +705,18 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A three-stage <span xmlns="" class="link local"><a href="/95AC/" title="Direct vs indirect networks [95AC]">indirect network</a></span> parameterized by \((m, n, r)\): \(r\) input switches and \(r\) output switches each of size \(n \times  m\), with \(m\) middle-stage switches each \(r \times  r\). Total terminal nodes \(N = nr\). Non-blocking when \(m \geq  2n - 1\).</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Number of total switching elements scales as \(N^{1.5}\) versus \(N^2\) for a flat <span xmlns="" class="link local"><a href="/YV5J/" title="Crossbar [YV5J]">Crossbar</a></span> while preserving non-blocking.</li>
   <li>Path diversity is \(m\) — multiple distinct paths between any source and destination.</li></ul>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>
 There are \(rmn\) input-switch elements, \(mr^2\) middle-switch elements, and \(rmn\) output-switch elements:
 \[S = 2rmn + mr^2.\]
 With \(r = N/n\):
 \[S = 2Nm + m(N/n)^2.\]
 Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 \[S = 4mN = O(N^{1.5}).\]
+</details>
 </div>
+
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> A <em>folded</em> Clos network — input and output stages combined, making \(n\) input ports and \(m\) output ports bidirectional — is structurally the same as a <span xmlns="" class="link local"><a href="/DFC7/" title="Fat tree [DFC7]">Fat tree</a></span>.</div>
 </details></section>
@@ -883,7 +907,11 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
   <li>Same bank, different words: serialize.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> How to avoid bank conflicts?</div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> Change the access pattern so threads hit different banks (often by transposing or by adding padding to break the stride that causes the conflict).</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span></summary>Change the access pattern so threads hit different banks (often by transposing or by adding padding to break the stride that causes the conflict).</details>
+</div>
+
 </details></section>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The GPU memory hierarchy is software-managed at L1 (shared memory) and coherent only at L2 — by restricting L1 to local-to-block scope, the architecture sidesteps the cost of a global <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">Cache coherence</a></span> protocol on a thousand-way-parallel chip.</div>
 <section lang="en" class="block hide-metadata"><details id="id84" open="open"><summary><header><h1>
@@ -897,7 +925,11 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 <p xmlns="http://www.w3.org/1999/xhtml">Coalescing is why memory layout matters so much for GPU code. The standard idiom is <em>structure-of-arrays</em> (SoA) instead of <em>array-of-structures</em> (AoS): threads accessing the same field of consecutive records hit consecutive bytes, which coalesce; threads accessing the same struct don't.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> Should you always cache on the GPU?</div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> No. If you're memory-bound and have no <span xmlns="" class="link local"><a href="/PMP9/" title="Spatial locality [PMP9]">Spatial locality</a></span>, cache is wasted on data you won't reuse. CUDA exposes the option to disable L1 caching for these cases, which lets misaligned loads transfer only the bytes needed instead of full cache lines.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span></summary>No. If you're memory-bound and have no <span xmlns="" class="link local"><a href="/PMP9/" title="Spatial locality [PMP9]">Spatial locality</a></span>, cache is wasted on data you won't reuse. CUDA exposes the option to disable L1 caching for these cases, which lets misaligned loads transfer only the bytes needed instead of full cache lines.</details>
+</div>
+
 </details></section></details></section>
         <section lang="en" class="block"><details id="id85"><summary><header><h1>
 <span class="taxon"></span>Directory-based coherence scales by replacing broadcasts with point-to-point messages <a class="slug" href="/KIT8/">[KIT8]</a> </h1>
@@ -1087,7 +1119,11 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
   <li>Channel load drops further for non-uniform traffic that respects the natural partitioning.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> <em>Zero path diversity.</em> There is exactly one path between any source and destination. A single hot link wedges traffic.</div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span> Add <em>shuffle stages</em> that permute paths after each routing stage, so the same source-destination pair can be reached by multiple routes.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span></summary>Add <em>shuffle stages</em> that permute paths after each routing stage, so the same source-destination pair can be reached by multiple routes.</details>
+</div>
+
 </details></section>
 <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id102" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Clos network <a class="slug" href="/YKAN/">[YKAN]</a> </h1>
@@ -1096,14 +1132,18 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A three-stage <span xmlns="" class="link local"><a href="/95AC/" title="Direct vs indirect networks [95AC]">indirect network</a></span> parameterized by \((m, n, r)\): \(r\) input switches and \(r\) output switches each of size \(n \times  m\), with \(m\) middle-stage switches each \(r \times  r\). Total terminal nodes \(N = nr\). Non-blocking when \(m \geq  2n - 1\).</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Number of total switching elements scales as \(N^{1.5}\) versus \(N^2\) for a flat <span xmlns="" class="link local"><a href="/YV5J/" title="Crossbar [YV5J]">Crossbar</a></span> while preserving non-blocking.</li>
   <li>Path diversity is \(m\) — multiple distinct paths between any source and destination.</li></ul>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>
 There are \(rmn\) input-switch elements, \(mr^2\) middle-switch elements, and \(rmn\) output-switch elements:
 \[S = 2rmn + mr^2.\]
 With \(r = N/n\):
 \[S = 2Nm + m(N/n)^2.\]
 Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 \[S = 4mN = O(N^{1.5}).\]
+</details>
 </div>
+
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> A <em>folded</em> Clos network — input and output stages combined, making \(n\) input ports and \(m\) output ports bidirectional — is structurally the same as a <span xmlns="" class="link local"><a href="/DFC7/" title="Fat tree [DFC7]">Fat tree</a></span>.</div>
 </details></section>

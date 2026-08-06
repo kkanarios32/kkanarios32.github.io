@@ -34,7 +34,9 @@ such that \(\mathbf {o}_{i,n}' = \mathbf {o}_n\)</p>
     \]
 </div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>
   We will proceed by directly rewriting the recurrence for \(\mathbf {o}_{i,k}'\) as 
   \[
     \begin {align*}
@@ -43,7 +45,9 @@ such that \(\mathbf {o}_{i,n}' = \mathbf {o}_n\)</p>
                         &amp;= \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} +  \frac {\exp (x_{i,k} - m_k)}{d_k} \cdot  \mathbf {v}_k
     .\end {align*}
     \]
-  </div>
+  </details>
+</div>
+
 <p xmlns="http://www.w3.org/1999/xhtml">Thus, we are left with the following algorithm</p><div xmlns="http://www.w3.org/1999/xhtml" class="code-figure"><div class="code-filename">flash_attention.py</div><pre><code class="language-python">for i in range(N):                      # one query row at a time
     m = float("-inf")                    # running max of the logits
     d = 0.0                              # running softmax denominator
@@ -108,10 +112,16 @@ Therefore, we must find a recursive relationship such that \(d_{i+1} = f(d_i, m_
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> What is \(f(d_i, m_i, x_{i+1})\)?</div>
 
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> Consider \(d_{i+1} = d_i \cdot  \exp (m_{i} - m_{i + 1}) + \exp (x_{i + 1} - m_{i + 1})\).</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span></summary>Consider \(d_{i+1} = d_i \cdot  \exp (m_{i} - m_{i + 1}) + \exp (x_{i + 1} - m_{i + 1})\).</details>
+</div>
 
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> 
+
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>
   This can be seen by directly rewriting \(d_{i + 1}\). 
   \[
     \begin {align*}
@@ -121,7 +131,9 @@ Therefore, we must find a recursive relationship such that \(d_{i+1} = f(d_i, m_
       &amp;= d_{i} \exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1})
     \end {align*}
   \]
+</details>
 </div>
+
 
 <p xmlns="http://www.w3.org/1999/xhtml">
 The running denominator \(d\) is rescaled by \(e^{m - m_{\text {new}}}\) each time a new maximum is found, keeping it consistent with the safe-softmax shift.</p>
@@ -164,7 +176,9 @@ such that \(\mathbf {o}_{i,n}' = \mathbf {o}_n\)</p>
     \]
 </div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>
   We will proceed by directly rewriting the recurrence for \(\mathbf {o}_{i,k}'\) as 
   \[
     \begin {align*}
@@ -173,7 +187,9 @@ such that \(\mathbf {o}_{i,n}' = \mathbf {o}_n\)</p>
                         &amp;= \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} +  \frac {\exp (x_{i,k} - m_k)}{d_k} \cdot  \mathbf {v}_k
     .\end {align*}
     \]
-  </div>
+  </details>
+</div>
+
 <p xmlns="http://www.w3.org/1999/xhtml">Thus, we are left with the following algorithm</p><div xmlns="http://www.w3.org/1999/xhtml" class="code-figure"><div class="code-filename">flash_attention.py</div><pre><code class="language-python">for i in range(N):                      # one query row at a time
     m = float("-inf")                    # running max of the logits
     d = 0.0                              # running softmax denominator
@@ -381,10 +397,16 @@ Therefore, we must find a recursive relationship such that \(d_{i+1} = f(d_i, m_
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> What is \(f(d_i, m_i, x_{i+1})\)?</div>
 
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span> Consider \(d_{i+1} = d_i \cdot  \exp (m_{i} - m_{i + 1}) + \exp (x_{i + 1} - m_{i + 1})\).</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span></summary>Consider \(d_{i+1} = d_i \cdot  \exp (m_{i} - m_{i + 1}) + \exp (x_{i + 1} - m_{i + 1})\).</details>
+</div>
 
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span> 
+
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>
   This can be seen by directly rewriting \(d_{i + 1}\). 
   \[
     \begin {align*}
@@ -394,7 +416,9 @@ Therefore, we must find a recursive relationship such that \(d_{i+1} = f(d_i, m_
       &amp;= d_{i} \exp (m_{i} - m_{i + 1}) + \exp (x_{i+1} - m_{i+1})
     \end {align*}
   \]
+</details>
 </div>
+
 
 <p xmlns="http://www.w3.org/1999/xhtml">
 The running denominator \(d\) is rescaled by \(e^{m - m_{\text {new}}}\) each time a new maximum is found, keeping it consistent with the safe-softmax shift.</p>

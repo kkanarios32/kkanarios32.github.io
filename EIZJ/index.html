@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script src="/highlightjs-line-numbers.min.js"></script><script>
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+    if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
+  });
+});
+          </script><title>Two chips split X[B, D] and Y[D, F] along D, each computing a partial sum and exchanging it. When is this compute-bound, and why is the threshold surprising?</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Card"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Two chips split \(X[B, D]\) and \(Y[D, F]\) along \(D\), each computing a partial sum and exchanging it. When is this compute-bound, and why is the threshold surprising? <a class="slug" href="/EIZJ/">[EIZJ]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 6, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Answer.</span></summary>
+  Each chip does half the contraction, \(T_{\mathrm {math}} = BDF / 1.97 \times  10^{14}\), then ships its \([B, F]\) partial sum across the interconnect, \(T_{\mathrm {comms}} = 2BF / 4.5 \times  10^{10}\). Compute-bound means
+
+  \[\frac {BDF}{2BF} = \frac {D}{2} &gt; \frac {1.97 \times  10^{14}}{4.5 \times  10^{10}} = 4377 \implies  D &gt; 8755\]
+
+  The surprise is that the threshold depends on \(D\), not \(B\): the batch scales FLOPs and bytes-sent identically and cancels out. Same roofline machinery as a single-chip matmul, but because the relevant bandwidth is now the network, a different dimension decides whether <span xmlns="" class="link local"><a href="/A7PN/" title="Tensor Parallelism [A7PN]">Tensor Parallelism</a></span> pays for itself — the contracted dimension has to be large enough to hide the exchange.
+</details>
+</div>
+
+
+</details></section><footer xmlns="">
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id3"><summary><header><h1>
+<span class="taxon"></span>Notebook: <span class="link local"><a href="/scaling-book/" title="How to scale your model [scaling-book]">How to scale your model</a></span> <a class="slug" href="/TAAK/">[TAAK]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 6, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Primarily a collection of Anki cards with a few notes. Solutions can be found in the <span xmlns="" class="link local"><a href="/KZR4/" title="Scaling Book: Exercises [KZR4]">solution manual</a></span>.</p>
+  <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>All about rooflines  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 6, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon"></span>TPU Architecture  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 6, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+
+</details></section>
+</details></section>
+      </details></section>
+    
+    <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id7"><summary><header><h1>
+<span class="taxon"></span>Tensor Parallelism <a class="slug" href="/A7PN/">[A7PN]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">A form of parallelism that splits the actual weights of the model across devices.</p>
+            <ul xmlns="http://www.w3.org/1999/xhtml"><li>Large weight matrices split across devices. Can train larger models that exceed memory of single device.</li>
+  <li>Devices exchange partial activations to compute layer outputs.</li></ul>
+          </details></section>
+      </details></section>
+    
+  </footer></article></div></body></html>

@@ -133,10 +133,23 @@ document.addEventListener('keydown', function(e) {
     </html>
   </xsl:template>
 
+  <!-- \meta{number}{2.1} is the way to give a subtree a number that is not its
+       position on the page — a textbook's own exercise numbering, which skips
+       and repeats where the auto-numbering cannot follow. Forester's \number
+       command sets frontmatter.number but the compiler never serializes it to
+       XML (it survives only far enough to resolve \ref), so f:number below is
+       vestigial and the meta is what actually arrives. Reading both keeps this
+       working if the compiler ever starts emitting the element.
+
+       An explicit number wins over position and forces should-number true, so
+       it survives the numbered="false"/toc="false" that exercise cards set —
+       which is the point: those flags say "do not count me", not "do not label
+       me". Rendering is otherwise unchanged: "Exercise 2.1. Title", the same
+       shape as "Definition 1.2. Title". -->
   <xsl:template match="f:tree" mode="tree-taxon-with-number">
     <xsl:param name="suffix" select="''" />
     <xsl:param name="taxon" select="f:frontmatter/f:taxon" />
-    <xsl:param name="number" select="f:frontmatter/f:number" />
+    <xsl:param name="number" select="f:frontmatter/f:number | f:frontmatter/f:meta[@name='number']" />
     <xsl:param name="fallback-number" />
     <xsl:param name="in-backmatter" select="ancestor::f:backmatter" />
 
@@ -177,7 +190,7 @@ document.addEventListener('keydown', function(e) {
 
   <xsl:template match="f:tree" mode="contextual-number">
     <xsl:param name="suffix" select="''" />
-    <xsl:param name="number" select="f:frontmatter/f:number" />
+    <xsl:param name="number" select="f:frontmatter/f:number | f:frontmatter/f:meta[@name='number']" />
     <xsl:param name="fallback-number" />
     <xsl:param name="in-backmatter" select="ancestor::f:backmatter" />
 
@@ -582,9 +595,7 @@ document.addEventListener('keydown', function(e) {
       <xsl:choose>
         <xsl:when test="not(@show-heading='false')">
           <details id="{generate-id(.)}">
-            <!-- Cards (\taxon{Card}) start collapsed: the question (summary)
-                 shows, the answer stays hidden until clicked — a flashcard. -->
-            <xsl:if test="not(@expanded = 'false') and not(normalize-space(f:frontmatter/f:taxon) = 'Card')">
+            <xsl:if test="not(@expanded = 'false')">
               <xsl:attribute name="open">open</xsl:attribute>
             </xsl:if>
             <summary>
