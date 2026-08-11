@@ -8,6 +8,50 @@ window.addEventListener('load', function () {
     if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
   });
 });
+          </script><script>
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
           </script><title>TensorCore (TPU)</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Definition"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>TensorCore (TPU) <a class="slug" href="/OGCRQ/">[OGCRQ]</a> </h1>
 <div class="metadata"><ul>
@@ -425,8 +469,8 @@ Consider a full TPU v5e pod. How many total CPU hosts are there? How many TPU Te
   
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
   <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
-<p><strong style="font-family: var(--sans); font-weight: 500;">TPU v5e.</strong> From the <span xmlns="" class="link local"><a href="/676P/" title="TPU specs [676P]">TPU specs</a></span>, a TPU v5e has a pod size of \(16\times  16\) and a host size of \(4\times  2\). Therefore, I believe this means that there are \(8\) CPU hosts. The v5e is an inference chip, so it only has one <span xmlns="" class="link local"><a href="/OGCRQ/" title="TensorCore (TPU) [OGCRQ]">tensor core</a></span> per chip. Across \(16\times  16\) chips this gives \(256\) tensor cores. Similarly, from the <span xmlns="" class="link local"><a href="/676P/" title="TPU specs [676P]">TPU specs</a></span> I think we can just multiply the FLOPS/s per chip and HBM per chip to get \(256\cdot  1.97e14\) bf16 FLOPs/s and \(256\cdot  8.2e11\) bytes/s.</p>
-<p><strong style="font-family: var(--sans); font-weight: 500;">TPU v5p.</strong> The only distinction here besides swapping the numbers is that each chip has two <span xmlns="" class="link local"><a href="/OGCRQ/" title="TensorCore (TPU) [OGCRQ]">tensor cores</a></span>. Combining this with the larger pod size, we get \(2\cdot  16\cdot  20\cdot  28\) tensor cores per pod.</p>
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">TPU v5e.</strong> From the <span xmlns="" class="link local"><a href="/676P/" title="TPU specs [676P]">TPU specs</a></span>, a TPU v5e has a pod size of \(16\times  16\) and a host size of \(4\times  2\). Therefore, I believe this means that there are \(8\) CPU hosts. The v5e is an inference chip, so it only has one <span xmlns="" class="link local"><a href="/OGCRQ/" title="TensorCore (TPU) [OGCRQ]">tensor core</a></span> per chip. Across \(16\times  16\) chips this gives \(256\) tensor cores. Similarly, from the <span xmlns="" class="link local"><a href="/676P/" title="TPU specs [676P]">TPU specs</a></span> I think we can just multiply the FLOPS/s per chip and HBM per chip to get \(256\cdot  1.97e14\) bf16 FLOPs/s and \(256\cdot  8.2e11\) bytes/s.</p>
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">TPU v5p.</strong> The only distinction here besides swapping the numbers is that each chip has two <span xmlns="" class="link local"><a href="/OGCRQ/" title="TensorCore (TPU) [OGCRQ]">tensor cores</a></span>. Combining this with the larger pod size, we get \(2\cdot  16\cdot  20\cdot  28\) tensor cores per pod.</p>
 
  <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 After looking at solution, it seems I misunderstood what host size meant. The host size is the topology of the subunit connected to a single host. So the number of hosts is actually the pod size / host size. This gives \((16\cdot  16) / (4\cdot  2)\) for the v5e and \((16\cdot  20\cdot  28) / (2\cdot  2\cdot  1)\) for the v5p.</div>

@@ -84,6 +84,67 @@ document.addEventListener('keydown', function(e) {
 });
           ]]></xsl:text>
         </script>
+        <!-- Scroll-spy for the table of contents. Marks the row whose section
+             the reader is currently in with aria-current, which the rail in
+             style.css picks up (nav#toc li:has(> .link[aria-current])).
+
+             Read rather than observed: every TOC row already carries a
+             data-target pointing at its section, the rows are in document
+             order, and so are the sections — so the current one is simply the
+             last whose top has crossed a line near the top of the viewport.
+             That falls out of a loop with an early exit, needs no thresholds
+             to tune, and gets nesting right for free: a subsection comes later
+             in the order than its parent, so the innermost section the reader
+             has reached is the one that wins.
+
+             rAF-throttled and passive, so scrolling is never blocked. -->
+        <script>
+          <xsl:text disable-output-escaping="yes"><![CDATA[
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
+          ]]></xsl:text>
+        </script>
         <title>
           <xsl:value-of select="/f:tree/f:frontmatter/f:title/@text" />
         </title>
@@ -555,14 +616,21 @@ document.addEventListener('keydown', function(e) {
         </xsl:choose>
       </xsl:attribute>
 
-      <xsl:choose>
-        <xsl:when test="@show-metadata = 'false'">
-          <xsl:attribute name="class">block hide-metadata</xsl:attribute>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:attribute name="class">block</xsl:attribute>
-        </xsl:otherwise>
-      </xsl:choose>
+      <!-- index-page marks a \meta{index}{true} tree on the element itself.
+           The meta was already read all over this stylesheet to decide how
+           entries render; the class carries the same fact into CSS, which
+           needs it for a different reason: an index page is a listing, not an
+           article, so the heading rhythm in style.css has to keep off it. Two
+           rows of a site map should sit a listing's distance apart, not a
+           section's. -->
+      <xsl:variable name="block-class">
+        <xsl:text>block</xsl:text>
+        <xsl:if test="@show-metadata = 'false'"> hide-metadata</xsl:if>
+        <xsl:if test="f:frontmatter/f:meta[@name = 'index'] = 'true'"> index-page</xsl:if>
+      </xsl:variable>
+      <xsl:attribute name="class">
+        <xsl:value-of select="$block-class" />
+      </xsl:attribute>
       <xsl:if test="f:frontmatter/f:taxon">
         <xsl:attribute name="data-taxon">
           <xsl:value-of select="f:frontmatter/f:taxon" />

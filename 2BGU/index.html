@@ -8,6 +8,50 @@ window.addEventListener('load', function () {
     if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
   });
 });
+          </script><script>
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
           </script><title>Processing in Memory for ML</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon"></span>Processing in Memory for ML <a class="slug" href="/2BGU/">[2BGU]</a> </h1>
 <div class="metadata"><ul>
@@ -19,7 +63,7 @@ window.addEventListener('load', function () {
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Unlike fully-connected cannot batch self-attention because it depends on the individual prompts.
 </div>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Recall.</strong> operational intensity is \[\frac {\text {compute throughput}}{\text {memory bandwidth}}\]</p><p xmlns="http://www.w3.org/1999/xhtml"><strong>Inference much lower operational intensity than GEMM!</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Inference only doing matrix \(\times \) row</li>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Recall.</strong> operational intensity is \[\frac {\text {compute throughput}}{\text {memory bandwidth}}\]</p><p xmlns="http://www.w3.org/1999/xhtml"><strong>Inference much lower operational intensity than GEMM!</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Inference only doing matrix \(\times \) row</li>
   <li>If embedding dim is \(D\), then this is only \(D\) ops / byte.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Processing in memory (PIM) enables faster memory bandwidth.</p>
   
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Has lower memory capacity (fewer GB) due to added processing units (PU).
@@ -41,7 +85,7 @@ Put high use operations i.e. vector multiplication, element-wise multiplication 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 CENT supports inter and intra-device communication via connecting communication controller to shared buffer and CXL port.
 </div>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Communcation primitives.</strong> multicast and gather</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Multicast: send to all CXL devices.</li>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Communcation primitives.</strong> multicast and gather</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Multicast: send to all CXL devices.</li>
   <li>Gather: receive data sequentially from all CXL devices.</li>
   <li>Multicsat-gather -&gt; tensor parallel.</li></ul><p xmlns="http://www.w3.org/1999/xhtml"><em>Peer-to-peer:</em> can also support pipeline parallelism.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
@@ -332,7 +376,7 @@ The side length is fixed in hardware, so every dimension has to be tiled down to
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Unlike fully-connected cannot batch self-attention because it depends on the individual prompts.
 </div>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Recall.</strong> operational intensity is \[\frac {\text {compute throughput}}{\text {memory bandwidth}}\]</p><p xmlns="http://www.w3.org/1999/xhtml"><strong>Inference much lower operational intensity than GEMM!</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Inference only doing matrix \(\times \) row</li>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Recall.</strong> operational intensity is \[\frac {\text {compute throughput}}{\text {memory bandwidth}}\]</p><p xmlns="http://www.w3.org/1999/xhtml"><strong>Inference much lower operational intensity than GEMM!</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Inference only doing matrix \(\times \) row</li>
   <li>If embedding dim is \(D\), then this is only \(D\) ops / byte.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Processing in memory (PIM) enables faster memory bandwidth.</p>
   
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Has lower memory capacity (fewer GB) due to added processing units (PU).
@@ -354,7 +398,7 @@ Put high use operations i.e. vector multiplication, element-wise multiplication 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 CENT supports inter and intra-device communication via connecting communication controller to shared buffer and CXL port.
 </div>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Communcation primitives.</strong> multicast and gather</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Multicast: send to all CXL devices.</li>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Communcation primitives.</strong> multicast and gather</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Multicast: send to all CXL devices.</li>
   <li>Gather: receive data sequentially from all CXL devices.</li>
   <li>Multicsat-gather -&gt; tensor parallel.</li></ul><p xmlns="http://www.w3.org/1999/xhtml"><em>Peer-to-peer:</em> can also support pipeline parallelism.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 

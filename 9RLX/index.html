@@ -8,6 +8,50 @@ window.addEventListener('load', function () {
     if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
   });
 });
+          </script><script>
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
           </script><title>Programmed I/O</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon"></span>Programmed I/O <a class="slug" href="/9RLX/">[9RLX]</a> </h1>
 <div class="metadata"><ul><li class="meta-item">July 13, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Simplified I/O Device Protocol: requires three "registers". One is the status register that tells the OS whether the device is ready or currently performing an operation. The second is the command register, which tells the device what we want to do. Lastly, is the data register that stores the actual data we want moved. The procedure operates as follows <span class="link-reference" tid="36.3" refid="arpaci2018operating"><span xmlns="" class="link local"><a href="/arpaci2018operating/" title="Operating Systems: Three Easy Pieces [arpaci2018operating]">[arpaci2018operating, 36.3]</a></span></span></p><ol xmlns="http://www.w3.org/1999/xhtml"><li>OS polls status register in while loop until <code>status == READY</code></li>
@@ -78,13 +122,13 @@ window.addEventListener('load', function () {
 <div class="metadata"><ul>
 <li class="meta-item">May 15, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">What the CPU does, entirely in hardware, the moment an interrupt arrives — whether a device IRQ, a fault like a <span xmlns="" class="link local"><a href="/CXFM/" title="Page fault [CXFM]">Page fault</a></span>, or a software <code>int N</code>. The point of the hardware path is to land in the kernel at a clean instruction boundary with enough saved state that user execution can resume later as if nothing happened.</p><p xmlns="http://www.w3.org/1999/xhtml">Four things happen, in order, with no software involvement:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><strong style="font-family: var(--sans); font-weight: 500;">Reach a clean instruction boundary.</strong> The CPU cannot pause halfway through, say, a memory write — architectural state would be inconsistent. So the current instruction either <em>finishes</em> normally (typical for asynchronous interrupts like a timer) or is <em>rolled back</em> as if it never started (faults, where the instruction couldn't complete anyway and needs to be retried). A page-fault handler maps in the missing page and <span xmlns="" class="link local"><a href="/UHNL/" title="IRET [UHNL]">IRET</a></span> returns to re-execute the faulting instruction; a timer handler returns to the next instruction.</li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">What the CPU does, entirely in hardware, the moment an interrupt arrives — whether a device IRQ, a fault like a <span xmlns="" class="link local"><a href="/CXFM/" title="Page fault [CXFM]">Page fault</a></span>, or a software <code>int N</code>. The point of the hardware path is to land in the kernel at a clean instruction boundary with enough saved state that user execution can resume later as if nothing happened.</p><p xmlns="http://www.w3.org/1999/xhtml">Four things happen, in order, with no software involvement:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Reach a clean instruction boundary.</strong> The CPU cannot pause halfway through, say, a memory write — architectural state would be inconsistent. So the current instruction either <em>finishes</em> normally (typical for asynchronous interrupts like a timer) or is <em>rolled back</em> as if it never started (faults, where the instruction couldn't complete anyway and needs to be retried). A page-fault handler maps in the missing page and <span xmlns="" class="link local"><a href="/UHNL/" title="IRET [UHNL]">IRET</a></span> returns to re-execute the faulting instruction; a timer handler returns to the next instruction.</li>
 
-  <li><strong style="font-family: var(--sans); font-weight: 500;">Save the minimum resume state to the kernel stack.</strong> The CPU pushes RIP (where to resume), RSP (the user stack pointer it's about to abandon), the privilege level (CS — were we in ring 3 or ring 0?), and RFLAGS. The save target is the <em>kernel</em> stack, whose address the CPU reads from the <span xmlns="" class="link local"><a href="/ZAAT/" title="Task state segment [ZAAT]">Task state segment</a></span> that the OS set up at boot. This is a security boundary: the kernel never trusts the user stack, since user code could have corrupted it or pointed RSP at something malicious. Note what is <em>not</em> saved: general-purpose registers. The handler itself pushes RAX, RBX, ... if it uses them, which keeps the hardware path fast.</li>
+  <li><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Save the minimum resume state to the kernel stack.</strong> The CPU pushes RIP (where to resume), RSP (the user stack pointer it's about to abandon), the privilege level (CS — were we in ring 3 or ring 0?), and RFLAGS. The save target is the <em>kernel</em> stack, whose address the CPU reads from the <span xmlns="" class="link local"><a href="/ZAAT/" title="Task state segment [ZAAT]">Task state segment</a></span> that the OS set up at boot. This is a security boundary: the kernel never trusts the user stack, since user code could have corrupted it or pointed RSP at something malicious. Note what is <em>not</em> saved: general-purpose registers. The handler itself pushes RAX, RBX, ... if it uses them, which keeps the hardware path fast.</li>
 
-  <li><strong style="font-family: var(--sans); font-weight: 500;">Jump to the handler via the <span xmlns="" class="link local"><a href="/YK46/" title="Interrupt descriptor table [YK46]">Interrupt descriptor table</a></span>.</strong> The CPU takes the interrupt number \(N\), indexes entry \(N\) of the IDT (found via the IDTR register), loads the handler address into RIP, and loads the new code segment, which switches the CPU from ring 3 to ring 0. After this step, the CPU is running kernel code on the kernel stack at the right privilege level — all set up automatically.</li>
+  <li><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Jump to the handler via the <span xmlns="" class="link local"><a href="/YK46/" title="Interrupt descriptor table [YK46]">Interrupt descriptor table</a></span>.</strong> The CPU takes the interrupt number \(N\), indexes entry \(N\) of the IDT (found via the IDTR register), loads the handler address into RIP, and loads the new code segment, which switches the CPU from ring 3 to ring 0. After this step, the CPU is running kernel code on the kernel stack at the right privilege level — all set up automatically.</li>
 
-  <li><strong style="font-family: var(--sans); font-weight: 500;">Flush the <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span> of work past the interrupt point.</strong> In an <span xmlns="" class="link local"><a href="/U0NY/" title="Out-of-order execution runs ready instructions past a stalled one, committing in program order [U0NY]">out-of-order execution</a></span> CPU the ROB may already contain instructions from after the interrupt — they've been issued speculatively because the front-end ran ahead. Those entries are discarded so the handler sees clean architectural state, as if execution had stopped exactly at the interrupt point. When <span xmlns="" class="link local"><a href="/UHNL/" title="IRET [UHNL]">IRET</a></span> returns, those instructions re-execute normally. This is the same squash machinery used for branch mispredictions in <span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span> — and, famously, the reason Spectre-class side channels exist: speculative work leaves observable traces in caches even after the ROB is flushed.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">Once the hardware path finishes, the OS's interrupt handler is running. Its first job is typically to save the remaining registers before doing real work — the rest is software.</p>
+  <li><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Flush the <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span> of work past the interrupt point.</strong> In an <span xmlns="" class="link local"><a href="/U0NY/" title="Out-of-order execution runs ready instructions past a stalled one, committing in program order [U0NY]">out-of-order execution</a></span> CPU the ROB may already contain instructions from after the interrupt — they've been issued speculatively because the front-end ran ahead. Those entries are discarded so the handler sees clean architectural state, as if execution had stopped exactly at the interrupt point. When <span xmlns="" class="link local"><a href="/UHNL/" title="IRET [UHNL]">IRET</a></span> returns, those instructions re-execute normally. This is the same squash machinery used for branch mispredictions in <span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span> — and, famously, the reason Spectre-class side channels exist: speculative work leaves observable traces in caches even after the ROB is flushed.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">Once the hardware path finishes, the OS's interrupt handler is running. Its first job is typically to save the remaining registers before doing real work — the rest is software.</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Steps 2 and 3 are why an OS needs to set up the IDT and TSS before enabling interrupts. Until both structures point somewhere valid, the first interrupt would either jump to garbage or push to a user-controlled stack — both fatal.</div>
 </details></section>
       </details></section>

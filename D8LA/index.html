@@ -8,6 +8,50 @@ window.addEventListener('load', function () {
     if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
   });
 });
+          </script><script>
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
           </script><title>Flow Matching Definitions</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon"></span><span class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">Flow Matching</a></span> Definitions <a class="slug" href="/D8LA/">[D8LA]</a> </h1>
 <div class="metadata"><ul><li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li></ul></div></header></summary><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id2" open="open"><summary><header><h1>
@@ -115,7 +159,7 @@ solvers.},
 <div class="metadata"><ul>
 <li class="meta-item">July 1, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This is a blog cataloging my understanding of <span xmlns="" class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">Flow Matching for Generative Modeling</a></span> prior to my group presentation on <span xmlns="" class="link local"><a href="/farebrotherTemporalDifferenceFlows2025/" title="Temporal Difference Flows [farebrotherTemporalDifferenceFlows2025]">Temporal Difference Flows</a></span>. The accompany slides are available <span xmlns="" class="link local"><a href="/FMTD/" title="Flow Matching and TD Flows [FMTD]">here</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Disclaimer.</strong> I came into this with literally no background. I have never even taken an ODE course. This may prove advantageous for the more general audience.</p>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This is a blog cataloging my understanding of <span xmlns="" class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">Flow Matching for Generative Modeling</a></span> prior to my group presentation on <span xmlns="" class="link local"><a href="/farebrotherTemporalDifferenceFlows2025/" title="Temporal Difference Flows [farebrotherTemporalDifferenceFlows2025]">Temporal Difference Flows</a></span>. The accompany slides are available <span xmlns="" class="link local"><a href="/FMTD/" title="Flow Matching and TD Flows [FMTD]">here</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Disclaimer.</strong> I came into this with literally no background. I have never even taken an ODE course. This may prove advantageous for the more general audience.</p>
   <section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
 <span class="taxon"></span>Motivation  </h1>
 <div class="metadata"><ul>
@@ -241,7 +285,7 @@ A <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vecto
 
 
 </details></section><p xmlns="http://www.w3.org/1999/xhtml">which is supposedly a "good" approximation of the data distribution \(q\). We can then show that a <em>conditional flow matching loss</em> has the same gradient as the full <em>flow matching loss</em> i.e. our vector field should converge to the <em>marginal vector field</em>, which is a good approximation for \(q\).
- </p></details></section><p xmlns="http://www.w3.org/1999/xhtml">To generate samples, we integrate the <strong>vector field</strong></p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Important.</strong> We do not <em>have</em> the flow. We only have the flow for a <strong>given</strong> \(x_{1}\). This can then provide a target for the vector field with equivalent gradient.</p><section lang="en" class="block hide-metadata"><details id="id28" open="open"><summary><header><h1>
+ </p></details></section><p xmlns="http://www.w3.org/1999/xhtml">To generate samples, we integrate the <strong>vector field</strong></p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Important.</strong> We do not <em>have</em> the flow. We only have the flow for a <strong>given</strong> \(x_{1}\). This can then provide a target for the vector field with equivalent gradient.</p><section lang="en" class="block hide-metadata"><details id="id28" open="open"><summary><header><h1>
 <span class="taxon"></span>Flow Matching vs. Diffusion <a class="slug" href="/TGWF/">[TGWF]</a> </h1>
 <div class="metadata"><ul></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Notes and thoughts from blog <span xmlns="" class="link local"><a href="/gaoDiffusionMeetsFlow2024/" title="Diffusion Meets Flow Matching: Two Sides of the Same Coin [gaoDiffusionMeetsFlow2024]">Diffusion Meets Flow Matching: Two Sides of the Same Coin</a></span>. As a useful pre-requisite, I recommend my notes on <span xmlns="" class="link local"><a href="/007T/" title="Diffusion Models [007T]">diffusion</a></span> and <span xmlns="" class="link local"><a href="/008A/" title="Flow Matching: What, Why, and How? [008A]">flow matching</a></span> respectively.</p><p xmlns="http://www.w3.org/1999/xhtml">To start, I began looking into this due to the wildly empirical claims from <span xmlns="" class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">Flow Matching for Generative Modeling</a></span>. Namely,</p>
  <blockquote xmlns="http://www.w3.org/1999/xhtml" class="jms-quote" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(\cal-neutral-rule);   font-style: italic;   color: rgba(0, 0, 0, 0.85);   ">

@@ -8,6 +8,50 @@ window.addEventListener('load', function () {
     if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
   });
 });
+          </script><script>
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
           </script><title>Forward-backward algorithm</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon"></span>Forward-backward algorithm <a class="slug" href="/F3T0/">[F3T0]</a> </h1>
 <div class="metadata"><ul>
@@ -132,7 +176,7 @@ Both passes are \(O(TK^2)\) because at each timestep, it requires computing \(\m
 
   <div xmlns="http://www.w3.org/1999/xhtml" class="comments">
     
-  <hr></hr>
+  <hr style="     margin: 2.5rem 0 2rem;     border: 0;     border-top: 2px solid rgb(219, 216, 215);     height: 0;     background: none;   "></hr>
 
     <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async=""></script>
   </div>
@@ -235,7 +279,7 @@ Note that \(P_{\theta }(\xi  \mid  \mathcal {H})\) is a distribution over \((K, 
   \phi _t(z, b) &amp;= \mathbb {P}(s_t, a_t \mid  z, b) \sum _{(z', b')} \phi _{t - 1}(z', b') \mathbb {P}(z, b \mid  z', b') \\
   \beta _t(z, b) &amp;= \sum _{(z', b')} \beta _{t + 1}(z', b') \mathbb {P}(s_{t + 1}, a_{t + 1} \mid  z', b')  \mathbb {P}(z', b' \mid  z, b)
 .\end {align*}\]
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Forward pass.</strong> For the forward pass, we have the initial condition</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Forward pass.</strong> For the forward pass, we have the initial condition</p>
 \[\phi _0(z, b) = p_{0}(s_{0}) \delta _{\{b = 1\}} \eta  (z \mid  s_{0})\]
 <p xmlns="http://www.w3.org/1999/xhtml">Here \((z', b')\) ranges over the possible values of \((z_{t - 1}, b_{t - 1})\). It is sufficient to expand the remaining two terms in terms of our generative model as defined above. First, note that \((z_{t}, b_{t})\) are independent of \(b_{t - 1}\). Therefore, we can drop the \(b_{t - 1}\) term and are left with the following two cases:</p>
 \[\begin {align*}
@@ -261,7 +305,7 @@ Note that \(P_{\theta }(\xi  \mid  \mathcal {H})\) is a distribution over \((K, 
 We have abused notation here, allowing \(\mathbb {P}(s_t, a_t \mid  z_t, b_t)\) to depend on \(s_{t - 1}, a_{t - 1}\), etc. This is to align with the notation from <span xmlns="" class="link local"><a href="/F3T0/" title="Forward-backward algorithm [F3T0]">Forward-backward algorithm</a></span>. It makes no difference in practice as long as the backward dependence is finite / bounded. However, in practice you would want the history dependence to be small and here it is only one-step.
 </div>
 
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Backward pass.</strong> For the backward pass, we define the end term as</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Backward pass.</strong> For the backward pass, we define the end term as</p>
 \[\beta _{T-1}(z, b) = \pi (a_{T - 1} \mid  z, s_{T - 1}) p(s_{T} \mid  s_{T - 1}, a_{T - 1})\]
 <p xmlns="http://www.w3.org/1999/xhtml">Here \((z', b')\) ranges over the possible values of \((z_{t + 1}, b_{t + 1})\). The other terms are analagous i.e.</p>
 \[\begin {align*}
@@ -306,7 +350,7 @@ We have abused notation here, allowing \(\mathbb {P}(s_t, a_t \mid  z_t, b_t)\) 
     <li>(+) Compression objective encourages temporally extended skills.</li>
     <li>(-) Design inherently does not allow the terminations to be skill-dependent.</li>
     <li>(-) Need to sample \(z\)'s to compute gradients \(\implies \) higher-variance.</li></ul>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Our graphical model.</strong> We try to combine the desirable properties.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Our graphical model.</strong> We try to combine the desirable properties.</p>
 <figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmib2k3httfkjeb72iv4xcklceerw667ygatjzunijzwmdvbib6bdbm.png"></img>
 <figcaption>Each boundary depends on a skill and each skill depends on the <strong>whole</strong> sequence. Each boundary also depends on the whole history. However, the skill conditioned policy only requires the current state \(s\) and skill \(z\). Thus, allowing the skills to be used.</figcaption></figure>
 <p xmlns="http://www.w3.org/1999/xhtml">We essentially combine the insight of <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span> where instead of trying to model the full joint distribution i.e. \(\mathbb {P}(\mathcal {H}, \xi )\) we instead model \(\mathbb {P}(\mathcal {A}, \xi  \mid  \mathcal {S})\), where we treat the entire state history as known.</p> 
@@ -316,7 +360,7 @@ We have abused notation here, allowing \(\mathbb {P}(s_t, a_t \mid  z_t, b_t)\) 
 This is only a good idea for us because we do not need to use the <em>meta controller</em> during evaluation.
 </div>
 
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Deliberation cost.</strong> In <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span>, they encourage temporal extension through the compression loss. This requires an empirical approximation of the skillmarginal \(p(z)\). For me, this caused the skill entropy to just collapse to zero instead of encouraging temporally extended options. Instead, we use a deliberation cost more common in the options literature <span xmlns="" class="link local"><a href="/baconOptionCriticArchitecture2017/" title="The Option-Critic Architecture [baconOptionCriticArchitecture2017]">The Option-Critic Architecture</a></span>, where we just add the <em>switch-rate</em> as an additional loss term.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Deliberation cost.</strong> In <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span>, they encourage temporal extension through the compression loss. This requires an empirical approximation of the skillmarginal \(p(z)\). For me, this caused the skill entropy to just collapse to zero instead of encouraging temporally extended options. Instead, we use a deliberation cost more common in the options literature <span xmlns="" class="link local"><a href="/baconOptionCriticArchitecture2017/" title="The Option-Critic Architecture [baconOptionCriticArchitecture2017]">The Option-Critic Architecture</a></span>, where we just add the <em>switch-rate</em> as an additional loss term.</p>
 <ul xmlns="http://www.w3.org/1999/xhtml"><li>We are given the posterior \(\mathbb {P}(z_t = z, b_t = 1 \mid  \mathcal {H})\). In our implementation this would be \((B, T, K)\)</li>
   <li>We marginalize over skills \(z\) by summing to get \(\mathbb {P}(b_t = 1 \mid  \mathcal {H})\)</li>
   <li>Then average over batch \(B\) and time \(T\) to get expected reads.</li></ul>
@@ -343,9 +387,9 @@ This is only a good idea for us because we do not need to use the <em>meta contr
 <li class="meta-item">July 23, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Setup.</strong> Assume we are given a set of skills \(\mathbf {z} \in  \{0, \ldots , K\}\) along with a skill-conditioned lower-level policy \(\pi (s \mid  z)\). Then what we want is to be able to learn the optimal goal-reaching policy over these skills. To do so, we must go beyond traditional offline skill-learning algorithms. We must <em>Learn a value function over learned skills purely from offline data</em></p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Setup.</strong> Assume we are given a set of skills \(\mathbf {z} \in  \{0, \ldots , K\}\) along with a skill-conditioned lower-level policy \(\pi (s \mid  z)\). Then what we want is to be able to learn the optimal goal-reaching policy over these skills. To do so, we must go beyond traditional offline skill-learning algorithms. We must <em>Learn a value function over learned skills purely from offline data</em></p>
 
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Skill-conditioned GCIQL.</strong>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Skill-conditioned GCIQL.</strong>
 If we now define the analagous skill-conditioned GCIQL losses, we have
 \[\begin {align}
   \mathcal {L}_{V}(\theta _{V}) &amp;= \mathbb {E}_{(s_{t}, z_{t}, g) \sim  \mathcal {D}} \Big [L_{2}^{\tau }\big (Q_{\overline {\theta }_{Q}}(s_{t},z_{t},g) - V_{\theta _{V}}(s_{t},g)\big )\Big ] \\
@@ -354,12 +398,12 @@ If we now define the analagous skill-conditioned GCIQL losses, we have
 This introduces a few changes and constraints on the final algorithm.
 <ul><li>\(\kappa \) is a random variable dependent on the termination condition of \(z\).</li>
   <li>It is not immediately obvious how we should design \(r(s_t, z_t, g)\).</li></ul>
-<strong style="font-family: var(--sans); font-weight: 500;">Future states.</strong> For the first point, there are two options with trade-offs. In <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span>, they learn a model over trajectories that partitions them into unique skills. We can directly use this to get the intermediate \(s_{t + \kappa }\) just based off the termination output by the model.
+<strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Future states.</strong> For the first point, there are two options with trade-offs. In <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span>, they learn a model over trajectories that partitions them into unique skills. We can directly use this to get the intermediate \(s_{t + \kappa }\) just based off the termination output by the model.
 <ul><li>This is the simplest approach and basically a generalization of <span xmlns="" class="link local"><a href="/parkHIQLOfflineGoalConditioned2024/" title="HIQL: Offline Goal-Conditioned RL with Latent States as Actions [parkHIQLOfflineGoalConditioned2024]">HIQL</a></span> to varying length skills, where they just use a state \(k\) steps away in the trajectory.</li>
   <li>However, this approach would be limited on <em>stitching</em> datasets, where all of the trajectories are short.</li></ul>
 <p>The second approach, assuming we already have skills (given termination function), to perform better in the stitching setting is instead to learn a generative model over the state \(s_{t+\kappa }\). Then we could just use  \(s_{t + \kappa } \sim  p(s_{t+\kappa } \mid  s_t, z_t)\) as our next state. There is new work on <em>universal horizon models</em><span class="link-reference"><span xmlns="" class="link local"><a href="/chungOfflineReinforcementLearning2026/" title="Offline Reinforcement Learning with Universal Horizon Models [chungOfflineReinforcementLearning2026]">[chungOfflineReinforcementLearning2026]</a></span></span> focused on this for \(n\)-step models. Alternatively, it seems there is work directly learning the value function for a sequence of skills <span class="link-reference"><span xmlns="" class="link local"><a href="/farebrotherCompositionalPlanningJumpy2026/" title="Compositional Planning with Jumpy World Models [farebrotherCompositionalPlanningJumpy2026]">[farebrotherCompositionalPlanningJumpy2026]</a></span></span>, but this seems to only work for a fixed (per skill) discount factor.</p>
 
-<p><strong style="font-family: var(--sans); font-weight: 500;">Reward.</strong> Here, I propose a modified reward function based on the observation that goal-conditioned policies work well for short-horizon goal-reaching. One of our skills is hardcoded to instead be a learned goal-conditioned policy \(\pi (a \mid  s, g)\) with associated value function \(V(s, g)\). Denote this skill as \(z_g\). Then we can define the reward function as</p>
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Reward.</strong> Here, I propose a modified reward function based on the observation that goal-conditioned policies work well for short-horizon goal-reaching. One of our skills is hardcoded to instead be a learned goal-conditioned policy \(\pi (a \mid  s, g)\) with associated value function \(V(s, g)\). Denote this skill as \(z_g\). Then we can define the reward function as</p>
 \[\begin {align*}
   r(s, z, g) &amp;= \begin {cases}
     1, &amp; \text {if } z = z_g \text { and } V(s, g) &lt; \epsilon  \\
@@ -376,10 +420,10 @@ This introduces a few changes and constraints on the final algorithm.
 <li class="meta-item">July 23, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-  <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Extending beyond pointmaze in locomotion.</strong> The main issue faced here is that our <em>discriminator</em> is too powerful in high dimensional state space. Namely, we <em>score</em> options based on their ability to reconstruct actions i.e. if \(\mathbb {P}(a_t \mid  s_t, z_t = z)\) is high then we further increase the probability of selecting that option \(z\). In higher-dimensional state spaces, the skill network \(\pi _{\theta }(a_t \cdot  \mid  s_t, z)\) is powerful enough to reconstruct \(a_t\) purely from \(s_t\) without using \(z\). This basically provides no signal for which \(z\) to use, and we end up just selecting \(z\) uniformly every time step.</p>
+  <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Extending beyond pointmaze in locomotion.</strong> The main issue faced here is that our <em>discriminator</em> is too powerful in high dimensional state space. Namely, we <em>score</em> options based on their ability to reconstruct actions i.e. if \(\mathbb {P}(a_t \mid  s_t, z_t = z)\) is high then we further increase the probability of selecting that option \(z\). In higher-dimensional state spaces, the skill network \(\pi _{\theta }(a_t \cdot  \mid  s_t, z)\) is powerful enough to reconstruct \(a_t\) purely from \(s_t\) without using \(z\). This basically provides no signal for which \(z\) to use, and we end up just selecting \(z\) uniformly every time step.</p>
   <ul xmlns="http://www.w3.org/1999/xhtml"><li>I have seen a little sign of life from trying \(\pi (a \mid  f_{\theta }(s), z)\) i.e. compressing \(s\) to a lower dimensional representation.</li>
     <li>It may also be worth trying a really small network. Right now \((256, 256)\) already gets very low reconstruction loss, so maybe we can go smaller?</li></ul>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Conquering manipulation.</strong> In <span xmlns="" class="link local"><a href="/parkOGBenchBenchmarkingOffline2025/" title="OGBench: Benchmarking Offline Goal-Conditioned RL [parkOGBenchBenchmarkingOffline2025]">OGBench: Benchmarking Offline Goal-Conditioned RL</a></span>, they provide a suite of manipulation environments in addition to the standard locomotion. One such environment, is the manipulation equivalent of the <span xmlns="" class="link external"><a href="https://en.wikipedia.org/wiki/Lights_Out_(game)" title="">lights out game</a></span>. This is a great test-bed to separate <em>skill-learning</em> from <em>planning</em>. In particular, the <em>skill-learning</em> portion can be clearly decomposed into the pressing of each of the buttons. However, when directly trying to use the <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span> it is not able to distinguish between these skills.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Conquering manipulation.</strong> In <span xmlns="" class="link local"><a href="/parkOGBenchBenchmarkingOffline2025/" title="OGBench: Benchmarking Offline Goal-Conditioned RL [parkOGBenchBenchmarkingOffline2025]">OGBench: Benchmarking Offline Goal-Conditioned RL</a></span>, they provide a suite of manipulation environments in addition to the standard locomotion. One such environment, is the manipulation equivalent of the <span xmlns="" class="link external"><a href="https://en.wikipedia.org/wiki/Lights_Out_(game)" title="">lights out game</a></span>. This is a great test-bed to separate <em>skill-learning</em> from <em>planning</em>. In particular, the <em>skill-learning</em> portion can be clearly decomposed into the pressing of each of the buttons. However, when directly trying to use the <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span> it is not able to distinguish between these skills.</p>
 <ul xmlns="http://www.w3.org/1999/xhtml"><li>On <code>puzzle 3x3</code> <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span> terminates every \(1.4\) steps because all the skills look similar.</li>
   <li>This is using the threshold \(\beta  &gt; 0.9\).</li></ul>
 <section lang="en" class="block hide-metadata" data-taxon="Conjecture"><details id="id17" open="open"><summary><header><h1>
@@ -387,11 +431,11 @@ This introduces a few changes and constraints on the final algorithm.
 <div class="metadata"><ul>
 <li class="meta-item">July 23, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Pressing each of the buttons looks too similar, where the main discrepancy between them is only their <strong>termination condition</strong>. Since <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span>'s termination condition is independent of skill, it is unable to distinguish between these.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li> This is further confirmed in the <em>scene</em> environment. <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span> is able to distinguish between very different skills like open drawer vs. window. However, it is not able to distinguish between unlock drawer vs. window, where they only differ in pressing two adjacent buttons.</li></ul><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Injecting goals into the graphical model.</strong> Another failure mode of manipulation is that skills cannot be <em>goal-independent</em>. For example, in the generating policy of <em>scene</em> they have a <em>pick and place</em> skill that picks up the block and places it somewhere. Where to place the block is <strong>encoded in the goal</strong>. We can augment our graphical model to also allow the actions to depend on the goal.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmibumdtxhheqqjqmxcu7b65kal36m45q36yv47js2fxlbit4i7j4uy.png"></img>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Pressing each of the buttons looks too similar, where the main discrepancy between them is only their <strong>termination condition</strong>. Since <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span>'s termination condition is independent of skill, it is unable to distinguish between these.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li> This is further confirmed in the <em>scene</em> environment. <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span> is able to distinguish between very different skills like open drawer vs. window. However, it is not able to distinguish between unlock drawer vs. window, where they only differ in pressing two adjacent buttons.</li></ul><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Injecting goals into the graphical model.</strong> Another failure mode of manipulation is that skills cannot be <em>goal-independent</em>. For example, in the generating policy of <em>scene</em> they have a <em>pick and place</em> skill that picks up the block and places it somewhere. Where to place the block is <strong>encoded in the goal</strong>. We can augment our graphical model to also allow the actions to depend on the goal.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmibumdtxhheqqjqmxcu7b65kal36m45q36yv47js2fxlbit4i7j4uy.png"></img>
 <figcaption>Our graphical model with the goal included.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml">However, we do not want the skills to become goal-conditioned policies. To get around this we can use the <em>information bottleneck</em> idea from <span xmlns="" class="link local"><a href="/goyalInfoBotTransferExploration2023/" title="InfoBot: Transfer and Exploration via the Information Bottleneck [goyalInfoBotTransferExploration2023]">InfoBot: Transfer and Exploration via the Information Bottleneck</a></span>. Namely, we penalize the <span xmlns="" class="link local"><a href="/000V/" title="Mutual Information [000V]">Mutual Information</a></span> between the goal and action or goal and skill (TBD the right way to do this).</p>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Ideally, this would allow goal-dependent skills, where the goal is not the entire state space. For example, penalizing <span xmlns="" class="link local"><a href="/000V/" title="Mutual Information [000V]">Mutual Information</a></span> could cause just the desired block position as the information to be passed to the skill. This ignores the irrelavant components of the state space <strong>for that skill</strong>. Another skill may focus on whether the window is locked / unlocked, etc.</div>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Get rid of weird threshold / turn into MPC-ish.</strong> Currently, when planning, we must tune the <code>value_threshold</code> for when we pass control to goal-conditioned policy. To get 89 percent on pointmaze we used -10. Instead of using a threshold, we could instead just treat the goal-conditioned policy as another skill. Furthermore, they could be seen as our primitive actions i.e. during planning we take the next state as the immediate next state instead of just jumping to goal (which would obv always be taken).</p></details></section>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Get rid of weird threshold / turn into MPC-ish.</strong> Currently, when planning, we must tune the <code>value_threshold</code> for when we pass control to goal-conditioned policy. To get 89 percent on pointmaze we used -10. Instead of using a threshold, we could instead just treat the goal-conditioned policy as another skill. Furthermore, they could be seen as our primitive actions i.e. during planning we take the next state as the immediate next state instead of just jumping to goal (which would obv always be taken).</p></details></section>
 </details></section>
 </details></section>
         <section lang="en" class="block"><details id="id18"><summary><header><h1>
@@ -461,7 +505,7 @@ Note that \(P_{\theta }(\xi  \mid  \mathcal {H})\) is a distribution over \((K, 
   \phi _t(z, b) &amp;= \mathbb {P}(s_t, a_t \mid  z, b) \sum _{(z', b')} \phi _{t - 1}(z', b') \mathbb {P}(z, b \mid  z', b') \\
   \beta _t(z, b) &amp;= \sum _{(z', b')} \beta _{t + 1}(z', b') \mathbb {P}(s_{t + 1}, a_{t + 1} \mid  z', b')  \mathbb {P}(z', b' \mid  z, b)
 .\end {align*}\]
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Forward pass.</strong> For the forward pass, we have the initial condition</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Forward pass.</strong> For the forward pass, we have the initial condition</p>
 \[\phi _0(z, b) = p_{0}(s_{0}) \delta _{\{b = 1\}} \eta  (z \mid  s_{0})\]
 <p xmlns="http://www.w3.org/1999/xhtml">Here \((z', b')\) ranges over the possible values of \((z_{t - 1}, b_{t - 1})\). It is sufficient to expand the remaining two terms in terms of our generative model as defined above. First, note that \((z_{t}, b_{t})\) are independent of \(b_{t - 1}\). Therefore, we can drop the \(b_{t - 1}\) term and are left with the following two cases:</p>
 \[\begin {align*}
@@ -487,7 +531,7 @@ Note that \(P_{\theta }(\xi  \mid  \mathcal {H})\) is a distribution over \((K, 
 We have abused notation here, allowing \(\mathbb {P}(s_t, a_t \mid  z_t, b_t)\) to depend on \(s_{t - 1}, a_{t - 1}\), etc. This is to align with the notation from <span xmlns="" class="link local"><a href="/F3T0/" title="Forward-backward algorithm [F3T0]">Forward-backward algorithm</a></span>. It makes no difference in practice as long as the backward dependence is finite / bounded. However, in practice you would want the history dependence to be small and here it is only one-step.
 </div>
 
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Backward pass.</strong> For the backward pass, we define the end term as</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Backward pass.</strong> For the backward pass, we define the end term as</p>
 \[\beta _{T-1}(z, b) = \pi (a_{T - 1} \mid  z, s_{T - 1}) p(s_{T} \mid  s_{T - 1}, a_{T - 1})\]
 <p xmlns="http://www.w3.org/1999/xhtml">Here \((z', b')\) ranges over the possible values of \((z_{t + 1}, b_{t + 1})\). The other terms are analagous i.e.</p>
 \[\begin {align*}

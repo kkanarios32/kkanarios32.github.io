@@ -8,6 +8,50 @@ window.addEventListener('load', function () {
     if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
   });
 });
+          </script><script>
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
           </script><title>Cache hierarchy</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon"></span>Cache hierarchy <a class="slug" href="/KBYI/">[KBYI]</a> </h1>
 <div class="metadata"><ul>
@@ -163,7 +207,7 @@ window.addEventListener('load', function () {
 <ul xmlns="http://www.w3.org/1999/xhtml"><li><span xmlns="" class="link local"><a href="/KBYI/" title="Cache hierarchy [KBYI]">Cache hierarchy</a></span> — Pentium adopted L1/L2 caching and split the L1 into separate instruction and data caches.</li>
   <li><span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span> — branch history table (BHT) and branch target buffer (BTB) combined with static prediction as a fallback on BHT miss.</li>
   <li><span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span> — execute past a predicted branch, write back only after the prediction is confirmed.</li></ul>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Pipeline.</strong></p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Pipeline.</strong></p>
 <ol xmlns="http://www.w3.org/1999/xhtml"><li><em>Fetch / Prefetch</em>: read from instruction cache.</li>
   <li><em>Decode 1</em>: decode to internal format; branch prediction.</li>
   <li><em>Decode 2</em>: convert complex instructions via <span xmlns="" class="link local"><a href="/87GH/" title="Microarchitecture [87GH]">Microarchitecture</a></span> to <span xmlns="" class="link local"><a href="/WEW2/" title="Micro-operations [WEW2]">Micro-operations</a></span>.</li>

@@ -8,6 +8,50 @@ window.addEventListener('load', function () {
     if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
   });
 });
+          </script><script>
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
           </script><title>Matrix Multiply Unit (MXU)</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Definition"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon">Definition. </span>Matrix Multiply Unit (MXU) <a class="slug" href="/OGCRP/">[OGCRP]</a> </h1>
 <div class="metadata"><ul>
@@ -109,7 +153,7 @@ The side length is fixed in hardware, so every dimension has to be tiled down to
 
 </details></section>
 </details></section>
-        <section lang="en" class="block"><details id="id11"><summary><header><h1>
+        <section lang="en" class="block index-page"><details id="id11"><summary><header><h1>
 <span class="taxon"></span>What I've been thinking about <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">August 6, 2026</li>
@@ -323,7 +367,7 @@ The side length is fixed in hardware, so every dimension has to be tiled down to
 
 </details></section>
   
-</details></section>
+
   
     
     
@@ -404,7 +448,7 @@ From the solution, the number we used was <em>with sparsity</em>. It turns out t
 
 </details></section>
   
-<section lang="en" class="block hide-metadata"><details id="id31" open="open"><summary><header><h1>
+</details></section><section lang="en" class="block hide-metadata"><details id="id31" open="open"><summary><header><h1>
 <span class="taxon"></span>What is a TPU? <a class="slug" href="/scaling-ch2/">[scaling-ch2]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">August 5, 2026</li>
@@ -458,8 +502,8 @@ Consider a full TPU v5e pod. How many total CPU hosts are there? How many TPU Te
   
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
   <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
-<p><strong style="font-family: var(--sans); font-weight: 500;">TPU v5e.</strong> From the <span xmlns="" class="link local"><a href="/676P/" title="TPU specs [676P]">TPU specs</a></span>, a TPU v5e has a pod size of \(16\times  16\) and a host size of \(4\times  2\). Therefore, I believe this means that there are \(8\) CPU hosts. The v5e is an inference chip, so it only has one <span xmlns="" class="link local"><a href="/OGCRQ/" title="TensorCore (TPU) [OGCRQ]">tensor core</a></span> per chip. Across \(16\times  16\) chips this gives \(256\) tensor cores. Similarly, from the <span xmlns="" class="link local"><a href="/676P/" title="TPU specs [676P]">TPU specs</a></span> I think we can just multiply the FLOPS/s per chip and HBM per chip to get \(256\cdot  1.97e14\) bf16 FLOPs/s and \(256\cdot  8.2e11\) bytes/s.</p>
-<p><strong style="font-family: var(--sans); font-weight: 500;">TPU v5p.</strong> The only distinction here besides swapping the numbers is that each chip has two <span xmlns="" class="link local"><a href="/OGCRQ/" title="TensorCore (TPU) [OGCRQ]">tensor cores</a></span>. Combining this with the larger pod size, we get \(2\cdot  16\cdot  20\cdot  28\) tensor cores per pod.</p>
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">TPU v5e.</strong> From the <span xmlns="" class="link local"><a href="/676P/" title="TPU specs [676P]">TPU specs</a></span>, a TPU v5e has a pod size of \(16\times  16\) and a host size of \(4\times  2\). Therefore, I believe this means that there are \(8\) CPU hosts. The v5e is an inference chip, so it only has one <span xmlns="" class="link local"><a href="/OGCRQ/" title="TensorCore (TPU) [OGCRQ]">tensor core</a></span> per chip. Across \(16\times  16\) chips this gives \(256\) tensor cores. Similarly, from the <span xmlns="" class="link local"><a href="/676P/" title="TPU specs [676P]">TPU specs</a></span> I think we can just multiply the FLOPS/s per chip and HBM per chip to get \(256\cdot  1.97e14\) bf16 FLOPs/s and \(256\cdot  8.2e11\) bytes/s.</p>
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">TPU v5p.</strong> The only distinction here besides swapping the numbers is that each chip has two <span xmlns="" class="link local"><a href="/OGCRQ/" title="TensorCore (TPU) [OGCRQ]">tensor cores</a></span>. Combining this with the larger pod size, we get \(2\cdot  16\cdot  20\cdot  28\) tensor cores per pod.</p>
 
  <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 After looking at solution, it seems I misunderstood what host size meant. The host size is the topology of the subunit connected to a single host. So the number of hosts is actually the pod size / host size. This gives \((16\cdot  16) / (4\cdot  2)\) for the v5e and \((16\cdot  20\cdot  28) / (2\cdot  2\cdot  1)\) for the v5p.</div>
@@ -730,7 +774,7 @@ Let \(A\) be an array with shape int8[128, 2048], sharding \(A[I_{XY},J]\), and 
 
 </details></section>
 
-  <hr xmlns="http://www.w3.org/1999/xhtml"></hr>
+  <hr xmlns="http://www.w3.org/1999/xhtml" style="     margin: 2.5rem 0 2rem;     border: 0;     border-top: 2px solid rgb(219, 216, 215);     height: 0;     background: none;   "></hr>
 <script xmlns="http://www.w3.org/1999/xhtml" src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async=""></script></details></section>
   <section lang="en" class="block"><details id="id44"><summary><header><h1>
 <span class="taxon"></span>TPU specs <a class="slug" href="/676P/">[676P]</a> </h1>
@@ -2127,9 +2171,9 @@ Neither ever requires an \(N \times  N\) intermediate.
 <li class="meta-item">May 27, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Forward pass.</strong> Store \(\mathbf {O}\) and the softmax denominators \(\mathbf {L}\), both \(O(Nd)\).</p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Between the passes.</strong> Receive \(d\mathbf {O}\) from the layer above (automatic in <span xmlns="" class="link local"><a href="/OGCRY/" title="JAX [OGCRY]">JAX</a></span>), then precompute \(\mathbf {D}_i = d\mathbf {O}_i \cdot  \mathbf {O}_i\) in \(O(N)\) memory.</p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Backward pass.</strong> Stream over tiles, recomputing \(\mathbf {P}_{ij}\) from \(\mathbf {Q}, \mathbf {K}, \mathbf {L}\) and \(d\mathbf {P}_{ij}\) from \(d\mathbf {O}, \mathbf {V}\) as needed:</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Forward pass.</strong> Store \(\mathbf {O}\) and the softmax denominators \(\mathbf {L}\), both \(O(Nd)\).</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Between the passes.</strong> Receive \(d\mathbf {O}\) from the layer above (automatic in <span xmlns="" class="link local"><a href="/OGCRY/" title="JAX [OGCRY]">JAX</a></span>), then precompute \(\mathbf {D}_i = d\mathbf {O}_i \cdot  \mathbf {O}_i\) in \(O(N)\) memory.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Backward pass.</strong> Stream over tiles, recomputing \(\mathbf {P}_{ij}\) from \(\mathbf {Q}, \mathbf {K}, \mathbf {L}\) and \(d\mathbf {P}_{ij}\) from \(d\mathbf {O}, \mathbf {V}\) as needed:</p>
 <ol xmlns="http://www.w3.org/1999/xhtml"><li>\(d\mathbf {V}_j = \sum _i \mathbf {P}_{ij} d\mathbf {O}_i\), accumulated over query tiles.</li>
   <li>\(d\mathbf {Q}_i = \sum _j \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {K}_j\), accumulated over key tiles.</li>
   <li>\(d\mathbf {K}_j = \sum _i \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {Q}_i\), accumulated over query tiles.</li></ol>
@@ -2530,8 +2574,8 @@ Neither ever requires an \(N \times  N\) intermediate.
   </div>
 
 <figcaption>MESI cache controller, responses, again over the transient states only. The whole of MESI's addition here is one cell: <code>ExclusiveData</code> landing in \(IS^D\) gives \(E\) instead of \(S\).</figcaption></figure>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Silent upgrades.</strong> If a cache in \(E\) may upgrade to \(M\) silently, the directory never learns the line went dirty, and the value it hands to the next <code>GetS</code> or <code>GetM</code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat \(E\) exactly like \(M\), forwarding everything. Neither requires a writeback on <code>PutE</code>. I take the first, matching the table.</p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Signaling exclusivity.</strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <code>ExclusiveData</code> message: receiving it in \(IS^D\) lands the cache in \(E\) rather than \(S\). It turns out to also be the key to the second race below.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Silent upgrades.</strong> If a cache in \(E\) may upgrade to \(M\) silently, the directory never learns the line went dirty, and the value it hands to the next <code>GetS</code> or <code>GetM</code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat \(E\) exactly like \(M\), forwarding everything. Neither requires a writeback on <code>PutE</code>. I take the first, matching the table.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Signaling exclusivity.</strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <code>ExclusiveData</code> message: receiving it in \(IS^D\) lands the cache in \(E\) rather than \(S\). It turns out to also be the key to the second race below.</p>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\) are functionally identical. Both appear above for completeness, but transitioning from \(E\) straight into \(MI^A\) verifies the same.
@@ -2735,7 +2779,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The first processor issues <code>GetS</code> and waits in \(IS^D\), while the home directory has already moved to \(E\) and sent it <code>ExclusiveData</code>. A second processor then issues <code>GetM</code>, and home's <code>Fwd-GetM</code> overtakes the data in flight.</p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Stall <code>Fwd-GetM</code> and <code>Fwd-GetS</code> in \(IS^D\) until the data lands. This is safe here because the data is on the response channel, which no stall can block.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Fix.</strong> Stall <code>Fwd-GetM</code> and <code>Fwd-GetS</code> in \(IS^D\) until the data lands. This is safe here because the data is on the response channel, which no stall can block.</p>
 </details></section>
 
   <section lang="en" class="block hide-metadata"><details id="id93" open="open"><summary><header><h1>
@@ -2758,7 +2802,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
 </div>
 
 
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> <code>ExclusiveData</code> pays for itself a second time. Because the message is distinguishable from ordinary <code>Data</code>, a cache receiving it in \(II^D\) knows it was the first reader and transitions to \(E\) instead of \(I\). There, the pending <code>Fwd-GetM</code> or <code>Fwd-GetS</code> is handled correctly.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Fix.</strong> <code>ExclusiveData</code> pays for itself a second time. Because the message is distinguishable from ordinary <code>Data</code>, a cache receiving it in \(II^D\) knows it was the first reader and transitions to \(E\) instead of \(I\). There, the pending <code>Fwd-GetM</code> or <code>Fwd-GetS</code> is handled correctly.</p>
 </details></section>
 
   <section lang="en" class="block hide-metadata"><details id="id94" open="open"><summary><header><h1>
@@ -2806,7 +2850,7 @@ os.environ["LIBTPU_INIT_ARGS"] = (
 <div class="metadata"><ul>
 <li class="meta-item">May 22, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Overview.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Dispatch / Cache: caches compilation based on input argument signatures i.e. shapes, dtypes, sharding. If shapes change will need to <strong>recompile</strong>.</li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Overview.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Dispatch / Cache: caches compilation based on input argument signatures i.e. shapes, dtypes, sharding. If shapes change will need to <strong>recompile</strong>.</li>
   <li>XLA transformation: Python -&gt; JaxPR -&gt; StableHLO, performing fusion and other simplifications to reduce memory overhead (?).</li>
   <li>TPU specific: Further reduced to LLO IR, then <em>very large instruction word</em> (VLIW) scheduling to map dot products to MXU.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
@@ -2841,13 +2885,13 @@ As soon as python code is traced into jaxpr it is thrown away. Only HLO is input
     <ul><li>Input for XLA compiler.</li>
       <li>Directed acyclic graph of copmutational operations.</li>
       <li>All array dimensions are known at compile time.</li>
-      <li>Limited opcodes i.e. Add, Multiply, Transpose, Dot, etc.</li></ul></ul></ol></details></section><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">XLA Shapes and Memory Layout.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Every data type defined by data type and fixed dimensions, determined at compile time.</li>
+      <li>Limited opcodes i.e. Add, Multiply, Transpose, Dot, etc.</li></ul></ul></ol></details></section><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">XLA Shapes and Memory Layout.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Every data type defined by data type and fixed dimensions, determined at compile time.</li>
   <li>Minor-to-major order i.e. fastest changing to slowesting changin.</li>
   <li>Tiling: arrays are split into smaller blocks to fit into VREG. Want to arrange data to efficiently fit VREG.</li></ul><figure xmlns="http://www.w3.org/1999/xhtml"><img width="60%" src="/bafkrmihanbz63fc3hvqd3drtqlm5shhn2624xbut2oobs3zibpwjw2jiju.png"></img>
-<figcaption>How memory is laid out based on XLA.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Execution.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Move tensors from CPU to HBM. Sharding is taken care of by PJIT if on TPU pod.</li>
+<figcaption>How memory is laid out based on XLA.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Execution.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Move tensors from CPU to HBM. Sharding is taken care of by PJIT if on TPU pod.</li>
   <li>Async: Immediately returns a <code>Future</code> JAX array while the hardware executes VLIW microcode asynchronously.</li>
   <li>Buffer management: Returns pointer to TPU memory. All handled lazily. Not copied back to CPU until <code>jax.block_until_ready()</code>.</li></ul></details></section>
-  <hr xmlns="http://www.w3.org/1999/xhtml"></hr>
+  <hr xmlns="http://www.w3.org/1999/xhtml" style="     margin: 2.5rem 0 2rem;     border: 0;     border-top: 2px solid rgb(219, 216, 215);     height: 0;     background: none;   "></hr>
 <script xmlns="http://www.w3.org/1999/xhtml" src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async=""></script></details></section>
 </details></section>
         <section lang="en" class="block"><details id="id98"><summary><header><h1>

@@ -115,10 +115,15 @@ h4 {
   margin-top: .5em;
 }
 
+/* `section` is deliberately NOT in this list. Setting overflow on one axis
+   forces the other out of `visible` (the same spec rule the .katex-display
+   comment below leans on), so an overflow-y here made every <section> a
+   clipping box — and a sidenote floated into the gutter is, by construction,
+   outside its section. It was cropped clean off the page. The things that
+   actually overflow are the wide ones, and they are all still listed. */
 pre,
 img,
 .katex-display,
-section,
 center {
   overflow-y: hidden;
 }
@@ -425,7 +430,11 @@ footer h2 {
   display: inline;
 }
 
-@media only screen and (max-width: 1000px) {
+/* One breakpoint for the whole layout, and it is shared with the sidenotes on
+   purpose: the flanks are a pair. A width that shows the table of contents but
+   has no room for a note in the margin would be a page with half its apparatus
+   — so above 1300px both gutters are in play, and below it neither is. */
+@media only screen and (max-width: 1300px) {
   body {
     margin-top: 1em;
     margin-left: .5em;
@@ -449,12 +458,26 @@ footer h2 {
     display: none;
     transition: ease all .2s;
   }
+
+  /* The header has to be centred here too. #grid-wrapper centres the article
+     column, so on any viewport wider than the 90ex measure — which is most of
+     this band, now that it reaches to 1300px — a header left at the body edge
+     sits a long way left of the prose it introduces. Below 90ex the max-width
+     exceeds the viewport and the auto margins collapse to nothing, so the
+     header keeps riding body's own margin on a phone. */
+  body>header {
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
 
 /* Desktop: a symmetric three-column grid — equal `1fr` flanks keep the
-   90ex article dead-center in the viewport, and the TOC drops into the
-   right flank so it sits off-center without stealing from the centering. */
-@media only screen and (min-width: 1000px) {
+   90ex article dead-center in the viewport, and the flanks take the two things
+   that are not prose. The TOC sits in the left flank and the sidenotes float
+   into the right one. That split is the whole reason the TOC moved: notes have
+   to be on the side the reader's eye leaves a line on, and there is only one
+   free gutter per side. */
+@media only screen and (min-width: 1301px) {
   body {
     margin-top: 2em;
     margin-left: 0;
@@ -467,14 +490,37 @@ footer h2 {
     justify-content: center;
   }
 
+  /* Both in row 1, said explicitly. The TOC follows the article in the DOM,
+     so once it moved to the left-hand column, sparse auto-placement refused to
+     backtrack and dropped it into a row of its own below the prose. */
   #grid-wrapper>article {
     grid-column: 2;
+    grid-row: 1;
   }
 
+  /* The rail travels with the reader. align-self is the load-bearing line: a
+     grid item stretches to its row by default, so the nav would be exactly as
+     tall as the article and `sticky` would have nothing to stick within —
+     it only takes effect while the element is shorter than its container.
+     Held to the viewport with its own scrollbar for the notebooks whose
+     contents run past a screen. */
   #grid-wrapper>nav {
-    grid-column: 3;
-    justify-self: start;
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: end;
+    align-self: start;
     max-width: 22em;
+    position: sticky;
+    top: 2em;
+    max-height: calc(100vh - 4em);
+    overflow-y: auto;
+    /* Dropped so the rail's label sits on the page title's baseline rather
+       than level with the top of its box. Aligning the boxes puts the label
+       an ascender and a half above the title — the two are set at very
+       different sizes (0.68rem against 1.5em), so their box tops have nothing
+       to do with each other and only the baselines read as aligned. 18px is
+       the measured difference between them. */
+    margin-top: 18px;
   }
 
   /* Centre the header on the same 90ex measure as the article so the two share
@@ -486,33 +532,101 @@ footer h2 {
   }
 }
 
-/* Between the mobile breakpoint and the width where a centered article
-   plus a TOC flank actually fit, there isn't room to keep the article
-   centered with the TOC in a gutter — so fall back to the classic
-   left-aligned layout: article then TOC, packed to the left. */
-@media only screen and (min-width: 1000px) and (max-width: 1300px) {
-  body {
-    margin-left: 2em;
+/* Sidenotes — \sidenote in base-macros. A numbered marker in the prose and the
+   note itself out in the right flank, on the line that spawned it.
+
+   Floated rather than positioned. A float is laid out against the line box it
+   follows, which is exactly the alignment wanted here and is what no absolute
+   positioning can give without measuring text; `clear: right` then stacks two
+   notes from the same paragraph instead of overlapping them. The negative
+   margin is what carries it out of the measure: the note's right edge lands
+   `width + gap` past the article's, so its left edge sits in the gutter.
+
+   The numbering is a CSS counter and nothing else — no state in the tree, no
+   hand-numbering to fall out of order when a paragraph moves. The marker
+   increments it, the note reads it, and the note is always the marker's next
+   sibling, so the two cannot disagree. `article` resets it per page. */
+article {
+  counter-reset: sidenote;
+}
+
+.sidenote-ref::after {
+  counter-increment: sidenote;
+  content: counter(sidenote);
+  vertical-align: super;
+  font-size: 0.7em;
+  line-height: 0;
+  color: rgb(var(--cal-neutral));
+  padding-left: 0.1em;
+}
+
+.sidenote::before {
+  content: counter(sidenote);
+  vertical-align: super;
+  font-size: 0.75em;
+  line-height: 0;
+  padding-right: 0.35em;
+  color: rgb(var(--cal-neutral));
+}
+
+/* Off-screen rather than display: none — a hidden checkbox is still the thing
+   a keyboard toggles, and display: none would take it out of the tab order,
+   leaving the note unreachable without a pointer. The focus ring goes on the
+   marker, which is what the reader can actually see. */
+.sidenote-ref input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  opacity: 0;
+}
+
+.sidenote-ref:has(input:focus-visible)::after {
+  outline: 2px solid rgb(var(--cal-neutral));
+  outline-offset: 2px;
+}
+
+@media only screen and (min-width: 1301px) {
+  .sidenote {
+    float: right;
+    clear: right;
+    width: 24ex;
+    margin: 0.25rem -26ex 0.6rem 0;
+    font-size: 10.5pt;
+    line-height: 1.4;
+    /* The prose is justified by `hyphens: auto` on body and runs to 90ex; a
+       24ex column set the same way would be mostly hyphens. */
+    hyphens: none;
+    text-align: left;
+  }
+}
+
+/* Narrower than that there is no right flank at all — the table of contents
+   has gone with it, by the shared breakpoint above — so the note collapses to
+   its marker and stays there until it is asked for. Click the marker and the
+   note opens directly under the line; click again and it closes.
+
+   A checkbox and no script. The marker is a <label> wrapping a hidden
+   checkbox, so a click toggles that checkbox with no id to keep unique and
+   nothing to run on load, and :has() lets the note two nodes away react to it.
+   Closed by default because the alternative — dropping every note into the
+   flow where it was written — breaks the sentence it annotates, which is the
+   whole reason a digression went to the margin instead of into parentheses. */
+@media only screen and (max-width: 1300px) {
+  .sidenote {
+    display: none;
   }
 
-  #grid-wrapper {
-    grid-template-columns: 90ex auto;
-    justify-content: start;
+  .sidenote-ref {
+    cursor: pointer;
   }
 
-  #grid-wrapper>article {
-    grid-column: 1;
-  }
-
-  #grid-wrapper>nav {
-    grid-column: 2;
-  }
-
-  /* In this band the article is packed left rather than centred, so undo the
-     auto margins above and let the header ride body's own margin-left. */
-  body>header {
-    margin-left: 0;
-    margin-right: 0;
+  .sidenote-ref:has(input:checked) + .sidenote {
+    display: block;
+    margin: 0.5rem 0 0.8rem 0;
+    padding: 0.1rem 0 0.1rem 0.9rem;
+    border-left: 2px solid rgb(var(--cal-neutral-rule));
+    font-size: 11pt;
   }
 }
 
@@ -579,6 +693,174 @@ span.taxon {
 
 article>section>details>summary>header>h1 {
   font-size: 1.5em;
+}
+
+/* Section headings, by depth.
+   ─────────────────────────────────────────────────────────────────────────
+   Forester emits an <h1> for every tree and subtree, at every depth — there
+   is no h2/h3/h4 to hang a hierarchy on, and no `.tree` class. What stands in
+   for heading level here is nesting: each subsection is a section.block
+   inside its parent's <details>, so the three levels below are the h2/h3/h4
+   of an ordinary document, written out as `> details > section` chains.
+
+   The vertical rhythm cannot go on the heading itself: `details h1` is
+   display: inline (which is what keeps the slug and the metadata on the
+   heading's own line), and an inline box ignores vertical margins. So the
+   space above a heading is the section's own margin-top, and the space below
+   it is the margin-bottom of the <summary> that holds it — summary is a block
+   and sits exactly between the heading and the body. The type stays on the h1.
+
+   Not scoped tightly enough to disturb a transcluded Definition or Theorem:
+   `section .block[data-taxon] …` further up carries two class/attribute
+   selectors to these one, so a taxon'd block keeps its own 12pt heading. */
+
+/* h2 — a top-level section. */
+article > section:not(.index-page) > details > section.block {
+  margin-top: 2.4em;  padding-bottom: 0;
+}
+
+article > section:not(.index-page) > details > section.block > details > summary {
+  margin-bottom: 0.6em;
+}
+
+article > section:not(.index-page) > details > section.block > details > summary > header > h1 {
+  font-size: 1.32em;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* h3 — a subsection. */
+article > section:not(.index-page) > details > section.block > details > section.block {
+  margin-top: 1.9em;  padding-bottom: 0;
+}
+
+article > section:not(.index-page) > details > section.block > details > section.block > details > summary {
+  margin-bottom: 0.35em;
+}
+
+article > section:not(.index-page) > details > section.block > details > section.block > details > summary > header > h1 {
+  font-size: 1.1em;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+
+/* h4 — a sub-subsection. Italic and a shade lighter rather than smaller: at
+   1em it is already at body size, and going below it would set a heading in
+   less type than the prose it introduces. */
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block {
+  margin-top: 1.5em;  padding-bottom: 0;
+}
+
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > summary {
+  margin-bottom: 0.3em;
+}
+
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > summary > header > h1 {
+  font-size: 1em;
+  font-weight: 400;
+  font-style: italic;
+  color: #4a4740;
+}
+
+/* The margins above are meant to be the *only* vertical rhythm around a
+   heading, and they were not: section.block>details already carries a
+   margin-bottom (0.4em closed, 1em open) from before there were heading
+   levels, so every gap was that plus the new margin-top, and the page came
+   out spaced roughly double. Zeroed for the sections styled above — the
+   heading's own margins now say what the gap is, and nothing adds to them.
+   The rule is scoped to these depths, so a transcluded card or definition
+   keeps the spacing it has always had. */
+article > section:not(.index-page) > details > section.block > details,
+article > section:not(.index-page) > details > section.block > details > section.block > details,
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details {
+  margin-bottom: 0;
+}
+
+/* Level four and deeper — a run-in heading. Below the third level a heading on
+   its own line is more furniture than signal: the thing being named is usually
+   a paragraph, and a page of one-line headings over one-paragraph bodies reads
+   as a list rather than as prose. So the name sets in small caps at body size
+   and the paragraph runs on from it, the way a manual's paragraph headings do.
+
+   Three pieces have to agree for a run-in to work here. The <summary> that
+   holds the heading is block by default, so it goes inline; the paragraph that
+   follows it is block, so it goes inline too; and the period comes from the
+   heading's own ::after, since Forester writes titles without punctuation.
+
+   The second selector is the same chain plus a descendant section, which is
+   what carries the treatment to level five and beyond — there is no depth at
+   which a heading should go back to being its own line once it has stopped. */
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block,
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block {
+  margin-top: 1.3em;
+  padding-bottom: 0;
+}
+
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details,
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block > details {
+  margin-bottom: 0;
+}
+
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details > summary,
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block > details > summary {
+  display: inline;
+  margin-bottom: 0;
+}
+
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details > summary > header > h1,
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block > details > summary > header > h1 {
+  font-size: 1em;
+  font-weight: 400;
+  font-style: normal;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.03em;
+  color: #4a4740;
+}
+
+/* The metadata div sits inside the header, after the heading, and is block —
+   so even when a deep section carries no date or author it still closed the
+   line and the paragraph began on the next one. Inline, it takes no line of
+   its own and the run-in survives. */
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details > summary > header > .metadata,
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block > details > summary > header > .metadata {
+  display: inline;
+}
+
+/* The period goes before the slug, not after the heading: the h1 holds the
+   title *and* the [ID] link, so a plain ::after set it adrift past the
+   bracket. Where there is no slug — an anonymous \section, which is most of
+   them — the heading takes the period itself. */
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details > summary > header > h1 > a.slug::before,
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block > details > summary > header > h1 > a.slug::before {
+  content: ".";
+  color: rgb(var(--cal-neutral));
+}
+
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details > summary > header > h1:not(:has(> a.slug))::after,
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block > details > summary > header > h1:not(:has(> a.slug))::after {
+  content: ".";
+}
+
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details > summary + p,
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block > details > summary + p {
+  display: inline;
+}
+
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details > summary + p::before,
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block > details > summary + p::before {
+  content: " ";
+}
+
+/* `h2 + h3`: a subsection that opens its parent immediately, with no prose in
+   between, needs a fraction of the gap — otherwise the two headings sit a full
+   section apart with nothing to separate. `summary + section` is the faithful
+   translation: the summary is the parent's heading, so a section adjacent to
+   it is one that follows the heading directly. Applied at every depth, since
+   the double-gap reads the same wherever it happens. */
+article > section:not(.index-page) > details > section.block > details > summary + section.block,
+article > section:not(.index-page) > details > section.block > details > section.block > details > summary + section.block,
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > summary + section.block {
+  margin-top: 0.8em;
 }
 
 details>summary {
@@ -721,49 +1003,107 @@ section.block.index-entry[data-taxon="Reference"] {
   display: none;
 }
 
+/* The table of contents, as a rail. Every row hangs off a hairline in its own
+   left margin, nesting shows as an indent of that rail rather than as bullets,
+   and the whole thing is set small and sans so it reads as apparatus beside
+   the prose rather than as a second column of text. It sits in the left flank
+   (see the desktop grid above), which is what the sidenote gutter cost it.
+
+   The greys here are the TOC's own — a warmer family than the callout palette,
+   deliberately, since this is chrome and not content. If the rail ever wants
+   to match a \remark exactly, its color is rgb(var(--cal-neutral-rule)). */
 nav#toc {
-  margin-left: 1em;
+  margin-right: 1.5em;
   font-family: var(--sans);
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
+/* A label, not a heading: small caps-height, letterspaced, quiet. It names the
+   rail without competing with the page title beside it. */
 nav#toc h1 {
-  margin-top: 0;
-  font-size: 16pt;
-}
-
-nav#toc,
-nav#toc a {
-  color: #555;
-}
-
-nav#toc .link {
- box-shadow: none;
- text-decoration: none;
-}
-
-nav#toc a.bullet {
- opacity: 0.7;
- margin-left: 0.4em;
- margin-right: 0.3em;
- padding-left: 0.2em;
- padding-right: 0.2em;
- text-decoration: none;
-}
-
-nav#toc h2 {
-  font-size: 1.1em;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #8c8a83;
+  margin: 0 0 0.75rem;
 }
 
 nav#toc ul {
-  list-style-type: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-nav#toc li > ul {
- padding-left: 1em;
-}
-
+/* Hanging indent, because the ■ is still in the line box even while it is
+   transparent: without it the first line starts one bullet-width in and every
+   wrapped line starts flush, so a two-line entry stepped backwards. The
+   padding covers the rail gap plus the bullet, the negative indent pulls the
+   first line back onto the bullet, and the text lands in the same column
+   either way. */
 nav#toc li {
- list-style-position: inside;
+  margin: 0;
+  padding: 0.32rem 0 0.32rem calc(0.7rem + 0.95em);
+  text-indent: -0.95em;
+  border-left: 2px solid #e7e4dc;
+  transition: border-color 120ms ease;
+}
+
+/* The rail darkens under the cursor, so the row you are about to click is the
+   one the eye is already on — and on the row being read, which the scroll-spy
+   in tree.xsl marks with aria-current as the reader moves down the page.
+
+   `> .link`, not `> .link a`: a TOC row's title is a <span class="link local">
+   carrying a data-target, not an anchor. forester.js binds the click. The only
+   <a> in the row is the ■, which links to the entry's own page. */
+nav#toc li:hover,
+nav#toc li:has(> .link[aria-current]) {
+  border-left-color: #2c2a26;
+}
+
+nav#toc li ul {
+  margin-left: 0.4rem;
+  text-indent: 0;
+}
+
+nav#toc .link {
+  box-shadow: none;
+  text-decoration: none;
+}
+
+nav#toc .link a {
+  color: #56534c;
+  text-decoration: none;
+  border-bottom: none;
+}
+
+nav#toc .link a:hover {
+  color: #17150f;
+}
+
+/* The ■ is the only link to the entry's own page — the row's title links to an
+   anchor on this one — so it cannot go. It shrinks and waits: invisible until
+   the row is hovered, then grey, then dark under the cursor itself.
+
+   `color: transparent` leaves it clickable while unseen, which is a hazard for
+   anyone arriving by keyboard rather than pointer, so :focus-visible brings it
+   back at full strength. */
+nav#toc a.bullet {
+  font-size: 0.6em;
+  color: transparent;
+  margin-right: 0.35em;
+  vertical-align: 0.15em;
+  text-decoration: none;
+}
+
+nav#toc li:hover a.bullet {
+  color: #b3b0a6;
+}
+
+nav#toc a.bullet:hover,
+nav#toc a.bullet:focus-visible {
+  color: #17150f;
 }
 
 .block {
@@ -914,13 +1254,16 @@ mark {
   background-color: rgb(255, 255, 151);
 }
 
+/* Only reached by an <hr> that \hr did not emit — markdown inside a \md block
+   can produce one. Same values as the macro (see \hr in base-macros); change
+   them together. */
 hr {
-  margin-top: 10px;
-  margin-bottom: 20px;
-  background-color: gainsboro;
+  margin: 2.5rem 0 2rem;
   border: 0 none;
+  border-top: 2px solid rgb(var(--cal-neutral-rule));
   width: 100%;
-  height: 2px;
+  height: 0;
+  background: none;
 }
 
 ol {

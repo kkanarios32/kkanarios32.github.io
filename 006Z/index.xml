@@ -43,7 +43,13 @@
 
 </fr:mainmatter></fr:tree>
 
-  <html:hr />
+  <html:hr style="
+    margin: 2.5rem 0 2rem;
+    border: 0;
+    border-top: 2px solid rgb(219, 216, 215);
+    height: 0;
+    background: none;
+  " />
 <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" /></fr:mainmatter>
     </fr:tree>
     <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -65,7 +71,13 @@
         <fr:meta name="reading-time">true</fr:meta>
       </fr:frontmatter>
       <fr:mainmatter>
-  <html:hr />
+  <html:hr style="
+    margin: 2.5rem 0 2rem;
+    border: 0;
+    border-top: 2px solid rgb(219, 216, 215);
+    height: 0;
+    background: none;
+  " />
 <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" /></fr:mainmatter>
     </fr:tree>
     <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -107,7 +119,7 @@ os.environ["LIBTPU_INIT_ARGS"] = (
     f"--xla_mosaic_enable_dump_debug_info=true "
     f"--xla_mosaic_enable_llo_source_annotations=true"
 )
-</html:code></html:pre><html:p>To understand these flags, one first needs to understand the Pallas lowering pipeline.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/M74N/</fr:uri><fr:display-uri>M74N</fr:display-uri><fr:route>/M74N/</fr:route><fr:title text="XLA Compilation">XLA Compilation</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Overview.</html:strong></html:p><html:ul><html:li>Dispatch / Cache: caches compilation based on input argument signatures i.e. shapes, dtypes, sharding. If shapes change will need to <html:strong>recompile</html:strong>.</html:li>
+</html:code></html:pre><html:p>To understand these flags, one first needs to understand the Pallas lowering pipeline.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/M74N/</fr:uri><fr:display-uri>M74N</fr:display-uri><fr:route>/M74N/</fr:route><fr:title text="XLA Compilation">XLA Compilation</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Overview.</html:strong></html:p><html:ul><html:li>Dispatch / Cache: caches compilation based on input argument signatures i.e. shapes, dtypes, sharding. If shapes change will need to <html:strong>recompile</html:strong>.</html:li>
   <html:li>XLA transformation: Python -&gt; JaxPR -&gt; StableHLO, performing fusion and other simplifications to reduce memory overhead (?).</html:li>
   <html:li>TPU specific: Further reduced to LLO IR, then <html:em>very large instruction word</html:em> (VLIW) scheduling to map dot products to MXU.</html:li></html:ul>
  <html:div class="jms-callout" style="
@@ -141,13 +153,19 @@ As soon as python code is traced into jaxpr it is thrown away. Only HLO is input
     <html:ul><html:li>Input for XLA compiler.</html:li>
       <html:li>Directed acyclic graph of copmutational operations.</html:li>
       <html:li>All array dimensions are known at compile time.</html:li>
-      <html:li>Limited opcodes i.e. Add, Multiply, Transpose, Dot, etc.</html:li></html:ul></html:ul></html:ol></fr:mainmatter></fr:tree><html:p><html:strong style="font-family: var(--sans); font-weight: 500;">XLA Shapes and Memory Layout.</html:strong></html:p><html:ul><html:li>Every data type defined by data type and fixed dimensions, determined at compile time.</html:li>
+      <html:li>Limited opcodes i.e. Add, Multiply, Transpose, Dot, etc.</html:li></html:ul></html:ul></html:ol></fr:mainmatter></fr:tree><html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">XLA Shapes and Memory Layout.</html:strong></html:p><html:ul><html:li>Every data type defined by data type and fixed dimensions, determined at compile time.</html:li>
   <html:li>Minor-to-major order i.e. fastest changing to slowesting changin.</html:li>
   <html:li>Tiling: arrays are split into smaller blocks to fit into VREG. Want to arrange data to efficiently fit VREG.</html:li></html:ul><html:figure><html:img width="60%" src="/bafkrmihanbz63fc3hvqd3drtqlm5shhn2624xbut2oobs3zibpwjw2jiju.png" />
-<html:figcaption>How memory is laid out based on XLA.</html:figcaption></html:figure><html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Execution.</html:strong></html:p><html:ul><html:li>Move tensors from CPU to HBM. Sharding is taken care of by PJIT if on TPU pod.</html:li>
+<html:figcaption>How memory is laid out based on XLA.</html:figcaption></html:figure><html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Execution.</html:strong></html:p><html:ul><html:li>Move tensors from CPU to HBM. Sharding is taken care of by PJIT if on TPU pod.</html:li>
   <html:li>Async: Immediately returns a <html:code>Future</html:code> JAX array while the hardware executes VLIW microcode asynchronously.</html:li>
   <html:li>Buffer management: Returns pointer to TPU memory. All handled lazily. Not copied back to CPU until <html:code>jax.block_until_ready()</html:code>.</html:li></html:ul></fr:mainmatter></fr:tree>
-  <html:hr />
+  <html:hr style="
+    margin: 2.5rem 0 2rem;
+    border: 0;
+    border-top: 2px solid rgb(219, 216, 215);
+    height: 0;
+    background: none;
+  " />
 <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" /></fr:mainmatter>
     </fr:tree>
     <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -256,7 +274,7 @@ As soon as python code is traced into jaxpr it is thrown away. Only HLO is input
     \text {---} & \mathbf {v}^{(n)} & \text {---}
   \end {bmatrix}
 \end {bmatrix} \in  \mathbb {R}^{n \times  d_v}
-]]></fr:tex></html:p><html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Intuition 1.</html:strong> Convex re-weighting of input tokens.
+]]></fr:tex></html:p><html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Intuition 1.</html:strong> Convex re-weighting of input tokens.
   Note that
 <fr:tex display="block"><![CDATA[
 \begin {align*}
@@ -299,7 +317,7 @@ As soon as python code is traced into jaxpr it is thrown away. Only HLO is input
   \end {bmatrix}
 \end {align*}
   ]]></fr:tex>
-  <html:strong style="font-family: var(--sans); font-weight: 500;">Intuition 2.</html:strong> Context dependent re-weighting.
+  <html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Intuition 2.</html:strong> Context dependent re-weighting.
       If <fr:tex display="inline"><![CDATA[\mathbf {p} = \mathbb {S}(\mathbf {Q} \mathbf {K}^T)]]></fr:tex> then
       <fr:tex display="block"><![CDATA[
         \begin {align*}
@@ -418,7 +436,13 @@ In <fr:link href="/shaoDeepSeekMathPushingLimits2024/" title="DeepSeekMath: Push
 
   <html:div class="comments">
     
-  <html:hr />
+  <html:hr style="
+    margin: 2.5rem 0 2rem;
+    border: 0;
+    border-top: 2px solid rgb(219, 216, 215);
+    height: 0;
+    background: none;
+  " />
 
     <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="deepseek-r1" theme="boxy-light" crossorigin="anonymous" async="" />
   </html:div>

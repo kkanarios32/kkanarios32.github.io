@@ -135,7 +135,13 @@ Both passes are <code>O(TK^2)</code> because at each timestep, it requires compu
 
   <div class="comments">
     
-  <hr />
+  <hr style="
+    margin: 2.5rem 0 2rem;
+    border: 0;
+    border-top: 2px solid rgb(219, 216, 215);
+    height: 0;
+    background: none;
+  " />
 
     <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
   </div>
@@ -167,7 +173,7 @@ It seems how to properly use these (todoist in particular) is the subject of muc
   <p>
     This is effectively a task management system.
   </p>
-  <p><strong style="font-family: var(--sans); font-weight: 500;">Work streams.</strong> I took this name from my investment banker friends (sounds cool / important). Basically, these are groupings I have made and allocated time for each day. They roughly consist of the following:
+  <p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Work streams.</strong> I took this name from my investment banker friends (sounds cool / important). Basically, these are groupings I have made and allocated time for each day. They roughly consist of the following:
   </p>
     <ul><li>Research / work (<mark>first thing in the morning</mark>):</li>
       <ul><li>Active work towards new artifact or paper i.e. coding up ideas.</li>
@@ -243,7 +249,13 @@ This is the harder part (and requires the most discipline). When working on a ta
 </section>
   <div class="comments">
     
-  <hr />
+  <hr style="
+    margin: 2.5rem 0 2rem;
+    border: 0;
+    border-top: 2px solid rgb(219, 216, 215);
+    height: 0;
+    background: none;
+  " />
 
     <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
   </div>
@@ -518,9 +530,9 @@ Neither ever requires an <code>N \times  N</code> intermediate.
 </section>
 </section>
   <section><header><h3>Summary</h3></header>
-<p><strong style="font-family: var(--sans); font-weight: 500;">Forward pass.</strong> Store <code>\mathbf {O}</code> and the softmax denominators <code>\mathbf {L}</code>, both <code>O(Nd)</code>.</p>
-<p><strong style="font-family: var(--sans); font-weight: 500;">Between the passes.</strong> Receive <code>d\mathbf {O}</code> from the layer above (automatic in <a href="https://kellenkanarios.com/OGCRY/">JAX</a>), then precompute <code>\mathbf {D}_i = d\mathbf {O}_i \cdot  \mathbf {O}_i</code> in <code>O(N)</code> memory.</p>
-<p><strong style="font-family: var(--sans); font-weight: 500;">Backward pass.</strong> Stream over tiles, recomputing <code>\mathbf {P}_{ij}</code> from <code>\mathbf {Q}, \mathbf {K}, \mathbf {L}</code> and <code>d\mathbf {P}_{ij}</code> from <code>d\mathbf {O}, \mathbf {V}</code> as needed:</p>
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Forward pass.</strong> Store <code>\mathbf {O}</code> and the softmax denominators <code>\mathbf {L}</code>, both <code>O(Nd)</code>.</p>
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Between the passes.</strong> Receive <code>d\mathbf {O}</code> from the layer above (automatic in <a href="https://kellenkanarios.com/OGCRY/">JAX</a>), then precompute <code>\mathbf {D}_i = d\mathbf {O}_i \cdot  \mathbf {O}_i</code> in <code>O(N)</code> memory.</p>
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Backward pass.</strong> Stream over tiles, recomputing <code>\mathbf {P}_{ij}</code> from <code>\mathbf {Q}, \mathbf {K}, \mathbf {L}</code> and <code>d\mathbf {P}_{ij}</code> from <code>d\mathbf {O}, \mathbf {V}</code> as needed:</p>
 <ol><li><code>d\mathbf {V}_j = \sum _i \mathbf {P}_{ij} d\mathbf {O}_i</code>, accumulated over query tiles.</li>
   <li><code>d\mathbf {Q}_i = \sum _j \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {K}_j</code>, accumulated over key tiles.</li>
   <li><code>d\mathbf {K}_j = \sum _i \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {Q}_i</code>, accumulated over query tiles.</li></ol>
@@ -529,7 +541,13 @@ Neither ever requires an <code>N \times  N</code> intermediate.
 </section>
   <div class="comments">
     
-  <hr />
+  <hr style="
+    margin: 2.5rem 0 2rem;
+    border: 0;
+    border-top: 2px solid rgb(219, 216, 215);
+    height: 0;
+    background: none;
+  " />
 
     <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
   </div>
@@ -2127,13 +2145,13 @@ Neither ever requires an <code>N \times  N</code> intermediate.
 
   <section><header><h3>Losing data to a PutM/Fwd-GetM race</h3></header>
 <p>Consider the <code>PutM</code> rule that downgrades a cache from modified to invalid. The evicting cache must <strong>not</strong> drop the data when it sends <code>PutM</code>, because it may still have to service a forwarded request; it transitions to <code>MI^A</code> and keeps the value. But nothing stops the <code>PutAck</code> from arriving first, taking it to <code>I</code> before the <code>Fwd-GetM</code> shows up. The data is gone and the forwarded request has nobody to answer it.</p>
-<p><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Add the <code>M^D</code> state to the directory controller. While in <code>M^D</code>, a <code>PutM</code> from a node that is not the current owner stalls until the data arrives. Leaving <code>M^D</code> for <code>M</code> requires the new owner to send data back to the directory even on a three-hop transaction, so the directory learns that the forward actually completed. I have not found a cleaner way to close this race without the extra state.</p>
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Fix.</strong> Add the <code>M^D</code> state to the directory controller. While in <code>M^D</code>, a <code>PutM</code> from a node that is not the current owner stalls until the data arrives. Leaving <code>M^D</code> for <code>M</code> requires the new owner to send data back to the directory even on a three-hop transaction, so the directory learns that the forward actually completed. I have not found a cleaner way to close this race without the extra state.</p>
 </section>
 
   <section><header><h3>Deadlocking two stores against a load</h3></header>
 <p>The <code>M^D</code> fix introduces a deadlock of its own. Take two processors that store-miss and a third that load-misses. The second store wins at the directory: the first store gets data and moves <code>IM^{AD} \to  IM^{A}</code>, then the second triggers a <code>Fwd-GetM</code> that takes ownership away from it.</p>
 <p>Meanwhile the load miss sits in <code>IS^D</code>. When its <code>Inv</code> arrives, the table says to stall — and because <code>Inv</code> and <code>Fwd-GetM</code> share the forwarded channel, that stall blocks the <code>Fwd-GetM</code> behind it. The winning processor never receives the data, and nothing ever drains the channel.</p>
-<p><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Another transient state absent from the table: <code>II^A</code>, meaning "was in <code>IS^A</code>, got invalidated, now waiting on <code>PutAck</code> before settling in <code>I</code>". The invalidation is processed rather than stalled, so the forwarded channel keeps moving.</p>
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Fix.</strong> Another transient state absent from the table: <code>II^A</code>, meaning "was in <code>IS^A</code>, got invalidated, now waiting on <code>PutAck</code> before settling in <code>I</code>". The invalidation is processed rather than stalled, so the forwarded channel keeps moving.</p>
 </section>
 
   <section><header><h3>Not clearing the owner too eagerly</h3></header>
@@ -3366,8 +3384,8 @@ Neither ever requires an <code>N \times  N</code> intermediate.
   </div>
 
 <figcaption>MESI cache controller, responses, again over the transient states only. The whole of MESI's addition here is one cell: <code>ExclusiveData</code> landing in <code>IS^D</code> gives <code>E</code> instead of <code>S</code>.</figcaption></figure>
-<p><strong style="font-family: var(--sans); font-weight: 500;">Silent upgrades.</strong> If a cache in <code>E</code> may upgrade to <code>M</code> silently, the directory never learns the line went dirty, and the value it hands to the next <code>GetS</code> or <code>GetM</code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat <code>E</code> exactly like <code>M</code>, forwarding everything. Neither requires a writeback on <code>PutE</code>. I take the first, matching the table.</p>
-<p><strong style="font-family: var(--sans); font-weight: 500;">Signaling exclusivity.</strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <code>ExclusiveData</code> message: receiving it in <code>IS^D</code> lands the cache in <code>E</code> rather than <code>S</code>. It turns out to also be the key to the second race below.</p>
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Silent upgrades.</strong> If a cache in <code>E</code> may upgrade to <code>M</code> silently, the directory never learns the line went dirty, and the value it hands to the next <code>GetS</code> or <code>GetM</code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat <code>E</code> exactly like <code>M</code>, forwarding everything. Neither requires a writeback on <code>PutE</code>. I take the first, matching the table.</p>
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Signaling exclusivity.</strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <code>ExclusiveData</code> message: receiving it in <code>IS^D</code> lands the cache in <code>E</code> rather than <code>S</code>. It turns out to also be the key to the second race below.</p>
 
  <div class="jms-callout" style="
   margin: 1.1rem 0;
@@ -3981,7 +3999,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, <code>EI^A</code> and
 
   <section><header><h3>Forwards arriving before exclusive data</h3></header>
 <p>The first processor issues <code>GetS</code> and waits in <code>IS^D</code>, while the home directory has already moved to <code>E</code> and sent it <code>ExclusiveData</code>. A second processor then issues <code>GetM</code>, and home's <code>Fwd-GetM</code> overtakes the data in flight.</p>
-<p><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Stall <code>Fwd-GetM</code> and <code>Fwd-GetS</code> in <code>IS^D</code> until the data lands. This is safe here because the data is on the response channel, which no stall can block.</p>
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Fix.</strong> Stall <code>Fwd-GetM</code> and <code>Fwd-GetS</code> in <code>IS^D</code> until the data lands. This is safe here because the data is on the response channel, which no stall can block.</p>
 </section>
 
   <section><header><h3>Losing exclusive data to an invalidation</h3></header>
@@ -4003,7 +4021,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, <code>EI^A</code> and
 </div>
 
 
-<p><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> <code>ExclusiveData</code> pays for itself a second time. Because the message is distinguishable from ordinary <code>Data</code>, a cache receiving it in <code>II^D</code> knows it was the first reader and transitions to <code>E</code> instead of <code>I</code>. There, the pending <code>Fwd-GetM</code> or <code>Fwd-GetS</code> is handled correctly.</p>
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Fix.</strong> <code>ExclusiveData</code> pays for itself a second time. Because the message is distinguishable from ordinary <code>Data</code>, a cache receiving it in <code>II^D</code> knows it was the first reader and transitions to <code>E</code> instead of <code>I</code>. There, the pending <code>Fwd-GetM</code> or <code>Fwd-GetS</code> is handled correctly.</p>
 </section>
 
   <section><header><h3>The finished controllers</h3></header>
@@ -4157,7 +4175,13 @@ Alternating between these steps yields the <em>expectation-maximization</em> alg
 
   <div class="comments">
     
-  <hr />
+  <hr style="
+    margin: 2.5rem 0 2rem;
+    border: 0;
+    border-top: 2px solid rgb(219, 216, 215);
+    height: 0;
+    background: none;
+  " />
 
     <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
   </div>
@@ -4176,7 +4200,7 @@ Alternating between these steps yields the <em>expectation-maximization</em> alg
     <id>https://kellenkanarios.com/0082/</id>
     <content type="xhtml">
       <div xmlns="http://www.w3.org/1999/xhtml">
-<p><strong style="font-family: var(--sans); font-weight: 500;">Setup.</strong>
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Setup.</strong>
 We are given a joint distribution <code>p(X, Z; \theta )</code>, where <code>X</code> and <code>Z</code> are random variables with their joint parametrized by <code>\theta </code>. We are also given a dataset <code>\mathcal {D}</code> containing realizations of <strong>only</strong> <code>X</code> i.e. <code>Z</code> is a <a href="https://kellenkanarios.com/0083/">latent random variable</a>.
   </p>
   
@@ -4206,7 +4230,7 @@ We are given a joint distribution <code>p(X, Z; \theta )</code>, where <code>X</
 </div>
 
 
-<p><strong style="font-family: var(--sans); font-weight: 500;">Motivation.</strong> Suppose we had some <code>q(z)</code> that we could sample realizations of <code>Z</code> from. Then we want to find some reasonable <code>\ell _{\theta }</code>, such that
+<p><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Motivation.</strong> Suppose we had some <code>q(z)</code> that we could sample realizations of <code>Z</code> from. Then we want to find some reasonable <code>\ell _{\theta }</code>, such that
 <code>\theta ^* \approx  \arg \max _{\theta } \mathbb {E}_{x, \sim  p(x; \theta ^*), z \sim  q(z)}[\ell _{\theta }(X, Z)]</code>
 
  <div class="jms-callout" style="
@@ -4247,7 +4271,13 @@ You may be wondering how we use this algorithmically to find <code>\theta ^*</co
 </p>
   <div class="comments">
     
-  <hr />
+  <hr style="
+    margin: 2.5rem 0 2rem;
+    border: 0;
+    border-top: 2px solid rgb(219, 216, 215);
+    height: 0;
+    background: none;
+  " />
 
     <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" />
   </div>
@@ -4320,7 +4350,13 @@ You may be wondering how we use this algorithmically to find <code>\theta ^*</co
 
   <div class="comments">
     
-  <hr />
+  <hr style="
+    margin: 2.5rem 0 2rem;
+    border: 0;
+    border-top: 2px solid rgb(219, 216, 215);
+    height: 0;
+    background: none;
+  " />
 
     <script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="nvim" theme="boxy-light" crossorigin="anonymous" async="" />
   </div>

@@ -47,15 +47,15 @@
     <html:ul><html:li>35.82% flop utilization.</html:li>
       <html:li>19.49% HBM bandwidth utilization.</html:li>
       <html:li>7.39% On-chip read utilization.</html:li></html:ul></html:ul>
-  <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">HBM Bottleneck.</html:strong> The default XLA attention does not fuse the softmax with the logit computation, requiring the entire logit matrix to be written back to HBM.</html:p>
-  <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Vector Unit Limitations.</html:strong> MXU can be left idle while VPU is performing copmlex exponential and sum operations.</html:p>
-  <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">VMEM Residency and Loop Control.</html:strong> Pallas allows you to control data movement, so that we can explicitly enforce <html:em>online softmax</html:em> rather than writing back to HBM.</html:p>
-  <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Temporal Control via LLO.</html:strong> Pallas also allows control over the <html:em>temporal flow</html:em>, preventing the compiler from reordering your manual optimizations.</html:p>
+  <html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">HBM Bottleneck.</html:strong> The default XLA attention does not fuse the softmax with the logit computation, requiring the entire logit matrix to be written back to HBM.</html:p>
+  <html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Vector Unit Limitations.</html:strong> MXU can be left idle while VPU is performing copmlex exponential and sum operations.</html:p>
+  <html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">VMEM Residency and Loop Control.</html:strong> Pallas allows you to control data movement, so that we can explicitly enforce <html:em>online softmax</html:em> rather than writing back to HBM.</html:p>
+  <html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Temporal Control via LLO.</html:strong> Pallas also allows control over the <html:em>temporal flow</html:em>, preventing the compiler from reordering your manual optimizations.</html:p>
 </fr:mainmatter></fr:tree>
 
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>23</fr:day></fr:date><fr:title text="Pallas Fundamentals">Pallas Fundamentals</fr:title></fr:frontmatter><fr:mainmatter>
 <html:em>Ignore the HLO pass.</html:em>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Writing a kernel.</html:strong></html:p>
+<html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Writing a kernel.</html:strong></html:p>
 <html:ul><html:li>Inside the kernel, data has already been moved from HBM to VMEM.
 <html:figure><html:img width="100%" src="/bafkrmiha7cfu4qisvm3es3cn2gvqjz7u3l5o6piqj3lehpbl34j5bf42ma.png" /></html:figure></html:li>
   <html:li>If data exceeds VMEM, we need to <html:em>tile</html:em> with <html:code>BlockSpec</html:code>.</html:li>
@@ -66,18 +66,18 @@
     <html:li>Asynchronous overlap.</html:li>
     <html:li>Buffer reuse. Uses same VMEM buffer across iterations.</html:li></html:ul></html:ul>
   <html:figure><html:img width="100%" src="/bafkrmieaepdhrv4tueesd6qhpu2sfijzhjoeyqs2i7xtryiimjhaqvgdeu.png" /></html:figure>
-  <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Two-level Tiling.</html:strong></html:p>
+  <html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Two-level Tiling.</html:strong></html:p>
   <html:ul><html:li>Macro-tiling: this is done by Pallas / user. You define the larger software blocks i.e. 1024x1024 to hide latency DMA transfers. Pallas manages pipeling.</html:li>
     <html:li>Micro-tiling: this is done by compiler / hardware. Translates larger block into hardware native VREG 8x128.
     </html:li></html:ul>
-  <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">VPU Pipelining.</html:strong></html:p>
+  <html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">VPU Pipelining.</html:strong></html:p>
   <html:ul><html:li>VLOAD: fetching inputs for <html:strong>chunk (8x128)(N + 1)th</html:strong> from VMEM and move to VRegs</html:li>
     <html:li>VALU: Perform elementwise operations for <html:strong>current (Nth)</html:strong> chunk </html:li>
     <html:li>VSTORE: write completed result for <html:strong>previous (N - 1)th</html:strong> chunk from VRegs back to VMEM.</html:li></html:ul>
 </fr:mainmatter></fr:tree>
 
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>23</fr:day></fr:date><fr:title text="Flash Attention">Flash Attention</fr:title></fr:frontmatter><fr:mainmatter>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Online softmax.</html:strong></html:p>
+<html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Online softmax.</html:strong></html:p>
 <html:ul><html:li>Each block does a local softmax calculation.</html:li>
   <html:li>Tracks a shared maximum and adjusts results.</html:li></html:ul>
 <html:p>Can Now fuse score calculation, softmax, and value aggregation into single pass.</html:p>
@@ -88,17 +88,17 @@
   <html:li>Re-scale accumulation: Multiplies by <fr:tex display="inline"><![CDATA[\alpha ]]></fr:tex> to the previously accumulated sums before adding current block output to accurately rescale all past results.</html:li>
   <html:li>Additive updates: partial results (current softmax and outputs) are added to running totals via fast multiply and addition ops.</html:li>
   <html:li>Delayed normalization: only divide by normalization once at the very end of the loop because division is slow.</html:li></html:ul>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Block-size tuning.</html:strong> to maximize compute-to-load ratio need biggest block sizes that fit into VMEM.</html:p>
+<html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Block-size tuning.</html:strong> to maximize compute-to-load ratio need biggest block sizes that fit into VMEM.</html:p>
 </fr:mainmatter></fr:tree>
 
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>3</fr:month><fr:day>23</fr:day></fr:date><fr:title text="Splash Attention">Splash Attention</fr:title></fr:frontmatter><fr:mainmatter>
 <html:p>With certain masks (i.e. causal) can skip alot of computation for parts of the attention matrix that are being masked out.</html:p>
 <html:ul><html:li>Finer blocks -&gt; can skip more but then have poorer utilization.</html:li></html:ul>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Pre-processing Mask Info.</html:strong></html:p>
+<html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Pre-processing Mask Info.</html:strong></html:p>
 <html:ul><html:li>Sparsity pruning: Divide mask into blocks and discard all inactive blocks (all zeros).</html:li>
   <html:li>Data compression: see how many unique mask patterns are needed to describe the remaining active blocks.</html:li>
   <html:li>Execution map and pre-fetching: (active_rows, mask_next) generated to map the computation order and tell the MXU which mask pattern to prefetch for zero-latency application.</html:li></html:ul>
-<html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Metadata structures.</html:strong></html:p>
+<html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Metadata structures.</html:strong></html:p>
 <html:ul><html:li>Block filtering (block_mask): categorizes QK blocks as zero, non-zero, partial.</html:li>
   <html:li>Coordinate mapping (active_ros/cols): provides the hardware with (Q, KV) grid indices, ensuring efficient loading of active blocks from HBM.</html:li>
   <html:li>Mask pipelining (mask_next): tells the hardware which mask pattern to prefetch.</html:li>
@@ -179,7 +179,13 @@
 
 </fr:mainmatter></fr:tree>
 
-  <html:hr />
+  <html:hr style="
+    margin: 2.5rem 0 2rem;
+    border: 0;
+    border-top: 2px solid rgb(219, 216, 215);
+    height: 0;
+    background: none;
+  " />
 <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" /></fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -250,7 +256,7 @@ os.environ["LIBTPU_INIT_ARGS"] = (
     f"--xla_mosaic_enable_dump_debug_info=true "
     f"--xla_mosaic_enable_llo_source_annotations=true"
 )
-</html:code></html:pre><html:p>To understand these flags, one first needs to understand the Pallas lowering pipeline.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/M74N/</fr:uri><fr:display-uri>M74N</fr:display-uri><fr:route>/M74N/</fr:route><fr:title text="XLA Compilation">XLA Compilation</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Overview.</html:strong></html:p><html:ul><html:li>Dispatch / Cache: caches compilation based on input argument signatures i.e. shapes, dtypes, sharding. If shapes change will need to <html:strong>recompile</html:strong>.</html:li>
+</html:code></html:pre><html:p>To understand these flags, one first needs to understand the Pallas lowering pipeline.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/M74N/</fr:uri><fr:display-uri>M74N</fr:display-uri><fr:route>/M74N/</fr:route><fr:title text="XLA Compilation">XLA Compilation</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Overview.</html:strong></html:p><html:ul><html:li>Dispatch / Cache: caches compilation based on input argument signatures i.e. shapes, dtypes, sharding. If shapes change will need to <html:strong>recompile</html:strong>.</html:li>
   <html:li>XLA transformation: Python -&gt; JaxPR -&gt; StableHLO, performing fusion and other simplifications to reduce memory overhead (?).</html:li>
   <html:li>TPU specific: Further reduced to LLO IR, then <html:em>very large instruction word</html:em> (VLIW) scheduling to map dot products to MXU.</html:li></html:ul>
  <html:div class="jms-callout" style="
@@ -284,13 +290,19 @@ As soon as python code is traced into jaxpr it is thrown away. Only HLO is input
     <html:ul><html:li>Input for XLA compiler.</html:li>
       <html:li>Directed acyclic graph of copmutational operations.</html:li>
       <html:li>All array dimensions are known at compile time.</html:li>
-      <html:li>Limited opcodes i.e. Add, Multiply, Transpose, Dot, etc.</html:li></html:ul></html:ul></html:ol></fr:mainmatter></fr:tree><html:p><html:strong style="font-family: var(--sans); font-weight: 500;">XLA Shapes and Memory Layout.</html:strong></html:p><html:ul><html:li>Every data type defined by data type and fixed dimensions, determined at compile time.</html:li>
+      <html:li>Limited opcodes i.e. Add, Multiply, Transpose, Dot, etc.</html:li></html:ul></html:ul></html:ol></fr:mainmatter></fr:tree><html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">XLA Shapes and Memory Layout.</html:strong></html:p><html:ul><html:li>Every data type defined by data type and fixed dimensions, determined at compile time.</html:li>
   <html:li>Minor-to-major order i.e. fastest changing to slowesting changin.</html:li>
   <html:li>Tiling: arrays are split into smaller blocks to fit into VREG. Want to arrange data to efficiently fit VREG.</html:li></html:ul><html:figure><html:img width="60%" src="/bafkrmihanbz63fc3hvqd3drtqlm5shhn2624xbut2oobs3zibpwjw2jiju.png" />
-<html:figcaption>How memory is laid out based on XLA.</html:figcaption></html:figure><html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Execution.</html:strong></html:p><html:ul><html:li>Move tensors from CPU to HBM. Sharding is taken care of by PJIT if on TPU pod.</html:li>
+<html:figcaption>How memory is laid out based on XLA.</html:figcaption></html:figure><html:p><html:strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Execution.</html:strong></html:p><html:ul><html:li>Move tensors from CPU to HBM. Sharding is taken care of by PJIT if on TPU pod.</html:li>
   <html:li>Async: Immediately returns a <html:code>Future</html:code> JAX array while the hardware executes VLIW microcode asynchronously.</html:li>
   <html:li>Buffer management: Returns pointer to TPU memory. All handled lazily. Not copied back to CPU until <html:code>jax.block_until_ready()</html:code>.</html:li></html:ul></fr:mainmatter></fr:tree>
-  <html:hr />
+  <html:hr style="
+    margin: 2.5rem 0 2rem;
+    border: 0;
+    border-top: 2px solid rgb(219, 216, 215);
+    height: 0;
+    background: none;
+  " />
 <html:script src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async="" /></fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>

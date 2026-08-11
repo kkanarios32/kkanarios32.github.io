@@ -8,6 +8,50 @@ window.addEventListener('load', function () {
     if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
   });
 });
+          </script><script>
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
           </script><title>Diversity is All You Need</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon"></span>Diversity is All You Need <a class="slug" href="/0080/">[0080]</a> </h1>
 <div class="metadata"><ul>
@@ -123,7 +167,7 @@ learning.},
 <li class="meta-item">June 30, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 <li class="meta-item">5 min read</li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Setup.</strong>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Setup.</strong>
 We are given a joint distribution \(p(X, Z; \theta )\), where \(X\) and \(Z\) are random variables with their joint parametrized by \(\theta \). We are also given a dataset \(\mathcal {D}\) containing realizations of <strong>only</strong> \(X\) i.e. \(Z\) is a <span xmlns="" class="link local"><a href="/0083/" title="Latent Variable [0083]">latent random variable</a></span>.
   </p>
   
@@ -141,7 +185,7 @@ We are given a joint distribution \(p(X, Z; \theta )\), where \(X\) and \(Z\) ar
 </div>
 
 
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Motivation.</strong> Suppose we had some \(q(z)\) that we could sample realizations of \(Z\) from. Then we want to find some reasonable \(\ell _{\theta }\), such that
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Motivation.</strong> Suppose we had some \(q(z)\) that we could sample realizations of \(Z\) from. Then we want to find some reasonable \(\ell _{\theta }\), such that
 \[\theta ^* \approx  \arg \max _{\theta } \mathbb {E}_{x, \sim  p(x; \theta ^*), z \sim  q(z)}[\ell _{\theta }(X, Z)]\]
 
  <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 

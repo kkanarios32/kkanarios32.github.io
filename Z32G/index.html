@@ -8,6 +8,50 @@ window.addEventListener('load', function () {
     if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
   });
 });
+          </script><script>
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
           </script><title>Directory protocols expose transient states because transactions span multiple hops</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon"></span>Directory protocols expose transient states because transactions span multiple hops <a class="slug" href="/Z32G/">[Z32G]</a> </h1>
 <div class="metadata"><ul>
@@ -633,7 +677,7 @@ window.addEventListener('load', function () {
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">Consider the <code>PutM</code> rule that downgrades a cache from modified to invalid. The evicting cache must <strong>not</strong> drop the data when it sends <code>PutM</code>, because it may still have to service a forwarded request; it transitions to \(MI^A\) and keeps the value. But nothing stops the <code>PutAck</code> from arriving first, taking it to \(I\) before the <code>Fwd-GetM</code> shows up. The data is gone and the forwarded request has nobody to answer it.</p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Add the \(M^D\) state to the directory controller. While in \(M^D\), a <code>PutM</code> from a node that is not the current owner stalls until the data arrives. Leaving \(M^D\) for \(M\) requires the new owner to send data back to the directory even on a three-hop transaction, so the directory learns that the forward actually completed. I have not found a cleaner way to close this race without the extra state.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Fix.</strong> Add the \(M^D\) state to the directory controller. While in \(M^D\), a <code>PutM</code> from a node that is not the current owner stalls until the data arrives. Leaving \(M^D\) for \(M\) requires the new owner to send data back to the directory even on a three-hop transaction, so the directory learns that the forward actually completed. I have not found a cleaner way to close this race without the extra state.</p>
 </details></section>
 
   <section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
@@ -644,7 +688,7 @@ window.addEventListener('load', function () {
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The \(M^D\) fix introduces a deadlock of its own. Take two processors that store-miss and a third that load-misses. The second store wins at the directory: the first store gets data and moves \(IM^{AD} \to  IM^{A}\), then the second triggers a <code>Fwd-GetM</code> that takes ownership away from it.</p>
 <p xmlns="http://www.w3.org/1999/xhtml">Meanwhile the load miss sits in \(IS^D\). When its <code>Inv</code> arrives, the table says to stall — and because <code>Inv</code> and <code>Fwd-GetM</code> share the forwarded channel, that stall blocks the <code>Fwd-GetM</code> behind it. The winning processor never receives the data, and nothing ever drains the channel.</p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Another transient state absent from the table: \(II^A\), meaning "was in \(IS^A\), got invalidated, now waiting on <code>PutAck</code> before settling in \(I\)". The invalidation is processed rather than stalled, so the forwarded channel keeps moving.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Fix.</strong> Another transient state absent from the table: \(II^A\), meaning "was in \(IS^A\), got invalidated, now waiting on <code>PutAck</code> before settling in \(I\)". The invalidation is processed rather than stalled, so the forwarded channel keeps moving.</p>
 </details></section>
 
   <section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
@@ -1047,8 +1091,8 @@ window.addEventListener('load', function () {
   </div>
 
 <figcaption>MESI cache controller, responses, again over the transient states only. The whole of MESI's addition here is one cell: <code>ExclusiveData</code> landing in \(IS^D\) gives \(E\) instead of \(S\).</figcaption></figure>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Silent upgrades.</strong> If a cache in \(E\) may upgrade to \(M\) silently, the directory never learns the line went dirty, and the value it hands to the next <code>GetS</code> or <code>GetM</code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat \(E\) exactly like \(M\), forwarding everything. Neither requires a writeback on <code>PutE</code>. I take the first, matching the table.</p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Signaling exclusivity.</strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <code>ExclusiveData</code> message: receiving it in \(IS^D\) lands the cache in \(E\) rather than \(S\). It turns out to also be the key to the second race below.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Silent upgrades.</strong> If a cache in \(E\) may upgrade to \(M\) silently, the directory never learns the line went dirty, and the value it hands to the next <code>GetS</code> or <code>GetM</code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat \(E\) exactly like \(M\), forwarding everything. Neither requires a writeback on <code>PutE</code>. I take the first, matching the table.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Signaling exclusivity.</strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <code>ExclusiveData</code> message: receiving it in \(IS^D\) lands the cache in \(E\) rather than \(S\). It turns out to also be the key to the second race below.</p>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\) are functionally identical. Both appear above for completeness, but transitioning from \(E\) straight into \(MI^A\) verifies the same.
@@ -1252,7 +1296,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The first processor issues <code>GetS</code> and waits in \(IS^D\), while the home directory has already moved to \(E\) and sent it <code>ExclusiveData</code>. A second processor then issues <code>GetM</code>, and home's <code>Fwd-GetM</code> overtakes the data in flight.</p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Stall <code>Fwd-GetM</code> and <code>Fwd-GetS</code> in \(IS^D\) until the data lands. This is safe here because the data is on the response channel, which no stall can block.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Fix.</strong> Stall <code>Fwd-GetM</code> and <code>Fwd-GetS</code> in \(IS^D\) until the data lands. This is safe here because the data is on the response channel, which no stall can block.</p>
 </details></section>
 
   <section lang="en" class="block hide-metadata"><details id="id21" open="open"><summary><header><h1>
@@ -1275,7 +1319,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
 </div>
 
 
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> <code>ExclusiveData</code> pays for itself a second time. Because the message is distinguishable from ordinary <code>Data</code>, a cache receiving it in \(II^D\) knows it was the first reader and transitions to \(E\) instead of \(I\). There, the pending <code>Fwd-GetM</code> or <code>Fwd-GetS</code> is handled correctly.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Fix.</strong> <code>ExclusiveData</code> pays for itself a second time. Because the message is distinguishable from ordinary <code>Data</code>, a cache receiving it in \(II^D\) knows it was the first reader and transitions to \(E\) instead of \(I\). There, the pending <code>Fwd-GetM</code> or <code>Fwd-GetS</code> is handled correctly.</p>
 </details></section>
 
   <section lang="en" class="block hide-metadata"><details id="id22" open="open"><summary><header><h1>
@@ -1901,7 +1945,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">Consider the <code>PutM</code> rule that downgrades a cache from modified to invalid. The evicting cache must <strong>not</strong> drop the data when it sends <code>PutM</code>, because it may still have to service a forwarded request; it transitions to \(MI^A\) and keeps the value. But nothing stops the <code>PutAck</code> from arriving first, taking it to \(I\) before the <code>Fwd-GetM</code> shows up. The data is gone and the forwarded request has nobody to answer it.</p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Add the \(M^D\) state to the directory controller. While in \(M^D\), a <code>PutM</code> from a node that is not the current owner stalls until the data arrives. Leaving \(M^D\) for \(M\) requires the new owner to send data back to the directory even on a three-hop transaction, so the directory learns that the forward actually completed. I have not found a cleaner way to close this race without the extra state.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Fix.</strong> Add the \(M^D\) state to the directory controller. While in \(M^D\), a <code>PutM</code> from a node that is not the current owner stalls until the data arrives. Leaving \(M^D\) for \(M\) requires the new owner to send data back to the directory even on a three-hop transaction, so the directory learns that the forward actually completed. I have not found a cleaner way to close this race without the extra state.</p>
 </details></section>
 
   <section lang="en" class="block hide-metadata"><details id="id36" open="open"><summary><header><h1>
@@ -1912,7 +1956,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The \(M^D\) fix introduces a deadlock of its own. Take two processors that store-miss and a third that load-misses. The second store wins at the directory: the first store gets data and moves \(IM^{AD} \to  IM^{A}\), then the second triggers a <code>Fwd-GetM</code> that takes ownership away from it.</p>
 <p xmlns="http://www.w3.org/1999/xhtml">Meanwhile the load miss sits in \(IS^D\). When its <code>Inv</code> arrives, the table says to stall — and because <code>Inv</code> and <code>Fwd-GetM</code> share the forwarded channel, that stall blocks the <code>Fwd-GetM</code> behind it. The winning processor never receives the data, and nothing ever drains the channel.</p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Another transient state absent from the table: \(II^A\), meaning "was in \(IS^A\), got invalidated, now waiting on <code>PutAck</code> before settling in \(I\)". The invalidation is processed rather than stalled, so the forwarded channel keeps moving.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Fix.</strong> Another transient state absent from the table: \(II^A\), meaning "was in \(IS^A\), got invalidated, now waiting on <code>PutAck</code> before settling in \(I\)". The invalidation is processed rather than stalled, so the forwarded channel keeps moving.</p>
 </details></section>
 
   <section lang="en" class="block hide-metadata"><details id="id37" open="open"><summary><header><h1>
@@ -2315,8 +2359,8 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   </div>
 
 <figcaption>MESI cache controller, responses, again over the transient states only. The whole of MESI's addition here is one cell: <code>ExclusiveData</code> landing in \(IS^D\) gives \(E\) instead of \(S\).</figcaption></figure>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Silent upgrades.</strong> If a cache in \(E\) may upgrade to \(M\) silently, the directory never learns the line went dirty, and the value it hands to the next <code>GetS</code> or <code>GetM</code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat \(E\) exactly like \(M\), forwarding everything. Neither requires a writeback on <code>PutE</code>. I take the first, matching the table.</p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Signaling exclusivity.</strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <code>ExclusiveData</code> message: receiving it in \(IS^D\) lands the cache in \(E\) rather than \(S\). It turns out to also be the key to the second race below.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Silent upgrades.</strong> If a cache in \(E\) may upgrade to \(M\) silently, the directory never learns the line went dirty, and the value it hands to the next <code>GetS</code> or <code>GetM</code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat \(E\) exactly like \(M\), forwarding everything. Neither requires a writeback on <code>PutE</code>. I take the first, matching the table.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Signaling exclusivity.</strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <code>ExclusiveData</code> message: receiving it in \(IS^D\) lands the cache in \(E\) rather than \(S\). It turns out to also be the key to the second race below.</p>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\) are functionally identical. Both appear above for completeness, but transitioning from \(E\) straight into \(MI^A\) verifies the same.
@@ -2520,7 +2564,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The first processor issues <code>GetS</code> and waits in \(IS^D\), while the home directory has already moved to \(E\) and sent it <code>ExclusiveData</code>. A second processor then issues <code>GetM</code>, and home's <code>Fwd-GetM</code> overtakes the data in flight.</p>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> Stall <code>Fwd-GetM</code> and <code>Fwd-GetS</code> in \(IS^D\) until the data lands. This is safe here because the data is on the response channel, which no stall can block.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Fix.</strong> Stall <code>Fwd-GetM</code> and <code>Fwd-GetS</code> in \(IS^D\) until the data lands. This is safe here because the data is on the response channel, which no stall can block.</p>
 </details></section>
 
   <section lang="en" class="block hide-metadata"><details id="id42" open="open"><summary><header><h1>
@@ -2543,7 +2587,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
 </div>
 
 
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> <code>ExclusiveData</code> pays for itself a second time. Because the message is distinguishable from ordinary <code>Data</code>, a cache receiving it in \(II^D\) knows it was the first reader and transitions to \(E\) instead of \(I\). There, the pending <code>Fwd-GetM</code> or <code>Fwd-GetS</code> is handled correctly.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Fix.</strong> <code>ExclusiveData</code> pays for itself a second time. Because the message is distinguishable from ordinary <code>Data</code>, a cache receiving it in \(II^D\) knows it was the first reader and transitions to \(E\) instead of \(I\). There, the pending <code>Fwd-GetM</code> or <code>Fwd-GetS</code> is handled correctly.</p>
 </details></section>
 
   <section lang="en" class="block hide-metadata"><details id="id43" open="open"><summary><header><h1>

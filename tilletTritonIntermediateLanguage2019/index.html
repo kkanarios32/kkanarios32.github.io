@@ -8,6 +8,50 @@ window.addEventListener('load', function () {
     if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
   });
 });
+          </script><script>
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
           </script><title>Triton: An intermediate language and compiler for tiled neural network computations</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Reference"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon">Reference. </span>Triton: An intermediate language and compiler for tiled neural network computations <a class="slug" href="/tilletTritonIntermediateLanguage2019/">[tilletTritonIntermediateLanguage2019]</a> </h1>
 <div class="metadata">
@@ -65,9 +109,9 @@ Outside of coding, I did not spend too much time brain-rotting. My phone screent
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Collection of resources</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>https://llvm.org/devmtg/2020-09/slides/MLIR_Tutorial.pdf</li>
   <li>https://www.lei.chat/posts/mlir-linalg-dialect-and-patterns/</li>
-  <li>https://www.lei.chat/posts/mlir-vector-dialect-and-patterns/</li></ul><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Dialects.</strong> This is effectively a syntax. For your given DSL, you must write each of the operations in this <em>MLIR dialect</em> in order to inherit the benefits of the MLIR ecosystem.</p>
+  <li>https://www.lei.chat/posts/mlir-vector-dialect-and-patterns/</li></ul><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Dialects.</strong> This is effectively a syntax. For your given DSL, you must write each of the operations in this <em>MLIR dialect</em> in order to inherit the benefits of the MLIR ecosystem.</p>
  <blockquote xmlns="http://www.w3.org/1999/xhtml" class="jms-quote" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(\cal-neutral-rule);   font-style: italic;   color: rgba(0, 0, 0, 0.85);   ">The whole structured CodeGen paradigm in MLIR prefers co-designing op semantics and transformations and let ops structurally encode and guarantee certain properties to simplify analyses and transformations.<div style="    margin-top: -0.5em;    font-style: normal;    font-size: 0.9em;    text-align: right;    color: rgb(\cal-neutral);   ">— <span xmlns="" class="link external"><a href="https://www.lei.chat/posts/mlir-linalg-dialect-and-patterns/" title="">Lei Zhang</a></span></div></blockquote>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">The general paradigm.</strong> It seems that when you are writing a DSL backed by MLIR that you</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Write an MLIR dialect for your DSL</li>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">The general paradigm.</strong> It seems that when you are writing a DSL backed by MLIR that you</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Write an MLIR dialect for your DSL</li>
   <li>You can write custom compiler passes for your MLIR dialect.</li>
   <ul><li>This is what is done in <span xmlns="" class="link local"><a href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations [tilletTritonIntermediateLanguage2019]">Triton</a></span>.</li>
     <li><span xmlns="" class="link local"><a href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations [tilletTritonIntermediateLanguage2019]">Triton</a></span> has two custom MLIR dialects: <code>ttir</code> and <code>ttgir</code>.</li>
@@ -106,7 +150,7 @@ Outside of coding, I did not spend too much time brain-rotting. My phone screent
   <ul xmlns="http://www.w3.org/1999/xhtml"><li><span xmlns="" class="link local"><a href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations [tilletTritonIntermediateLanguage2019]">Triton: An intermediate language and compiler for tiled neural network computations</a></span></li>
     <li><span xmlns="" class="link local"><a href="/wangTileLangComposableTiled2025/" title="TileLang: A Composable Tiled Programming Model for AI Systems [wangTileLangComposableTiled2025]">TileLang: A Composable Tiled Programming Model for AI Systems</a></span></li>
     <li>cuTile</li></ul>
-  <strong xmlns="http://www.w3.org/1999/xhtml" style="font-family: var(--sans); font-weight: 500;">Autotuning + Tiles.</strong>
+  <strong xmlns="http://www.w3.org/1999/xhtml" style="font-family: var(--serif); font-weight: 700; font-style: italic;">Autotuning + Tiles.</strong>
   <ul xmlns="http://www.w3.org/1999/xhtml"><li><span xmlns="" class="link local"><a href="/helion2025/" title="Helion: A High-Level DSL for Performant and Portable ML Kernels [helion2025]">Helion: A High-Level DSL for Performant and Portable ML Kernels</a></span></li></ul>
 </details></section>
 
@@ -143,9 +187,9 @@ Outside of coding, I did not spend too much time brain-rotting. My phone screent
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Collection of resources</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>https://llvm.org/devmtg/2020-09/slides/MLIR_Tutorial.pdf</li>
   <li>https://www.lei.chat/posts/mlir-linalg-dialect-and-patterns/</li>
-  <li>https://www.lei.chat/posts/mlir-vector-dialect-and-patterns/</li></ul><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Dialects.</strong> This is effectively a syntax. For your given DSL, you must write each of the operations in this <em>MLIR dialect</em> in order to inherit the benefits of the MLIR ecosystem.</p>
+  <li>https://www.lei.chat/posts/mlir-vector-dialect-and-patterns/</li></ul><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Dialects.</strong> This is effectively a syntax. For your given DSL, you must write each of the operations in this <em>MLIR dialect</em> in order to inherit the benefits of the MLIR ecosystem.</p>
  <blockquote xmlns="http://www.w3.org/1999/xhtml" class="jms-quote" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(\cal-neutral-rule);   font-style: italic;   color: rgba(0, 0, 0, 0.85);   ">The whole structured CodeGen paradigm in MLIR prefers co-designing op semantics and transformations and let ops structurally encode and guarantee certain properties to simplify analyses and transformations.<div style="    margin-top: -0.5em;    font-style: normal;    font-size: 0.9em;    text-align: right;    color: rgb(\cal-neutral);   ">— <span xmlns="" class="link external"><a href="https://www.lei.chat/posts/mlir-linalg-dialect-and-patterns/" title="">Lei Zhang</a></span></div></blockquote>
-<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">The general paradigm.</strong> It seems that when you are writing a DSL backed by MLIR that you</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Write an MLIR dialect for your DSL</li>
+<p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">The general paradigm.</strong> It seems that when you are writing a DSL backed by MLIR that you</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Write an MLIR dialect for your DSL</li>
   <li>You can write custom compiler passes for your MLIR dialect.</li>
   <ul><li>This is what is done in <span xmlns="" class="link local"><a href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations [tilletTritonIntermediateLanguage2019]">Triton</a></span>.</li>
     <li><span xmlns="" class="link local"><a href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations [tilletTritonIntermediateLanguage2019]">Triton</a></span> has two custom MLIR dialects: <code>ttir</code> and <code>ttgir</code>.</li>
