@@ -520,13 +520,15 @@ footer h2 {
        meant to sit quietly. Wheel and touch still scroll it. */
     scrollbar-width: none;
     -ms-overflow-style: none;
-    /* Dropped so the rail's label sits on the page title's baseline rather
-       than level with the top of its box. Aligning the boxes puts the label
-       an ascender and a half above the title — the two are set at very
-       different sizes (0.68rem against 1.5em), so their box tops have nothing
-       to do with each other and only the baselines read as aligned. 18px is
-       the measured difference between them. */
-    margin-top: 18px;
+    /* Dropped so the rail's label lines up with the page title rather than
+       with the top of its box — the two are set at very different sizes
+       (0.68rem against 1.2em), so their box tops have nothing to do with each
+       other. Cap-height alignment, not baseline: the label is uppercase and
+       the title starts on a capital, so matching the tops is what actually
+       reads as level. Baseline alignment measured 18px and sat visibly low,
+       because a 0.68rem label hung off the same baseline has its whole small
+       body below a line the title fills. 8px is the measured cap-top delta. */
+    margin-top: 8px;
   }
 
   #grid-wrapper>nav::-webkit-scrollbar {
@@ -938,7 +940,8 @@ a.index-entry-link {
 }
 
 a.index-entry-link:hover {
-  background-color: rgba(0, 100, 255, .1);
+  background-color: transparent;
+  color: rgb(127, 116, 87);
 }
 
 /* No taxon prefix on a listing row. A taxon classifies something you are
@@ -1083,8 +1086,52 @@ nav#toc a.bullet:focus-visible {
   border-radius: var(--radius)
 }
 
-.block:hover {
-  background-color: rgba(0, 100, 255, 0.04);
+/* Every transcluded tree is a <details> you can collapse by clicking its
+   heading, and until now nothing said so: the theme hides the browser's own
+   disclosure marker site-wide (details>summary::marker, above), so a tree had
+   no affordance at all. Coloring the title on hover was the first attempt and
+   was wrong — it puts the signal *inside* the prose, so the page flickers as
+   the cursor crosses it and the reader has to wonder what the color means.
+
+   The marker instead sits out in the margin, clear of the text column, and
+   only when the block is hovered or its summary focused. Nothing is added to
+   the resting page; the cue appears exactly where a disclosure control belongs
+   and disappears when it is not wanted. It is the same ▸/▾ that \foldout draws
+   (see .foldout, above), so a collapsible tree and a folded proof read as the
+   same gesture rather than two conventions.
+
+   Scoped to `article > section section.block` — nested trees only. The page's
+   own tree is a <details> too, but a triangle beside the page title inviting
+   you to collapse the whole article is not an offer worth making.
+
+   The absolute positioning needs the section as its containing block, hence
+   position: relative; `top` is left auto so the glyph keeps the static
+   position it would have had, which is the heading's own line. */
+article > section section.block {
+  position: relative;
+}
+
+article > section section.block > details > summary {
+  cursor: pointer;
+}
+
+article > section section.block > details > summary > header::before {
+  content: "▸";
+  position: absolute;
+  left: -1.15em;
+  font-size: 0.8em;
+  color: rgb(var(--cal-neutral));
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+article > section section.block > details[open] > summary > header::before {
+  content: "▾";
+}
+
+article > section section.block:hover > details > summary > header::before,
+article > section section.block > details > summary:focus-visible > header::before {
+  opacity: 1;
 }
 
 .block.highlighted {
@@ -1162,11 +1209,23 @@ td {
   vertical-align: top;
 }
 
+/* Hover marks the thing under the cursor by coloring it, not by painting a
+   panel behind it. The tan is the TOC rail's, taken to a weight that reads as
+   text: the rail is #e7e4dc, 1.3:1 on white, which is right for a hairline and
+   invisible for a word, so this keeps its hue and saturation (44°, 19%) and
+   drops the lightness to 42% — 4.6:1, warm against black prose.
+
+   The color has to land on the <a>, not only on the wrapper: `a { color:
+   black }` further down would otherwise win over an inherited value on the
+   .link span around it. */
 a.slug:hover,
 a.bullet:hover,
 .edit-button:hover,
-.link:hover {
-  background-color: rgba(0, 100, 255, .1);
+.link:hover,
+.link:hover a,
+a.link:hover {
+  background-color: transparent;
+  color: rgb(127, 116, 87);
 }
 
 .link {
