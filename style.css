@@ -692,7 +692,7 @@ span.taxon {
 
 
 article>section>details>summary>header>h1 {
-  font-size: 1.5em;
+  font-size: 1.2em;
 }
 
 /* Section headings, by depth.
@@ -714,32 +714,24 @@ article>section>details>summary>header>h1 {
    `section .block[data-taxon] …` further up carries two class/attribute
    selectors to these one, so a taxon'd block keeps its own 12pt heading. */
 
+/* The ramp is anchored at the top: a top-level section is 1.083em, which is
+   the 13pt `details h1` has always set, so the largest heading on a page is
+   exactly the size it was before there were levels at all. The lower levels
+   are compressed rather than scaled — the same factor applied down the ramp
+   would have put the fourth and fifth levels under 10pt, setting a heading in
+   less type than the prose beneath it. So the sizes bottom out at body size
+   and the levels separate by weight, then by italic, then by small caps. */
+
 /* h2 — a top-level section. */
-article > section:not(.index-page) > details > section.block {
-  margin-top: 2.4em;  padding-bottom: 0;
-}
-
-article > section:not(.index-page) > details > section.block > details > summary {
-  margin-bottom: 0.6em;
-}
-
 article > section:not(.index-page) > details > section.block > details > summary > header > h1 {
-  font-size: 1.32em;
+  font-size: 1.083em;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 /* h3 — a subsection. */
-article > section:not(.index-page) > details > section.block > details > section.block {
-  margin-top: 1.9em;  padding-bottom: 0;
-}
-
-article > section:not(.index-page) > details > section.block > details > section.block > details > summary {
-  margin-bottom: 0.35em;
-}
-
 article > section:not(.index-page) > details > section.block > details > section.block > details > summary > header > h1 {
-  font-size: 1.1em;
+  font-size: 1.04em;
   font-weight: 400;
   letter-spacing: normal;
 }
@@ -747,33 +739,11 @@ article > section:not(.index-page) > details > section.block > details > section
 /* h4 — a sub-subsection. Italic and a shade lighter rather than smaller: at
    1em it is already at body size, and going below it would set a heading in
    less type than the prose it introduces. */
-article > section:not(.index-page) > details > section.block > details > section.block > details > section.block {
-  margin-top: 1.5em;  padding-bottom: 0;
-}
-
-article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > summary {
-  margin-bottom: 0.3em;
-}
-
 article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > summary > header > h1 {
   font-size: 1em;
   font-weight: 400;
   font-style: italic;
   color: #4a4740;
-}
-
-/* The margins above are meant to be the *only* vertical rhythm around a
-   heading, and they were not: section.block>details already carries a
-   margin-bottom (0.4em closed, 1em open) from before there were heading
-   levels, so every gap was that plus the new margin-top, and the page came
-   out spaced roughly double. Zeroed for the sections styled above — the
-   heading's own margins now say what the gap is, and nothing adds to them.
-   The rule is scoped to these depths, so a transcluded card or definition
-   keeps the spacing it has always had. */
-article > section:not(.index-page) > details > section.block > details,
-article > section:not(.index-page) > details > section.block > details > section.block > details,
-article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details {
-  margin-bottom: 0;
 }
 
 /* Level four and deeper — a run-in heading. Below the third level a heading on
@@ -782,29 +752,30 @@ article > section:not(.index-page) > details > section.block > details > section
    as a list rather than as prose. So the name sets in small caps at body size
    and the paragraph runs on from it, the way a manual's paragraph headings do.
 
-   Three pieces have to agree for a run-in to work here. The <summary> that
-   holds the heading is block by default, so it goes inline; the paragraph that
-   follows it is block, so it goes inline too; and the period comes from the
-   heading's own ::after, since Forester writes titles without punctuation.
+   The heading floats rather than going inline, and that is not a preference:
+   the heading lives inside a <summary>, and Firefox keeps a details' first
+   summary block-level whatever `display` says, so an inline run-in silently
+   does nothing there. A left float puts the paragraph's first line beside the
+   heading and lets the rest wrap back to the margin, which is the same result.
+   `clear` then stops a run-in shorter than its paragraph from leaving its
+   float over whatever comes next. The period comes from the heading's own
+   ::after, since Forester writes titles without punctuation.
 
    The second selector is the same chain plus a descendant section, which is
    what carries the treatment to level five and beyond — there is no depth at
-   which a heading should go back to being its own line once it has stopped. */
+   which a heading should go back to being its own line once it has stopped.
+
+   No margins anywhere here: spacing is whatever section.block>details has
+   always supplied. */
 article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block,
 article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block {
-  margin-top: 1.3em;
-  padding-bottom: 0;
-}
-
-article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details,
-article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block > details {
-  margin-bottom: 0;
+  clear: left;
 }
 
 article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details > summary,
 article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block > details > summary {
-  display: inline;
-  margin-bottom: 0;
+  float: left;
+  margin: 0 0.4em 0 0;
 }
 
 article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details > summary > header > h1,
@@ -817,21 +788,12 @@ article > section:not(.index-page) > details > section.block > details > section
   color: #4a4740;
 }
 
-/* The metadata div sits inside the header, after the heading, and is block —
-   so even when a deep section carries no date or author it still closed the
-   line and the paragraph began on the next one. Inline, it takes no line of
-   its own and the run-in survives. */
-article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details > summary > header > .metadata,
-article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block > details > summary > header > .metadata {
-  display: inline;
-}
-
 /* The period goes before the slug, not after the heading: the h1 holds the
    title *and* the [ID] link, so a plain ::after set it adrift past the
    bracket. Where there is no slug — an anonymous \section, which is most of
    them — the heading takes the period itself. */
-article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details > summary > header > h1 > a.slug::before,
-article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block > details > summary > header > h1 > a.slug::before {
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details > summary > header > h1 > a.slug::after,
+article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block > details > summary > header > h1 > a.slug::after {
   content: ".";
   color: rgb(var(--cal-neutral));
 }
@@ -841,27 +803,7 @@ article > section:not(.index-page) > details > section.block > details > section
   content: ".";
 }
 
-article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details > summary + p,
-article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block > details > summary + p {
-  display: inline;
-}
 
-article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block > details > summary + p::before,
-article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > section.block section.block > details > summary + p::before {
-  content: " ";
-}
-
-/* `h2 + h3`: a subsection that opens its parent immediately, with no prose in
-   between, needs a fraction of the gap — otherwise the two headings sit a full
-   section apart with nothing to separate. `summary + section` is the faithful
-   translation: the summary is the parent's heading, so a section adjacent to
-   it is one that follows the heading directly. Applied at every depth, since
-   the double-gap reads the same wherever it happens. */
-article > section:not(.index-page) > details > section.block > details > summary + section.block,
-article > section:not(.index-page) > details > section.block > details > section.block > details > summary + section.block,
-article > section:not(.index-page) > details > section.block > details > section.block > details > section.block > details > summary + section.block {
-  margin-top: 0.8em;
-}
 
 details>summary {
   list-style-type: none;
