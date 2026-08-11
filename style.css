@@ -621,12 +621,33 @@ article {
     cursor: pointer;
   }
 
+  /* Floated, not display: block. A block here ends the line it sits on, so
+     whatever punctuation follows the marker in the source — the comma or full
+     stop that closes the clause the note hangs off — got pushed to the head of
+     the continuation, and the paragraph resumed with a stranded `, so …`.
+     A float is out of flow: the comma stays welded to its marker, the line
+     finishes normally, and the note drops in underneath.
+
+     width and box-sizing go together — a 100% float with padding would
+     otherwise overflow its paragraph by the width of the rule and its inset. */
   .sidenote-ref:has(input:checked) + .sidenote {
+    /* display first: the closed state is display: none, and a float on a
+       display: none box is still display: none. */
     display: block;
+    float: left;
+    clear: both;
+    width: 100%;
+    box-sizing: border-box;
     margin: 0.5rem 0 0.8rem 0;
     padding: 0.1rem 0 0.1rem 0.9rem;
     border-left: 2px solid rgb(var(--cal-neutral-rule));
     font-size: 11pt;
+  }
+
+  /* Contain it. Without a block formatting context a note longer than the rest
+     of its paragraph hangs out of the bottom and overlaps whatever follows. */
+  article p:has(> .sidenote) {
+    display: flow-root;
   }
 }
 

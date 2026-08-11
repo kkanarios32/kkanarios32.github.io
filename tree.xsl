@@ -127,6 +127,30 @@ document.addEventListener('keydown', function(e) {
       if (current) current.removeAttribute('aria-current');
       if (found) found.setAttribute('aria-current', 'true');
       current = found;
+      if (found) reveal(found);
+    }
+
+    // Keep the marked row inside the rail. The rail is capped at the viewport
+    // and scrolls internally, so on a long contents the row being read drifts
+    // out of sight and the highlight becomes useless — you can see that you
+    // are somewhere, but not where.
+    //
+    // nav.scrollTop is set directly rather than calling scrollIntoView, which
+    // walks up the ancestor chain and will scroll the window as readily as the
+    // rail: the page would yank itself around while the reader is scrolling
+    // it. Assigning scrollTop can move nothing but the rail. Nudged only when
+    // the row is actually out of the band, so an entry already comfortably in
+    // view does not cause the rail to twitch on every section boundary.
+    function reveal(link) {
+      var pad = 32;
+      var railTop = nav.getBoundingClientRect().top;
+      var railBottom = nav.getBoundingClientRect().bottom;
+      var row = link.getBoundingClientRect();
+      if (row.top < railTop + pad) {
+        nav.scrollTop -= (railTop + pad) - row.top;
+      } else if (row.bottom > railBottom - pad) {
+        nav.scrollTop += row.bottom - (railBottom - pad);
+      }
     }
 
     function schedule() {
