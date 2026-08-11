@@ -75,18 +75,18 @@
      sans; the serif body font is set directly on `body`. */
   --sans: 'Hanken Grotesk';
 
-  /* The two palette values the theme draws itself, mirrored from \paper and
-     \cal-algorithm in trees/evergreen/base-macros.tree, which is the source of
-     truth — the callouts are inline-styled from there and cannot see a CSS
-     variable. Only these two are restated: the page ground, which is no
-     macro's to set, and the Card accent, which keys off a taxon that no macro
-     can reach. Everything else colored on this site is a callout, and a
+  /* The palette values the theme draws itself, mirrored from \cal-* in
+     trees/evergreen/base-macros.tree, which is the source of truth — the
+     callouts are inline-styled from there and cannot see a CSS variable. Only
+     what the theme itself draws is restated: the rule under a code block, and
+     the Card accent, which keys off a taxon no macro can reach. Everything else colored on this site is a callout, and a
      callout is a macro's job. Held as bare triples for the same reason
      base-macros holds them that way — rgb(var(--cal-algorithm)) and
      rgba(var(--cal-algorithm), 0.4) then come off one definition instead of
      two. Change them in both places or not at all. Nothing here fills, so no
      tint is restated; the palette's tints live in base-macros alone. */
-  --paper: 253, 251, 247;
+  --cal-neutral: 109, 103, 101;
+  --cal-neutral-rule: 219, 216, 215;
   --cal-algorithm: 63, 83, 127;
 }
 
@@ -123,10 +123,17 @@ center {
   overflow-y: hidden;
 }
 
+/* Code blocks wear what every other block on the site wears: a hairline in
+   the margin, no fill, square. A <pre> needs no panel to be legible — the
+   monospace and the hard line breaks do that on their own — and a filled box
+   around every snippet in a systems note is most of what made those pages
+   read as a stack of blocks. Slightly more vertical padding than a callout
+   gets: code has no leading of its own to sit on. */
 pre {
-  border-radius: var(--radius);
-  background-color: rgba(0, 100, 100, 0.04);
-  padding: .5em;
+  border-radius: 0;
+  background: none;
+  border-left: 2px solid rgb(var(--cal-neutral-rule));
+  padding: 0.3rem 0 0.3rem 0.9rem;
   font-size: 11pt;
   margin-top: 0em;
   overflow-x: auto;
@@ -240,33 +247,26 @@ table.hljs-ln {
   content: attr(data-line-number);
 }
 
-/* Named code block: \codeblockf wraps a \codeblock in a titled panel. The
-   filename bar sits on top; the panel clips the <pre>'s corners so they read
-   as one unit. Tied to the \codeblockf macro, so it lives here. */
+/* Named code block: \codeblockf wraps a \codeblock in a titled panel — which
+   under vellum is no longer a panel. The filename takes the same rule and the
+   same left inset as the <pre> below it, so the line runs unbroken from the
+   name through the code and the two still read as one unit without a box
+   drawn around them. Tied to the \codeblockf macro, so it lives here. */
 .code-figure {
-  margin: 1em 0;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: var(--radius);
-  overflow: hidden;
+  margin: 1.1rem 0;
 }
 .code-filename {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.8em;
-  padding: 0.35em 0.9em;
-  color: rgba(0, 0, 0, 0.55);
-  background-color: rgba(0, 100, 100, 0.08);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 0 0 0.2em 0.9em;
+  color: rgb(var(--cal-neutral));
+  border-left: 2px solid rgb(var(--cal-neutral-rule));
 }
 .code-figure pre {
   margin: 0;
-  border-radius: 0;
 }
 
 body {
-  /* Vellum, not white. The callout tints are mixed against this ground, so the
-     page and its asides sit in one light rather than reading as paper laid on
-     a screen. */
-  background: rgb(var(--paper));
   font-family: XCharter, Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
   font-size: 12pt;
   line-height: 1.55;
