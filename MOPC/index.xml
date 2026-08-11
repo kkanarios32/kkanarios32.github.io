@@ -14,13 +14,12 @@
     <fr:title text="Software pipelining vs. loop unrolling">Software pipelining vs. loop unrolling</fr:title>
   </fr:frontmatter>
   <fr:mainmatter><html:p>See <html:span class="link-reference" tid="H.3" refid="hennessy2019computer"><fr:link href="/hennessy2019computer/" title="Computer architecture: A quantitative approach" uri="https://kellenkanarios.com/hennessy2019computer/" display-uri="hennessy2019computer" type="local">[hennessy2019computer, H.3]</fr:link></html:span> for more details.</html:p><html:p>Loop unrolling at its core performs no instruction re-ordering. It literally just expands the loop. When combined with a compiler, this increase the size of your basic blocks allowing for more optimization opportunities. This also eliminates overhead of branch prediction</html:p><html:p><fr:link href="/AOWY/" title="Software Pipelining" uri="https://kellenkanarios.com/AOWY/" display-uri="AOWY" type="local">Software Pipelining</fr:link> does not rely on the unroll window.</html:p>
+  
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(60, 90, 180, 0.8);
-  border-radius: var(--radius);
-  background-color: rgba(60, 90, 180, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
   Loop unrolling cannot make use of the large distance between dependencies for large <fr:tex display="inline"><![CDATA[k]]></fr:tex> below. 
   <html:pre><html:code class="language-c"><![CDATA[for (i = k; i < n; i++)
     a[i] += a[i - k];]]></html:code></html:pre>
@@ -32,13 +31,13 @@
   You can imagine how this becomes more useful as <fr:tex display="inline"><![CDATA[k]]></fr:tex> grows large.
 </html:div>
 
+
+  
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(60, 90, 180, 0.8);
-  border-radius: var(--radius);
-  background-color: rgba(60, 90, 180, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> 
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
   There is an actual dependency between instructions here that cannot be circumvented by <fr:link href="/U0NY/" title="Out-of-order execution runs ready instructions past a stalled one, committing in program order" uri="https://kellenkanarios.com/U0NY/" display-uri="U0NY" type="local">OoO hardware</fr:link> 
 <html:pre><html:code class="language-c"><![CDATA[for (i = 0; i < n; i++)
     sum += a[i];]]></html:code></html:pre>
@@ -49,6 +48,7 @@ However, this can be re-written at the software level to get some parallelism wi
 }
 sum = (s0 + s1) + (s2 + s3);}]]></html:code></html:pre>
 </html:div>
+
 </fr:mainmatter>
   <fr:backmatter>
     <fr:tree show-metadata="false" hidden-when-empty="true">
@@ -145,13 +145,13 @@ sum = (s0 + s1) + (s2 + s3);}]]></html:code></html:pre>
           </fr:frontmatter>
           <fr:mainmatter><html:p>Execute instructions in whatever order their operands become available, then commit them back in program order. The programmer's model still sees sequential execution; the hardware reorders aggressively underneath to keep <fr:link href="/DA6Q/" title="Execution units" uri="https://kellenkanarios.com/DA6Q/" display-uri="DA6Q" type="local">Execution units</fr:link> busy across <fr:link href="/ITFA/" title="Data hazards stall when an instruction needs a not-yet-written value" uri="https://kellenkanarios.com/ITFA/" display-uri="ITFA" type="local">data hazard</fr:link>s and memory latency.</html:p><html:p>Two structures make this work:</html:p><html:ul><html:li><fr:link href="/FQ9N/" title="Reservation station" uri="https://kellenkanarios.com/FQ9N/" display-uri="FQ9N" type="local">Reservation station</fr:link>s — hold instructions waiting on operands, so a stalled instruction doesn't block independent ones behind it.</html:li>
   <html:li><fr:link href="/BI4H/" title="Reorder buffer" uri="https://kellenkanarios.com/BI4H/" display-uri="BI4H" type="local">Reorder buffer</fr:link> — preserves program order so commits look sequential and mispredicted <fr:link href="/IIF9/" title="Speculative execution" uri="https://kellenkanarios.com/IIF9/" display-uri="IIF9" type="local">Speculative execution</fr:link> paths can be unwound.</html:li></html:ul><html:p>Combined with <fr:link href="/5CT9/" title="Register renaming breaks false dependencies" uri="https://kellenkanarios.com/5CT9/" display-uri="5CT9" type="local">register renaming</fr:link> to break false dependencies, the back-end of a modern CPU is essentially a dynamic scheduler that uses the program order only as a hint about what to retire next.</html:p>
+  
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(60, 90, 180, 0.8);
-  border-radius: var(--radius);
-  background-color: rgba(60, 90, 180, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</html:span> An out-of-order pipeline can issue a load early (because its address operands are ready), execute several unrelated ALU ops while waiting for the memory, then have all four instructions ready to commit in program order. The illusion of sequential execution is preserved; the parallelism is real.</html:div>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> An out-of-order pipeline can issue a load early (because its address operands are ready), execute several unrelated ALU ops while waiting for the memory, then have all four instructions ready to commit in program order. The illusion of sequential execution is preserved; the parallelism is real.</html:div>
+
 </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>

@@ -15,7 +15,7 @@ window.addEventListener('load', function () {
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Cycle through all runnable jobs, giving each a fixed time slice — the <em>stride</em>, <em>time slice</em>, or <em>quantum length</em> — before preempting and moving to the next. The best you can do at minimizing <em>response time</em>: every job sees the CPU within at most \(N\) quanta where \(N\) is the runnable-job count.</p><p xmlns="http://www.w3.org/1999/xhtml">The quantum length is a tradeoff:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Short quantum: better response time, more frequent <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switches</a></span>, worse cache locality.</li>
   <li>Long quantum: amortizes context-switch cost, worse response time.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Worst-case response time for \(N\) jobs at quantum \(S\) is \(S(N-1)\).</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Round-robin minimizes response time but is poor for turnaround time relative to <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>. A scheduler that wants both has to combine ideas — see <span xmlns="" class="link local"><a href="/4WG5/" title="Multi-level feedback queue [4WG5]">Multi-level feedback queue</a></span>.</div>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Round-robin minimizes response time but is poor for turnaround time relative to <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>. A scheduler that wants both has to combine ideas — see <span xmlns="" class="link local"><a href="/4WG5/" title="Multi-level feedback queue [4WG5]">Multi-level feedback queue</a></span>.</div>
 </details></section><footer xmlns="">
     
     <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
@@ -34,21 +34,27 @@ window.addEventListener('load', function () {
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">First-in, first-out. Jobs are run to completion in the order they arrive. Trivially fair under any reasonable notion of fairness, but suffers from the <em>convoy effect</em>: a single long-running job at the head delays every shorter job behind it, inflating average turnaround time.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> If the first arriving job is much longer than the rest, all subsequent jobs wait at least its full duration before getting any CPU.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> If the first arriving job is much longer than the rest, all subsequent jobs wait at least its full duration before getting any CPU.</div>
+
 </details></section><section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
 <span class="taxon"></span>SJF scheduling <a class="slug" href="/VJ4F/">[VJ4F]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Shortest job first</em>. Run the job with the smallest total work first, run-to-completion. If all jobs arrive at the same time, SJF provably minimizes average turnaround time.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Real workloads don't all arrive at \(t = 0\). A long job that arrives slightly before a short one still gets to monopolize the CPU until it finishes — SJF degenerates to <span xmlns="" class="link local"><a href="/JA6Z/" title="FIFO scheduling [JA6Z]">FIFO scheduling</a></span> under sequential arrivals.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Real workloads don't all arrive at \(t = 0\). A long job that arrives slightly before a short one still gets to monopolize the CPU until it finishes — SJF degenerates to <span xmlns="" class="link local"><a href="/JA6Z/" title="FIFO scheduling [JA6Z]">FIFO scheduling</a></span> under sequential arrivals.</div>
+
 <p xmlns="http://www.w3.org/1999/xhtml">Removing the run-to-completion constraint and allowing preemption gives <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>.</p></details></section><section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
 <span class="taxon"></span>STCF scheduling <a class="slug" href="/7R07/">[7R07]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Shortest time-to-completion first</em>. A preemptive refinement of <span xmlns="" class="link local"><a href="/VJ4F/" title="SJF scheduling [VJ4F]">SJF scheduling</a></span>: whenever the scheduler is invoked, it picks the job with the least <em>remaining</em> work. A short job arriving mid-execution can preempt a long one.</p><p xmlns="http://www.w3.org/1999/xhtml">STCF is provably optimal for minimizing average turnaround time over all preemptive schedulers.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Long jobs starve in response time. The lowest-priority work might not get a CPU slice for a very long time, which is unacceptable for interactive workloads.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Long jobs starve in response time. The lowest-priority work might not get a CPU slice for a very long time, which is unacceptable for interactive workloads.</div>
+
 </details></section><section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
 <span class="taxon"></span>Round-robin scheduling <a class="slug" href="/NEL8/">[NEL8]</a> </h1>
 <div class="metadata"><ul>
@@ -56,7 +62,7 @@ window.addEventListener('load', function () {
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Cycle through all runnable jobs, giving each a fixed time slice — the <em>stride</em>, <em>time slice</em>, or <em>quantum length</em> — before preempting and moving to the next. The best you can do at minimizing <em>response time</em>: every job sees the CPU within at most \(N\) quanta where \(N\) is the runnable-job count.</p><p xmlns="http://www.w3.org/1999/xhtml">The quantum length is a tradeoff:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Short quantum: better response time, more frequent <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switches</a></span>, worse cache locality.</li>
   <li>Long quantum: amortizes context-switch cost, worse response time.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Worst-case response time for \(N\) jobs at quantum \(S\) is \(S(N-1)\).</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Round-robin minimizes response time but is poor for turnaround time relative to <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>. A scheduler that wants both has to combine ideas — see <span xmlns="" class="link local"><a href="/4WG5/" title="Multi-level feedback queue [4WG5]">Multi-level feedback queue</a></span>.</div>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Round-robin minimizes response time but is poor for turnaround time relative to <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>. A scheduler that wants both has to combine ideas — see <span xmlns="" class="link local"><a href="/4WG5/" title="Multi-level feedback queue [4WG5]">Multi-level feedback queue</a></span>.</div>
 </details></section><section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
 <span class="taxon"></span>Multi-level feedback queue <a class="slug" href="/4WG5/">[4WG5]</a> </h1>
 <div class="metadata"><ul>
@@ -65,20 +71,28 @@ window.addEventListener('load', function () {
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A practical scheduler that approximates <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>'s turnaround properties and <span xmlns="" class="link local"><a href="/NEL8/" title="Round-robin scheduling [NEL8]">Round-robin scheduling</a></span>'s response properties without requiring foreknowledge of job lengths. Maintain multiple priority queues; within a queue, schedule round-robin. Never service a lower-priority queue while a higher-priority queue has a runnable job.</p><p xmlns="http://www.w3.org/1999/xhtml">The priority of a job is not assigned by the user — it is <em>learned</em> from behavior:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>New jobs enter at the top priority.</li>
   <li>Each priority level has an <em>allotment</em> — the total CPU time a job may consume before being demoted.</li>
   <li>Once a job exhausts its allotment at a level, it drops to the next level.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Short jobs that finish quickly never leave the top queue (good turnaround). Interactive jobs that yield often stay at the top (good response time). CPU-bound jobs sink to the bottom and get scheduled when nothing better is runnable.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Gaming the allotment: a job can issue I/O just before its allotment expires to avoid demotion, since I/O time doesn't count.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Gaming the allotment: a job can issue I/O just before its allotment expires to avoid demotion, since I/O time doesn't count.</div>
+
 
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span></summary>Charge the job's allotment for total time at the priority level, including time spent blocked.</details>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(121, 65, 66);">Solution.</span></summary>Charge the job's allotment for total time at the priority level, including time spent blocked.</details>
 </div>
 
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Starvation of low-priority queues if higher queues never empty.</div>
 
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span></summary>Periodically reset all jobs to the top priority. Cheap and effective.</details>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Starvation of low-priority queues if higher queues never empty.</div>
+
+
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(121, 65, 66);">Solution.</span></summary>Periodically reset all jobs to the top priority. Cheap and effective.</details>
 </div>
+
 
 </details></section><section lang="en" class="block hide-metadata"><details id="id9" open="open"><summary><header><h1>
 <span class="taxon"></span>Lottery scheduling <a class="slug" href="/AM8U/">[AM8U]</a> </h1>
@@ -88,7 +102,7 @@ window.addEventListener('load', function () {
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A proportional-share scheduler. Each runnable job holds some number of <em>tickets</em>, drawn from a fixed total. On each scheduling decision, the scheduler picks a random ticket and runs the job that owns it. Over time, a job receives CPU time proportional to its share of the tickets.</p><p xmlns="http://www.w3.org/1999/xhtml">The implementation is trivial: one random number per decision, plus a sum table. No global state about historical CPU usage is needed.</p><p xmlns="http://www.w3.org/1999/xhtml">Mechanisms layered on top:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Ticket currency</em> — give each user a fixed number of tickets to split among their processes however they like.</li>
   <li><em>Ticket transfer</em> — a client process can hand tickets to a server to boost its priority while servicing the request.</li>
   <li><em>Ticket inflation</em> — a process can grow its share temporarily, with bounds set by trust.</li></ul>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The unsolved problem is <em>how</em> to assign tickets in the first place. The mechanism is simple; the policy is not.</div>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> The unsolved problem is <em>how</em> to assign tickets in the first place. The mechanism is simple; the policy is not.</div>
 <p xmlns="http://www.w3.org/1999/xhtml">A deterministic version of the same idea is <span xmlns="" class="link local"><a href="/HCJ7/" title="Stride scheduling [HCJ7]">Stride scheduling</a></span>, which avoids the variance of random sampling at the cost of needing global state.</p></details></section><section lang="en" class="block hide-metadata"><details id="id10" open="open"><summary><header><h1>
 <span class="taxon"></span>Stride scheduling <a class="slug" href="/HCJ7/">[HCJ7]</a> </h1>
 <div class="metadata"><ul>
@@ -97,11 +111,13 @@ window.addEventListener('load', function () {
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A deterministic proportional-share scheduler. Each job has a <em>stride</em> inversely proportional to its ticket count (the more tickets, the smaller the stride) and a running <em>pass</em> counter that accumulates its stride every time it's scheduled.</p><p xmlns="http://www.w3.org/1999/xhtml">The decision is:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Pick the job with the lowest <em>pass</em>.</li>
   <li>Run it for one quantum.</li>
   <li>Increment its pass by its stride.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">A job with twice as many tickets has half the stride, so its pass grows half as fast, so it gets scheduled twice as often. Same long-run behavior as <span xmlns="" class="link local"><a href="/AM8U/" title="Lottery scheduling [AM8U]">Lottery scheduling</a></span>, but with zero variance.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> New jobs need an initial pass value. Setting it to 0 lets them dominate; setting it to the global minimum lets them merge in cleanly but requires tracking that minimum.</div>
-</details></section>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Each <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switch</a></span> is not free. Choosing a longer time slice amortizes that cost at the price of response time.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> New jobs need an initial pass value. Setting it to 0 lets them dominate; setting it to the global minimum lets them merge in cleanly but requires tracking that minimum.</div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> I/O-bound jobs are commonly handled by splitting a job into its non-I/O segments and scheduling them individually — turning one long-but-mostly-blocked job into many short, runnable ones.</div>
+</details></section>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Each <span xmlns="" class="link local"><a href="/OKCI/" title="Context switch [OKCI]">context switch</a></span> is not free. Choosing a longer time slice amortizes that cost at the price of response time.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> I/O-bound jobs are commonly handled by splitting a job into its non-I/O segments and scheduling them individually — turning one long-but-mostly-blocked job into many short, runnable ones.</div>
 </details></section>
       </details></section>
     <section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
@@ -115,20 +131,28 @@ window.addEventListener('load', function () {
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A practical scheduler that approximates <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>'s turnaround properties and <span xmlns="" class="link local"><a href="/NEL8/" title="Round-robin scheduling [NEL8]">Round-robin scheduling</a></span>'s response properties without requiring foreknowledge of job lengths. Maintain multiple priority queues; within a queue, schedule round-robin. Never service a lower-priority queue while a higher-priority queue has a runnable job.</p><p xmlns="http://www.w3.org/1999/xhtml">The priority of a job is not assigned by the user — it is <em>learned</em> from behavior:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>New jobs enter at the top priority.</li>
   <li>Each priority level has an <em>allotment</em> — the total CPU time a job may consume before being demoted.</li>
   <li>Once a job exhausts its allotment at a level, it drops to the next level.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Short jobs that finish quickly never leave the top queue (good turnaround). Interactive jobs that yield often stay at the top (good response time). CPU-bound jobs sink to the bottom and get scheduled when nothing better is runnable.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Gaming the allotment: a job can issue I/O just before its allotment expires to avoid demotion, since I/O time doesn't count.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Gaming the allotment: a job can issue I/O just before its allotment expires to avoid demotion, since I/O time doesn't count.</div>
+
 
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span></summary>Charge the job's allotment for total time at the priority level, including time spent blocked.</details>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(121, 65, 66);">Solution.</span></summary>Charge the job's allotment for total time at the priority level, including time spent blocked.</details>
 </div>
 
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Starvation of low-priority queues if higher queues never empty.</div>
 
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span></summary>Periodically reset all jobs to the top priority. Cheap and effective.</details>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Starvation of low-priority queues if higher queues never empty.</div>
+
+
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(121, 65, 66);">Solution.</span></summary>Periodically reset all jobs to the top priority. Cheap and effective.</details>
 </div>
+
 
 </details></section>
         <section lang="en" class="block"><details id="id13"><summary><header><h1>
@@ -158,10 +182,12 @@ window.addEventListener('load', function () {
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
   
- <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(120, 90, 190, 0.85);   border-radius: var(--radius);   background-color: rgba(120, 90, 190, 0.05);   "><span style="font-weight: 600; color: rgba(120, 90, 190, 0.85);">Prediction.</span> Two processes of \(5\) instructions each, every instruction using the CPU with probability one, so nothing ever blocks:
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+  
+  
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(110, 67, 101);   "><span style="font-weight: 500; color: rgb(110, 67, 101);">Prediction.</span> Two processes of \(5\) instructions each, every instruction using the CPU with probability one, so nothing ever blocks:
   <pre>Process 0
   cpu
   cpu
@@ -177,9 +203,11 @@ Process 1
   cpu</pre>
   Utilization should be 100%. The first process runs to completion, then the second. Were both waiting on I/O this would not hold.</div>
 
+
   <p>Confirmed with <code>-c -p</code>: 100% utilization.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -199,10 +227,12 @@ Process 1
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
   
- <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(120, 90, 190, 0.85);   border-radius: var(--radius);   background-color: rgba(120, 90, 190, 0.05);   "><span style="font-weight: 600; color: rgba(120, 90, 190, 0.85);">Prediction.</span> One process of \(4\) CPU instructions and one of a single I/O instruction:
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+  
+  
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(110, 67, 101);   "><span style="font-weight: 500; color: rgb(110, 67, 101);">Prediction.</span> One process of \(4\) CPU instructions and one of a single I/O instruction:
   <pre>Process 0
   cpu
   cpu
@@ -214,9 +244,11 @@ Process 1
   io_done</pre>
   It should take \(4 + \text {time of IO}\): the compute-bound process runs its four instructions first, and only then does the second process start and sit out the whole I/O.</div>
 
+
   <p>With <code>-c -p</code> it takes \(11\) timesteps, which is indeed \(\approx  4 + \text {time of IO}\).</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -236,10 +268,12 @@ Process 1
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
   
- <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(120, 90, 190, 0.85);   border-radius: var(--radius);   background-color: rgba(120, 90, 190, 0.05);   "><span style="font-weight: 600; color: rgba(120, 90, 190, 0.85);">Prediction.</span> Now the trace is
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+  
+  
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(110, 67, 101);   "><span style="font-weight: 500; color: rgb(110, 67, 101);">Prediction.</span> Now the trace is
   <pre>Process 0
   io
   io_done
@@ -251,9 +285,11 @@ Process 1
   cpu</pre>
   which should take \(\max (5, 1 + \text {time IO})\) depending on the <code>-L</code> flag. Order matters, because the CPU instructions can run while the non-blocking I/O is outstanding — which is the argument for scheduling at all.</div>
 
+
   <p>It takes \(7\) timesteps: the I/O overlaps with the compute as expected.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -273,8 +309,9 @@ Process 1
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>The whole CPU-bound process is held hostage by the I/O:</p>
   <pre>Time        PID: 0        PID: 1           CPU           IOs
   1         RUN:io         READY             1
@@ -290,6 +327,7 @@ Process 1
  11           DONE       RUN:cpu             1</pre>
 </details>
 </div>
+
 
 
 </details></section>
@@ -309,10 +347,13 @@ Process 1
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
   
- <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(120, 90, 190, 0.85);   border-radius: var(--radius);   background-color: rgba(120, 90, 190, 0.05);   "><span style="font-weight: 600; color: rgba(120, 90, 190, 0.85);">Prediction.</span> Timestep \(1\) still runs <code>RUN:io</code>, but then <code>PID: 1</code> should occupy the next \(4\) timesteps until it completes. After one more <code>BLOCKED</code> step we run <code>RUN:io_done</code> and both finish.</div>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+  
+  
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(110, 67, 101);   "><span style="font-weight: 500; color: rgb(110, 67, 101);">Prediction.</span> Timestep \(1\) still runs <code>RUN:io</code>, but then <code>PID: 1</code> should occupy the next \(4\) timesteps until it completes. After one more <code>BLOCKED</code> step we run <code>RUN:io_done</code> and both finish.</div>
+
 
   <p>Exactly that:</p>
   <pre>Time        PID: 0        PID: 1           CPU           IOs
@@ -325,6 +366,7 @@ Process 1
   7*   RUN:io_done          DONE             1</pre>
 </details>
 </div>
+
 
 
 </details></section>
@@ -344,10 +386,13 @@ Process 1
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
   
- <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(120, 90, 190, 0.85);   border-radius: var(--radius);   background-color: rgba(120, 90, 190, 0.05);   "><span style="font-weight: 600; color: rgba(120, 90, 190, 0.85);">Prediction.</span> They are not. All three CPU-bound processes finish before we return to the I/O-bound one, which then issues its next <code>io</code> with nothing left to overlap it against — the concurrency benefit evaporates.</div>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+  
+  
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(110, 67, 101);   "><span style="font-weight: 500; color: rgb(110, 67, 101);">Prediction.</span> They are not. All three CPU-bound processes finish before we return to the I/O-bound one, which then issues its next <code>io</code> with nothing left to overlap it against — the concurrency benefit evaporates.</div>
+
 
   <p>The trace is long, but the totals say it:</p>
   <pre>Stats: Total Time 31
@@ -355,6 +400,7 @@ Stats: CPU Busy 21 (67.74%)
 Stats: IO Busy  15 (48.39%)</pre>
 </details>
 </div>
+
 
 
 </details></section>
@@ -374,10 +420,13 @@ Stats: IO Busy  15 (48.39%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
   
- <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(120, 90, 190, 0.85);   border-radius: var(--radius);   background-color: rgba(120, 90, 190, 0.05);   "><span style="font-weight: 600; color: rgba(120, 90, 190, 0.85);">Prediction.</span> Returning to the I/O-bound process lets it issue its next <code>io</code> before handing the CPU back, so the requests stay in flight alongside the compute. As a heuristic it is a bet that a process which just did I/O will do more of it.</div>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+  
+  
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(110, 67, 101);   "><span style="font-weight: 500; color: rgb(110, 67, 101);">Prediction.</span> Returning to the I/O-bound process lets it issue its next <code>io</code> before handing the CPU back, so the requests stay in flight alongside the compute. As a heuristic it is a bet that a process which just did I/O will do more of it.</div>
+
 
   <p>The bet pays:</p>
   <pre>Stats: Total Time 21
@@ -385,6 +434,7 @@ Stats: CPU Busy 21 (100.00%)
 Stats: IO Busy  15 (71.43%)</pre>
 </details>
 </div>
+
 
 
 </details></section>
@@ -404,14 +454,18 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
   
- <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(120, 90, 190, 0.85);   border-radius: var(--radius);   background-color: rgba(120, 90, 190, 0.05);   "><span style="font-weight: 600; color: rgba(120, 90, 190, 0.85);">Prediction.</span> With each instruction a coin flip between CPU and I/O, <code>IO_RUN_LATER</code> and <code>IO_RUN_IMMEDIATE</code> should be close to indistinguishable. <code>SWITCH_ON_IO</code> over <code>SWITCH_ON_END</code> should matter more and more as processes are added, since there is almost always CPU work waiting — though with only two processes the gain may be small, as both are likely to be blocked at some point.</div>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+  
+  
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(110, 67, 101);   "><span style="font-weight: 500; color: rgb(110, 67, 101);">Prediction.</span> With each instruction a coin flip between CPU and I/O, <code>IO_RUN_LATER</code> and <code>IO_RUN_IMMEDIATE</code> should be close to indistinguishable. <code>SWITCH_ON_IO</code> over <code>SWITCH_ON_END</code> should matter more and more as processes are added, since there is almost always CPU work waiting — though with only two processes the gain may be small, as both are likely to be blocked at some point.</div>
+
 
   <p>For seed <code>-s 1</code> the two <code>-I</code> policies perform identically, and enabling <code>SWITCH_ON_IO</code> improves both CPU and I/O utilization.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -437,11 +491,13 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>The child gets a copy of the parent's address space, \(x\) included. Each subsequent write lands in that process's own copy, so neither sees the other's change.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -461,11 +517,13 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>Both have access to the same descriptor. Concurrent writes can in principle interleave, but in my runs whichever process was scheduled first always finished writing before the other started — plausibly a scheduling artifact rather than a guarantee.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -485,11 +543,13 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>Reusing the shared file from the previous exercise: have the child write a value, and have the parent spin in a <code>while</code> loop until it reads that value back. It works, and it is miserable — which is presumably why <code>wait()</code> exists.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -509,11 +569,13 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>It returns the pid of the child that died. Called in the child — which has no children of its own — it returns \(-1\) immediately.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -533,11 +595,13 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>The suffixes are a small matrix of three independent choices. The <code>v</code> family takes a variable-size argument vector where the <code>l</code> family takes a fixed argument list. The <code>e</code> family takes an explicit environment — the list of environment variables the new program will see — instead of inheriting the caller's. The <code>p</code> family resolves the program name against <code>PATH</code>, the way a shell does, instead of requiring a path.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -557,11 +621,13 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>When a parent has several children. <code>wait()</code> returns on whichever dies first; <code>waitpid()</code> lets you name the child you care about.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -581,11 +647,13 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>Nothing prints from the child. The parent's stdout is a separate descriptor and is untouched, so it still prints.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -605,11 +673,13 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>It worked only once I added <code>fflush()</code> — the writer's output was sitting in stdio's buffer rather than in the pipe. Whether that is required in general or an artifact of how I structured the writer, I am not sure.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -635,11 +705,13 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>Workloads that arrive in increasing order of total job time — FIFO is then already running them shortest-first.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -659,11 +731,13 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>Short jobs and long quanta. A quantum long enough to hold a whole job turns round robin into run-to-completion, and short jobs make the ordering hardly matter.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -683,11 +757,13 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>It degrades: the longest job waits out every shorter one ahead of it, so as those grow the response time grows with them.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -707,8 +783,9 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>Job \(i\) waits out the \(i - 1\) slices ahead of it, so with quantum \(S\) the worst case is the last job's:</p>
   \[\mathrm {RT}_{\max } = S(N - 1)\]
   <p>and averaging over the \(N\) jobs halves it,</p>
@@ -716,6 +793,7 @@ Stats: IO Busy  15 (71.43%)</pre>
   <p>Both grow linearly in the quantum: round robin's responsiveness is precisely what a long quantum spends.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -742,11 +820,13 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>Workloads that arrive in increasing order of total job time — FIFO is then already running them shortest-first.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -766,11 +846,13 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>Short jobs and long quanta. A quantum long enough to hold a whole job turns round robin into run-to-completion, and short jobs make the ordering hardly matter.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -790,11 +872,13 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>It degrades: the longest job waits out every shorter one ahead of it, so as those grow the response time grows with them.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -814,8 +898,9 @@ Stats: IO Busy  15 (71.43%)</pre>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Solution.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
   <p>Job \(i\) waits out the \(i - 1\) slices ahead of it, so with quantum \(S\) the worst case is the last job's:</p>
   \[\mathrm {RT}_{\max } = S(N - 1)\]
   <p>and averaging over the \(N\) jobs halves it,</p>
@@ -823,6 +908,7 @@ Stats: IO Busy  15 (71.43%)</pre>
   <p>Both grow linearly in the quantum: round robin's responsiveness is precisely what a long quantum spends.</p>
 </details>
 </div>
+
 
 
 </details></section>
@@ -840,20 +926,28 @@ Stats: IO Busy  15 (71.43%)</pre>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A practical scheduler that approximates <span xmlns="" class="link local"><a href="/7R07/" title="STCF scheduling [7R07]">STCF scheduling</a></span>'s turnaround properties and <span xmlns="" class="link local"><a href="/NEL8/" title="Round-robin scheduling [NEL8]">Round-robin scheduling</a></span>'s response properties without requiring foreknowledge of job lengths. Maintain multiple priority queues; within a queue, schedule round-robin. Never service a lower-priority queue while a higher-priority queue has a runnable job.</p><p xmlns="http://www.w3.org/1999/xhtml">The priority of a job is not assigned by the user — it is <em>learned</em> from behavior:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>New jobs enter at the top priority.</li>
   <li>Each priority level has an <em>allotment</em> — the total CPU time a job may consume before being demoted.</li>
   <li>Once a job exhausts its allotment at a level, it drops to the next level.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Short jobs that finish quickly never leave the top queue (good turnaround). Interactive jobs that yield often stay at the top (good response time). CPU-bound jobs sink to the bottom and get scheduled when nothing better is runnable.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Gaming the allotment: a job can issue I/O just before its allotment expires to avoid demotion, since I/O time doesn't count.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Gaming the allotment: a job can issue I/O just before its allotment expires to avoid demotion, since I/O time doesn't count.</div>
+
 
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span></summary>Charge the job's allotment for total time at the priority level, including time spent blocked.</details>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(121, 65, 66);">Solution.</span></summary>Charge the job's allotment for total time at the priority level, including time spent blocked.</details>
 </div>
 
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Starvation of low-priority queues if higher queues never empty.</div>
 
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span></summary>Periodically reset all jobs to the top priority. Cheap and effective.</details>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Starvation of low-priority queues if higher queues never empty.</div>
+
+
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(121, 65, 66);">Solution.</span></summary>Periodically reset all jobs to the top priority. Cheap and effective.</details>
 </div>
+
 
 </details></section>
         <section lang="en" class="block"><details id="id44"><summary><header><h1>
@@ -862,7 +956,9 @@ Stats: IO Busy  15 (71.43%)</pre>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Shortest time-to-completion first</em>. A preemptive refinement of <span xmlns="" class="link local"><a href="/VJ4F/" title="SJF scheduling [VJ4F]">SJF scheduling</a></span>: whenever the scheduler is invoked, it picks the job with the least <em>remaining</em> work. A short job arriving mid-execution can preempt a long one.</p><p xmlns="http://www.w3.org/1999/xhtml">STCF is provably optimal for minimizing average turnaround time over all preemptive schedulers.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Long jobs starve in response time. The lowest-priority work might not get a CPU slice for a very long time, which is unacceptable for interactive workloads.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Long jobs starve in response time. The lowest-priority work might not get a CPU slice for a very long time, which is unacceptable for interactive workloads.</div>
+
 </details></section>
         <section lang="en" class="block"><details id="id45"><summary><header><h1>
 <span class="taxon"></span>Context switch <a class="slug" href="/OKCI/">[OKCI]</a> </h1>

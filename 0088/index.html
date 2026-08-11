@@ -29,7 +29,7 @@ for a <strong>fixed</strong> theta <strong>and</strong> \(q\). Therefore, <stron
   \[\theta _{t + 1} \gets  \theta _t + \nabla _{\theta } \mathsf {ELBO}(x, q, \theta _t),\]
   to maximize the log-likelihood \(\log  p(x; \theta )\). 
 </p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Note that the gradient is with respect to \(\theta \), where \(\theta \) is just the third argument to \(\mathsf {ELBO}\) as defined above. Notably, \(\theta _t\) will show up elsewhere later but will <strong>NOT</strong> be backpropagated through.
 </div>
 
@@ -43,21 +43,26 @@ Note that the gradient is with respect to \(\theta \), where \(\theta \) is just
 <p xmlns="http://www.w3.org/1999/xhtml">Recall (or review) from the discussion on <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> that \(q(z) = p(z | x; \theta )\) maximizes the ELBO for a given \(x\) and \(\theta  \). Therefore, we actually want to learn \(q_{\phi }(z, x, \theta ) \approx  p(z | x; \theta )\). To do so, we can simply maximize the ELBO (duh). Formally,
 \[\phi _{t+1} = \argmax _{\phi } \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q}\left [\log  \frac {p(x,  Z; \theta _t)}{q_{\phi }(Z, x, \theta _t)}\right ]\]</p>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);">Question.</span> 
 Now this is all cool theoretically but how TF do we actually maximize this thing? 
 </div>
 
 
+
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(115, 73, 35);">Answer.</span></summary>
   It is highly dependent on the parametrization of \(p\) and \(q\).
 </details>
 </div>
 
 
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
+
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
   <p>
   We define the problem as 
   <ol><li>\(p(z) \sim  N(0, 1)\)</li>
@@ -72,30 +77,37 @@ Now this is all cool theoretically but how TF do we actually maximize this thing
     \]</p>
 </div>
 
-  
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
-    We need to sample realization \(z \sim  q_{\phi }(\cdot  |x, \theta )\). So isn't our realization \(z\) a function of \(\phi \). How would we optimize this?
-  </div>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span></summary>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> 
+    We need to sample realization \(z \sim  q_{\phi }(\cdot  |x, \theta )\). So isn't our realization \(z\) a function of \(\phi \). How would we optimize this?
+  </div>
+
+
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(115, 73, 35);">Answer.</span></summary>
     The <span xmlns="" class="link local"><a href="/0089/" title="Reparametrization Trick [0089]">reparametrization trick</a></span>!!
   </details>
 </div>
 
 
+
   <p xmlns="http://www.w3.org/1999/xhtml">Now for a given sample \(x_i \sim  \mathcal {D}\), we can get a sample \(z_i(\phi ) \sim  q(\cdot  \mid  x_i, \theta )\) that is differentiable with respect to \(\phi \). Using this, we can get the stochastic gradient estimate
   \[\nabla _q \widetilde {\mathsf {ELBO}}(x, q, \theta ) = \nabla _{\phi } \left [\frac {z_i(\phi )^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((z_i(\phi ) - \mu _{\theta }(z_i(\phi )))^2 - (z_i(\phi ) - \mu _{\phi }(x))^2\big )\right ]\]</p>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 100, 255, 0.7);   border-radius: var(--radius);   background-color: rgba(0, 100, 255, 0.05);   "><span style="font-weight: 600; color: rgba(0, 100, 255, 0.7);">Algorithm.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);">Algorithm.</span> 
   input \(\theta _t\)
   <ol><li>Sample \(x_i\) from dataset \(\mathcal {D}\)</li>
     <li>Sample \(z_i(\phi ) \sim  q_{\phi }(\cdot  \mid  x_i, \theta _t)\) via <span xmlns="" class="link local"><a href="/0089/" title="Reparametrization Trick [0089]">trick</a></span>.</li>
     <li>Compute \(\nabla _q \widetilde {\mathsf {ELBO}}\)</li>
     <li>Update via SGD</li></ol>
 </div>
+
 
 </details></section>
 
@@ -166,7 +178,9 @@ Alternating between these steps yields the <em>expectation-maximization</em> alg
  \mathbb {P}(b_t = 1, z_t \mid  z_{t - 1}, s_t) &amp;= \psi (s_t, z_{t - 1}) \cdot  \eta (z_t \mid  s_t)
 .\end {align*}
 \]<p xmlns="http://www.w3.org/1999/xhtml">Up to this point, we have assumed this is the ground truth model and we are given each of the components. Instead we want to <em>learn</em> these components. To do so, we introduce our set of parameters \(\mathbf {\theta } \), such that each component is parametrized by a subset of \(\mathbf {\theta } \) i.e. \(\eta _{\theta }, \pi _{\theta }, \psi _{\theta }\).</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</span> We want to learn some \(\theta \) that maximized the likelihood of the <em>observable</em> data.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Goal.</span> We want to learn some \(\theta \) that maximized the likelihood of the <em>observable</em> data.</div>
+
 <p xmlns="http://www.w3.org/1999/xhtml">To do so, first consider the log-likelihood of our new parametrized model</p>\[
 \begin {align*}
 \log  \mathbb {P}_{\theta }(\mathcal {H}, \xi ) &amp;= \log  \left [p(s_{0})\delta _{\{b_{0} = 1\}}\eta _{\theta }(z_{0} \mid  s_{0}) \prod _{t=1}^{T - 1} \mathbb {P}_{\theta }(b_t, z_t \mid  z_{t - 1}, s_t) \prod _{t = 0}^{T - 1} \pi _{\theta }(a_t \mid  s_t, z_t) p(s_{t+1} \mid  s_t, a_t)\right ] \\
@@ -177,17 +191,21 @@ Alternating between these steps yields the <em>expectation-maximization</em> alg
 \nabla _{\theta } \log  \mathbb {P}_{\theta }(\mathcal {H}, \xi ) &amp;= \nabla _{\theta } \left [ \log \left [\eta _{\theta }(z_{0} \mid  s_{0}) \prod _{t=1}^{T - 1} \mathbb {P}_{\theta }(b_t, z_t \mid  z_{t - 1}, s_t) \prod _{t = 0}^{T - 1} \pi _{\theta }(a_t \mid  s_t, z_t)\right ] \right ]\\
 &amp;= \nabla _{\theta } \log \left [\eta _{\theta }(z_{0} \mid  s_{0})\right ] + \sum _{t=1}^{T - 1} \nabla _{\theta } \log \left [\mathbb {P}_{\theta }(b_t, z_t \mid  z_{t - 1}, s_t)\right ] + \sum _{t = 0}^{T - 1} \nabla _{\theta } \log  \left [\pi _{\theta }(a_t \mid  s_t, z_t)\right ].
 \end {align*}\]
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> This requires samples \((\mathcal {H}, \xi ) \sim  P_{\theta }(\mathcal {H}, \xi )\), but we only have samples \(\mathcal {H} \sim  P_{\theta }(\mathcal {H})\)!!!</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> This requires samples \((\mathcal {H}, \xi ) \sim  P_{\theta }(\mathcal {H}, \xi )\), but we only have samples \(\mathcal {H} \sim  P_{\theta }(\mathcal {H})\)!!!</div>
+
 
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span></summary>We can use the trick from <span xmlns="" class="link local"><a href="/0088/" title="Expectation Maximization [0088]">Expectation Maximization</a></span>. Referred to in the paper as the <em>expectation gradient trick</em>. Namely,
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(121, 65, 66);">Solution.</span></summary>We can use the trick from <span xmlns="" class="link local"><a href="/0088/" title="Expectation Maximization [0088]">Expectation Maximization</a></span>. Referred to in the paper as the <em>expectation gradient trick</em>. Namely,
 \[\nabla _{\theta } \log  P_{\theta }(\mathcal {H}) = \mathbb {E}_{\xi  \sim  P_{\theta }(\xi  \mid  \mathcal {H})} \left [ \nabla _{\theta } \log  P_{\theta }(\mathcal {H}, \xi ) \right ]\]
 </details>
 </div>
 
+
 <p xmlns="http://www.w3.org/1999/xhtml">Now it remains to compute the expectation from \(P_{\theta }(\xi  \mid  \mathcal {H})\)</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Note that \(P_{\theta }(\xi  \mid  \mathcal {H})\) is a distribution over \((K, \{0,1\})^{T} \) i.e. over each \((z_t, b_t)\). To efficiently compute, we need to use <span xmlns="" class="link local"><a href="/F3T0/" title="Forward-backward algorithm [F3T0]">Forward-backward algorithm</a></span>.
 </div>
 
@@ -233,7 +251,7 @@ Note that \(P_{\theta }(\xi  \mid  \mathcal {H})\) is a distribution over \((K, 
   &amp;\times   \sum _{(z', b')} \phi _{t - 1}(z', b') \Big (\eta _{\theta }(z \mid  s_{t}) \psi _{\theta }(s_{t}, z') + \delta _{\{z = z'\}} (1 - \psi _{\theta }(s_{t}, z'))\Big )
 .\end {align*}\]
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 We have abused notation here, allowing \(\mathbb {P}(s_t, a_t \mid  z_t, b_t)\) to depend on \(s_{t - 1}, a_{t - 1}\), etc. This is to align with the notation from <span xmlns="" class="link local"><a href="/F3T0/" title="Forward-backward algorithm [F3T0]">Forward-backward algorithm</a></span>. It makes no difference in practice as long as the backward dependence is finite / bounded. However, in practice you would want the history dependence to be small and here it is only one-step.
 </div>
 
@@ -253,7 +271,9 @@ We have abused notation here, allowing \(\mathbb {P}(s_t, a_t \mid  z_t, b_t)\) 
         <section lang="en" class="block"><details id="id8"><summary><header><h1>
 <span class="taxon"></span>Normalizing Flows <a class="slug" href="/B9J9/">[B9J9]</a> </h1>
 <div class="metadata"><ul><li class="meta-item">July 15, 2025</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Brief notes on <span xmlns="" class="link local"><a href="/rezendeVariationalInferenceNormalizing/" title="Variational Inference with Normalizing Flows [rezendeVariationalInferenceNormalizing]">Variational Inference with Normalizing Flows</a></span> to motivate <span xmlns="" class="link local"><a href="/008A/" title="Flow Matching: What, Why, and How? [008A]">flow matching</a></span>.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</span> We are concerned with the problem of <em>density estimation</em>. Given a dataset \(\mathcal {X}\), consisting of samples \(\mathbf {x}_i \sim  p(\mathbf {x})\), we want to learn \(p(\mathbf {x})\).</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Goal.</span> We are concerned with the problem of <em>density estimation</em>. Given a dataset \(\mathcal {X}\), consisting of samples \(\mathbf {x}_i \sim  p(\mathbf {x})\), we want to learn \(p(\mathbf {x})\).</div>
+
 <p xmlns="http://www.w3.org/1999/xhtml">One popular way to do this is via <em>variational inference</em>. As a brief recap, in variational inference, we assume that there is actually a joint distribution \(p(\mathbf {x}, \mathbf {z})\), where \(\mathbf {z}\) is a <span xmlns="" class="link local"><a href="/0083/" title="Latent Variable [0083]">latent variable</a></span>. We then find \(p(\mathbf {x})\) by maximizing the log-likelihood \(\log  \int  p(\mathbf {x} \mid  \mathbf {z}) \mathrm {d}\mathbf {z}\)</p><p xmlns="http://www.w3.org/1999/xhtml">
  For an example of this, see my post on <span xmlns="" class="link local"><a href="/0088/" title="Expectation Maximization [0088]">expectation maximization</a></span>. In that post, we utilize the <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> to learn a latent variable model \(q_{\phi }(\mathbf {z} | \mathbf {x})\). As discussed in my post on <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span>, in order to learn \(p(\mathbf {x})\), we must have that \(p(\mathbf {z} | \mathbf {x})\) is in the family \(q_{\phi }\). However, \(q_
  {\phi }\) is usually a Gaussian parametrized by \(\phi \), so that we can easily learn \(\phi \). In this case, it is very unlikely that \(p(\mathbf {z} \mid  x)\) lies in the family of \(q_{\phi }\) and therefore we have no hope of learning the true \(p(\mathbf {x})\).
@@ -267,19 +287,25 @@ We have abused notation here, allowing \(\mathbb {P}(s_t, a_t \mid  z_t, b_t)\) 
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Setup.</strong>
 We are given a joint distribution \(p(X, Z; \theta )\), where \(X\) and \(Z\) are random variables with their joint parametrized by \(\theta \). We are also given a dataset \(\mathcal {D}\) containing realizations of <strong>only</strong> \(X\) i.e. \(Z\) is a <span xmlns="" class="link local"><a href="/0083/" title="Latent Variable [0083]">latent random variable</a></span>.
   </p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</span> We want to learn \(p(x; \theta )\).</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Goal.</span> We want to learn \(p(x; \theta )\).</div>
+
 <p xmlns="http://www.w3.org/1999/xhtml"> However, \[p(x; \theta ) = \int  p(x, z; \theta ) \mathrm {d}z = \int  p(x | z; \theta )p(z) \mathrm {d}z,\] which is computationally intractable for most continuous \(Z\).</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> Can we update \(\theta \) for a given realization of \(x\) and \(z\)?</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);">Question.</span> Can we update \(\theta \) for a given realization of \(x\) and \(z\)?</div>
+
 
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span></summary>Yes!!!</details>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(115, 73, 35);">Answer.</span></summary>Yes!!!</details>
 </div>
+
 
 <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Motivation.</strong> Suppose we had some \(q(z)\) that we could sample realizations of \(Z\) from. Then we want to find some reasonable \(\ell _{\theta }\), such that
 \[\theta ^* \approx  \arg \max _{\theta } \mathbb {E}_{x, \sim  p(x; \theta ^*), z \sim  q(z)}[\ell _{\theta }(X, Z)]\]
 
- <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 \(q(z)\) can potentially (and will) depend on the sample \(x_i\). This is OK because we are given \(x_i\)'s, which we can then just pass to \(q\) to get the corresponding \(z_i\).
 </div>
 
@@ -337,19 +363,25 @@ where \(\epsilon  \sim  N(0, 1)\). Then, for a given sample \(\epsilon \), we ca
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Setup.</strong>
 We are given a joint distribution \(p(X, Z; \theta )\), where \(X\) and \(Z\) are random variables with their joint parametrized by \(\theta \). We are also given a dataset \(\mathcal {D}\) containing realizations of <strong>only</strong> \(X\) i.e. \(Z\) is a <span xmlns="" class="link local"><a href="/0083/" title="Latent Variable [0083]">latent random variable</a></span>.
   </p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</span> We want to learn \(p(x; \theta )\).</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Goal.</span> We want to learn \(p(x; \theta )\).</div>
+
 <p xmlns="http://www.w3.org/1999/xhtml"> However, \[p(x; \theta ) = \int  p(x, z; \theta ) \mathrm {d}z = \int  p(x | z; \theta )p(z) \mathrm {d}z,\] which is computationally intractable for most continuous \(Z\).</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> Can we update \(\theta \) for a given realization of \(x\) and \(z\)?</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);">Question.</span> Can we update \(\theta \) for a given realization of \(x\) and \(z\)?</div>
+
 
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span></summary>Yes!!!</details>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(115, 73, 35);">Answer.</span></summary>Yes!!!</details>
 </div>
+
 
 <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Motivation.</strong> Suppose we had some \(q(z)\) that we could sample realizations of \(Z\) from. Then we want to find some reasonable \(\ell _{\theta }\), such that
 \[\theta ^* \approx  \arg \max _{\theta } \mathbb {E}_{x, \sim  p(x; \theta ^*), z \sim  q(z)}[\ell _{\theta }(X, Z)]\]
 
- <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 \(q(z)\) can potentially (and will) depend on the sample \(x_i\). This is OK because we are given \(x_i\)'s, which we can then just pass to \(q\) to get the corresponding \(z_i\).
 </div>
 

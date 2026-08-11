@@ -20,31 +20,29 @@
   <fr:mainmatter><html:p>The hardware optimization on GPUs that combines simultaneous memory accesses by threads in a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link> into a single transaction — when the accessed addresses fall in the same cache line.</html:p><html:p>Global memory latency on a GPU is 400–800 cycles. Coalescing is the primary way to keep the SM fed:</html:p><html:ul><html:li>If all 32 threads in a warp access addresses within one cache line: one memory transaction, full bandwidth.</html:li>
   <html:li>If addresses span multiple cache lines: the hardware serializes into multiple transactions; bandwidth drops proportionally.</html:li></html:ul>
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Address permutations within a cache line don't hurt utilization — coalescing is about which lines are touched, not which exact bytes.</html:div>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> Address permutations within a cache line don't hurt utilization — coalescing is about which lines are touched, not which exact bytes.</html:div>
 <html:p>Coalescing is why memory layout matters so much for GPU code. The standard idiom is <html:em>structure-of-arrays</html:em> (SoA) instead of <html:em>array-of-structures</html:em> (AoS): threads accessing the same field of consecutive records hit consecutive bytes, which coalesce; threads accessing the same struct don't.</html:p>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 130, 0, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(200, 130, 0, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</html:span> Should you always cache on the GPU?</html:div>
-
   
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(0, 140, 120, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(0, 140, 120, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);" /> 
-  <html:details><html:summary><html:span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</html:span></html:summary>No. If you're memory-bound and have no <fr:link href="/PMP9/" title="Spatial locality" uri="https://kellenkanarios.com/PMP9/" display-uri="PMP9" type="local">Spatial locality</fr:link>, cache is wasted on data you won't reuse. CUDA exposes the option to disable L1 caching for these cases, which lets misaligned loads transfer only the bytes needed instead of full cache lines.</html:details>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);">Question.</html:span> Should you always cache on the GPU?</html:div>
+
+
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-weight: 500; color: rgb(115, 73, 35);">Answer.</html:span></html:summary>No. If you're memory-bound and have no <fr:link href="/PMP9/" title="Spatial locality" uri="https://kellenkanarios.com/PMP9/" display-uri="PMP9" type="local">Spatial locality</fr:link>, cache is wasted on data you won't reuse. CUDA exposes the option to disable L1 caching for these cases, which lets misaligned loads transfer only the bytes needed instead of full cache lines.</html:details>
 </html:div>
+
 
 </fr:mainmatter>
   <fr:backmatter>
@@ -83,61 +81,57 @@
   <html:li>Communicate between threads within a block.</html:li></html:ul><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>25</fr:day></fr:date><fr:uri>https://kellenkanarios.com/OGCRU/</fr:uri><fr:display-uri>OGCRU</fr:display-uri><fr:route>/OGCRU/</fr:route><fr:title text="Bank conflicts serialize shared-memory accesses to the same bank">Bank conflicts serialize shared-memory accesses to the same bank</fr:title></fr:frontmatter><fr:mainmatter><html:p>Shared memory is divided into <html:em>banks</html:em> (typically 32). Each bank can service one access per cycle. If two threads in a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link> access different addresses in the <html:em>same</html:em> bank, the accesses serialize — a <html:em>bank conflict</html:em>.</html:p><html:p>Three behaviors when warp threads access shared memory:</html:p><html:ul><html:li>Different banks: full parallelism. No conflict.</html:li>
   <html:li>Same bank, same word: hardware broadcasts the word to all threads. No conflict.</html:li>
   <html:li>Same bank, different words: serialize.</html:li></html:ul>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 130, 0, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(200, 130, 0, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</html:span> How to avoid bank conflicts?</html:div>
-
   
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(0, 140, 120, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(0, 140, 120, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);" /> 
-  <html:details><html:summary><html:span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</html:span></html:summary>Change the access pattern so threads hit different banks (often by transposing or by adding padding to break the stride that causes the conflict).</html:details>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);">Question.</html:span> How to avoid bank conflicts?</html:div>
+
+
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-weight: 500; color: rgb(115, 73, 35);">Answer.</html:span></html:summary>Change the access pattern so threads hit different banks (often by transposing or by adding padding to break the stride that causes the conflict).</html:details>
 </html:div>
+
 
 </fr:mainmatter></fr:tree>
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> The GPU memory hierarchy is software-managed at L1 (shared memory) and coherent only at L2 — by restricting L1 to local-to-block scope, the architecture sidesteps the cost of a global <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> protocol on a thousand-way-parallel chip.</html:div>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> The GPU memory hierarchy is software-managed at L1 (shared memory) and coherent only at L2 — by restricting L1 to local-to-block scope, the architecture sidesteps the cost of a global <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> protocol on a thousand-way-parallel chip.</html:div>
 <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/U1FO/</fr:uri><fr:display-uri>U1FO</fr:display-uri><fr:route>/U1FO/</fr:route><fr:title text="Memory coalescing merges a warp's accesses into one transaction per cache line">Memory coalescing merges a warp's accesses into one transaction per cache line</fr:title></fr:frontmatter><fr:mainmatter><html:p>The hardware optimization on GPUs that combines simultaneous memory accesses by threads in a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link> into a single transaction — when the accessed addresses fall in the same cache line.</html:p><html:p>Global memory latency on a GPU is 400–800 cycles. Coalescing is the primary way to keep the SM fed:</html:p><html:ul><html:li>If all 32 threads in a warp access addresses within one cache line: one memory transaction, full bandwidth.</html:li>
   <html:li>If addresses span multiple cache lines: the hardware serializes into multiple transactions; bandwidth drops proportionally.</html:li></html:ul>
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Address permutations within a cache line don't hurt utilization — coalescing is about which lines are touched, not which exact bytes.</html:div>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> Address permutations within a cache line don't hurt utilization — coalescing is about which lines are touched, not which exact bytes.</html:div>
 <html:p>Coalescing is why memory layout matters so much for GPU code. The standard idiom is <html:em>structure-of-arrays</html:em> (SoA) instead of <html:em>array-of-structures</html:em> (AoS): threads accessing the same field of consecutive records hit consecutive bytes, which coalesce; threads accessing the same struct don't.</html:p>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 130, 0, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(200, 130, 0, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</html:span> Should you always cache on the GPU?</html:div>
-
   
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(0, 140, 120, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(0, 140, 120, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);" /> 
-  <html:details><html:summary><html:span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</html:span></html:summary>No. If you're memory-bound and have no <fr:link href="/PMP9/" title="Spatial locality" uri="https://kellenkanarios.com/PMP9/" display-uri="PMP9" type="local">Spatial locality</fr:link>, cache is wasted on data you won't reuse. CUDA exposes the option to disable L1 caching for these cases, which lets misaligned loads transfer only the bytes needed instead of full cache lines.</html:details>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);">Question.</html:span> Should you always cache on the GPU?</html:div>
+
+
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-weight: 500; color: rgb(115, 73, 35);">Answer.</html:span></html:summary>No. If you're memory-bound and have no <fr:link href="/PMP9/" title="Spatial locality" uri="https://kellenkanarios.com/PMP9/" display-uri="PMP9" type="local">Spatial locality</fr:link>, cache is wasted on data you won't reuse. CUDA exposes the option to disable L1 caching for these cases, which lets misaligned loads transfer only the bytes needed instead of full cache lines.</html:details>
 </html:div>
+
 
 </fr:mainmatter></fr:tree></fr:mainmatter>
         </fr:tree>
@@ -197,12 +191,10 @@
           </fr:frontmatter>
           <fr:mainmatter><html:p>The empirical observation that if a program accesses memory address <fr:tex display="inline"><![CDATA[x]]></fr:tex>, it is likely to access addresses near <fr:tex display="inline"><![CDATA[x]]></fr:tex> soon. Sequential array traversal, struct field access, and instruction fetch all exhibit it.</html:p><html:p>Caches exploit spatial locality by loading whole <html:em>cache lines</html:em> (typically 64 bytes) on every miss, not just the single requested byte. The byte that triggered the load is the <html:em>critical word</html:em>; the surrounding bytes come along for free under the assumption you'll want them.</html:p>
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> RAM and caches are organized in cache-line granularity throughout. Bandwidth is sized for whole-line transfers; tags are per-line, not per-byte.</html:div>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> RAM and caches are organized in cache-line granularity throughout. Bandwidth is sized for whole-line transfers; tags are per-line, not per-byte.</html:div>
 <html:p>The complement is <fr:link href="/9RWN/" title="Temporal locality" uri="https://kellenkanarios.com/9RWN/" display-uri="9RWN" type="local">Temporal locality</fr:link> — repeated access to the same data over time. Temporal locality implies spatial locality (you re-touch nearby bytes when you re-touch the original), but not vice versa.</html:p></fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>

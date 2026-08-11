@@ -243,12 +243,10 @@
   <html:li><html:strong><html:code>lfence</html:code></html:strong> — load fence. All prior loads must complete before any later load issues. Less commonly needed under TSO, but useful as a speculation barrier (Spectre mitigation cases) and on architectures with load-load reordering.</html:li>
   <html:li><html:strong><html:code>mfence</html:code></html:strong> — full fence. Drains the entire store buffer and serializes all prior memory operations against all subsequent ones. The hammer.</html:li></html:ul><html:p>What a fence actually does in hardware is force the store buffer to drain (or wait for it to drain) rather than just waiting for <fr:link href="/BI4H/" title="Reorder buffer" uri="https://kellenkanarios.com/BI4H/" display-uri="BI4H" type="local">Reorder buffer</fr:link> commit. This is the distinction worth keeping straight: ROB commit makes a store architecturally real but invisible to other cores; the fence is what makes it visible. The cost is whatever latency the cache hierarchy adds — fences are expensive precisely because they undo the latency-hiding the <fr:link href="/UNB6/" title="Store buffer" uri="https://kellenkanarios.com/UNB6/" display-uri="UNB6" type="local">Store buffer</fr:link> exists to provide.</html:p><html:p>Under <fr:link href="/OW4D/" title="Sequential consistency" uri="https://kellenkanarios.com/OW4D/" display-uri="OW4D" type="local">Sequential consistency</fr:link> every memory operation behaves as if a full fence sat on either side of it, which is why SC is fast to reason about and slow to implement. Real-world consistency models pick relaxations and require fences only at the points the programmer marks as ordering-sensitive — <html:em>acquire</html:em> and <html:em>release</html:em> <fr:link href="/S5D0/" title="Half fence" uri="https://kellenkanarios.com/S5D0/" display-uri="S5D0" type="local">Half fence</fr:link>s (see <fr:link href="/ZWHV/" title="Release consistency" uri="https://kellenkanarios.com/ZWHV/" display-uri="ZWHV" type="local">Release consistency</fr:link>) are the common compromise.</html:p>
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> A fence does not flush caches or invalidate anything — coherence traffic does that. A fence only constrains the issue order observed by the rest of the system.</html:div>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> A fence does not flush caches or invalidate anything — coherence traffic does that. A fence only constrains the issue order observed by the rest of the system.</html:div>
 </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -269,16 +267,93 @@
             <fr:title text="Store buffer">Store buffer</fr:title>
             <fr:taxon>Definition</fr:taxon>
           </fr:frontmatter>
-          <fr:mainmatter><html:p>A FIFO of retired-but-not-yet-globally-visible stores that decouples instruction commit from cache write. When a store reaches the head of the <fr:link href="/BI4H/" title="Reorder buffer" uri="https://kellenkanarios.com/BI4H/" display-uri="BI4H" type="local">Reorder buffer</fr:link> and commits, its value has not yet reached L1 — commit only hands the store off to the store buffer. The actual cache write, called <html:em>drain</html:em>, happens asynchronously and may be delayed by cache misses, coherence traffic, or memory-ordering rules.</html:p><html:p>Without this split, the ROB would have to stall on a cache miss for every store. With it, once a store is known to be non-speculative, the front-end moves on while the store buffer absorbs whatever latency the memory hierarchy imposes. <html:em>Commit</html:em> and <html:em>drain</html:em> are therefore two distinct moments in the lifetime of a store:</html:p><html:ul><html:li><html:strong>Commit</html:strong> — the store is architecturally real. Younger speculation cannot squash it, but other cores do not see it yet.</html:li>
-  <html:li><html:strong>Drain</html:strong> — the value is written to L1 and becomes visible to the coherence protocol, and therefore to other cores.</html:li></html:ul><html:p>Between these two moments the value lives only in the store buffer. Younger same-core loads can still observe it through <fr:link href="/GXCN/" title="Store-to-load forwarding" uri="https://kellenkanarios.com/GXCN/" display-uri="GXCN" type="local">Store-to-load forwarding</fr:link>, but other cores cannot — which is the structural reason <fr:link href="/VH8Y/" title="Total store order" uri="https://kellenkanarios.com/VH8Y/" display-uri="VH8Y" type="local">Total store order</fr:link> permits store-load reordering across cores. A <fr:link href="/R03A/" title="Memory fence" uri="https://kellenkanarios.com/R03A/" display-uri="R03A" type="local">Memory fence</fr:link> like <html:code>mfence</html:code> forces the buffer to drain so that subsequent operations see a consistent global view.</html:p>
+          <fr:mainmatter><html:p>A FIFO of stores that have left the pipeline but are not yet globally visible, decoupling instruction commit from cache write. A store's slot is allocated early — at dispatch/rename, since it must exist before execute for the address and data to be written into — so commit is not a handoff into the buffer but a <html:em>state transition</html:em> within it: when the store reaches the head of the <fr:link href="/BI4H/" title="Reorder buffer" uri="https://kellenkanarios.com/BI4H/" display-uri="BI4H" type="local">Reorder buffer</fr:link>, its entry stops being speculative and becomes a <html:em>senior store</html:em>, eligible to drain. Nothing reaches L1 at that instant. The actual cache write, called <html:em>drain</html:em>, happens asynchronously and may be delayed by cache misses, coherence traffic, or memory-ordering rules.</html:p><html:p>Without this split, the ROB would have to stall on a cache miss for every store. With it, once a store is known to be non-speculative, the front-end moves on while the store buffer absorbs whatever latency the memory hierarchy imposes. <html:em>Commit</html:em> and <html:em>drain</html:em> are therefore two distinct moments in the lifetime of a store:</html:p><html:ul><html:li><html:strong>Commit</html:strong> — the store is architecturally real. Younger speculation cannot squash it, but other cores do not see it yet.</html:li>
+  <html:li><html:strong>Drain</html:strong> — the value is written to L1 and becomes visible to the coherence protocol, and therefore to other cores.</html:li></html:ul><html:p>Between these two moments the value lives only in the store buffer. Younger same-core loads can still observe it through <fr:link href="/GXCN/" title="Store-to-load forwarding" uri="https://kellenkanarios.com/GXCN/" display-uri="GXCN" type="local">Store-to-load forwarding</fr:link>, but other cores cannot — which is the structural reason <fr:link href="/VH8Y/" title="Total store order" uri="https://kellenkanarios.com/VH8Y/" display-uri="VH8Y" type="local">Total store order</fr:link> permits store-load reordering across cores. A <fr:link href="/R03A/" title="Memory fence" uri="https://kellenkanarios.com/R03A/" display-uri="R03A" type="local">Memory fence</fr:link> like <html:code>mfence</html:code> forces the buffer to drain so that subsequent operations see a consistent global view.</html:p><html:p>Drain is not a single event either, and the two halves are easy to conflate. Acquiring <html:em>permission</html:em> — an Upgrade if the line is already in S, a GetM if it is not — is distinct from <html:em>performing the write</html:em>, merging the data into the line while holding M. Only the second is architecturally required to be post-commit. Ownership is invisible to software, so a core issues the <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> request speculatively at AGU execute time, as soon as the physical address is known and often tens of cycles before retirement; if the store is squashed or the line is snooped away before the merge, nothing is lost but fabric traffic. This is why store misses so often look free in a trace — the latency was paid during <fr:link href="/IIF9/" title="Speculative execution" uri="https://kellenkanarios.com/IIF9/" display-uri="IIF9" type="local">Speculative execution</fr:link>, not at the head of the buffer. The merge under M is the store's global visibility point.</html:p>
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Retirement bandwidth (ROB commits per cycle) and store bandwidth (drain rate to L1) are separate throughput limits. A workload that retires stores faster than the cache can absorb them eventually backs up the ROB anyway, but the store buffer absorbs short bursts at no cost.</html:div>
-</fr:mainmatter>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> Retirement bandwidth (ROB commits per cycle) and store bandwidth (drain rate to L1) are separate throughput limits. A workload that retires stores faster than the cache can absorb them eventually backs up the ROB anyway, but the store buffer absorbs short bursts at no cost.</html:div>
+<fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>9</fr:day></fr:date><fr:uri>https://kellenkanarios.com/W5Z4/</fr:uri><fr:display-uri>W5Z4</fr:display-uri><fr:route>/W5Z4/</fr:route><fr:title text="Commit is a state transition, not an allocation">Commit is a state transition, not an allocation</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1786316439336</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>A store's lifetime: when is its <fr:link href="/UNB6/" title="Store buffer" uri="https://kellenkanarios.com/UNB6/" display-uri="UNB6" type="local">Store buffer</fr:link> slot allocated, and what changes at <fr:link href="/BI4H/" title="Reorder buffer" uri="https://kellenkanarios.com/BI4H/" display-uri="BI4H" type="local">Reorder buffer</fr:link> commit?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The slot is allocated at <html:strong>dispatch/rename</html:strong>, not at commit. It has to exist before the store executes: that is where the address and data get written in, and where younger loads find the value to <fr:link href="/GXCN/" title="Store-to-load forwarding" uri="https://kellenkanarios.com/GXCN/" display-uri="GXCN" type="local">Store-to-load forwarding</fr:link>.
+
+  Commit is only a <html:strong>state transition</html:strong>. The entry stops being speculative — it becomes a <html:em>senior store</html:em>, and is now eligible to drain. Nothing reaches the cache at that instant.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>9</fr:day></fr:date><fr:uri>https://kellenkanarios.com/DHK1/</fr:uri><fr:display-uri>DHK1</fr:display-uri><fr:route>/DHK1/</fr:route><fr:title text="Permission and the write are two separate events">Permission and the write are two separate events</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1786316439086</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Which two events are conflated in "the store issues a <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> request", and which one is required to be post-commit?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:ol><html:li><html:strong>Requesting permission</html:strong> — GetM/BusRdX/RFO, or an Upgrade if the line is already in S.</html:li>
+    <html:li><html:strong>Performing the write</html:strong> — merging the store data into the line, leaving it in M.</html:li></html:ol>
+
+  Only <html:strong>(2)</html:strong> is architecturally constrained to be post-commit. Permission can be acquired speculatively, well before the store is known to be real.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>9</fr:day></fr:date><fr:uri>https://kellenkanarios.com/7Y8Z/</fr:uri><fr:display-uri>7Y8Z</fr:display-uri><fr:route>/7Y8Z/</fr:route><fr:title text="Ownership can be acquired speculatively">Ownership can be acquired speculatively</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1786316438961</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>When is the <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> request for a store actually issued in a real core, and why is that safe?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Usually at <html:strong>AGU execute time</html:strong>, as soon as the physical address is known — a real Upgrade/GetM on the fabric, tens of cycles before retirement. This is why store misses often look free in traces: the latency was paid during <fr:link href="/IIF9/" title="Speculative execution" uri="https://kellenkanarios.com/IIF9/" display-uri="IIF9" type="local">Speculative execution</fr:link>, not at drain.
+
+  It is safe because ownership is <html:strong>architecturally invisible</html:strong>. If the store is squashed, or the line is snooped away before the merge, nothing is lost but fabric traffic.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>9</fr:day></fr:date><fr:uri>https://kellenkanarios.com/ZSZV/</fr:uri><fr:display-uri>ZSZV</fr:display-uri><fr:route>/ZSZV/</fr:route><fr:title text="What drain costs in each L1D state">What drain costs in each L1D state</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1786316439363</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>At drain, what does the head <fr:link href="/UNB6/" title="Store buffer" uri="https://kellenkanarios.com/UNB6/" display-uri="UNB6" type="local">Store buffer</fr:link> entry do for each L1D <fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link> state — M/E, S, or miss?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:ul><html:li><html:strong>M or E</html:strong> — write directly; no fabric transaction at all, since E<fr:tex display="inline"><![CDATA[\to ]]></fr:tex>M is a silent upgrade.</html:li>
+    <html:li><html:strong>S</html:strong> — issue the Upgrade/GetM now if the speculative one didn't land, and stall until permission arrives.</html:li>
+    <html:li><html:strong>Miss</html:strong> — issue GetM to fetch the data and invalidate sharers, allocate an <fr:link href="/89LS/" title="Miss status handling register" uri="https://kellenkanarios.com/89LS/" display-uri="89LS" type="local">Miss status handling register</fr:link>, stall.</html:li></html:ul>
+
+  Drain is decoupled from commit and, under <fr:link href="/VH8Y/" title="Total store order" uri="https://kellenkanarios.com/VH8Y/" display-uri="VH8Y" type="local">Total store order</fr:link>, in order — so a stalled head blocks younger senior stores even when their lines are already in M.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree></fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
@@ -299,20 +374,16 @@
           </fr:frontmatter>
           <fr:mainmatter><html:p>The strongest practical memory model. The result of any execution is the same as if the operations of all threads were executed in some <html:em>single sequential order</html:em>, and the operations of each thread appear in that order in the same sequence as the program specifies.</html:p><html:p>Equivalent operational definition: imagine a single switch that, at each step, selects one thread to run its next operation. Any valid execution is the result of some sequence of such selections. There is no reordering across threads, no reordering within a thread, and no buffering that becomes visible to other threads.</html:p><html:p>Sequential consistency is what most programmers reason about by default — and what real hardware does not provide, because it forbids almost every optimization that makes a CPU fast. <fr:link href="/BCFG/" title="Relaxed consistency" uri="https://kellenkanarios.com/BCFG/" display-uri="BCFG" type="local">Relaxed consistency</fr:link> is what we get in exchange.</html:p>
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> SC does not provide guarantees <html:em>between</html:em> threads beyond ordering. Two threads racing on the same variable are still racing — SC just promises a consistent global timeline.</html:div>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> SC does not provide guarantees <html:em>between</html:em> threads beyond ordering. Two threads racing on the same variable are still racing — SC just promises a consistent global timeline.</html:div>
 
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Enforcing SC purely in hardware requires loads to wait for the <fr:link href="/UNB6/" title="Store buffer" uri="https://kellenkanarios.com/UNB6/" display-uri="UNB6" type="local">Store buffer</fr:link> to drain and stores to retire strictly in order. Both kill performance. <html:em>SC-preserving compilers</html:em> try to push the constraint to compile time by refusing to reorder shared accesses.</html:div>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> Enforcing SC purely in hardware requires loads to wait for the <fr:link href="/UNB6/" title="Store buffer" uri="https://kellenkanarios.com/UNB6/" display-uri="UNB6" type="local">Store buffer</fr:link> to drain and stores to retire strictly in order. Both kill performance. <html:em>SC-preserving compilers</html:em> try to push the constraint to compile time by refusing to reorder shared accesses.</html:div>
 </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>

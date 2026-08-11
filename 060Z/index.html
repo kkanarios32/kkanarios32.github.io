@@ -21,9 +21,11 @@ window.addEventListener('load', function () {
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
   In attention kernel, we perform \(QK^T\) in VMEM then copy back to HBM, then copy back to VMEM and do the softmax. Instead we want to <em>fuse</em> this into one kernel.
   </div>
+
 
   <figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmifn52vzltvmavkzqh7sj2oluirqgq2hpkxzldgkwhp2j2mbahh5ei.png"></img>
   <figcaption>Summary of XLA fusions for attention kernel.</figcaption></figure>
@@ -121,7 +123,146 @@ window.addEventListener('load', function () {
 </details></section><footer xmlns="">
     
     
-    
+    <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id7"><summary><header><h1>
+<span class="taxon">Definition. </span>TPU memory hierarchy <a class="slug" href="/IO2I/">[IO2I]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 11, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">The TPU memory hierarchy is entirely software managed with no cache. Memory movement is controlled by the compiler and <span xmlns="" class="link local"><a href="/PMIC/" title="Operator fusion is like ASIC caching [PMIC]">Operator fusion is like ASIC caching</a></span>.</p>
+            <figure xmlns="http://www.w3.org/1999/xhtml"><img width="60%" src="/bafkrmihebk5hzb7q5baotsb2or45d4r7s3qqhnirgttiegd4xj5fbgxkbq.png"></img>
+<figcaption>Datapath through a TPU onto the execution unit <span xmlns="" class="link local"><a href="/OGCRP/" title="Matrix Multiply Unit (MXU) [OGCRP]">Matrix Multiply Unit (MXU)</a></span> or <span xmlns="" class="link local"><a href="/OGCRN/" title="Vector Processing Unit [OGCRN]">Vector Processing Unit</a></span>.</figcaption></figure>
+            <p xmlns="http://www.w3.org/1999/xhtml">Notably, in <span xmlns="" class="link local"><a href="/060Z/" title="Pallas [060Z]">Pallas</a></span>, you tile the memory transfer and define the pipeline from HBM to VMEM.</p>
+          </details></section>
+        <section lang="en" class="block"><details id="id8"><summary><header><h1>
+<span class="taxon"></span>Bringing <em xmlns="http://www.w3.org/1999/xhtml">Speed-of-Light</em> <span class="link local"><a href="/dongFlexAttentionProgramming2024/" title="Flex Attention: A Programming Model for Generating Optimized Attention Kernels [dongFlexAttentionProgramming2024]">FlexAttention</a></span> to TPU <a class="slug" href="/3AIF/">[3AIF]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 10, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+<li class="meta-item">1 min read</li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This blog will function both as a worklog and a release for my <span xmlns="" class="link local"><a href="/060Z/" title="Pallas [060Z]">Pallas</a></span> implementation of <span xmlns="" class="link local"><a href="/dongFlexAttentionProgramming2024/" title="Flex Attention: A Programming Model for Generating Optimized Attention Kernels [dongFlexAttentionProgramming2024]">FlexAttention</a></span> on <span xmlns="" class="link local"><a href="/NZZ7/" title="TPU Architecture [NZZ7]">TPU Architecture</a></span>. </p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmig6ozqvm3pbwzvn6lbpirgxmsd36qwlcma2htsj4xtyxh6v3uft5e.png"></img>
+<figcaption>ChatGPT realizing my weird brain child.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml">As a pre-cursor, I highly recommend reading the original <span xmlns="" class="link local"><a href="/dongFlexAttentionProgramming2024/" title="Flex Attention: A Programming Model for Generating Optimized Attention Kernels [dongFlexAttentionProgramming2024]">FlexAttention paper</a></span>. Additionally, a big shout out to the people at google for <span xmlns="" class="link local"><a href="/splash_attention/" title="Splash attention: Sparse flash attention for TPU [splash_attention]">SplashAttention</a></span>, which we unfortunately aim to make obsolete as a subset of flex attention. For a very deep dive on splash attention, I <strong>highly</strong> recommend <span xmlns="" class="link local"><a href="/toulme2026xla/" title="When XLA isn’t enough: From Pallas to VLIW with Splash attention on TPU [toulme2026xla]">this blog</a></span>. We will cover the key implementation details to accentuate our work here.</p>
+  <section lang="en" class="block hide-metadata"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon"></span><span class="link local"><a href="/060Z/" title="Pallas [060Z]">Pallas</a></span> constraints  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 10, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+
+</details></section>
+
+  <hr xmlns="http://www.w3.org/1999/xhtml"></hr>
+<script xmlns="http://www.w3.org/1999/xhtml" src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async=""></script></details></section>
+        <section lang="en" class="block"><details id="id10"><summary><header><h1>
+<span class="taxon"></span>Weekly Review 2026-W32 <a class="slug" href="/2026-W32/">[2026-W32]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 9, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Tough week this week. Although, I am officially BACK in peak running form. I think the lingering illness has been holding me back the last few weeks.</p><section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon"></span><span class="link local"><a href="/G944/" title="The Quantified Me [G944]">The Quantified Me</a></span>: 2026-W32 <a class="slug" href="/TFJO/">[TFJO]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 9, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">I am finally itching to start actually coding again. Most of my coding time has been spent just taking notes and trying to learn as much as possible about <span xmlns="" class="link local"><a href="/5PSC/" title="Kernel DSLs [5PSC]">kernel DSLs</a></span>, <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span>, etc. However, I need to exercise some coding chops.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmibxbhy2zyrpfxjbf5kxksthhxdchy2g6mj7s2waupxg7kalgtekkm.png"></img>
+  <figcaption>Coding hours for week 2026-W32.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml">There is no non-coding computer time because arbtt is a very lightweight program with no synchronization across devices. Qualitatively, I am jumping around too much again. I do not know if arbtt can properly capture this, but I need to be more disciplined with the pomodoro method. Specifically, choosing something to work on and not diverging <strong>for anything</strong> until the timer has ended.</p></details></section><section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
+<span class="taxon"></span><span class="link local"><a href="/5501/" title="Life Maxing [5501]">Life Maxing</a></span>: 2026-W32 <a class="slug" href="/TEPF/">[TEPF]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 9, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">I have been HOOPING in running lately. My body is officially able to handle some substantial miles per week. Expect to see a lot of numbers in the 50s coming soon...</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmiaa5agovo6ezx4cutg25p4vz4bhrutqr5ogwf6tqeygkqu6o5am34.png"></img>
+  <figcaption>Health stats for week 2026-W32.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml">It is a humbling reality that my habits fell off a cliff this week. The only thing to do is to try my best to get back on the wagon. There is a silver lining here. Through tracking, I can see that there is too much friction in these habits right now. For example, my stretch routine has gotten to 28min! Obviously, we will be cutting this down until we become consistent again. For Anki, I am already back on the wagon, and I do not think it will be a problem.</p></details></section>
+  <section lang="en" class="block hide-metadata"><details id="id13" open="open"><summary><header><h1>
+<span class="taxon"></span>Goals for Next Week  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 9, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+<p xmlns="http://www.w3.org/1999/xhtml">My main goal over the next few months is becoming a <span xmlns="" class="link local"><a href="/NZZ7/" title="TPU Architecture [NZZ7]">TPU</a></span> sensei. To this end, I am working on a <span xmlns="" class="link local"><a href="/PGP6/" title="Cosplaying TPU Kernel Engineer [PGP6]">blog</a></span> traversing deep into the weeds of the TPU ecosystem. I am also working through the <span xmlns="" class="link local"><a href="/scaling-book/" title="How to scale your model [scaling-book]">How to scale your model</a></span> with solutions <span xmlns="" class="link local"><a href="/KZR4/" title="Scaling Book: Exercises [KZR4]">here</a></span> and notebook <span xmlns="" class="link local"><a href="/TAAK/" title="Notebook: How to scale your model [TAAK]">here</a></span>. Working on some <span xmlns="" class="link local"><a href="/060Z/" title="Pallas [060Z]">Pallas</a></span> kernels to hopefully be released some time in the next few months.</p>
+<p xmlns="http://www.w3.org/1999/xhtml"><em>A bit of reflection.</em> I officially think it is time I focus and specialize. Throughout the past few years, I have had far too diverse interests and trying to learn <span xmlns="" class="link external"><em xmlns="http://www.w3.org/1999/xhtml"><a xmlns="" href="https://en.wikipedia.org/wiki/Everything_Everywhere_All_at_Once" title="">everything everywhere all at once</a></em></span> (never actually seen this movie 
+  :)
+). While I have had a ton of fun learning computer architecture (<span xmlns="" class="link local"><a href="/P3GB/" title="Notebook: Inside the Machine [P3GB]">here</a></span> and <span xmlns="" class="link local"><a href="/N7GP/" title="Notebook: Computer Architecture [N7GP]">here</a></span>), operating systems (<span xmlns="" class="link local"><a href="/0084/" title="Notebook: Three Easy Pieces [0084]">here</a></span>), reinforcement learning, etc. it is simply not optimal to spread myself this thin and continues to lead to burnout. I am big on the idea that it is important to conduct some of <span xmlns="" class="link local"><a href="/calnewport/" title="Cal Newport [calnewport]">Cal Newport's</a></span> <em>deliberate practice</em>. Previously, I was trying to concurrently switch between different things each day, but I am now convinced I need to <strong>minimize cognitive overhead</strong> around decision making / maintenance / conducting said practice. From now on, I will pick one thing (<span xmlns="" class="link local"><a href="/scaling-book/" title="How to scale your model [scaling-book]">scaling book</a></span> at the time of this), do exercises, make anki cards, then switch after I feel VERY comfortable with the material and continue to maintain this understanding through anki.</p>
+<p xmlns="http://www.w3.org/1999/xhtml">To do so, I will now have two deep work blocks each day of roughly two hours. The first will be this deliberate practice. Over time, we will see if this <em>periodization</em> approach will be more fruitful than trying to concurrently learn too much.</p>
+</details></section>
+</details></section>
+        <section lang="en" class="block"><details id="id14"><summary><header><h1>
+<span class="taxon"></span>Cosplaying TPU Kernel Engineer <a class="slug" href="/PGP6/">[PGP6]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+<li class="meta-item">4 min read</li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This is a blog where I dive deep into the internals of <span xmlns="" class="link local"><a href="/M74N/" title="XLA Compilation [M74N]">XLA Compilation</a></span>, <span xmlns="" class="link local"><a href="/060Z/" title="Pallas [060Z]">Pallas</a></span>, and the whole <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> lowering pipeline. To follow along, you only need a moderate understanding of computer architecture, a cape, and our trusty companion DMA the dog (idk how ChatGPT came up with this)!</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="70%" src="/bafkrmiddirt2bzlxompvt4qpqmjdyhsoojvaytvas6qrfgpp63im2tzeua.png"></img>
+<figcaption>Generated by ChatGPT.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml">The end goal is to have a clear understanding of</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>How to profile custom pallas kernels. (Surprisingly difficult in the open source ecosystem).</li>
+  <li>What optimization considerations need to be made to achieve <em>speed-of-light</em> performance on TPUs.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">To do so, I want to start with simple matrix multiplication.</p><p xmlns="http://www.w3.org/1999/xhtml">Below are the flags taken from <span xmlns="" class="link external"><a href="https://patricktoulme.substack.com/p/when-xla-isnt-enough-from-pallas" title="">this incredible blog</a></span>. You should definitely check it out after reading this (it is a bit more involved and goes through splash attention, which is a real production kernel).</p><pre xmlns="http://www.w3.org/1999/xhtml"><code class="language-python">import os
+HLO_PATH, MOSAIC_PATH, LLO_PATH = "/tmp/hlo", "/tmp/mosaic", "/tmp/llo"
+
+os.environ["XLA_FLAGS"] = (
+    f"--xla_dump_hlo_as_text "
+    f"--xla_dump_to={HLO_PATH} "
+    f"--xla_dump_hlo_pass_re=.* "
+)
+os.environ["LIBTPU_INIT_ARGS"] = (
+    f"--xla_jf_dump_to={LLO_PATH} "
+    f"--xla_jf_dump_llo_text=true "
+    f"--xla_jf_dump_hlo_text=true "
+    f"--xla_jf_dump_llo_static_gaps=true "
+    f"--xla_jf_emit_annotations=true "
+    f"--xla_jf_debug_level=2 "
+    f"--xla_mosaic_dump_to={MOSAIC_PATH} "
+    f"--xla_mosaic_enable_dump_debug_info=true "
+    f"--xla_mosaic_enable_llo_source_annotations=true"
+)
+</code></pre><p xmlns="http://www.w3.org/1999/xhtml">To understand these flags, one first needs to understand the Pallas lowering pipeline.</p><section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
+<span class="taxon"></span>XLA Compilation <a class="slug" href="/M74N/">[M74N]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Overview.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Dispatch / Cache: caches compilation based on input argument signatures i.e. shapes, dtypes, sharding. If shapes change will need to <strong>recompile</strong>.</li>
+  <li>XLA transformation: Python -&gt; JaxPR -&gt; StableHLO, performing fusion and other simplifications to reduce memory overhead (?).</li>
+  <li>TPU specific: Further reduced to LLO IR, then <em>very large instruction word</em> (VLIW) scheduling to map dot products to MXU.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
+As soon as python code is traced into jaxpr it is thrown away. Only HLO is input to XLA compiler.
+</div>
+<section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
+<span class="taxon"></span>Lifecycle of a JAX program <a class="slug" href="/NR79/">[NR79]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">We have the following compilation pipeline</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Tracing: Python / JAX -&gt; <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span></li>
+  <ul><li><code>jax.make_jaxpr(fun)(*args)</code></li>
+    <li>Abstract execution. JAX executes python code using abstract tracer objects instead of real arrays.</li>
+    <li>Every operation and its intermediate result is recorded into <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span>.</li>
+    <li>Sequence used to construct a grap, which the XLA compiler will later optimize.</li>
+    <li>Python code is executed once during tracing but excluded from final graph.</li>
+    <li>Each JAX primitive registers functions for</li>
+    <ul><li>Lowering to StableHLO</li>  
+        <li>How it is transformed under <code>grad</code> and <code>vmap</code>.</li></ul></ul>
+  <li>Lowering: Jaxpr -&gt; HLO</li>
+  <ul><li><code>fn_lowered = jax.jit(fun).lower(*args)</code></li>
+    <li><code>stable_hlo = fn_lowered.as_text()</code></li>
+    <li><code>hlo = fn_lowered.compiler_ir('hlo')</code></li>
+    <li>Multiple ML frameworks lower to StableHLO.</li>
+    <ul><li>Hardware agnostic.</li>
+      <li>Backwards compatible.</li></ul></ul>
+  <li>Compile: HLO -&gt; Optimized HLO -&gt; LLO IR -&gt; VLIW -&gt; Executables</li>
+  <ul><li><code>compiled = fn_lowered.compile()</code></li>
+    <li><code>compiled.runtime_executable()</code> returns a <code>LoadedExecutable</code>.</li>
+    <li>Useful(?) <code>compiled.cost_analysis()</code>.</li>
+    <li>HLO:</li>
+    <ul><li>Input for XLA compiler.</li>
+      <li>Directed acyclic graph of copmutational operations.</li>
+      <li>All array dimensions are known at compile time.</li>
+      <li>Limited opcodes i.e. Add, Multiply, Transpose, Dot, etc.</li></ul></ul></ol></details></section><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">XLA Shapes and Memory Layout.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Every data type defined by data type and fixed dimensions, determined at compile time.</li>
+  <li>Minor-to-major order i.e. fastest changing to slowesting changin.</li>
+  <li>Tiling: arrays are split into smaller blocks to fit into VREG. Want to arrange data to efficiently fit VREG.</li></ul><figure xmlns="http://www.w3.org/1999/xhtml"><img width="60%" src="/bafkrmihanbz63fc3hvqd3drtqlm5shhn2624xbut2oobs3zibpwjw2jiju.png"></img>
+<figcaption>How memory is laid out based on XLA.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Execution.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Move tensors from CPU to HBM. Sharding is taken care of by PJIT if on TPU pod.</li>
+  <li>Async: Immediately returns a <code>Future</code> JAX array while the hardware executes VLIW microcode asynchronously.</li>
+  <li>Buffer management: Returns pointer to TPU memory. All handled lazily. Not copied back to CPU until <code>jax.block_until_ready()</code>.</li></ul></details></section>
+  <hr xmlns="http://www.w3.org/1999/xhtml"></hr>
+<script xmlns="http://www.w3.org/1999/xhtml" src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async=""></script></details></section>
+      </details></section>
     
     
   </footer></article><nav id="toc"><div class="block"><h1>Table of Contents</h1><ul xmlns="" class="block">

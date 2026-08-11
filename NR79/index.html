@@ -1,0 +1,109 @@
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script src="/highlightjs-line-numbers.min.js"></script><script>
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+    if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
+  });
+});
+          </script><title>Lifecycle of a JAX program</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>Lifecycle of a JAX program <a class="slug" href="/NR79/">[NR79]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    <p xmlns="http://www.w3.org/1999/xhtml">We have the following compilation pipeline</p>
+    <ol xmlns="http://www.w3.org/1999/xhtml"><li>Tracing: Python / JAX -&gt; <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span></li>
+  <ul><li><code>jax.make_jaxpr(fun)(*args)</code></li>
+    <li>Abstract execution. JAX executes python code using abstract tracer objects instead of real arrays.</li>
+    <li>Every operation and its intermediate result is recorded into <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span>.</li>
+    <li>Sequence used to construct a grap, which the XLA compiler will later optimize.</li>
+    <li>Python code is executed once during tracing but excluded from final graph.</li>
+    <li>Each JAX primitive registers functions for</li>
+    <ul><li>Lowering to StableHLO</li>  
+        <li>How it is transformed under <code>grad</code> and <code>vmap</code>.</li></ul></ul>
+  <li>Lowering: Jaxpr -&gt; HLO</li>
+  <ul><li><code>fn_lowered = jax.jit(fun).lower(*args)</code></li>
+    <li><code>stable_hlo = fn_lowered.as_text()</code></li>
+    <li><code>hlo = fn_lowered.compiler_ir('hlo')</code></li>
+    <li>Multiple ML frameworks lower to StableHLO.</li>
+    <ul><li>Hardware agnostic.</li>
+      <li>Backwards compatible.</li></ul></ul>
+  <li>Compile: HLO -&gt; Optimized HLO -&gt; LLO IR -&gt; VLIW -&gt; Executables</li>
+  <ul><li><code>compiled = fn_lowered.compile()</code></li>
+    <li><code>compiled.runtime_executable()</code> returns a <code>LoadedExecutable</code>.</li>
+    <li>Useful(?) <code>compiled.cost_analysis()</code>.</li>
+    <li>HLO:</li>
+    <ul><li>Input for XLA compiler.</li>
+      <li>Directed acyclic graph of copmutational operations.</li>
+      <li>All array dimensions are known at compile time.</li>
+      <li>Limited opcodes i.e. Add, Multiply, Transpose, Dot, etc.</li></ul></ul></ol>
+  </details></section><footer xmlns="">
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id3"><summary><header><h1>
+<span class="taxon"></span>XLA Compilation <a class="slug" href="/M74N/">[M74N]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Overview.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Dispatch / Cache: caches compilation based on input argument signatures i.e. shapes, dtypes, sharding. If shapes change will need to <strong>recompile</strong>.</li>
+  <li>XLA transformation: Python -&gt; JaxPR -&gt; StableHLO, performing fusion and other simplifications to reduce memory overhead (?).</li>
+  <li>TPU specific: Further reduced to LLO IR, then <em>very large instruction word</em> (VLIW) scheduling to map dot products to MXU.</li></ul>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
+As soon as python code is traced into jaxpr it is thrown away. Only HLO is input to XLA compiler.
+</div>
+<section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>Lifecycle of a JAX program <a class="slug" href="/NR79/">[NR79]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">We have the following compilation pipeline</p><ol xmlns="http://www.w3.org/1999/xhtml"><li>Tracing: Python / JAX -&gt; <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span></li>
+  <ul><li><code>jax.make_jaxpr(fun)(*args)</code></li>
+    <li>Abstract execution. JAX executes python code using abstract tracer objects instead of real arrays.</li>
+    <li>Every operation and its intermediate result is recorded into <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span>.</li>
+    <li>Sequence used to construct a grap, which the XLA compiler will later optimize.</li>
+    <li>Python code is executed once during tracing but excluded from final graph.</li>
+    <li>Each JAX primitive registers functions for</li>
+    <ul><li>Lowering to StableHLO</li>  
+        <li>How it is transformed under <code>grad</code> and <code>vmap</code>.</li></ul></ul>
+  <li>Lowering: Jaxpr -&gt; HLO</li>
+  <ul><li><code>fn_lowered = jax.jit(fun).lower(*args)</code></li>
+    <li><code>stable_hlo = fn_lowered.as_text()</code></li>
+    <li><code>hlo = fn_lowered.compiler_ir('hlo')</code></li>
+    <li>Multiple ML frameworks lower to StableHLO.</li>
+    <ul><li>Hardware agnostic.</li>
+      <li>Backwards compatible.</li></ul></ul>
+  <li>Compile: HLO -&gt; Optimized HLO -&gt; LLO IR -&gt; VLIW -&gt; Executables</li>
+  <ul><li><code>compiled = fn_lowered.compile()</code></li>
+    <li><code>compiled.runtime_executable()</code> returns a <code>LoadedExecutable</code>.</li>
+    <li>Useful(?) <code>compiled.cost_analysis()</code>.</li>
+    <li>HLO:</li>
+    <ul><li>Input for XLA compiler.</li>
+      <li>Directed acyclic graph of copmutational operations.</li>
+      <li>All array dimensions are known at compile time.</li>
+      <li>Limited opcodes i.e. Add, Multiply, Transpose, Dot, etc.</li></ul></ul></ol></details></section><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">XLA Shapes and Memory Layout.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Every data type defined by data type and fixed dimensions, determined at compile time.</li>
+  <li>Minor-to-major order i.e. fastest changing to slowesting changin.</li>
+  <li>Tiling: arrays are split into smaller blocks to fit into VREG. Want to arrange data to efficiently fit VREG.</li></ul><figure xmlns="http://www.w3.org/1999/xhtml"><img width="60%" src="/bafkrmihanbz63fc3hvqd3drtqlm5shhn2624xbut2oobs3zibpwjw2jiju.png"></img>
+<figcaption>How memory is laid out based on XLA.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Execution.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Move tensors from CPU to HBM. Sharding is taken care of by PJIT if on TPU pod.</li>
+  <li>Async: Immediately returns a <code>Future</code> JAX array while the hardware executes VLIW microcode asynchronously.</li>
+  <li>Buffer management: Returns pointer to TPU memory. All handled lazily. Not copied back to CPU until <code>jax.block_until_ready()</code>.</li></ul></details></section>
+      </details></section>
+    
+    <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id6"><summary><header><h1>
+<span class="taxon"></span>jaxpr <a class="slug" href="/G981/">[G981]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="stub-notice" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   color: rgb(38, 97, 69);   font-style: italic;   ">🌱 Stub — this concept is referenced but not yet written.</div>
+</details></section>
+      </details></section>
+    
+  </footer></article></div></body></html>

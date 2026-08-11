@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script src="/highlightjs-line-numbers.min.js"></script><script>
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+    if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
+  });
+});
+          </script><title>Ownership can be acquired speculatively</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Card"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Ownership can be acquired speculatively <a class="slug" href="/7Y8Z/">[7Y8Z]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 9, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">When is the <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">Cache coherence</a></span> request for a store actually issued in a real core, and why is that safe?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Usually at <strong>AGU execute time</strong>, as soon as the physical address is known — a real Upgrade/GetM on the fabric, tens of cycles before retirement. This is why store misses often look free in traces: the latency was paid during <span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span>, not at drain.
+
+  It is safe because ownership is <strong>architecturally invisible</strong>. If the store is squashed, or the line is snooped away before the merge, nothing is lost but fabric traffic.
+</details>
+</div>
+
+
+
+</details></section><footer xmlns="">
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id3"><summary><header><h1>
+<span class="taxon">Definition. </span>Store buffer <a class="slug" href="/UNB6/">[UNB6]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 13, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A FIFO of stores that have left the pipeline but are not yet globally visible, decoupling instruction commit from cache write. A store's slot is allocated early — at dispatch/rename, since it must exist before execute for the address and data to be written into — so commit is not a handoff into the buffer but a <em>state transition</em> within it: when the store reaches the head of the <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span>, its entry stops being speculative and becomes a <em>senior store</em>, eligible to drain. Nothing reaches L1 at that instant. The actual cache write, called <em>drain</em>, happens asynchronously and may be delayed by cache misses, coherence traffic, or memory-ordering rules.</p><p xmlns="http://www.w3.org/1999/xhtml">Without this split, the ROB would have to stall on a cache miss for every store. With it, once a store is known to be non-speculative, the front-end moves on while the store buffer absorbs whatever latency the memory hierarchy imposes. <em>Commit</em> and <em>drain</em> are therefore two distinct moments in the lifetime of a store:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><strong>Commit</strong> — the store is architecturally real. Younger speculation cannot squash it, but other cores do not see it yet.</li>
+  <li><strong>Drain</strong> — the value is written to L1 and becomes visible to the coherence protocol, and therefore to other cores.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Between these two moments the value lives only in the store buffer. Younger same-core loads can still observe it through <span xmlns="" class="link local"><a href="/GXCN/" title="Store-to-load forwarding [GXCN]">Store-to-load forwarding</a></span>, but other cores cannot — which is the structural reason <span xmlns="" class="link local"><a href="/VH8Y/" title="Total store order [VH8Y]">Total store order</a></span> permits store-load reordering across cores. A <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> like <code>mfence</code> forces the buffer to drain so that subsequent operations see a consistent global view.</p><p xmlns="http://www.w3.org/1999/xhtml">Drain is not a single event either, and the two halves are easy to conflate. Acquiring <em>permission</em> — an Upgrade if the line is already in S, a GetM if it is not — is distinct from <em>performing the write</em>, merging the data into the line while holding M. Only the second is architecturally required to be post-commit. Ownership is invisible to software, so a core issues the <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">Cache coherence</a></span> request speculatively at AGU execute time, as soon as the physical address is known and often tens of cycles before retirement; if the store is squashed or the line is snooped away before the merge, nothing is lost but fabric traffic. This is why store misses so often look free in a trace — the latency was paid during <span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span>, not at the head of the buffer. The merge under M is the store's global visibility point.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Retirement bandwidth (ROB commits per cycle) and store bandwidth (drain rate to L1) are separate throughput limits. A workload that retires stores faster than the cache can absorb them eventually backs up the ROB anyway, but the store buffer absorbs short bursts at no cost.</div>
+</details></section>
+      </details></section>
+    
+    <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id5"><summary><header><h1>
+<span class="taxon"></span>Cache coherence <a class="slug" href="/GA7N/">[GA7N]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+            <p xmlns="http://www.w3.org/1999/xhtml">In a <span xmlns="" class="link local"><a href="/JRP0/" title="Multicore [JRP0]">Multicore</a></span> system where every core has its own <span xmlns="" class="link local"><a href="/KBYI/" title="Cache hierarchy [KBYI]">Cache hierarchy</a></span>, the same memory address can live in multiple caches simultaneously. A <em>cache coherence</em> protocol is the mechanism that keeps those copies consistent — propagating writes, invalidating stale copies, and preserving two invariants:</p>
+            <ol xmlns="http://www.w3.org/1999/xhtml"><li><strong>Single-writer invariant</strong>: at any moment, at most one core has permission to write a given line. No other core can read or write it concurrently.</li>
+  <li><strong>Data-value invariant</strong>: all cores see the same order of updates to a given line.</li></ol>
+            <p xmlns="http://www.w3.org/1999/xhtml">Two organizational families:</p>
+            <ul xmlns="http://www.w3.org/1999/xhtml"><li><span xmlns="" class="link local"><a href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus [8C2H]">snoop-based coherence</a></span> — every cache watches a shared bus and reacts to other cores' traffic. Scales to ~8 cores.</li>
+  <li><span xmlns="" class="link local"><a href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages [KIT8]">directory-based coherence</a></span> — a structure tracks who has a copy of each line; coherence messages are point-to-point. Scales to hundreds of cores at the cost of an extra hop.</li></ul>
+            <p xmlns="http://www.w3.org/1999/xhtml">The concrete state machines are protocols like <span xmlns="" class="link local"><a href="/EYXU/" title="MSI protocol [EYXU]">MSI protocol</a></span>, <span xmlns="" class="link local"><a href="/30XT/" title="MESI protocol [30XT]">MESI protocol</a></span>, <span xmlns="" class="link local"><a href="/AI2B/" title="MOESI protocol [AI2B]">MOESI protocol</a></span>, and DEC Firefly, each adding states to handle more cases or to optimize specific sharing patterns. A worked implementation of directory-based MESI in Murphi lives in <span xmlns="" class="link local"><a href="/HHZO/" title="Implementing Directory-based MESI in Murphi [HHZO]">Implementing Directory-based MESI in Murphi</a></span>.</p>
+            <p xmlns="http://www.w3.org/1999/xhtml">Worked instance: <span xmlns="" class="link local"><a href="/HHZO/" title="Implementing Directory-based MESI in Murphi [HHZO]">Implementing Directory-based MESI in Murphi</a></span> implements directory-based MESI in Murphi.</p>
+          </details></section>
+        <section lang="en" class="block"><details id="id6"><summary><header><h1>
+<span class="taxon"></span>Speculative execution <a class="slug" href="/IIF9/">[IIF9]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Run instructions before knowing whether they should actually be run, on the assumption that you'll usually be right. Used after <span xmlns="" class="link local"><a href="/1LCS/" title="Branch prediction [1LCS]">Branch prediction</a></span> to keep the pipeline busy past a <span xmlns="" class="link local"><a href="/IJ7Q/" title="Branch instruction [IJ7Q]">Branch instruction</a></span>: instructions on the predicted path enter the pipeline, execute, and stash their results in non-architectural state. Only when the branch resolves are speculated results "committed" to architectural state — or, if the prediction was wrong, discarded.</p><p xmlns="http://www.w3.org/1999/xhtml">Speculative state lives in the <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span> (and the <span xmlns="" class="link local"><a href="/5CT9/" title="Register renaming breaks false dependencies [5CT9]">register renaming</a></span> rename registers). Entries are tagged as speculative; on misprediction the speculative entries are flushed.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Modern speculative execution drives a lot of CPU complexity — and a lot of CPU security work. Spectre-class side channels exploit the fact that speculative execution can leave traces in caches even after the speculative results are discarded.</div>
+</details></section>
+      </details></section>
+    
+  </footer></article></div></body></html>

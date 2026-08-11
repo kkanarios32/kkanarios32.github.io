@@ -54,16 +54,40 @@ window.addEventListener('load', function () {
 </ul>
 </div></header></summary><pre>@misc{lipmanFlowMatchingGenerative2023,
  title = {Flow {{Matching}} for {{Generative Modeling}}},
- author = {Lipman, Yaron and Chen, Ricky T. Q. and {Ben-Hamu}, Heli and Nickel, Maximilian and Le, Matt},
+ author = {Lipman, Yaron and Chen, Ricky T. Q. and {Ben-Hamu}, Heli and Nickel,
+Maximilian and Le, Matt},
  year = {2023},
  doi = {10.48550/arXiv.2210.02747},
  urldate = {2025-06-20},
  number = {arXiv:2210.02747},
  publisher = {arXiv},
- file = {/home/kellen/Downloads/papers/Flow Matching for Generative Modeling - Lipman et al..pdf;/home/kellen/Downloads/pdfs/storage/R693NNL4/2210.html},
- keywords = {Computer Science - Artificial Intelligence,Computer Science - Machine Learning,Statistics - Machine Learning},
+ file = {/home/kellen/Downloads/papers/Flow Matching for Generative Modeling -
+Lipman et
+al..pdf;/home/kellen/Downloads/pdfs/storage/R693NNL4/2210.html},
+ keywords = {Computer Science - Artificial Intelligence,Computer Science -
+Machine Learning,Statistics - Machine Learning},
  archiveprefix = {arXiv},
- abstract = {We introduce a new paradigm for generative modeling built on Continuous Normalizing Flows (CNFs), allowing us to train CNFs at unprecedented scale. Specifically, we present the notion of Flow Matching (FM), a simulation-free approach for training CNFs based on regressing vector fields of fixed conditional probability paths. Flow Matching is compatible with a general family of Gaussian probability paths for transforming between noise and data samples -- which subsumes existing diffusion paths as specific instances. Interestingly, we find that employing FM with diffusion paths results in a more robust and stable alternative for training diffusion models. Furthermore, Flow Matching opens the door to training CNFs with other, non-diffusion probability paths. An instance of particular interest is using Optimal Transport (OT) displacement interpolation to define the conditional probability paths. These paths are more efficient than diffusion paths, provide faster training and sampling, and result in better generalization. Training CNFs using Flow Matching on ImageNet leads to consistently better performance than alternative diffusion-based methods in terms of both likelihood and sample quality, and allows fast and reliable sample generation using off-the-shelf numerical ODE solvers.},
+ abstract = {We introduce a new paradigm for generative modeling built on
+Continuous Normalizing Flows (CNFs), allowing us to train CNFs at
+unprecedented scale. Specifically, we present the notion of Flow
+Matching (FM), a simulation-free approach for training CNFs based
+on regressing vector fields of fixed conditional probability paths.
+Flow Matching is compatible with a general family of Gaussian
+probability paths for transforming between noise and data samples
+-- which subsumes existing diffusion paths as specific instances.
+Interestingly, we find that employing FM with diffusion paths
+results in a more robust and stable alternative for training
+diffusion models. Furthermore, Flow Matching opens the door to
+training CNFs with other, non-diffusion probability paths. An
+instance of particular interest is using Optimal Transport (OT)
+displacement interpolation to define the conditional probability
+paths. These paths are more efficient than diffusion paths, provide
+faster training and sampling, and result in better generalization.
+Training CNFs using Flow Matching on ImageNet leads to consistently
+better performance than alternative diffusion-based methods in
+terms of both likelihood and sample quality, and allows fast and
+reliable sample generation using off-the-shelf numerical ODE
+solvers.},
  primaryclass = {cs},
  eprint = {2210.02747},
  month = {February}
@@ -77,17 +101,21 @@ window.addEventListener('load', function () {
 <span class="taxon"></span>Flow Matching: What, Why, and How? <a class="slug" href="/008A/">[008A]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 1, 2025</li>
-<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
-</address></li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This is a blog cataloging my understanding of <span xmlns="" class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">Flow Matching for Generative Modeling</a></span> prior to my group presentation on <span xmlns="" class="link local"><a href="/farebrotherTemporalDifferenceFlows2025/" title="Temporal Difference Flows [farebrotherTemporalDifferenceFlows2025]">Temporal Difference Flows</a></span>. The accompany slides are available <span xmlns="" class="link local"><a href="/FMTD/" title="Flow Matching and TD Flows [FMTD]">here</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Disclaimer.</strong> I came into this with literally no background. I have never even taken an ODE course. This may prove advantageous for the more general audience.</p>
   <section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
 <span class="taxon"></span>Motivation  </h1>
-<div class="metadata"><ul><li class="meta-item">July 1, 2025</li></ul></div></header></summary>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
 To understand flow matching, it is a useful endeavor to understand the problems in prior work it aims to solve.
 <section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
 <span class="taxon"></span>Normalizing Flows <a class="slug" href="/B9J9/">[B9J9]</a> </h1>
 <div class="metadata"><ul><li class="meta-item">July 15, 2025</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Brief notes on <span xmlns="" class="link local"><a href="/rezendeVariationalInferenceNormalizing/" title="Variational Inference with Normalizing Flows [rezendeVariationalInferenceNormalizing]">Variational Inference with Normalizing Flows</a></span> to motivate <span xmlns="" class="link local"><a href="/008A/" title="Flow Matching: What, Why, and How? [008A]">flow matching</a></span>.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</span> We are concerned with the problem of <em>density estimation</em>. Given a dataset \(\mathcal {X}\), consisting of samples \(\mathbf {x}_i \sim  p(\mathbf {x})\), we want to learn \(p(\mathbf {x})\).</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Goal.</span> We are concerned with the problem of <em>density estimation</em>. Given a dataset \(\mathcal {X}\), consisting of samples \(\mathbf {x}_i \sim  p(\mathbf {x})\), we want to learn \(p(\mathbf {x})\).</div>
+
 <p xmlns="http://www.w3.org/1999/xhtml">One popular way to do this is via <em>variational inference</em>. As a brief recap, in variational inference, we assume that there is actually a joint distribution \(p(\mathbf {x}, \mathbf {z})\), where \(\mathbf {z}\) is a <span xmlns="" class="link local"><a href="/0083/" title="Latent Variable [0083]">latent variable</a></span>. We then find \(p(\mathbf {x})\) by maximizing the log-likelihood \(\log  \int  p(\mathbf {x} \mid  \mathbf {z}) \mathrm {d}\mathbf {z}\)</p><p xmlns="http://www.w3.org/1999/xhtml">
  For an example of this, see my post on <span xmlns="" class="link local"><a href="/0088/" title="Expectation Maximization [0088]">expectation maximization</a></span>. In that post, we utilize the <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> to learn a latent variable model \(q_{\phi }(\mathbf {z} | \mathbf {x})\). As discussed in my post on <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span>, in order to learn \(p(\mathbf {x})\), we must have that \(p(\mathbf {z} | \mathbf {x})\) is in the family \(q_{\phi }\). However, \(q_
  {\phi }\) is usually a Gaussian parametrized by \(\phi \), so that we can easily learn \(\phi \). In this case, it is very unlikely that \(p(\mathbf {z} \mid  x)\) lies in the family of \(q_{\phi }\) and therefore we have no hope of learning the true \(p(\mathbf {x})\).
@@ -124,7 +152,7 @@ Since we are considering probability measures over \(\mathbb {R}^n\), it is not 
   \frac {\mathrm {d}}{\mathrm {d}t} \phi _t(x) &amp;= v_t(\phi _t(x)) \\
   \phi _{0}(x) &amp;= x
 .\end {align*}\]</p></details></section>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
    Modeling a <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vector field [008C]">vector field</a></span> via a neural network i.e. \(v_t(x; \theta )\) implicitly defines a deep parametric model of the flow \(\phi _t(x)\) via solving the ODE or an approximation, such as
    \[\phi _{t + \Delta  t}(x) \approx  \phi _t(x) + \Delta  t \cdot  v_t(\phi _t(x); \theta )\]
    Obviously, accuracy will be dependent on the step size \(\Delta  t\).
@@ -176,11 +204,13 @@ A <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vecto
  then the <span xmlns="" class="link local"><a href="/373T/" title="Marginal Vector Field [373T]">marginal vector field</a></span> \(v_t\) generates \(p_t\), where
  \[p_t(x) = \int  p_t(x \mid  x_1) q(x_{1})\]</p>
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(109, 103, 101);   "><span style="font-weight: 500; color: rgb(109, 103, 101);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(109, 103, 101);">Proof.</span></summary>
   This follows from just plugging into <span xmlns="" class="link local"><a href="/EFN0/" title="Continuity Equation [EFN0]">continuity equation</a></span>.
 </details>
 </div>
+
 
 </details></section><section lang="en" class="block hide-metadata" data-taxon="Theorem"><details id="id22" open="open"><summary><header><h1>
 <span class="taxon">Theorem. </span><span class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">FM</a></span> Gradient Equivalence <a class="slug" href="/DZ1D/">[DZ1D]</a> </h1>
@@ -189,11 +219,13 @@ A <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vecto
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(109, 103, 101);   "><span style="font-weight: 500; color: rgb(109, 103, 101);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(109, 103, 101);">Proof.</span></summary>
 
 </details>
 </div>
+
 
 </details></section><p xmlns="http://www.w3.org/1999/xhtml">which is supposedly a "good" approximation of the data distribution \(q\). We can then show that a <em>conditional flow matching loss</em> has the same gradient as the full <em>flow matching loss</em> i.e. our vector field should converge to the <em>marginal vector field</em>, which is a good approximation for \(q\).
  </p></details></section><p xmlns="http://www.w3.org/1999/xhtml">To generate samples, we integrate the <strong>vector field</strong></p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Important.</strong> We do not <em>have</em> the flow. We only have the flow for a <strong>given</strong> \(x_{1}\). This can then provide a target for the vector field with equivalent gradient.</p><section lang="en" class="block hide-metadata"><details id="id23" open="open"><summary><header><h1>

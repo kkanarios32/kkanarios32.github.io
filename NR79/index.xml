@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors>
+      <fr:author>
+        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+      </fr:author>
+    </fr:authors>
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>8</fr:month>
+      <fr:day>7</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/NR79/</fr:uri>
+    <fr:display-uri>NR79</fr:display-uri>
+    <fr:route>/NR79/</fr:route>
+    <fr:title text="Lifecycle of a JAX program">Lifecycle of a JAX program</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter>
+    <html:p>We have the following compilation pipeline</html:p>
+    <html:ol><html:li>Tracing: Python / JAX -&gt; <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link></html:li>
+  <html:ul><html:li><html:code>jax.make_jaxpr(fun)(*args)</html:code></html:li>
+    <html:li>Abstract execution. JAX executes python code using abstract tracer objects instead of real arrays.</html:li>
+    <html:li>Every operation and its intermediate result is recorded into <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link>.</html:li>
+    <html:li>Sequence used to construct a grap, which the XLA compiler will later optimize.</html:li>
+    <html:li>Python code is executed once during tracing but excluded from final graph.</html:li>
+    <html:li>Each JAX primitive registers functions for</html:li>
+    <html:ul><html:li>Lowering to StableHLO</html:li>  
+        <html:li>How it is transformed under <html:code>grad</html:code> and <html:code>vmap</html:code>.</html:li></html:ul></html:ul>
+  <html:li>Lowering: Jaxpr -&gt; HLO</html:li>
+  <html:ul><html:li><html:code>fn_lowered = jax.jit(fun).lower(*args)</html:code></html:li>
+    <html:li><html:code>stable_hlo = fn_lowered.as_text()</html:code></html:li>
+    <html:li><html:code>hlo = fn_lowered.compiler_ir('hlo')</html:code></html:li>
+    <html:li>Multiple ML frameworks lower to StableHLO.</html:li>
+    <html:ul><html:li>Hardware agnostic.</html:li>
+      <html:li>Backwards compatible.</html:li></html:ul></html:ul>
+  <html:li>Compile: HLO -&gt; Optimized HLO -&gt; LLO IR -&gt; VLIW -&gt; Executables</html:li>
+  <html:ul><html:li><html:code>compiled = fn_lowered.compile()</html:code></html:li>
+    <html:li><html:code>compiled.runtime_executable()</html:code> returns a <html:code>LoadedExecutable</html:code>.</html:li>
+    <html:li>Useful(?) <html:code>compiled.cost_analysis()</html:code>.</html:li>
+    <html:li>HLO:</html:li>
+    <html:ul><html:li>Input for XLA compiler.</html:li>
+      <html:li>Directed acyclic graph of copmutational operations.</html:li>
+      <html:li>All array dimensions are known at compile time.</html:li>
+      <html:li>Limited opcodes i.e. Add, Multiply, Transpose, Dot, etc.</html:li></html:ul></html:ul></html:ol>
+  </fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/M74N/</fr:uri>
+            <fr:display-uri>M74N</fr:display-uri>
+            <fr:route>/M74N/</fr:route>
+            <fr:title text="XLA Compilation">XLA Compilation</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Overview.</html:strong></html:p><html:ul><html:li>Dispatch / Cache: caches compilation based on input argument signatures i.e. shapes, dtypes, sharding. If shapes change will need to <html:strong>recompile</html:strong>.</html:li>
+  <html:li>XLA transformation: Python -&gt; JaxPR -&gt; StableHLO, performing fusion and other simplifications to reduce memory overhead (?).</html:li>
+  <html:li>TPU specific: Further reduced to LLO IR, then <html:em>very large instruction word</html:em> (VLIW) scheduling to map dot products to MXU.</html:li></html:ul>
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+As soon as python code is traced into jaxpr it is thrown away. Only HLO is input to XLA compiler.
+</html:div>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>7</fr:day></fr:date><fr:uri>https://kellenkanarios.com/NR79/</fr:uri><fr:display-uri>NR79</fr:display-uri><fr:route>/NR79/</fr:route><fr:title text="Lifecycle of a JAX program">Lifecycle of a JAX program</fr:title></fr:frontmatter><fr:mainmatter><html:p>We have the following compilation pipeline</html:p><html:ol><html:li>Tracing: Python / JAX -&gt; <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link></html:li>
+  <html:ul><html:li><html:code>jax.make_jaxpr(fun)(*args)</html:code></html:li>
+    <html:li>Abstract execution. JAX executes python code using abstract tracer objects instead of real arrays.</html:li>
+    <html:li>Every operation and its intermediate result is recorded into <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link>.</html:li>
+    <html:li>Sequence used to construct a grap, which the XLA compiler will later optimize.</html:li>
+    <html:li>Python code is executed once during tracing but excluded from final graph.</html:li>
+    <html:li>Each JAX primitive registers functions for</html:li>
+    <html:ul><html:li>Lowering to StableHLO</html:li>  
+        <html:li>How it is transformed under <html:code>grad</html:code> and <html:code>vmap</html:code>.</html:li></html:ul></html:ul>
+  <html:li>Lowering: Jaxpr -&gt; HLO</html:li>
+  <html:ul><html:li><html:code>fn_lowered = jax.jit(fun).lower(*args)</html:code></html:li>
+    <html:li><html:code>stable_hlo = fn_lowered.as_text()</html:code></html:li>
+    <html:li><html:code>hlo = fn_lowered.compiler_ir('hlo')</html:code></html:li>
+    <html:li>Multiple ML frameworks lower to StableHLO.</html:li>
+    <html:ul><html:li>Hardware agnostic.</html:li>
+      <html:li>Backwards compatible.</html:li></html:ul></html:ul>
+  <html:li>Compile: HLO -&gt; Optimized HLO -&gt; LLO IR -&gt; VLIW -&gt; Executables</html:li>
+  <html:ul><html:li><html:code>compiled = fn_lowered.compile()</html:code></html:li>
+    <html:li><html:code>compiled.runtime_executable()</html:code> returns a <html:code>LoadedExecutable</html:code>.</html:li>
+    <html:li>Useful(?) <html:code>compiled.cost_analysis()</html:code>.</html:li>
+    <html:li>HLO:</html:li>
+    <html:ul><html:li>Input for XLA compiler.</html:li>
+      <html:li>Directed acyclic graph of copmutational operations.</html:li>
+      <html:li>All array dimensions are known at compile time.</html:li>
+      <html:li>Limited opcodes i.e. Add, Multiply, Transpose, Dot, etc.</html:li></html:ul></html:ul></html:ol></fr:mainmatter></fr:tree><html:p><html:strong style="font-family: var(--sans); font-weight: 500;">XLA Shapes and Memory Layout.</html:strong></html:p><html:ul><html:li>Every data type defined by data type and fixed dimensions, determined at compile time.</html:li>
+  <html:li>Minor-to-major order i.e. fastest changing to slowesting changin.</html:li>
+  <html:li>Tiling: arrays are split into smaller blocks to fit into VREG. Want to arrange data to efficiently fit VREG.</html:li></html:ul><html:figure><html:img width="60%" src="/bafkrmihanbz63fc3hvqd3drtqlm5shhn2624xbut2oobs3zibpwjw2jiju.png" />
+<html:figcaption>How memory is laid out based on XLA.</html:figcaption></html:figure><html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Execution.</html:strong></html:p><html:ul><html:li>Move tensors from CPU to HBM. Sharding is taken care of by PJIT if on TPU pod.</html:li>
+  <html:li>Async: Immediately returns a <html:code>Future</html:code> JAX array while the hardware executes VLIW microcode asynchronously.</html:li>
+  <html:li>Buffer management: Returns pointer to TPU memory. All handled lazily. Not copied back to CPU until <html:code>jax.block_until_ready()</html:code>.</html:li></html:ul></fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>7</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/G981/</fr:uri>
+            <fr:display-uri>G981</fr:display-uri>
+            <fr:route>/G981/</fr:route>
+            <fr:title text="jaxpr">jaxpr</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+ <html:div class="stub-notice" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  color: rgb(38, 97, 69);
+  font-style: italic;
+  ">🌱 Stub — this concept is referenced but not yet written.</html:div>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

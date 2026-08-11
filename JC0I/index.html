@@ -1,0 +1,80 @@
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script src="/highlightjs-line-numbers.min.js"></script><script>
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+    if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
+  });
+});
+          </script><title>The merge under M is the visibility point</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Card"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>The merge under M is the visibility point <a class="slug" href="/JC0I/">[JC0I]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 9, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What is a store's global visibility point, and what does that imply for <span xmlns="" class="link local"><a href="/VH8Y/" title="Total store order [VH8Y]">Total store order</a></span>?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  The instant the data is <strong>merged into the L1D line while holding M</strong>.
+
+  Before that, the value lives only in the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> — forwardable to this core through <span xmlns="" class="link local"><a href="/GXCN/" title="Store-to-load forwarding [GXCN]">Store-to-load forwarding</a></span>, invisible to every other. That asymmetry is exactly why TSO permits <strong>store\(\to \)load reordering</strong>.
+</details>
+</div>
+
+
+
+</details></section><footer xmlns="">
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id3"><summary><header><h1>
+<span class="taxon">Definition. </span>Total store order <a class="slug" href="/VH8Y/">[VH8Y]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/BCFG/" title="Relaxed consistency [BCFG]">Relaxed consistency</a></span> relaxation in which loads may be hoisted above prior stores, but no other reorderings are permitted. The motivation: a store can sit in the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> waiting for cache, while subsequent loads — which do not touch the buffered address — proceed without stalling.</p><p xmlns="http://www.w3.org/1999/xhtml">Same-core reads of a still-buffered store get the right value through <span xmlns="" class="link local"><a href="/GXCN/" title="Store-to-load forwarding [GXCN]">Store-to-load forwarding</a></span>; cross-core reads see the old value until the buffer drains. This asymmetry is the entire point of TSO's relaxation: the store buffer hides latency from the issuing thread without forcing other threads to wait. x86 implements TSO.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Under TSO, Dekker's algorithm is still broken without <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> — the classic example where TSO is too weak for naive software synchronization.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> The IBM 370 variant is TSO without <span xmlns="" class="link local"><a href="/GXCN/" title="Store-to-load forwarding [GXCN]">Store-to-load forwarding</a></span> — it preserves global store atomicity at the cost of same-core stall-on-self-read.</div>
+</details></section>
+      </details></section>
+    
+    <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id5"><summary><header><h1>
+<span class="taxon">Definition. </span>Total store order <a class="slug" href="/VH8Y/">[VH8Y]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 24, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A <span xmlns="" class="link local"><a href="/BCFG/" title="Relaxed consistency [BCFG]">Relaxed consistency</a></span> relaxation in which loads may be hoisted above prior stores, but no other reorderings are permitted. The motivation: a store can sit in the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> waiting for cache, while subsequent loads — which do not touch the buffered address — proceed without stalling.</p><p xmlns="http://www.w3.org/1999/xhtml">Same-core reads of a still-buffered store get the right value through <span xmlns="" class="link local"><a href="/GXCN/" title="Store-to-load forwarding [GXCN]">Store-to-load forwarding</a></span>; cross-core reads see the old value until the buffer drains. This asymmetry is the entire point of TSO's relaxation: the store buffer hides latency from the issuing thread without forcing other threads to wait. x86 implements TSO.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Under TSO, Dekker's algorithm is still broken without <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> — the classic example where TSO is too weak for naive software synchronization.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> The IBM 370 variant is TSO without <span xmlns="" class="link local"><a href="/GXCN/" title="Store-to-load forwarding [GXCN]">Store-to-load forwarding</a></span> — it preserves global store atomicity at the cost of same-core stall-on-self-read.</div>
+</details></section>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id6"><summary><header><h1>
+<span class="taxon">Definition. </span>Store buffer <a class="slug" href="/UNB6/">[UNB6]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 13, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A FIFO of stores that have left the pipeline but are not yet globally visible, decoupling instruction commit from cache write. A store's slot is allocated early — at dispatch/rename, since it must exist before execute for the address and data to be written into — so commit is not a handoff into the buffer but a <em>state transition</em> within it: when the store reaches the head of the <span xmlns="" class="link local"><a href="/BI4H/" title="Reorder buffer [BI4H]">Reorder buffer</a></span>, its entry stops being speculative and becomes a <em>senior store</em>, eligible to drain. Nothing reaches L1 at that instant. The actual cache write, called <em>drain</em>, happens asynchronously and may be delayed by cache misses, coherence traffic, or memory-ordering rules.</p><p xmlns="http://www.w3.org/1999/xhtml">Without this split, the ROB would have to stall on a cache miss for every store. With it, once a store is known to be non-speculative, the front-end moves on while the store buffer absorbs whatever latency the memory hierarchy imposes. <em>Commit</em> and <em>drain</em> are therefore two distinct moments in the lifetime of a store:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><strong>Commit</strong> — the store is architecturally real. Younger speculation cannot squash it, but other cores do not see it yet.</li>
+  <li><strong>Drain</strong> — the value is written to L1 and becomes visible to the coherence protocol, and therefore to other cores.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">Between these two moments the value lives only in the store buffer. Younger same-core loads can still observe it through <span xmlns="" class="link local"><a href="/GXCN/" title="Store-to-load forwarding [GXCN]">Store-to-load forwarding</a></span>, but other cores cannot — which is the structural reason <span xmlns="" class="link local"><a href="/VH8Y/" title="Total store order [VH8Y]">Total store order</a></span> permits store-load reordering across cores. A <span xmlns="" class="link local"><a href="/R03A/" title="Memory fence [R03A]">Memory fence</a></span> like <code>mfence</code> forces the buffer to drain so that subsequent operations see a consistent global view.</p><p xmlns="http://www.w3.org/1999/xhtml">Drain is not a single event either, and the two halves are easy to conflate. Acquiring <em>permission</em> — an Upgrade if the line is already in S, a GetM if it is not — is distinct from <em>performing the write</em>, merging the data into the line while holding M. Only the second is architecturally required to be post-commit. Ownership is invisible to software, so a core issues the <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">Cache coherence</a></span> request speculatively at AGU execute time, as soon as the physical address is known and often tens of cycles before retirement; if the store is squashed or the line is snooped away before the merge, nothing is lost but fabric traffic. This is why store misses so often look free in a trace — the latency was paid during <span xmlns="" class="link local"><a href="/IIF9/" title="Speculative execution [IIF9]">Speculative execution</a></span>, not at the head of the buffer. The merge under M is the store's global visibility point.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Retirement bandwidth (ROB commits per cycle) and store bandwidth (drain rate to L1) are separate throughput limits. A workload that retires stores faster than the cache can absorb them eventually backs up the ROB anyway, but the store buffer absorbs short bursts at no cost.</div>
+</details></section>
+        <section lang="en" class="block" data-taxon="Definition"><details id="id7"><summary><header><h1>
+<span class="taxon">Definition. </span>Store-to-load forwarding <a class="slug" href="/GXCN/">[GXCN]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 13, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The mechanism by which a younger load on the same core observes the value of an older store that is still sitting in the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">Store buffer</a></span> and has not yet drained to L1. The load-store unit checks the store buffer for any in-flight store to the same address; if one exists, the load's data comes directly from the buffer entry rather than from the cache, satisfying the same-core sequential semantics that the program expects.</p><p xmlns="http://www.w3.org/1999/xhtml">Forwarding is the reason the <span xmlns="" class="link local"><a href="/UNB6/" title="Store buffer [UNB6]">commit/drain split</a></span> does not break the single-core illusion. Within one thread, a store followed by a load to the same address must read the just-stored value — and would, on a machine without a store buffer, because the cache is the single source of truth. With a store buffer, the cache is briefly stale relative to architectural state; forwarding patches that hole.</p><p xmlns="http://www.w3.org/1999/xhtml">The structural consequence shows up in <span xmlns="" class="link local"><a href="/VH8Y/" title="Total store order [VH8Y]">Total store order</a></span>: store-load reordering across cores is permitted precisely because forwarding makes same-core reads see the new value, while cross-core reads continue to see the old one until drain. This asymmetry is the entire point of TSO's relaxation — the store buffer can hide latency from the issuing thread without forcing other threads to wait.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Address matching in the store buffer is partial: most implementations check enough low-order bits to detect a hit but fall back to a stall (or a re-execution) on aliasing or partial-overlap cases. Reliable wide-then-narrow forwarding is one of the harder corners of memory disambiguation.</div>
+</details></section>
+      </details></section>
+    
+  </footer></article></div></body></html>

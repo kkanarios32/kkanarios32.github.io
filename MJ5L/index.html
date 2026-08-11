@@ -24,7 +24,9 @@ window.addEventListener('load', function () {
 
 release(lock_ptr):
   store[lock_ptr] &lt;- UNLOCKED</pre>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <code>test_and_set</code>, so contention scales badly with the number of waiters.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <code>test_and_set</code>, so contention scales badly with the number of waiters.</div>
+
 </details></section><footer xmlns="">
     
     <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
@@ -53,7 +55,9 @@ release(lock_ptr):
 
 release(lock_ptr):
   store[lock_ptr] &lt;- UNLOCKED</pre>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <code>test_and_set</code>, so contention scales badly with the number of waiters.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <code>test_and_set</code>, so contention scales badly with the number of waiters.</div>
+
 </details></section>
             <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
 <span class="taxon"></span>Test-and-test-and-set lock <a class="slug" href="/PXY9/">[PXY9]</a> </h1>
@@ -73,9 +77,11 @@ release(lock_ptr):
 
 release(lock_ptr):
   store[lock_ptr] &lt;- UNLOCKED</pre>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Spinning is a read-only operation now.</div>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Spinning is a read-only operation now.</div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> When the lock is released, the line must be invalidated on every waiter, and they all simultaneously read and try to write. The contention is shifted from steady state to release time but is still \(O(n)\) in the number of waiters.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> When the lock is released, the line must be invalidated on every waiter, and they all simultaneously read and try to write. The contention is shifted from steady state to release time but is still \(O(n)\) in the number of waiters.</div>
+
 </details></section>
             <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
 <span class="taxon"></span>Ticket lock <a class="slug" href="/V7KP/">[V7KP]</a> </h1>
@@ -88,7 +94,9 @@ release(lock_ptr):
 
 release(lock_ptr):
   lock_ptr-&gt;now_serving = lock_ptr-&gt;now_serving + 1</pre>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Still \(O(n)\) coherence traffic on release: incrementing <code>now_serving</code> invalidates the line on every waiter, and they all reload it to recheck their ticket.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Still \(O(n)\) coherence traffic on release: incrementing <code>now_serving</code> invalidates the line on every waiter, and they all reload it to recheck their ticket.</div>
+
 </details></section>
             <section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
 <span class="taxon"></span>Array-based lock <a class="slug" href="/BJ7N/">[BJ7N]</a> </h1>
@@ -98,7 +106,9 @@ release(lock_ptr):
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Each waiter is assigned its own slot in an array and spins only on that slot. Release just flips the next slot to "go-ahead", so the cache line touched by release is the one read by exactly one other thread. Coherence traffic per release is constant rather than \(O(n)\), at the cost of one slot per waiter.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Give each waiter its own "slot" to wait on.</li>
   <li>Only need to set the next slot to "go-ahead" on release.</li>
   <li>Constant coherence traffic.</li></ul>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> \(O(n)\) memory for the lock array, and padding each slot to \(64\)b (one cache line) to avoid false sharing makes that cost real.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> \(O(n)\) memory for the lock array, and padding each slot to \(64\)b (one cache line) to avoid false sharing makes that cost real.</div>
+
 </details></section>
             <section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
 <span class="taxon"></span>MCS lock <a class="slug" href="/IN64/">[IN64]</a> </h1>
@@ -145,9 +155,11 @@ release(lock):
 
 release(lock_ptr):
   store[lock_ptr] &lt;- UNLOCKED</pre>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Spinning is a read-only operation now.</div>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Spinning is a read-only operation now.</div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> When the lock is released, the line must be invalidated on every waiter, and they all simultaneously read and try to write. The contention is shifted from steady state to release time but is still \(O(n)\) in the number of waiters.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> When the lock is released, the line must be invalidated on every waiter, and they all simultaneously read and try to write. The contention is shifted from steady state to release time but is still \(O(n)\) in the number of waiters.</div>
+
 </details></section>
         <section lang="en" class="block"><details id="id11"><summary><header><h1>
 <span class="taxon"></span>Locks <a class="slug" href="/Q2DT/">[Q2DT]</a> </h1>
@@ -172,7 +184,9 @@ release(lock_ptr):
 
 release(lock_ptr):
   store[lock_ptr] &lt;- UNLOCKED</pre>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <code>test_and_set</code>, so contention scales badly with the number of waiters.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <code>test_and_set</code>, so contention scales badly with the number of waiters.</div>
+
 </details></section>
             <section lang="en" class="block hide-metadata"><details id="id13" open="open"><summary><header><h1>
 <span class="taxon"></span>Test-and-test-and-set lock <a class="slug" href="/PXY9/">[PXY9]</a> </h1>
@@ -192,9 +206,11 @@ release(lock_ptr):
 
 release(lock_ptr):
   store[lock_ptr] &lt;- UNLOCKED</pre>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> Spinning is a read-only operation now.</div>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Spinning is a read-only operation now.</div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> When the lock is released, the line must be invalidated on every waiter, and they all simultaneously read and try to write. The contention is shifted from steady state to release time but is still \(O(n)\) in the number of waiters.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> When the lock is released, the line must be invalidated on every waiter, and they all simultaneously read and try to write. The contention is shifted from steady state to release time but is still \(O(n)\) in the number of waiters.</div>
+
 </details></section>
             <section lang="en" class="block hide-metadata"><details id="id14" open="open"><summary><header><h1>
 <span class="taxon"></span>Ticket lock <a class="slug" href="/V7KP/">[V7KP]</a> </h1>
@@ -207,7 +223,9 @@ release(lock_ptr):
 
 release(lock_ptr):
   lock_ptr-&gt;now_serving = lock_ptr-&gt;now_serving + 1</pre>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Still \(O(n)\) coherence traffic on release: incrementing <code>now_serving</code> invalidates the line on every waiter, and they all reload it to recheck their ticket.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Still \(O(n)\) coherence traffic on release: incrementing <code>now_serving</code> invalidates the line on every waiter, and they all reload it to recheck their ticket.</div>
+
 </details></section>
             <section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
 <span class="taxon"></span>Array-based lock <a class="slug" href="/BJ7N/">[BJ7N]</a> </h1>
@@ -217,7 +235,9 @@ release(lock_ptr):
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Each waiter is assigned its own slot in an array and spins only on that slot. Release just flips the next slot to "go-ahead", so the cache line touched by release is the one read by exactly one other thread. Coherence traffic per release is constant rather than \(O(n)\), at the cost of one slot per waiter.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Give each waiter its own "slot" to wait on.</li>
   <li>Only need to set the next slot to "go-ahead" on release.</li>
   <li>Constant coherence traffic.</li></ul>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> \(O(n)\) memory for the lock array, and padding each slot to \(64\)b (one cache line) to avoid false sharing makes that cost real.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> \(O(n)\) memory for the lock array, and padding each slot to \(64\)b (one cache line) to avoid false sharing makes that cost real.</div>
+
 </details></section>
             <section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
 <span class="taxon"></span>MCS lock <a class="slug" href="/IN64/">[IN64]</a> </h1>

@@ -1,0 +1,57 @@
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script src="/highlightjs-line-numbers.min.js"></script><script>
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+    if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
+  });
+});
+          </script><title>Splash attention: Sparse flash attention for TPU</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Reference"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon">Reference. </span>Splash attention: Sparse flash attention for TPU <a class="slug" href="/splash_attention/">[splash_attention]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">2024</li></ul>
+<br><ul><li class="meta-item"><address class="author">JAX Authors</address></li></ul>
+<br><ul><li class="meta-item"><a class="link external" href="https://github.com/jax-ml/jax/blob/main/jax/experimental/pallas/ops/tpu/splash_attention/splash_attention_kernel.py%0A%20%20%20%20%20%20%20%20%20">
+         https://github.com/jax-ml/jax/blob/main/jax/experimental/pallas/ops/tpu/splash_attention/splash_attention_kernel.py
+         </a></li></ul>
+</div></header></summary><pre>@misc{splash_attention,
+ title = {Splash Attention: Sparse Flash Attention for {TPU}},
+ author = {{JAX Authors}},
+ year = {2024},
+ url = {
+https://github.com/jax-ml/jax/blob/main/jax/experimental/pallas/ops/tpu/splash_attention/splash_attention_kernel.py
+},
+ urldate = {2026-08-10},
+ note = {Part of {JAX}, \texttt{jax.experimental.pallas.ops.tpu.splash\_
+attention}}
+}</pre></details></section><footer xmlns="">
+    
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section lang="en" class="block"><details id="id3"><summary><header><h1>
+<span class="taxon"></span>Bringing <em xmlns="http://www.w3.org/1999/xhtml">Speed-of-Light</em> <span class="link local"><a href="/dongFlexAttentionProgramming2024/" title="Flex Attention: A Programming Model for Generating Optimized Attention Kernels [dongFlexAttentionProgramming2024]">FlexAttention</a></span> to TPU <a class="slug" href="/3AIF/">[3AIF]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 10, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+<li class="meta-item">1 min read</li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This blog will function both as a worklog and a release for my <span xmlns="" class="link local"><a href="/060Z/" title="Pallas [060Z]">Pallas</a></span> implementation of <span xmlns="" class="link local"><a href="/dongFlexAttentionProgramming2024/" title="Flex Attention: A Programming Model for Generating Optimized Attention Kernels [dongFlexAttentionProgramming2024]">FlexAttention</a></span> on <span xmlns="" class="link local"><a href="/NZZ7/" title="TPU Architecture [NZZ7]">TPU Architecture</a></span>. </p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmig6ozqvm3pbwzvn6lbpirgxmsd36qwlcma2htsj4xtyxh6v3uft5e.png"></img>
+<figcaption>ChatGPT realizing my weird brain child.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml">As a pre-cursor, I highly recommend reading the original <span xmlns="" class="link local"><a href="/dongFlexAttentionProgramming2024/" title="Flex Attention: A Programming Model for Generating Optimized Attention Kernels [dongFlexAttentionProgramming2024]">FlexAttention paper</a></span>. Additionally, a big shout out to the people at google for <span xmlns="" class="link local"><a href="/splash_attention/" title="Splash attention: Sparse flash attention for TPU [splash_attention]">SplashAttention</a></span>, which we unfortunately aim to make obsolete as a subset of flex attention. For a very deep dive on splash attention, I <strong>highly</strong> recommend <span xmlns="" class="link local"><a href="/toulme2026xla/" title="When XLA isn’t enough: From Pallas to VLIW with Splash attention on TPU [toulme2026xla]">this blog</a></span>. We will cover the key implementation details to accentuate our work here.</p>
+  <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span><span class="link local"><a href="/060Z/" title="Pallas [060Z]">Pallas</a></span> constraints  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 10, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+
+</details></section>
+
+  <hr xmlns="http://www.w3.org/1999/xhtml"></hr>
+<script xmlns="http://www.w3.org/1999/xhtml" src="https://utteranc.es/client.js" repo="kkanarios32/website-comments" issue-term="pathname" theme="boxy-light" crossorigin="anonymous" async=""></script></details></section>
+      </details></section>
+    
+    
+  </footer></article></div></body></html>

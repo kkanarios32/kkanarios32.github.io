@@ -15,9 +15,12 @@ window.addEventListener('load', function () {
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 <li class="meta-item">10 min read</li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Suppose we have a sequence of latent variable \(\xi  = (z_{1}, z_{2}, \ldots , z_{T})\) and the corresponding sequence of observations \(\mathcal {H} = (x_{1}, x_{2}, \ldots , x_{T})\)</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</span> We want to compute the <em>posterior</em> distribution \(\mathbb {P}(\xi  \mid  \mathcal {H}).\)</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Goal.</span> We want to compute the <em>posterior</em> distribution \(\mathbb {P}(\xi  \mid  \mathcal {H}).\)</div>
+
 <p xmlns="http://www.w3.org/1999/xhtml">Suppose \(\mathcal {z}\) is a discrete random variable taking at most \(K\) different values. Then, for horizon length \(T\), there are \(K^T\) possible values for \(\xi \). Thus, computing \(\mathbb {P}(\xi  \mid  \mathcal {H})\) blows up <strong>exponentially</strong>.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
 <p>Suppose that \(z \in  \{0, 1\} \) and \(T = 2\). Then</p>
 \[\begin {align*}
   \xi  \in  \{\{0, 0\}, \{0, 1\}, \{1, 1\}, \{1, 0\} \}
@@ -32,6 +35,7 @@ window.addEventListener('load', function () {
 .\end {align*}\]
 \[\begin {gathered}\vdots \end {gathered}\]
 </div>
+
 <p xmlns="http://www.w3.org/1999/xhtml">Directly computing the probability for each possible value of \(\xi \) would thus take \(O(K^T)\) or exponential in the horizon length. Can we do better?</p><p xmlns="http://www.w3.org/1999/xhtml">In the particular case of a <em>hidden markov model</em>, we can achieve \(O(TK^2)\)!!!</p>
   
   
@@ -47,7 +51,7 @@ window.addEventListener('load', function () {
 &amp;= \frac {\mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t, x_{0}, \ldots , x_t) \mathbb {P}(x_{0}, \ldots , x_{t} \mid  z_t)\mathbb {P}(z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})} \\
 &amp;= \frac {\mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t, x_{0}, \ldots , x_t) \mathbb {P}(x_{0}, \ldots , x_{t}, z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})}
   .\end {align*}\]<p xmlns="http://www.w3.org/1999/xhtml">Since we are considering an <span xmlns="" class="link local"><a href="/3C07/" title="Hidden markov model [3C07]">HMM</a></span>, \((x_{1}, \ldots , x_t)\) and \((x_{t + 1}, \ldots , x_{T})\) are <em>conditionally independent</em> conditioned on \(z_t\). Thus, we can further simplify this to</p>\[\mathbb {P}(z_t \mid  x_{0}, \ldots , x_{T}) = \frac {\mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t) \mathbb {P}(x_{0}, \ldots , x_{t}, z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})}\]
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(70, 100, 150, 0.75);   border-radius: var(--radius);   background-color: rgba(70, 100, 150, 0.05);   "><span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</span> We will now consider the terms in the numerator separately. The first can be viewed as the <em>backward</em> term
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Notation.</span> We will now consider the terms in the numerator separately. The first can be viewed as the <em>backward</em> term
   \[\beta _t(z) = \mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t = z),\]
   and the second as the <em>forward</em> term
   \[\phi _t(z) = \mathbb {P}(x_{0}, \ldots , x_{t}, z_t = z).\]
@@ -104,7 +108,7 @@ Additionally, \((x_{t + 2}, \ldots , x_{T}) \perp  x_{t + 1} \mid  z_{t + 1}\), 
 <p xmlns="http://www.w3.org/1999/xhtml">Here \(z'\) ranges over the possible values of \(z_{t + 1}\). We see that \(\beta _t(z)\) depends only on information from time \(t\) and \(t + 1\). Therefore, information propagates <em>backward in time</em>.</p>
 </details></section>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Both passes are \(O(TK^2)\) because at each timestep, it requires computing \(\mathbb {P}(z_{t} \mid  z_{t - 1})\) or \(\mathbb {P}(z_{t + 1} \mid  z_{t})\) which is a \(K \times  K\) transition matrix.
 </div>
 <p xmlns="http://www.w3.org/1999/xhtml">Notably, the structure of the <span xmlns="" class="link local"><a href="/3C07/" title="Hidden markov model [3C07]">HMM</a></span> ensures each marginal \(\mathbb {P}(z_t \mid  \mathcal {H})\) depends only on the <strong>local</strong> transition probabilities \(\mathbb {P}(z_{t} \mid  z_{t - 1})\) and \(\mathbb {P}(z_{t + 1} \mid  z_{t})\) rather than the exponential <strong>global</strong> \(\mathbb {P}(z_{0}, \ldots , z_{T})\). This lends itself to the idea of a <em>dynamic programming</em> algorithm, where we compute the posterior of the preceding / succeeding latent and use the result for the next. Since we have bi-directional dependencies this requires making two passes a <em>forward</em> and <em>backward</em> pass. The key remaining detail is that these components can be efficiently combined to recover the full true marginal.</p>
@@ -180,7 +184,9 @@ Both passes are \(O(TK^2)\) because at each timestep, it requires computing \(\m
  \mathbb {P}(b_t = 1, z_t \mid  z_{t - 1}, s_t) &amp;= \psi (s_t, z_{t - 1}) \cdot  \eta (z_t \mid  s_t)
 .\end {align*}
 \]<p xmlns="http://www.w3.org/1999/xhtml">Up to this point, we have assumed this is the ground truth model and we are given each of the components. Instead we want to <em>learn</em> these components. To do so, we introduce our set of parameters \(\mathbf {\theta } \), such that each component is parametrized by a subset of \(\mathbf {\theta } \) i.e. \(\eta _{\theta }, \pi _{\theta }, \psi _{\theta }\).</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</span> We want to learn some \(\theta \) that maximized the likelihood of the <em>observable</em> data.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Goal.</span> We want to learn some \(\theta \) that maximized the likelihood of the <em>observable</em> data.</div>
+
 <p xmlns="http://www.w3.org/1999/xhtml">To do so, first consider the log-likelihood of our new parametrized model</p>\[
 \begin {align*}
 \log  \mathbb {P}_{\theta }(\mathcal {H}, \xi ) &amp;= \log  \left [p(s_{0})\delta _{\{b_{0} = 1\}}\eta _{\theta }(z_{0} \mid  s_{0}) \prod _{t=1}^{T - 1} \mathbb {P}_{\theta }(b_t, z_t \mid  z_{t - 1}, s_t) \prod _{t = 0}^{T - 1} \pi _{\theta }(a_t \mid  s_t, z_t) p(s_{t+1} \mid  s_t, a_t)\right ] \\
@@ -191,17 +197,21 @@ Both passes are \(O(TK^2)\) because at each timestep, it requires computing \(\m
 \nabla _{\theta } \log  \mathbb {P}_{\theta }(\mathcal {H}, \xi ) &amp;= \nabla _{\theta } \left [ \log \left [\eta _{\theta }(z_{0} \mid  s_{0}) \prod _{t=1}^{T - 1} \mathbb {P}_{\theta }(b_t, z_t \mid  z_{t - 1}, s_t) \prod _{t = 0}^{T - 1} \pi _{\theta }(a_t \mid  s_t, z_t)\right ] \right ]\\
 &amp;= \nabla _{\theta } \log \left [\eta _{\theta }(z_{0} \mid  s_{0})\right ] + \sum _{t=1}^{T - 1} \nabla _{\theta } \log \left [\mathbb {P}_{\theta }(b_t, z_t \mid  z_{t - 1}, s_t)\right ] + \sum _{t = 0}^{T - 1} \nabla _{\theta } \log  \left [\pi _{\theta }(a_t \mid  s_t, z_t)\right ].
 \end {align*}\]
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> This requires samples \((\mathcal {H}, \xi ) \sim  P_{\theta }(\mathcal {H}, \xi )\), but we only have samples \(\mathcal {H} \sim  P_{\theta }(\mathcal {H})\)!!!</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> This requires samples \((\mathcal {H}, \xi ) \sim  P_{\theta }(\mathcal {H}, \xi )\), but we only have samples \(\mathcal {H} \sim  P_{\theta }(\mathcal {H})\)!!!</div>
+
 
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span></summary>We can use the trick from <span xmlns="" class="link local"><a href="/0088/" title="Expectation Maximization [0088]">Expectation Maximization</a></span>. Referred to in the paper as the <em>expectation gradient trick</em>. Namely,
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(121, 65, 66);">Solution.</span></summary>We can use the trick from <span xmlns="" class="link local"><a href="/0088/" title="Expectation Maximization [0088]">Expectation Maximization</a></span>. Referred to in the paper as the <em>expectation gradient trick</em>. Namely,
 \[\nabla _{\theta } \log  P_{\theta }(\mathcal {H}) = \mathbb {E}_{\xi  \sim  P_{\theta }(\xi  \mid  \mathcal {H})} \left [ \nabla _{\theta } \log  P_{\theta }(\mathcal {H}, \xi ) \right ]\]
 </details>
 </div>
 
+
 <p xmlns="http://www.w3.org/1999/xhtml">Now it remains to compute the expectation from \(P_{\theta }(\xi  \mid  \mathcal {H})\)</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Note that \(P_{\theta }(\xi  \mid  \mathcal {H})\) is a distribution over \((K, \{0,1\})^{T} \) i.e. over each \((z_t, b_t)\). To efficiently compute, we need to use <span xmlns="" class="link local"><a href="/F3T0/" title="Forward-backward algorithm [F3T0]">Forward-backward algorithm</a></span>.
 </div>
 
@@ -247,7 +257,7 @@ Note that \(P_{\theta }(\xi  \mid  \mathcal {H})\) is a distribution over \((K, 
   &amp;\times   \sum _{(z', b')} \phi _{t - 1}(z', b') \Big (\eta _{\theta }(z \mid  s_{t}) \psi _{\theta }(s_{t}, z') + \delta _{\{z = z'\}} (1 - \psi _{\theta }(s_{t}, z'))\Big )
 .\end {align*}\]
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 We have abused notation here, allowing \(\mathbb {P}(s_t, a_t \mid  z_t, b_t)\) to depend on \(s_{t - 1}, a_{t - 1}\), etc. This is to align with the notation from <span xmlns="" class="link local"><a href="/F3T0/" title="Forward-backward algorithm [F3T0]">Forward-backward algorithm</a></span>. It makes no difference in practice as long as the backward dependence is finite / bounded. However, in practice you would want the history dependence to be small and here it is only one-step.
 </div>
 
@@ -302,7 +312,7 @@ We have abused notation here, allowing \(\mathbb {P}(s_t, a_t \mid  z_t, b_t)\) 
 <p xmlns="http://www.w3.org/1999/xhtml">We essentially combine the insight of <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span> where instead of trying to model the full joint distribution i.e. \(\mathbb {P}(\mathcal {H}, \xi )\) we instead model \(\mathbb {P}(\mathcal {A}, \xi  \mid  \mathcal {S})\), where we treat the entire state history as known.</p> 
 <p xmlns="http://www.w3.org/1999/xhtml">In the language of <span xmlns="" class="link local"><a href="/3C07/" title="Hidden markov model [3C07]">HMMs</a></span>, the <em>emission probabilities</em> only correspond to the <strong>actions</strong>. Therefore, we can perform the <span xmlns="" class="link local"><a href="/F3T0/" title="Forward-backward algorithm [F3T0]">Forward-backward algorithm</a></span> and condition on whatever component of the state we want without breaking the exactness.</p>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 This is only a good idea for us because we do not need to use the <em>meta controller</em> during evaluation.
 </div>
 
@@ -379,7 +389,7 @@ This introduces a few changes and constraints on the final algorithm.
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Pressing each of the buttons looks too similar, where the main discrepancy between them is only their <strong>termination condition</strong>. Since <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span>'s termination condition is independent of skill, it is unable to distinguish between these.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li> This is further confirmed in the <em>scene</em> environment. <span xmlns="" class="link local"><a href="/jiangLearningOptionsCompression/" title="Learning Options via Compression [jiangLearningOptionsCompression]">LOVE</a></span> is able to distinguish between very different skills like open drawer vs. window. However, it is not able to distinguish between unlock drawer vs. window, where they only differ in pressing two adjacent buttons.</li></ul><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Injecting goals into the graphical model.</strong> Another failure mode of manipulation is that skills cannot be <em>goal-independent</em>. For example, in the generating policy of <em>scene</em> they have a <em>pick and place</em> skill that picks up the block and places it somewhere. Where to place the block is <strong>encoded in the goal</strong>. We can augment our graphical model to also allow the actions to depend on the goal.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmibumdtxhheqqjqmxcu7b65kal36m45q36yv47js2fxlbit4i7j4uy.png"></img>
 <figcaption>Our graphical model with the goal included.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml">However, we do not want the skills to become goal-conditioned policies. To get around this we can use the <em>information bottleneck</em> idea from <span xmlns="" class="link local"><a href="/goyalInfoBotTransferExploration2023/" title="InfoBot: Transfer and Exploration via the Information Bottleneck [goyalInfoBotTransferExploration2023]">InfoBot: Transfer and Exploration via the Information Bottleneck</a></span>. Namely, we penalize the <span xmlns="" class="link local"><a href="/000V/" title="Mutual Information [000V]">Mutual Information</a></span> between the goal and action or goal and skill (TBD the right way to do this).</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Ideally, this would allow goal-dependent skills, where the goal is not the entire state space. For example, penalizing <span xmlns="" class="link local"><a href="/000V/" title="Mutual Information [000V]">Mutual Information</a></span> could cause just the desired block position as the information to be passed to the skill. This ignores the irrelavant components of the state space <strong>for that skill</strong>. Another skill may focus on whether the window is locked / unlocked, etc.</div>
 <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Get rid of weird threshold / turn into MPC-ish.</strong> Currently, when planning, we must tune the <code>value_threshold</code> for when we pass control to goal-conditioned policy. To get 89 percent on pointmaze we used -10. Instead of using a threshold, we could instead just treat the goal-conditioned policy as another skill. Furthermore, they could be seen as our primitive actions i.e. during planning we take the next state as the immediate next state instead of just jumping to goal (which would obv always be taken).</p></details></section>
 </details></section>
@@ -400,7 +410,9 @@ Ideally, this would allow goal-dependent skills, where the goal is not the entir
  \mathbb {P}(b_t = 1, z_t \mid  z_{t - 1}, s_t) &amp;= \psi (s_t, z_{t - 1}) \cdot  \eta (z_t \mid  s_t)
 .\end {align*}
 \]<p xmlns="http://www.w3.org/1999/xhtml">Up to this point, we have assumed this is the ground truth model and we are given each of the components. Instead we want to <em>learn</em> these components. To do so, we introduce our set of parameters \(\mathbf {\theta } \), such that each component is parametrized by a subset of \(\mathbf {\theta } \) i.e. \(\eta _{\theta }, \pi _{\theta }, \psi _{\theta }\).</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</span> We want to learn some \(\theta \) that maximized the likelihood of the <em>observable</em> data.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Goal.</span> We want to learn some \(\theta \) that maximized the likelihood of the <em>observable</em> data.</div>
+
 <p xmlns="http://www.w3.org/1999/xhtml">To do so, first consider the log-likelihood of our new parametrized model</p>\[
 \begin {align*}
 \log  \mathbb {P}_{\theta }(\mathcal {H}, \xi ) &amp;= \log  \left [p(s_{0})\delta _{\{b_{0} = 1\}}\eta _{\theta }(z_{0} \mid  s_{0}) \prod _{t=1}^{T - 1} \mathbb {P}_{\theta }(b_t, z_t \mid  z_{t - 1}, s_t) \prod _{t = 0}^{T - 1} \pi _{\theta }(a_t \mid  s_t, z_t) p(s_{t+1} \mid  s_t, a_t)\right ] \\
@@ -411,17 +423,21 @@ Ideally, this would allow goal-dependent skills, where the goal is not the entir
 \nabla _{\theta } \log  \mathbb {P}_{\theta }(\mathcal {H}, \xi ) &amp;= \nabla _{\theta } \left [ \log \left [\eta _{\theta }(z_{0} \mid  s_{0}) \prod _{t=1}^{T - 1} \mathbb {P}_{\theta }(b_t, z_t \mid  z_{t - 1}, s_t) \prod _{t = 0}^{T - 1} \pi _{\theta }(a_t \mid  s_t, z_t)\right ] \right ]\\
 &amp;= \nabla _{\theta } \log \left [\eta _{\theta }(z_{0} \mid  s_{0})\right ] + \sum _{t=1}^{T - 1} \nabla _{\theta } \log \left [\mathbb {P}_{\theta }(b_t, z_t \mid  z_{t - 1}, s_t)\right ] + \sum _{t = 0}^{T - 1} \nabla _{\theta } \log  \left [\pi _{\theta }(a_t \mid  s_t, z_t)\right ].
 \end {align*}\]
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> This requires samples \((\mathcal {H}, \xi ) \sim  P_{\theta }(\mathcal {H}, \xi )\), but we only have samples \(\mathcal {H} \sim  P_{\theta }(\mathcal {H})\)!!!</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> This requires samples \((\mathcal {H}, \xi ) \sim  P_{\theta }(\mathcal {H}, \xi )\), but we only have samples \(\mathcal {H} \sim  P_{\theta }(\mathcal {H})\)!!!</div>
+
 
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(40, 150, 80, 0.9);   border-radius: var(--radius);   background-color: rgba(40, 150, 80, 0.06);   "><span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</span></summary>We can use the trick from <span xmlns="" class="link local"><a href="/0088/" title="Expectation Maximization [0088]">Expectation Maximization</a></span>. Referred to in the paper as the <em>expectation gradient trick</em>. Namely,
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(121, 65, 66);">Solution.</span></summary>We can use the trick from <span xmlns="" class="link local"><a href="/0088/" title="Expectation Maximization [0088]">Expectation Maximization</a></span>. Referred to in the paper as the <em>expectation gradient trick</em>. Namely,
 \[\nabla _{\theta } \log  P_{\theta }(\mathcal {H}) = \mathbb {E}_{\xi  \sim  P_{\theta }(\xi  \mid  \mathcal {H})} \left [ \nabla _{\theta } \log  P_{\theta }(\mathcal {H}, \xi ) \right ]\]
 </details>
 </div>
 
+
 <p xmlns="http://www.w3.org/1999/xhtml">Now it remains to compute the expectation from \(P_{\theta }(\xi  \mid  \mathcal {H})\)</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Note that \(P_{\theta }(\xi  \mid  \mathcal {H})\) is a distribution over \((K, \{0,1\})^{T} \) i.e. over each \((z_t, b_t)\). To efficiently compute, we need to use <span xmlns="" class="link local"><a href="/F3T0/" title="Forward-backward algorithm [F3T0]">Forward-backward algorithm</a></span>.
 </div>
 
@@ -467,7 +483,7 @@ Note that \(P_{\theta }(\xi  \mid  \mathcal {H})\) is a distribution over \((K, 
   &amp;\times   \sum _{(z', b')} \phi _{t - 1}(z', b') \Big (\eta _{\theta }(z \mid  s_{t}) \psi _{\theta }(s_{t}, z') + \delta _{\{z = z'\}} (1 - \psi _{\theta }(s_{t}, z'))\Big )
 .\end {align*}\]
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 We have abused notation here, allowing \(\mathbb {P}(s_t, a_t \mid  z_t, b_t)\) to depend on \(s_{t - 1}, a_{t - 1}\), etc. This is to align with the notation from <span xmlns="" class="link local"><a href="/F3T0/" title="Forward-backward algorithm [F3T0]">Forward-backward algorithm</a></span>. It makes no difference in practice as long as the backward dependence is finite / bounded. However, in practice you would want the history dependence to be small and here it is only one-step.
 </div>
 

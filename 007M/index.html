@@ -40,9 +40,12 @@ window.addEventListener('load', function () {
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 <li class="meta-item">10 min read</li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Suppose we have a sequence of latent variable \(\xi  = (z_{1}, z_{2}, \ldots , z_{T})\) and the corresponding sequence of observations \(\mathcal {H} = (x_{1}, x_{2}, \ldots , x_{T})\)</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</span> We want to compute the <em>posterior</em> distribution \(\mathbb {P}(\xi  \mid  \mathcal {H}).\)</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Goal.</span> We want to compute the <em>posterior</em> distribution \(\mathbb {P}(\xi  \mid  \mathcal {H}).\)</div>
+
 <p xmlns="http://www.w3.org/1999/xhtml">Suppose \(\mathcal {z}\) is a discrete random variable taking at most \(K\) different values. Then, for horizon length \(T\), there are \(K^T\) possible values for \(\xi \). Thus, computing \(\mathbb {P}(\xi  \mid  \mathcal {H})\) blows up <strong>exponentially</strong>.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
 <p>Suppose that \(z \in  \{0, 1\} \) and \(T = 2\). Then</p>
 \[\begin {align*}
   \xi  \in  \{\{0, 0\}, \{0, 1\}, \{1, 1\}, \{1, 0\} \}
@@ -57,6 +60,7 @@ window.addEventListener('load', function () {
 .\end {align*}\]
 \[\begin {gathered}\vdots \end {gathered}\]
 </div>
+
 <p xmlns="http://www.w3.org/1999/xhtml">Directly computing the probability for each possible value of \(\xi \) would thus take \(O(K^T)\) or exponential in the horizon length. Can we do better?</p><p xmlns="http://www.w3.org/1999/xhtml">In the particular case of a <em>hidden markov model</em>, we can achieve \(O(TK^2)\)!!!</p>
   
   
@@ -72,7 +76,7 @@ window.addEventListener('load', function () {
 &amp;= \frac {\mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t, x_{0}, \ldots , x_t) \mathbb {P}(x_{0}, \ldots , x_{t} \mid  z_t)\mathbb {P}(z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})} \\
 &amp;= \frac {\mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t, x_{0}, \ldots , x_t) \mathbb {P}(x_{0}, \ldots , x_{t}, z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})}
   .\end {align*}\]<p xmlns="http://www.w3.org/1999/xhtml">Since we are considering an <span xmlns="" class="link local"><a href="/3C07/" title="Hidden markov model [3C07]">HMM</a></span>, \((x_{1}, \ldots , x_t)\) and \((x_{t + 1}, \ldots , x_{T})\) are <em>conditionally independent</em> conditioned on \(z_t\). Thus, we can further simplify this to</p>\[\mathbb {P}(z_t \mid  x_{0}, \ldots , x_{T}) = \frac {\mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t) \mathbb {P}(x_{0}, \ldots , x_{t}, z_t)}{\mathbb {P}(x_{0}, \ldots , x_{T})}\]
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(70, 100, 150, 0.75);   border-radius: var(--radius);   background-color: rgba(70, 100, 150, 0.05);   "><span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</span> We will now consider the terms in the numerator separately. The first can be viewed as the <em>backward</em> term
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Notation.</span> We will now consider the terms in the numerator separately. The first can be viewed as the <em>backward</em> term
   \[\beta _t(z) = \mathbb {P}(x_{t + 1}, \ldots , x_{T} \mid  z_t = z),\]
   and the second as the <em>forward</em> term
   \[\phi _t(z) = \mathbb {P}(x_{0}, \ldots , x_{t}, z_t = z).\]
@@ -129,7 +133,7 @@ Additionally, \((x_{t + 2}, \ldots , x_{T}) \perp  x_{t + 1} \mid  z_{t + 1}\), 
 <p xmlns="http://www.w3.org/1999/xhtml">Here \(z'\) ranges over the possible values of \(z_{t + 1}\). We see that \(\beta _t(z)\) depends only on information from time \(t\) and \(t + 1\). Therefore, information propagates <em>backward in time</em>.</p>
 </details></section>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Both passes are \(O(TK^2)\) because at each timestep, it requires computing \(\mathbb {P}(z_{t} \mid  z_{t - 1})\) or \(\mathbb {P}(z_{t + 1} \mid  z_{t})\) which is a \(K \times  K\) transition matrix.
 </div>
 <p xmlns="http://www.w3.org/1999/xhtml">Notably, the structure of the <span xmlns="" class="link local"><a href="/3C07/" title="Hidden markov model [3C07]">HMM</a></span> ensures each marginal \(\mathbb {P}(z_t \mid  \mathcal {H})\) depends only on the <strong>local</strong> transition probabilities \(\mathbb {P}(z_{t} \mid  z_{t - 1})\) and \(\mathbb {P}(z_{t + 1} \mid  z_{t})\) rather than the exponential <strong>global</strong> \(\mathbb {P}(z_{0}, \ldots , z_{T})\). This lends itself to the idea of a <em>dynamic programming</em> algorithm, where we compute the posterior of the preceding / succeeding latent and use the result for the next. Since we have bi-directional dependencies this requires making two passes a <em>forward</em> and <em>backward</em> pass. The key remaining detail is that these components can be efficiently combined to recover the full true marginal.</p>
@@ -206,10 +210,12 @@ To decide on the next task, I use a priority-based system:
   <li>Things I am not working on right now, or have any need to be completed any time soon.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">
 This idea is mainly based on the <span xmlns="" class="link local"><a href="/4WG5/" title="Multi-level feedback queue [4WG5]">MLFQ</a></span>, which has been proven effective for balancing response / turnaround time. To maintain this system, I have reviews each day and week (tracking with <span xmlns="" class="link external"><a href="https://kellenkanarios.com/habitify.me" title="">habitify</a></span>) to make sure I stay consistent.
 </p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 100, 255, 0.7);   border-radius: var(--radius);   background-color: rgba(0, 100, 255, 0.05);   "><span style="font-weight: 600; color: rgba(0, 100, 255, 0.7);">Algorithm.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);">Algorithm.</span> 
   <em>Weekly review.</em>
 
- <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 100, 255, 0.7);   border-radius: var(--radius);   background-color: rgba(0, 100, 255, 0.05);   "><span style="font-weight: 600; color: rgba(0, 100, 255, 0.7);">Algorithm.</span> 
+  
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);">Algorithm.</span> 
   <em>Daily review.</em>
   <ul><li>For each work stream,</li>
     <ul><li>If I finished the allocated task for the day, get new task from priority 2.</li>
@@ -220,6 +226,7 @@ This idea is mainly based on the <span xmlns="" class="link local"><a href="/4WG
     <ul><li>Since PhD work is so hard to predict, I have found timeblocking any further than one day in advance to be a futile effort.</li></ul></ul>
   </div>
 
+
   <ul><li>Typically done on Fridays, so that I can dynamically allocate time on weekends if needed.</li>
     <li>For each work stream,</li>
     <ol><li>Look in remaining priority 2 and priority 3 tasks.</li>
@@ -229,6 +236,7 @@ This idea is mainly based on the <span xmlns="" class="link local"><a href="/4WG
      <li>Move / keep remaining tasks in priority 2.</li></ol>
     <li>Write <span xmlns="" class="link local"><a href="/007S/" title="Weeknotes [007S]">Weeknotes</a></span> for the week.</li></ul>
 </div>
+
 
   <section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
 <span class="taxon"></span>What to do when actually working on a task  </h1>
@@ -275,7 +283,9 @@ This is the harder part (and requires the most discipline). When working on a ta
 <p xmlns="http://www.w3.org/1999/xhtml">Since \(x_i - m \leq  0\), this ensures that each \(\exp (x_i - m)\) is bounded in a safe range.</p>
 
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> Note that computing the \(\max \) over \(\mathbf {x}\) means that we must have all of the logits in a row of \(QK^T\) materialized in <span xmlns="" class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">SMEM</a></span>, or first loop over all of them to compute the max before computing the normalization constant.</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Note that computing the \(\max \) over \(\mathbf {x}\) means that we must have all of the logits in a row of \(QK^T\) materialized in <span xmlns="" class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">SMEM</a></span>, or first loop over all of them to compute the max before computing the normalization constant.</div>
+
 
 </details></section>
 
@@ -291,19 +301,24 @@ This is the harder part (and requires the most discipline). When working on a ta
 Therefore, we must find a recursive relationship such that \(d_{i+1} = f(d_i, m_i, x_{i+1})\) for some function \(f\). This would then allow us to locally compute \(d_{i+1}\) with only the local information of current \(x_{i+1}\) and the two running statistics \(d_i\) and \(m_i\). This is exactly the kind of algorithm that is conducive to <span xmlns="" class="link local"><a href="/OGCRV/" title="Memory Tiling (GPU) [OGCRV]">memory tiling</a></span>.
 </p>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> What is \(f(d_i, m_i, x_{i+1})\)?</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);">Question.</span> What is \(f(d_i, m_i, x_{i+1})\)?</div>
+
 
 
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span></summary>Consider \(d_{i+1} = d_i \cdot  \exp (m_{i} - m_{i + 1}) + \exp (x_{i + 1} - m_{i + 1})\).</details>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(115, 73, 35);">Answer.</span></summary>Consider \(d_{i+1} = d_i \cdot  \exp (m_{i} - m_{i + 1}) + \exp (x_{i + 1} - m_{i + 1})\).</details>
 </div>
 
 
 
+
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(109, 103, 101);   "><span style="font-weight: 500; color: rgb(109, 103, 101);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(109, 103, 101);">Proof.</span></summary>
   This can be seen by directly rewriting \(d_{i + 1}\). 
   \[
     \begin {align*}
@@ -317,6 +332,7 @@ Therefore, we must find a recursive relationship such that \(d_{i+1} = f(d_i, m_
 </div>
 
 
+
 <p xmlns="http://www.w3.org/1999/xhtml">
 The running denominator \(d\) is rescaled by \(e^{m - m_{\text {new}}}\) each time a new maximum is found, keeping it consistent with the safe-softmax shift.</p>
 <div xmlns="http://www.w3.org/1999/xhtml" class="code-figure"><div class="code-filename">online_softmax.py</div><pre><code class="language-python">m = float("-inf")                    # running max of the logits
@@ -327,7 +343,7 @@ for i in range(n):                   # one fused sweep for the stats
     m = m_new
 p = [exp(x[i] - m) / d for i in range(n)]   # second pass: normalized probs</code></pre></div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Unfortunately, we cannot get around the second pass to compute the normalized output for \(\mathbf {p}\). However, this is not the case in <span xmlns="" class="link local"><a href="/R0PM/" title="Flash Attention (v1) [R0PM]">Flash Attention (v1)</a></span>.
 </div>
 
@@ -342,7 +358,7 @@ Unlike in the <span xmlns="" class="link local"><a href="/PI7N/" title="Online S
   </p>\[O = \mathrm {softmax}(QK^T) V\]<p xmlns="http://www.w3.org/1999/xhtml">
 For more details see <span xmlns="" class="link local"><a href="/004G/" title="Self-Attention [004G]">self-attention</a></span>.
   </p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(70, 100, 150, 0.75);   border-radius: var(--radius);   background-color: rgba(70, 100, 150, 0.05);   "><span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Notation.</span> 
   In correspondence with the notation in the <span xmlns="" class="link local"><a href="/PI7N/" title="Online Softmax [PI7N]">online softmax</a></span>, we define the following:
   \[x_{i,j} = \mathbf {q}_i \cdot  \mathbf {k}_j,\]
   where \(\mathbf {q}_i\) is the \(i\)th row of \(Q\) and \(\mathbf {k}_j\) is the \(j\)th row of \(K\). Similarly, \(\mathbf {o}_i\) is the \(i\)th row of the output matrix \(O\) given by
@@ -351,16 +367,19 @@ For more details see <span xmlns="" class="link local"><a href="/004G/" title="S
 <p xmlns="http://www.w3.org/1999/xhtml">Now following the template provided by the <span xmlns="" class="link local"><a href="/PI7N/" title="Online Softmax [PI7N]">online softmax</a></span>, we must find a recurrence for \(\mathbf {o}_i\). Namely, we will consider the sequence \(\mathbf {o}_{i,k}'\) given by
 \[\mathbf {o}_{i,k}' = \sum _{j = 1}^{k} \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_j, \]
 such that \(\mathbf {o}_{i,n}' = \mathbf {o}_n\)</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(140, 60, 170, 0.8);   border-radius: var(--radius);   background-color: rgba(140, 60, 170, 0.05);   "><span style="font-weight: 600; color: rgba(140, 60, 170, 0.8);">Claim.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(110, 67, 101);   "><span style="font-weight: 500; color: rgb(110, 67, 101);">Claim.</span> 
   We have the following recurrence for \(\mathbf {o}_{i,k}'\):
   \[
   \mathbf {o}_{i,k}' = \mathbf {o}_{i, k-1} \cdot  \frac {d_{k - 1} \cdot  \exp (m_{k-1} - m_{k})}{d_k} + \frac {\exp (x_{i,j} - m_k)}{d_k} \cdot  \mathbf {v}_k
     \]
 </div>
 
+
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(109, 103, 101);   "><span style="font-weight: 500; color: rgb(109, 103, 101);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(109, 103, 101);">Proof.</span></summary>
   We will proceed by directly rewriting the recurrence for \(\mathbf {o}_{i,k}'\) as 
   \[
     \begin {align*}
@@ -371,6 +390,7 @@ such that \(\mathbf {o}_{i,n}' = \mathbf {o}_n\)</p>
     \]
   </details>
 </div>
+
 
 <p xmlns="http://www.w3.org/1999/xhtml">Thus, we are left with the following algorithm</p><div xmlns="http://www.w3.org/1999/xhtml" class="code-figure"><div class="code-filename">flash_attention.py</div><pre><code class="language-python">for i in range(N):                      # one query row at a time
     m = float("-inf")                    # running max of the logits
@@ -383,7 +403,7 @@ such that \(\mathbf {o}_{i,n}' = \mathbf {o}_n\)</p>
         o = o * (d * exp(m - m_new) / d_new) + (exp(x - m_new) / d_new) * v[j]
         m, d = m_new, d_new
     out[i] = o</code></pre></div>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 A key benefit of this algorithm is that it is entirely parallelizable across rows. This means that we can loop across entire <span xmlns="" class="link local"><a href="/OGCRV/" title="Memory Tiling (GPU) [OGCRV]">tiles</a></span> like in the GEMM case.
 </div>
 </details></section><section lang="en" class="block hide-metadata"><details id="id18" open="open"><summary><header><h1>
@@ -392,7 +412,7 @@ A key benefit of this algorithm is that it is entirely parallelizable across row
 <li class="meta-item">May 27, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The forward pass of <span xmlns="" class="link local"><a href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness [daoFlashAttentionFastMemoryEfficient2022]">flash attention</a></span> avoids materializing the \(N \times  N\) attention matrix by streaming an online softmax. The backward pass has to pull the same trick twice over, because the naive gradient computation wants <em>two</em> \(N \times  N\) matrices — \(\mathbf {P}\) and \(d\mathbf {P}\). Getting there means first writing down every gradient we need, then finding a way to recompute rather than store each one.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(70, 100, 150, 0.75);   border-radius: var(--radius);   background-color: rgba(70, 100, 150, 0.05);   "><span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Notation.</span> 
 Following the notation in the <span xmlns="" class="link local"><a href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness [daoFlashAttentionFastMemoryEfficient2022]">original paper</a></span>,
 \[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V},\]
 where \(\mathbf {Q}, \mathbf {K}, \mathbf {V}, \mathbf {O}\) are \(N \times  d\) and \(\mathbf {S}, \mathbf {P}\) are \(N \times  N\). For a scalar loss \(\phi \) we abbreviate the gradient with respect to any matrix \(\mathbf {X}\) as
@@ -470,13 +490,15 @@ and write \(\mathbf {L}_i\) for the softmax denominator of row \(i\) saved by th
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">Every gradient above is expressed through \(\mathbf {P}_{ij}\) and \(d\mathbf {P}_{ij}\), both \(N \times  N\). Materializing either one is exactly the quadratic memory cost the forward pass went to such lengths to avoid, so the backward pass has to be able to produce those entries on demand.</p>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 160, 175, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 160, 175, 0.06);   "><span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Insight.</span> 
 Both are recoverable from the \(N \times  d\) tensors already resident in memory. The forward pass saved \(\mathbf {L}\), so
 \[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}},\]
 and \(d\mathbf {P}\) is just an inner product of two rows,
 \[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i} \cdot  \mathbf {V}_j.\]
 Neither ever requires an \(N \times  N\) intermediate.
 </div>
+
 
 <p xmlns="http://www.w3.org/1999/xhtml">Substituting both into the previous section leaves \(d\mathbf {Q}\) and \(d\mathbf {K}\) in terms of \(\mathbf {Q}\), \(\mathbf {K}\), \(\mathbf {V}\), \(d\mathbf {O}\), \(\mathbf {L}\), and \(\mathbf {D}\) alone:</p>
 \[
@@ -560,13 +582,15 @@ Neither ever requires an \(N \times  N\) intermediate.
 <li class="meta-item">July 17, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An <em>invariant</em> is something that Murphi checks to ensure is true at all possible configurations of the system.</p></details></section><div xmlns="http://www.w3.org/1999/xhtml" style="margin-top: -0.5rem;"></div>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 100, 255, 0.7);   border-radius: var(--radius);   background-color: rgba(0, 100, 255, 0.05);   "><span style="font-weight: 600; color: rgba(0, 100, 255, 0.7);">Algorithm.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);">Algorithm.</span> 
 <em>Repeat forever:</em>
 <ol><li>Find all rules whose conditions are true in the current state.
        (i.e. conditional expressions are true, given the current values
        of the global variables).</li>
     <li>Choose one arbitrarily and execute the action, yielding a new state.</li></ol>
 </div>
+
 </details></section>
   <section lang="en" class="block hide-metadata"><details id="id32" open="open"><summary><header><h1>
 <span class="taxon"></span>Why three virtual channels  </h1>
@@ -960,7 +984,7 @@ Neither ever requires an \(N \times  N\) intermediate.
     ack: AckCount;  -- tracks InvAck count
   End;</code></pre></div>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 <code>load</code>, <code>store</code>, and <code>replacement</code> only move the protocol between stable states. To simulate the system it is therefore enough to implement the rules that <em>initiate</em> those transitions evict from modified, load from invalid, and let the model checker drive the transient states from there.
 </div>
 
@@ -1532,7 +1556,7 @@ Neither ever requires an \(N \times  N\) intermediate.
 <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Silent upgrades.</strong> If a cache in \(E\) may upgrade to \(M\) silently, the directory never learns the line went dirty, and the value it hands to the next <code>GetS</code> or <code>GetM</code> is stale. There are two consistent ways out: forbid the silent upgrade, in which case no forwarding is needed; or allow it and treat \(E\) exactly like \(M\), forwarding everything. Neither requires a writeback on <code>PutE</code>. I take the first, matching the table.</p>
 <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Signaling exclusivity.</strong> The directory needs a way to tell a requester "you are the first reader, take the line exclusive." That is a new <code>ExclusiveData</code> message: receiving it in \(IS^D\) lands the cache in \(E\) rather than \(S\). It turns out to also be the key to the second race below.</p>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\) are functionally identical. Both appear above for completeness, but transitioning from \(E\) straight into \(MI^A\) verifies the same.
 </div>
 
@@ -1745,7 +1769,8 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">The nastier version of the same race: the invalidation arrives before the forward. By the \(II^A\) rule inherited from MSI, a <code>PutAck</code> in that state drops the line to \(I\). This discards data a forwarded request is about to ask for.</p>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
 <ol><li><code>Proc_1</code> load-misses → \(IS^D\)</li>
   <li><code>Home</code> takes the first <code>GetS</code> from <code>Proc_1</code> → \(E\), sends <code>ExclusiveData</code></li>
   <li><code>Proc_2</code> issues <code>GetM</code> → \(IM^{AD}\)</li>
@@ -1754,6 +1779,7 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, \(EI^A\) and \(MI^A\)
   <li><code>Proc_1</code> receives <code>Inv</code> → \(II^D\)</li>
   <li><code>Proc_1</code> receives <code>ExclusiveData</code> → \(I\), and the data is lost</li></ol>
 </div>
+
 
 <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Fix.</strong> <code>ExclusiveData</code> pays for itself a second time. Because the message is distinguishable from ordinary <code>Data</code>, a cache receiving it in \(II^D\) knows it was the first reader and transitions to \(E\) instead of \(I\). There, the pending <code>Fwd-GetM</code> or <code>Fwd-GetS</code> is handled correctly.</p>
 </details></section>
@@ -1791,7 +1817,7 @@ for a <strong>fixed</strong> theta <strong>and</strong> \(q\). Therefore, <stron
   \[\theta _{t + 1} \gets  \theta _t + \nabla _{\theta } \mathsf {ELBO}(x, q, \theta _t),\]
   to maximize the log-likelihood \(\log  p(x; \theta )\). 
 </p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Note that the gradient is with respect to \(\theta \), where \(\theta \) is just the third argument to \(\mathsf {ELBO}\) as defined above. Notably, \(\theta _t\) will show up elsewhere later but will <strong>NOT</strong> be backpropagated through.
 </div>
 
@@ -1805,21 +1831,26 @@ Note that the gradient is with respect to \(\theta \), where \(\theta \) is just
 <p xmlns="http://www.w3.org/1999/xhtml">Recall (or review) from the discussion on <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> that \(q(z) = p(z | x; \theta )\) maximizes the ELBO for a given \(x\) and \(\theta  \). Therefore, we actually want to learn \(q_{\phi }(z, x, \theta ) \approx  p(z | x; \theta )\). To do so, we can simply maximize the ELBO (duh). Formally,
 \[\phi _{t+1} = \argmax _{\phi } \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q}\left [\log  \frac {p(x,  Z; \theta _t)}{q_{\phi }(Z, x, \theta _t)}\right ]\]</p>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);">Question.</span> 
 Now this is all cool theoretically but how TF do we actually maximize this thing? 
 </div>
 
 
+
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(115, 73, 35);">Answer.</span></summary>
   It is highly dependent on the parametrization of \(p\) and \(q\).
 </details>
 </div>
 
 
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
+
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
   <p>
   We define the problem as 
   <ol><li>\(p(z) \sim  N(0, 1)\)</li>
@@ -1834,30 +1865,37 @@ Now this is all cool theoretically but how TF do we actually maximize this thing
     \]</p>
 </div>
 
-  
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 55, 45, 0.85);   border-radius: var(--radius);   background-color: rgba(200, 55, 45, 0.06);   "><span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</span> 
-    We need to sample realization \(z \sim  q_{\phi }(\cdot  |x, \theta )\). So isn't our realization \(z\) a function of \(\phi \). How would we optimize this?
-  </div>
 
   
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span></summary>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> 
+    We need to sample realization \(z \sim  q_{\phi }(\cdot  |x, \theta )\). So isn't our realization \(z\) a function of \(\phi \). How would we optimize this?
+  </div>
+
+
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(115, 73, 35);">Answer.</span></summary>
     The <span xmlns="" class="link local"><a href="/0089/" title="Reparametrization Trick [0089]">reparametrization trick</a></span>!!
   </details>
 </div>
 
 
+
   <p xmlns="http://www.w3.org/1999/xhtml">Now for a given sample \(x_i \sim  \mathcal {D}\), we can get a sample \(z_i(\phi ) \sim  q(\cdot  \mid  x_i, \theta )\) that is differentiable with respect to \(\phi \). Using this, we can get the stochastic gradient estimate
   \[\nabla _q \widetilde {\mathsf {ELBO}}(x, q, \theta ) = \nabla _{\phi } \left [\frac {z_i(\phi )^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((z_i(\phi ) - \mu _{\theta }(z_i(\phi )))^2 - (z_i(\phi ) - \mu _{\phi }(x))^2\big )\right ]\]</p>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 100, 255, 0.7);   border-radius: var(--radius);   background-color: rgba(0, 100, 255, 0.05);   "><span style="font-weight: 600; color: rgba(0, 100, 255, 0.7);">Algorithm.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);">Algorithm.</span> 
   input \(\theta _t\)
   <ol><li>Sample \(x_i\) from dataset \(\mathcal {D}\)</li>
     <li>Sample \(z_i(\phi ) \sim  q_{\phi }(\cdot  \mid  x_i, \theta _t)\) via <span xmlns="" class="link local"><a href="/0089/" title="Reparametrization Trick [0089]">trick</a></span>.</li>
     <li>Compute \(\nabla _q \widetilde {\mathsf {ELBO}}\)</li>
     <li>Update via SGD</li></ol>
 </div>
+
 
 </details></section>
 
@@ -1883,19 +1921,25 @@ Alternating between these steps yields the <em>expectation-maximization</em> alg
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Setup.</strong>
 We are given a joint distribution \(p(X, Z; \theta )\), where \(X\) and \(Z\) are random variables with their joint parametrized by \(\theta \). We are also given a dataset \(\mathcal {D}\) containing realizations of <strong>only</strong> \(X\) i.e. \(Z\) is a <span xmlns="" class="link local"><a href="/0083/" title="Latent Variable [0083]">latent random variable</a></span>.
   </p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</span> We want to learn \(p(x; \theta )\).</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Goal.</span> We want to learn \(p(x; \theta )\).</div>
+
 <p xmlns="http://www.w3.org/1999/xhtml"> However, \[p(x; \theta ) = \int  p(x, z; \theta ) \mathrm {d}z = \int  p(x | z; \theta )p(z) \mathrm {d}z,\] which is computationally intractable for most continuous \(Z\).</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(200, 130, 0, 0.9);   border-radius: var(--radius);   background-color: rgba(200, 130, 0, 0.06);   "><span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</span> Can we update \(\theta \) for a given realization of \(x\) and \(z\)?</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);">Question.</span> Can we update \(\theta \) for a given realization of \(x\) and \(z\)?</div>
+
 
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 140, 120, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 140, 120, 0.06);   "><span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</span></summary>Yes!!!</details>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(115, 73, 35);">Answer.</span></summary>Yes!!!</details>
 </div>
+
 
 <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Motivation.</strong> Suppose we had some \(q(z)\) that we could sample realizations of \(Z\) from. Then we want to find some reasonable \(\ell _{\theta }\), such that
 \[\theta ^* \approx  \arg \max _{\theta } \mathbb {E}_{x, \sim  p(x; \theta ^*), z \sim  q(z)}[\ell _{\theta }(X, Z)]\]
 
- <div class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 \(q(z)\) can potentially (and will) depend on the sample \(x_i\). This is OK because we are given \(x_i\)'s, which we can then just pass to \(q\) to get the corresponding \(z_i\).
 </div>
 
@@ -1935,7 +1979,7 @@ You may be wondering how we use this algorithmically to find \(\theta ^*\)? This
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 <li class="meta-item">8 min read</li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">I used LazyVim for a long time, but I kept hitting a wall: understanding <em>how</em> LazyVim did something was consistently harder than if I had just written the thing myself. So I gave myself one day to rebuild from scratch, with the modest goal of first-class support for \(\TeX \), Python, Forester, and C/C++. That one-day sprint is long past, and the config has kept evolving since; this note describes where it landed, not the frantic first pass. The through-line is that almost everything now leans on Neovim's own primitives instead of a framework, which is exactly the transparency I was missing.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> The whole config lives in my <span xmlns="" class="link external"><a href="https://github.com/kkanarios32/dotfiles" title="">dotfiles</a></span>. It is a thin <code>init.lua</code> that loads four modules (<code>config.lazy</code>, <code>config.options</code>, <code>config.keymaps</code>, and <code>core.lsp</code>), with the actual plugin specs under <code>lua/plugins/</code> and per-server LSP tables under <code>lsp/</code>.</div>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> The whole config lives in my <span xmlns="" class="link external"><a href="https://github.com/kkanarios32/dotfiles" title="">dotfiles</a></span>. It is a thin <code>init.lua</code> that loads four modules (<code>config.lazy</code>, <code>config.options</code>, <code>config.keymaps</code>, and <code>core.lsp</code>), with the actual plugin specs under <code>lua/plugins/</code> and per-server LSP tables under <code>lsp/</code>.</div>
 
   <section lang="en" class="block hide-metadata"><details id="id50" open="open"><summary><header><h1>
 <span class="taxon"></span>Sane defaults  </h1>
@@ -2024,7 +2068,7 @@ You may be wondering how we use this algorithmically to find \(\theta ^*\)? This
 <li class="meta-item">March 4, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">I originally built a whole in-editor Anki workflow on top of <span xmlns="" class="link external"><a href="https://git.sr.ht/~foosoft/anki-connectdeck-actions" title="">AnkiConnect</a></span> and a vendored <code>anki.nvim</code>. That has since moved out of the editor and into the forest itself: cards are just <code>\taxon{Card}</code> trees, and <code>scripts/anki-sync</code> mirrors them into Anki, creating the note on first sync and updating in place thereafter. Writing a card is now the same as writing any other tree, snippets and all, and the sync is one command away. This is <span xmlns="" class="link local"><a href="/2RO9/" title="What false dependencies does register renaming eliminate? [2RO9]">an example of a card</a></span>.</p>
+<p xmlns="http://www.w3.org/1999/xhtml">I originally built a whole in-editor Anki workflow on top of <span xmlns="" class="link external"><a href="https://git.sr.ht/~foosoft/anki-connectdeck-actions" title="">AnkiConnect</a></span> and a vendored <code>anki.nvim</code>. That has since moved out of the editor and into the forest itself: cards are just <code>\taxon{Card}</code> trees, and <code>scripts/anki-sync</code> mirrors them into Anki, creating the note on first sync and updating in place thereafter. Writing a card is now the same as writing any other tree, snippets and all, and the sync is one command away. This is <span xmlns="" class="link local"><a href="/2RO9/" title="The false dependencies renaming removes [2RO9]">an example of a card</a></span>.</p>
 </details></section>
 
   
@@ -2039,17 +2083,21 @@ You may be wondering how we use this algorithmically to find \(\theta ^*\)? This
 <span class="taxon"></span>Flow Matching: What, Why, and How? <a class="slug" href="/008A/">[008A]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 1, 2025</li>
-<li class="meta-item"><address class="author"> with contributions from <span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span>
-</address></li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This is a blog cataloging my understanding of <span xmlns="" class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">Flow Matching for Generative Modeling</a></span> prior to my group presentation on <span xmlns="" class="link local"><a href="/farebrotherTemporalDifferenceFlows2025/" title="Temporal Difference Flows [farebrotherTemporalDifferenceFlows2025]">Temporal Difference Flows</a></span>. The accompany slides are available <span xmlns="" class="link local"><a href="/FMTD/" title="Flow Matching and TD Flows [FMTD]">here</a></span>.</p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Disclaimer.</strong> I came into this with literally no background. I have never even taken an ODE course. This may prove advantageous for the more general audience.</p>
   <section lang="en" class="block hide-metadata"><details id="id61" open="open"><summary><header><h1>
 <span class="taxon"></span>Motivation  </h1>
-<div class="metadata"><ul><li class="meta-item">July 1, 2025</li></ul></div></header></summary>
+<div class="metadata"><ul>
+<li class="meta-item">July 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
 To understand flow matching, it is a useful endeavor to understand the problems in prior work it aims to solve.
 <section lang="en" class="block hide-metadata"><details id="id62" open="open"><summary><header><h1>
 <span class="taxon"></span>Normalizing Flows <a class="slug" href="/B9J9/">[B9J9]</a> </h1>
 <div class="metadata"><ul><li class="meta-item">July 15, 2025</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Brief notes on <span xmlns="" class="link local"><a href="/rezendeVariationalInferenceNormalizing/" title="Variational Inference with Normalizing Flows [rezendeVariationalInferenceNormalizing]">Variational Inference with Normalizing Flows</a></span> to motivate <span xmlns="" class="link local"><a href="/008A/" title="Flow Matching: What, Why, and How? [008A]">flow matching</a></span>.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(190, 50, 130, 0.85);   border-radius: var(--radius);   background-color: rgba(190, 50, 130, 0.06);   "><span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</span> We are concerned with the problem of <em>density estimation</em>. Given a dataset \(\mathcal {X}\), consisting of samples \(\mathbf {x}_i \sim  p(\mathbf {x})\), we want to learn \(p(\mathbf {x})\).</div>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Goal.</span> We are concerned with the problem of <em>density estimation</em>. Given a dataset \(\mathcal {X}\), consisting of samples \(\mathbf {x}_i \sim  p(\mathbf {x})\), we want to learn \(p(\mathbf {x})\).</div>
+
 <p xmlns="http://www.w3.org/1999/xhtml">One popular way to do this is via <em>variational inference</em>. As a brief recap, in variational inference, we assume that there is actually a joint distribution \(p(\mathbf {x}, \mathbf {z})\), where \(\mathbf {z}\) is a <span xmlns="" class="link local"><a href="/0083/" title="Latent Variable [0083]">latent variable</a></span>. We then find \(p(\mathbf {x})\) by maximizing the log-likelihood \(\log  \int  p(\mathbf {x} \mid  \mathbf {z}) \mathrm {d}\mathbf {z}\)</p><p xmlns="http://www.w3.org/1999/xhtml">
  For an example of this, see my post on <span xmlns="" class="link local"><a href="/0088/" title="Expectation Maximization [0088]">expectation maximization</a></span>. In that post, we utilize the <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> to learn a latent variable model \(q_{\phi }(\mathbf {z} | \mathbf {x})\). As discussed in my post on <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span>, in order to learn \(p(\mathbf {x})\), we must have that \(p(\mathbf {z} | \mathbf {x})\) is in the family \(q_{\phi }\). However, \(q_
  {\phi }\) is usually a Gaussian parametrized by \(\phi \), so that we can easily learn \(\phi \). In this case, it is very unlikely that \(p(\mathbf {z} \mid  x)\) lies in the family of \(q_{\phi }\) and therefore we have no hope of learning the true \(p(\mathbf {x})\).
@@ -2086,7 +2134,7 @@ Since we are considering probability measures over \(\mathbb {R}^n\), it is not 
   \frac {\mathrm {d}}{\mathrm {d}t} \phi _t(x) &amp;= v_t(\phi _t(x)) \\
   \phi _{0}(x) &amp;= x
 .\end {align*}\]</p></details></section>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
    Modeling a <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vector field [008C]">vector field</a></span> via a neural network i.e. \(v_t(x; \theta )\) implicitly defines a deep parametric model of the flow \(\phi _t(x)\) via solving the ODE or an approximation, such as
    \[\phi _{t + \Delta  t}(x) \approx  \phi _t(x) + \Delta  t \cdot  v_t(\phi _t(x); \theta )\]
    Obviously, accuracy will be dependent on the step size \(\Delta  t\).
@@ -2138,11 +2186,13 @@ A <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vecto
  then the <span xmlns="" class="link local"><a href="/373T/" title="Marginal Vector Field [373T]">marginal vector field</a></span> \(v_t\) generates \(p_t\), where
  \[p_t(x) = \int  p_t(x \mid  x_1) q(x_{1})\]</p>
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(109, 103, 101);   "><span style="font-weight: 500; color: rgb(109, 103, 101);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(109, 103, 101);">Proof.</span></summary>
   This follows from just plugging into <span xmlns="" class="link local"><a href="/EFN0/" title="Continuity Equation [EFN0]">continuity equation</a></span>.
 </details>
 </div>
+
 
 </details></section><section lang="en" class="block hide-metadata" data-taxon="Theorem"><details id="id76" open="open"><summary><header><h1>
 <span class="taxon">Theorem. </span><span class="link local"><a href="/lipmanFlowMatchingGenerative2023/" title="Flow Matching for Generative Modeling [lipmanFlowMatchingGenerative2023]">FM</a></span> Gradient Equivalence <a class="slug" href="/DZ1D/">[DZ1D]</a> </h1>
@@ -2151,11 +2201,13 @@ A <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vecto
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(109, 103, 101);   "><span style="font-weight: 500; color: rgb(109, 103, 101);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(109, 103, 101);">Proof.</span></summary>
 
 </details>
 </div>
+
 
 </details></section><p xmlns="http://www.w3.org/1999/xhtml">which is supposedly a "good" approximation of the data distribution \(q\). We can then show that a <em>conditional flow matching loss</em> has the same gradient as the full <em>flow matching loss</em> i.e. our vector field should converge to the <em>marginal vector field</em>, which is a good approximation for \(q\).
  </p></details></section><p xmlns="http://www.w3.org/1999/xhtml">To generate samples, we integrate the <strong>vector field</strong></p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--sans); font-weight: 500;">Important.</strong> We do not <em>have</em> the flow. We only have the flow for a <strong>given</strong> \(x_{1}\). This can then provide a target for the vector field with equivalent gradient.</p><section lang="en" class="block hide-metadata"><details id="id77" open="open"><summary><header><h1>
@@ -2273,7 +2325,8 @@ A <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vecto
           p_{ij} = \frac {\mathbf {q}^{(i)} \cdot  \mathbf {k}^{(j)}}{\sum _{j} \mathbf {q}^{(i)} \cdot  \mathbf {k}^{(j)}}
         \end {align*}
       \]</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(60, 90, 180, 0.8);   border-radius: var(--radius);   background-color: rgba(60, 90, 180, 0.05);   "><span style="font-weight: 600; color: rgba(60, 90, 180, 0.8);">Example.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
     Suppose that \(\mathbf {x} = \text {I play with the ball}\). Then 
 \[
     \begin {align*}
@@ -2301,6 +2354,7 @@ A <span xmlns="" class="link local"><a href="/008C/" title="Time-dependent vecto
 \]
 
 </div>
+
 <p xmlns="http://www.w3.org/1999/xhtml">\[
   \begin {align*}
 \left [\mathbb {S}(\mathbf {Q}\mathbf {K}^T)\right ]_{4} &amp;= \mathbb {S}\left (\begin {bmatrix}
@@ -2480,8 +2534,9 @@ For a \(k\) step prediction, this would just be your model predicting what will 
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">\(\mathcal {L}_N\) from <span xmlns="" class="link local"><a href="/oordRepresentationLearningContrastive2019/" title="Representation Learning with Contrastive Predictive Coding [oordRepresentationLearningContrastive2019]">InfoNCE paper</a></span> maximizes a lower bound on the <span xmlns="" class="link local"><a href="/000V/" title="Mutual Information [000V]">Mutual Information</a></span> between \(x_{t + k}\) and \(c_t\).</p>
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>All we must do is plug \(\frac {p(x \mid  c)}{p(x)}\) back into the objective.
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(109, 103, 101);   "><span style="font-weight: 500; color: rgb(109, 103, 101);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(109, 103, 101);">Proof.</span></summary>All we must do is plug \(\frac {p(x \mid  c)}{p(x)}\) back into the objective.
   \[\begin {align*}
     \mathcal {L}_{\mathbb {N}}^{\text {opt}}&amp;=-\,\mathbb {E}\log \left [\frac {\frac {p(x_{t+k}|c_{t})}{p(x_{t+k})}}{\frac {p(x_{t+k}|c_{t})}{p(x_{t+k})}+\sum _{x_{j}\in  X_{\text {neg}}}\frac {p(x_{j}|c_{t})}{p(x_{j})}}\right ] \\
     &amp;=\mathbb {E}\log \left [1+\frac {p(x_{t+k})}{p(x_{t+k}|c_{t})}\sum _{x_{j}\in  X_{\text {neg}}}\frac {p(x_{j}|c_{t})}{p(x_{j})}\right ] \\
@@ -2493,6 +2548,7 @@ For a \(k\) step prediction, this would just be your model predicting what will 
   \]
 </details>
 </div>
+
 
 </details></section><section lang="en" class="block hide-metadata"><details id="id98" open="open"><summary><header><h1>
 <span class="taxon"></span>Contrastive Learning as GCRL <a class="slug" href="/P658/">[P658]</a> </h1>
@@ -2516,8 +2572,9 @@ For a \(k\) step prediction, this would just be your model predicting what will 
 \mathcal {L}(\theta ) = \mathbb {E}_{x \sim  p_X, y \sim  p_Y}\Big [\log \sigma (f_{\theta }(x)) + \log (1-\sigma (f_{\theta }(y)))\Big ]
 \]\[f^*(s, a, s_g) = \log \left (\frac {p^{\pi (\cdot  \mid  \cdot )}(s_g \mid  s, a)}{p(s_g)}\right )\]
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(109, 103, 101);   "><span style="font-weight: 500; color: rgb(109, 103, 101);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(109, 103, 101);">Proof.</span></summary>
     We want to maximize
 \[
     \begin {align*}
@@ -2543,9 +2600,11 @@ For a \(k\) step prediction, this would just be your model predicting what will 
 </div>
 
 
+
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(109, 103, 101);   "><span style="font-weight: 500; color: rgb(109, 103, 101);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(109, 103, 101);">Proof.</span></summary>
 The first step is to prove that the average Q-values are close to the task-conditioned Q-values. Below, we will use \(R_{g}(\tau )\triangleq \sum _{t=0}^{\tau }\gamma ^{\ell }r_{g}(s_{t},a_{t})\):
 
 \[
@@ -2561,6 +2620,7 @@ The first step is to prove that the average Q-values are close to the task-condi
   \]
 </details>
 </div>
+
 
 </details></section></details></section>
   

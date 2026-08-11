@@ -21,12 +21,10 @@
   <html:li>Invalid + store → no transition (write-through assumed; the bus carries the write).</html:li>
   <html:li>Valid + store → BusWr to notify other caches; they invalidate.</html:li></html:ul><html:p><html:strong>Write-update coherence</html:strong>, the variant where stores update other caches' copies instead of invalidating them, works for very small bus-based systems but does not scale: every write reaches everyone, and copies of data the snooper isn't using pollute its <fr:link href="/UG51/" title="Cache replacement policy" uri="https://kellenkanarios.com/UG51/" display-uri="UG51" type="local">Cache replacement policy</fr:link>.</html:p><html:p>Snoop-based coherence relies on a shared physical bus, which limits it to roughly 8 cores. Beyond that, switch to <fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory-based coherence</fr:link>.</html:p>
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Snoop-based SMPs use the <html:em><fr:link href="/4W5G/" title="Inclusion property" uri="https://kellenkanarios.com/4W5G/" display-uri="4W5G" type="local">Inclusion property</fr:link></html:em> so that snooping at L2 suffices — every L1 line is also tracked at L2.</html:div>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> Snoop-based SMPs use the <html:em><fr:link href="/4W5G/" title="Inclusion property" uri="https://kellenkanarios.com/4W5G/" display-uri="4W5G" type="local">Inclusion property</fr:link></html:em> so that snooping at L2 suffices — every L1 line is also tracked at L2.</html:div>
 </fr:mainmatter>
   <fr:backmatter>
     <fr:tree show-metadata="false" hidden-when-empty="true">
@@ -92,33 +90,31 @@
             <fr:title text="Inclusion property">Inclusion property</fr:title>
           </fr:frontmatter>
           <fr:mainmatter><html:p>A cache hierarchy property: every line held in a higher-level cache (closer to the core, e.g. L1) must also be present in the next-level cache (L2). The hierarchy contains its own contents at every level — L2 ⊇ L1.</html:p><html:p>Why it matters for <fr:link href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">snoop-based coherence</fr:link>: with inclusion, a snoop only needs to consult L2. If a snoop hits in L2, then either the line is also in L1 (and L2 forwards the snoop) or it's not (and L1 doesn't need to look). This means L1 doesn't need a snoop port.</html:p>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 55, 45, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(200, 55, 45, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> L1 hits don't update LRU metadata at L2 — so L2 might evict a line that L1 is actively using, violating inclusion.</html:div>
-
   
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(40, 150, 80, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(40, 150, 80, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);" /> 
-  <html:details><html:summary><html:span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span></html:summary>Either (a) refuse to evict an L2 line that's still in L1, or (b) when evicting from L2, also evict from L1.</html:details>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(121, 65, 66);
+  "><html:span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</html:span> L1 hits don't update LRU metadata at L2 — so L2 might evict a line that L1 is actively using, violating inclusion.</html:div>
+
+
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(121, 65, 66);
+  "><html:span style="font-weight: 500; color: rgb(121, 65, 66);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-weight: 500; color: rgb(121, 65, 66);">Solution.</html:span></html:summary>Either (a) refuse to evict an L2 line that's still in L1, or (b) when evicting from L2, also evict from L1.</html:details>
 </html:div>
 
 
+
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Inclusive caches waste capacity (every line is duplicated). Non-inclusive and exclusive variants trade some snoop simplicity for better effective capacity.</html:div>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> Inclusive caches waste capacity (every line is duplicated). Non-inclusive and exclusive variants trade some snoop simplicity for better effective capacity.</html:div>
 </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -200,33 +196,31 @@
             <fr:title text="Inclusion property">Inclusion property</fr:title>
           </fr:frontmatter>
           <fr:mainmatter><html:p>A cache hierarchy property: every line held in a higher-level cache (closer to the core, e.g. L1) must also be present in the next-level cache (L2). The hierarchy contains its own contents at every level — L2 ⊇ L1.</html:p><html:p>Why it matters for <fr:link href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">snoop-based coherence</fr:link>: with inclusion, a snoop only needs to consult L2. If a snoop hits in L2, then either the line is also in L1 (and L2 forwards the snoop) or it's not (and L1 doesn't need to look). This means L1 doesn't need a snoop port.</html:p>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 55, 45, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(200, 55, 45, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> L1 hits don't update LRU metadata at L2 — so L2 might evict a line that L1 is actively using, violating inclusion.</html:div>
-
   
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(40, 150, 80, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(40, 150, 80, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);" /> 
-  <html:details><html:summary><html:span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span></html:summary>Either (a) refuse to evict an L2 line that's still in L1, or (b) when evicting from L2, also evict from L1.</html:details>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(121, 65, 66);
+  "><html:span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</html:span> L1 hits don't update LRU metadata at L2 — so L2 might evict a line that L1 is actively using, violating inclusion.</html:div>
+
+
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(121, 65, 66);
+  "><html:span style="font-weight: 500; color: rgb(121, 65, 66);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-weight: 500; color: rgb(121, 65, 66);">Solution.</html:span></html:summary>Either (a) refuse to evict an L2 line that's still in L1, or (b) when evicting from L2, also evict from L1.</html:details>
 </html:div>
 
 
+
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Inclusive caches waste capacity (every line is duplicated). Non-inclusive and exclusive variants trade some snoop simplicity for better effective capacity.</html:div>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> Inclusive caches waste capacity (every line is duplicated). Non-inclusive and exclusive variants trade some snoop simplicity for better effective capacity.</html:div>
 </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
@@ -276,12 +270,10 @@
           </fr:frontmatter>
           <fr:mainmatter><html:p>Within a <fr:link href="/C74U/" title="Cache associativity" uri="https://kellenkanarios.com/C74U/" display-uri="C74U" type="local">Cache associativity</fr:link> set, when a new line arrives and the set is full, which existing line gets evicted? Same question as <fr:link href="/7WG2/" title="LRU and the clock algorithm" uri="https://kellenkanarios.com/7WG2/" display-uri="7WG2" type="local">LRU and the clock algorithm</fr:link> for pages, different timescales.</html:p><html:p>The hot policy is <html:em>least recently used</html:em> — but pure LRU requires tracking a per-line ordering and updating it on every hit, which is too expensive at L1 latencies. Real caches use <html:em>pseudo-LRU</html:em> — a tree of single bits per set that approximates LRU with a fraction of the bookkeeping. The clock algorithm is one well-known pseudo-LRU scheme.</html:p>
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> Block (cache line) size is part of the same tradeoff. Larger blocks improve <fr:link href="/PMP9/" title="Spatial locality" uri="https://kellenkanarios.com/PMP9/" display-uri="PMP9" type="local">Spatial locality</fr:link> but cause cache pollution (you fetch bytes you don't use) and eat memory bandwidth. The sweet spot is around 64 bytes on modern x86.</html:div>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> Block (cache line) size is part of the same tradeoff. Larger blocks improve <fr:link href="/PMP9/" title="Spatial locality" uri="https://kellenkanarios.com/PMP9/" display-uri="PMP9" type="local">Spatial locality</fr:link> but cause cache pollution (you fetch bytes you don't use) and eat memory bandwidth. The sweet spot is around 64 bytes on modern x86.</html:div>
 </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>

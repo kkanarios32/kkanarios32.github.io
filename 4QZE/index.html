@@ -79,13 +79,15 @@ window.addEventListener('load', function () {
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">Every gradient above is expressed through \(\mathbf {P}_{ij}\) and \(d\mathbf {P}_{ij}\), both \(N \times  N\). Materializing either one is exactly the quadratic memory cost the forward pass went to such lengths to avoid, so the backward pass has to be able to produce those entries on demand.</p>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 160, 175, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 160, 175, 0.06);   "><span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Insight.</span> 
 Both are recoverable from the \(N \times  d\) tensors already resident in memory. The forward pass saved \(\mathbf {L}\), so
 \[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}},\]
 and \(d\mathbf {P}\) is just an inner product of two rows,
 \[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i} \cdot  \mathbf {V}_j.\]
 Neither ever requires an \(N \times  N\) intermediate.
 </div>
+
 
 <p xmlns="http://www.w3.org/1999/xhtml">Substituting both into the previous section leaves \(d\mathbf {Q}\) and \(d\mathbf {K}\) in terms of \(\mathbf {Q}\), \(\mathbf {K}\), \(\mathbf {V}\), \(d\mathbf {O}\), \(\mathbf {L}\), and \(\mathbf {D}\) alone:</p>
 \[
@@ -123,24 +125,53 @@ Neither ever requires an \(N \times  N\) intermediate.
 <span class="taxon">Reference. </span>FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness <a class="slug" href="/daoFlashAttentionFastMemoryEfficient2022/">[daoFlashAttentionFastMemoryEfficient2022]</a> </h1>
 <div class="metadata">
 <ul><li class="meta-item">June, 2022</li></ul>
-<br><ul><li class="meta-item"><address class="author">Tri Dao,  Daniel Y. Fu,  Stefano Ermon,  Atri Rudra,  Christopher Ré</address></li></ul>
+<br><ul><li class="meta-item"><address class="author">Tri Dao,  Daniel Y. Fu,  Stefano Ermon,  Atri Rudra,  Christopher R é</address></li></ul>
 <br><ul>
 <li class="meta-item"><a class="doi link" href="https://www.doi.org/10.48550/arXiv.2205.14135">10.48550/arXiv.2205.14135</a></li>
 <li class="meta-item"><a class="link external" href="https://arxiv.org/abs/2205.14135">https://arxiv.org/abs/2205.14135</a></li>
 </ul>
 </div></header></summary><pre>@misc{daoFlashAttentionFastMemoryEfficient2022,
- title = {{{FlashAttention}}: {{Fast}} and {{Memory-Efficient Exact Attention}} with {{IO-Awareness}}},
- author = {Dao, Tri and Fu, Daniel Y. and Ermon, Stefano and Rudra, Atri and R{\'e}, Christopher},
+ title = {{{FlashAttention}}: {{Fast}} and {{Memory-Efficient Exact Attention}}
+with {{IO-Awareness}}},
+ author = {Dao, Tri and Fu, Daniel Y. and Ermon, Stefano and Rudra, Atri and R{
+\'e}, Christopher},
  year = {2022},
  doi = {10.48550/arXiv.2205.14135},
  urldate = {2026-03-16},
  number = {arXiv:2205.14135},
  publisher = {arXiv},
- file = {/home/kellen/Downloads/papers/FlashAttention Fast and Memory-Efficient Exact Attention with IO-Awareness - Dao et al..pdf},
+ file = {/home/kellen/Downloads/papers/FlashAttention Fast and Memory-Efficient
+Exact Attention with IO-Awareness - Dao et al..pdf},
  keywords = {Computer Science - Machine Learning},
  langid = {english},
  archiveprefix = {arXiv},
- abstract = {Transformers are slow and memory-hungry on long sequences, since the time and memory complexity of self-attention are quadratic in sequence length. Approximate attention methods have attempted to address this problem by trading off model quality to reduce the compute complexity, but often do not achieve wall-clock speedup. We argue that a missing principle is making attention algorithms IOaware---accounting for reads and writes between levels of GPU memory. We propose FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory reads/writes between GPU high bandwidth memory (HBM) and GPU on-chip SRAM. We analyze the IO complexity of FlashAttention, showing that it requires fewer HBM accesses than standard attention, and is optimal for a range of SRAM sizes. We also extend FlashAttention to block-sparse attention, yielding an approximate attention algorithm that is faster than any existing approximate attention method. FlashAttention trains Transformers faster than existing baselines: 15\% end-to-end wall-clock speedup on BERT-large (seq. length 512) compared to the MLPerf 1.1 training speed record, 3 speedup on GPT-2 (seq. length 1K), and 2.4 speedup on long-range arena (seq. length 1K-4K). FlashAttention and block-sparse FlashAttention enable longer context in Transformers, yielding higher quality models (0.7 better perplexity on GPT-2 and 6.4 points of lift on long-document classification) and entirely new capabilities: the first Transformers to achieve better-than-chance performance on the Path-X challenge (seq. length 16K, 61.4\% accuracy) and Path-256 (seq. length 64K, 63.1\% accuracy).},
+ abstract = {Transformers are slow and memory-hungry on long sequences, since
+the time and memory complexity of self-attention are quadratic in
+sequence length. Approximate attention methods have attempted to
+address this problem by trading off model quality to reduce the
+compute complexity, but often do not achieve wall-clock speedup. We
+argue that a missing principle is making attention algorithms
+IOaware---accounting for reads and writes between levels of GPU
+memory. We propose FlashAttention, an IO-aware exact attention
+algorithm that uses tiling to reduce the number of memory
+reads/writes between GPU high bandwidth memory (HBM) and GPU
+on-chip SRAM. We analyze the IO complexity of FlashAttention,
+showing that it requires fewer HBM accesses than standard attention
+, and is optimal for a range of SRAM sizes. We also extend
+FlashAttention to block-sparse attention, yielding an approximate
+attention algorithm that is faster than any existing approximate
+attention method. FlashAttention trains Transformers faster than
+existing baselines: 15\% end-to-end wall-clock speedup on
+BERT-large (seq. length 512) compared to the MLPerf 1.1 training
+speed record, 3 speedup on GPT-2 (seq. length 1K), and 2.4 speedup
+on long-range arena (seq. length 1K-4K). FlashAttention and
+block-sparse FlashAttention enable longer context in Transformers,
+yielding higher quality models (0.7 better perplexity on GPT-2 and
+6.4 points of lift on long-document classification) and entirely
+new capabilities: the first Transformers to achieve
+better-than-chance performance on the Path-X challenge (seq. length
+16K, 61.4\% accuracy) and Path-256 (seq. length 64K, 63.1\%
+accuracy).},
  primaryclass = {cs},
  eprint = {2205.14135},
  month = {June},
@@ -156,7 +187,7 @@ Neither ever requires an \(N \times  N\) intermediate.
 <li class="meta-item">May 27, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The forward pass of <span xmlns="" class="link local"><a href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness [daoFlashAttentionFastMemoryEfficient2022]">flash attention</a></span> avoids materializing the \(N \times  N\) attention matrix by streaming an online softmax. The backward pass has to pull the same trick twice over, because the naive gradient computation wants <em>two</em> \(N \times  N\) matrices — \(\mathbf {P}\) and \(d\mathbf {P}\). Getting there means first writing down every gradient we need, then finding a way to recompute rather than store each one.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(70, 100, 150, 0.75);   border-radius: var(--radius);   background-color: rgba(70, 100, 150, 0.05);   "><span style="font-weight: 600; color: rgba(70, 100, 150, 0.75);">Notation.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Notation.</span> 
 Following the notation in the <span xmlns="" class="link local"><a href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness [daoFlashAttentionFastMemoryEfficient2022]">original paper</a></span>,
 \[\mathbf {S} = \mathbf {Q} \mathbf {K}^T, \quad  \mathbf {P} = \mathrm {softmax}(\mathbf {S}), \quad  \mathbf {O} = \mathbf {P} \mathbf {V},\]
 where \(\mathbf {Q}, \mathbf {K}, \mathbf {V}, \mathbf {O}\) are \(N \times  d\) and \(\mathbf {S}, \mathbf {P}\) are \(N \times  N\). For a scalar loss \(\phi \) we abbreviate the gradient with respect to any matrix \(\mathbf {X}\) as
@@ -234,13 +265,15 @@ and write \(\mathbf {L}_i\) for the softmax denominator of row \(i\) saved by th
 </ul></div></header></summary>
 <p xmlns="http://www.w3.org/1999/xhtml">Every gradient above is expressed through \(\mathbf {P}_{ij}\) and \(d\mathbf {P}_{ij}\), both \(N \times  N\). Materializing either one is exactly the quadratic memory cost the forward pass went to such lengths to avoid, so the backward pass has to be able to produce those entries on demand.</p>
 
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 160, 175, 0.9);   border-radius: var(--radius);   background-color: rgba(0, 160, 175, 0.06);   "><span style="font-weight: 600; color: rgba(0, 160, 175, 0.9);">💡 Insight.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Insight.</span> 
 Both are recoverable from the \(N \times  d\) tensors already resident in memory. The forward pass saved \(\mathbf {L}\), so
 \[\mathbf {P}_{ij} = \frac {\exp  \left (\mathbf {Q}_{i} \cdot  \mathbf {K}_{j}\right )}{\mathbf {L}_{i}},\]
 and \(d\mathbf {P}\) is just an inner product of two rows,
 \[d\mathbf {P}_{ij} = \sum _{k} d\mathbf {O}_{ik} \mathbf {V}_{jk} = d\mathbf {O}_{i} \cdot  \mathbf {V}_j.\]
 Neither ever requires an \(N \times  N\) intermediate.
 </div>
+
 
 <p xmlns="http://www.w3.org/1999/xhtml">Substituting both into the previous section leaves \(d\mathbf {Q}\) and \(d\mathbf {K}\) in terms of \(\mathbf {Q}\), \(\mathbf {K}\), \(\mathbf {V}\), \(d\mathbf {O}\), \(\mathbf {L}\), and \(\mathbf {D}\) alone:</p>
 \[
@@ -298,7 +331,8 @@ Neither ever requires an \(N \times  N\) intermediate.
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The softmax function \(\mathrm {softmax}: \mathbb {R}^d \to  \mathbb {R}^d\) is defined by
 \[\mathrm {softmax}(\mathbf {x})_i = \frac {e^{x_i}}{\sum _{j = 1}^{d} e^{x_j}}\]</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(140, 60, 170, 0.8);   border-radius: var(--radius);   background-color: rgba(140, 60, 170, 0.05);   "><span style="font-weight: 600; color: rgba(140, 60, 170, 0.8);">Claim.</span> 
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(110, 67, 101);   "><span style="font-weight: 500; color: rgb(110, 67, 101);">Claim.</span> 
   The Jacobian of the softmax function for \(\mathbf {y} = \mathrm {softmax}(\mathbf {x})\) is given by
   \[
     \begin {align*}
@@ -313,9 +347,11 @@ Neither ever requires an \(N \times  N\) intermediate.
   \]
 </div>
 
+
   
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(0, 0, 0, 0.4);   border-radius: var(--radius);   background-color: rgba(0, 0, 0, 0.03);   "><span style="font-weight: 600; color: rgba(0, 0, 0, 0.4);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 600; color: rgba(0, 0, 0, 0.4);">Proof.</span></summary>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(109, 103, 101);   "><span style="font-weight: 500; color: rgb(109, 103, 101);"></span> 
+  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(109, 103, 101);">Proof.</span></summary>
     Write \(y_i = e^{x_i} / S\) with \(S = \sum _{k=1}^{d} e^{x_k}\), so that \(\partial  S / \partial  x_j = e^{x_j}\). By the quotient rule,
 \[
     \begin {align*}
@@ -329,6 +365,7 @@ Neither ever requires an \(N \times  N\) intermediate.
     Collecting these entries into a matrix, the diagonal contributes \(y_i\) along \(\mathrm {diag}(\mathbf {y})\) and the \(-y_i y_j\) term is the outer product \(\mathbf {y}\mathbf {y}^\top \), giving \(J = \mathrm {diag}(\mathbf {y}) - \mathbf {y}\mathbf {y}^\top \).
 </details>
 </div>
+
 
 </details></section>
       </details></section>

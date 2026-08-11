@@ -21,76 +21,66 @@
   <html:li>Decoding stage: sequential -&gt; bottleneck!</html:li></html:ul><html:p>As batch size increases, the <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanarios.com/TJLA/" display-uri="TJLA" type="local">KV-cache</fr:link> dominates memory usage.</html:p><html:ul><html:li>KV cache size grows with context length.</html:li>
   <html:li>Tradeoff between context length and batch size.</html:li></html:ul>
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
 Unlike fully-connected cannot batch self-attention because it depends on the individual prompts.
 </html:div>
 <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Recall.</html:strong> operational intensity is <fr:tex display="block"><![CDATA[\frac {\text {compute throughput}}{\text {memory bandwidth}}]]></fr:tex></html:p><html:p><html:strong>Inference much lower operational intensity than GEMM!</html:strong></html:p><html:ul><html:li>Inference only doing matrix <fr:tex display="inline"><![CDATA[\times ]]></fr:tex> row</html:li>
   <html:li>If embedding dim is <fr:tex display="inline"><![CDATA[D]]></fr:tex>, then this is only <fr:tex display="inline"><![CDATA[D]]></fr:tex> ops / byte.</html:li></html:ul><html:p>Processing in memory (PIM) enables faster memory bandwidth.</html:p>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 55, 45, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(200, 55, 45, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> Has lower memory capacity (fewer GB) due to added processing units (PU).
-</html:div>
-
   
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(40, 150, 80, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(40, 150, 80, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);" /> 
-  <html:details><html:summary><html:span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span></html:summary>Use Compute eXpress Link (CXL) to do memory expansion to get high memory bandwidth + expend memory capacity.</html:details>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(121, 65, 66);
+  "><html:span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</html:span> Has lower memory capacity (fewer GB) due to added processing units (PU).
 </html:div>
 
 
+  
+  
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(121, 65, 66);
+  "><html:span style="font-weight: 500; color: rgb(121, 65, 66);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-weight: 500; color: rgb(121, 65, 66);">Solution.</html:span></html:summary>Use Compute eXpress Link (CXL) to do memory expansion to get high memory bandwidth + expend memory capacity.</html:details>
+</html:div>
+
+
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
 Put high use operations i.e. vector multiplication, element-wise multiplication in PIM module (99% usage). Put more complicated operations on PNM accelerator. TODO: ISAs for each specified on slides (not available yet).
 </html:div>
 
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
 CENT supports inter and intra-device communication via connecting communication controller to shared buffer and CXL port.
 </html:div>
 <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Communcation primitives.</html:strong> multicast and gather</html:p><html:ul><html:li>Multicast: send to all CXL devices.</html:li>
   <html:li>Gather: receive data sequentially from all CXL devices.</html:li>
   <html:li>Multicsat-gather -&gt; tensor parallel.</html:li></html:ul><html:p><html:em>Peer-to-peer:</html:em> can also support pipeline parallelism.</html:p>
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
 For fast communication, use tensor parallelism i.e. if connected via NVLink. If slower communication use pipeline parallelism. Can mix.
 </html:div>
 
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
 Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not scale. Cannot arbitrarily add PIM.
 </html:div>
 </fr:mainmatter>
@@ -146,6 +136,247 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
                 <fr:title text="TPU Architecture">TPU Architecture</fr:title>
               </fr:frontmatter>
               <fr:mainmatter>
+                <fr:tree show-metadata="false">
+                  <fr:frontmatter>
+                    <fr:authors>
+                      <fr:author>
+                        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                      </fr:author>
+                    </fr:authors>
+                    <fr:date>
+                      <fr:year>2026</fr:year>
+                      <fr:month>8</fr:month>
+                      <fr:day>10</fr:day>
+                    </fr:date>
+                    <fr:uri>https://kellenkanarios.com/676P/</fr:uri>
+                    <fr:display-uri>676P</fr:display-uri>
+                    <fr:route>/676P/</fr:route>
+                    <fr:title text="TPU specs">TPU specs</fr:title>
+                  </fr:frontmatter>
+                  <fr:mainmatter><html:p>Per-chip and per-pod numbers for each generation of <fr:link href="/NZZ7/" title="TPU Architecture" uri="https://kellenkanarios.com/NZZ7/" display-uri="NZZ7" type="local">TPU</fr:link>, from the <fr:link href="/scaling-book/" title="How to scale your model" uri="https://kellenkanarios.com/scaling-book/" display-uri="scaling-book" type="local">Scaling Book</fr:link>. <html:em>Pod size</html:em> is the ICI topology of a full slice; <html:em>host size</html:em> is the chips hanging off a single CPU host.</html:p>
+  <html:div style="
+    overflow-x: auto;
+    max-width: 100%;
+  ">
+    <html:table>
+
+  <html:tr>
+  
+  <html:th>Model</html:th>
+
+  
+  <html:th>Pod size</html:th>
+
+  
+  <html:th>Host size</html:th>
+
+  
+  <html:th>HBM/chip</html:th>
+
+  
+  <html:th>HBM BW/chip (bytes/s)</html:th>
+
+  
+  <html:th>FLOPs/s/chip (bf16)</html:th>
+
+  
+  <html:th>FLOPs/s/chip (int8)</html:th>
+
+</html:tr>
+
+
+  <html:tr>
+  <html:td style="white-space: nowrap;">TPU v3</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[32 \times  32]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[4 \times  2]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;">32GB</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[9.0e11]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[1.4e14]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[1.4e14]]></fr:tex></html:td>
+</html:tr>
+
+
+  <html:tr>
+  <html:td style="white-space: nowrap;">TPU v4p</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[16 \times  16 \times  16]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[2 \times  2 \times  1]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;">32GB</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[1.2e12]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[2.75e14]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[2.75e14]]></fr:tex></html:td>
+</html:tr>
+
+
+  <html:tr>
+  <html:td style="white-space: nowrap;">TPU v5p</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[16 \times  20 \times  28]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[2 \times  2 \times  1]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;">96GB</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[2.8e12]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[4.59e14]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[9.18e14]]></fr:tex></html:td>
+</html:tr>
+
+
+  <html:tr>
+  <html:td style="white-space: nowrap;">TPU v5e</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[16 \times  16]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[4 \times  2]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;">16GB</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[8.2e11]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[1.97e14]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[3.94e14]]></fr:tex></html:td>
+</html:tr>
+
+
+  <html:tr>
+  <html:td style="white-space: nowrap;">TPU v6e</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[16 \times  16]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[4 \times  2]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;">32GB</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[1.6e12]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[9.20e14]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[1.84e15]]></fr:tex></html:td>
+</html:tr>
+
+
+  <html:tr>
+  <html:td style="white-space: nowrap;">TPU7x</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[4 \times  4 \times  576]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[2 \times  2 \times  1]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;">192GB</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[7.4e12]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[2.30e15]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[4.61e15]]></fr:tex></html:td>
+</html:tr>
+
+</html:table>
+  </html:div>
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> The int8 column only doubles from v5p onward — v3 and v4p run int8 through the <fr:link href="/OGCRP/" title="Matrix Multiply Unit (MXU)" uri="https://kellenkanarios.com/OGCRP/" display-uri="OGCRP" type="local">MXU</fr:link> at the same rate as bf16, so quantizing there saves memory traffic but buys no extra OPs/s. The ratio of a FLOPs/s column to the HBM bandwidth column is the <fr:link href="/scaling-ch1/" title="Scaling Book: Exercises › All about rooflines" uri="https://kellenkanarios.com/scaling-ch1/" display-uri="scaling-ch1" type="local">roofline</fr:link> ridge point: on v5e, <fr:tex display="inline"><![CDATA[3.94e14 / 8.2e11 \approx  480]]></fr:tex>, i.e. batch <fr:tex display="inline"><![CDATA[240]]></fr:tex> in the <fr:tex display="inline"><![CDATA[2B]]></fr:tex> arithmetic-intensity approximation.</html:div>
+<html:p>Interconnect bandwidth is quoted per <html:em>link</html:em>, not per chip — multiply by the number of neighbors a chip has in the topology above to get its aggregate off-chip bandwidth.</html:p>
+  <html:div style="
+    overflow-x: auto;
+    max-width: 100%;
+  ">
+    <html:table>
+
+  <html:tr>
+  
+  <html:th>Model</html:th>
+
+  
+  <html:th>ICI BW/link (one-way, bytes/s)</html:th>
+
+  
+  <html:th>ICI BW/link (bidi, bytes/s)</html:th>
+
+</html:tr>
+
+
+  <html:tr>
+  <html:td style="white-space: nowrap;">TPU v3</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[1.0e11]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[2.0e11]]></fr:tex></html:td>
+</html:tr>
+
+
+  <html:tr>
+  <html:td style="white-space: nowrap;">TPU v4p</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[4.5e10]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[9.0e10]]></fr:tex></html:td>
+</html:tr>
+
+
+  <html:tr>
+  <html:td style="white-space: nowrap;">TPU v5p</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[9.0e10]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[1.8e11]]></fr:tex></html:td>
+</html:tr>
+
+
+  <html:tr>
+  <html:td style="white-space: nowrap;">TPU v5e</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[4.5e10]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[9.0e10]]></fr:tex></html:td>
+</html:tr>
+
+
+  <html:tr>
+  <html:td style="white-space: nowrap;">TPU v6e</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[9.0e10]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[1.8e11]]></fr:tex></html:td>
+</html:tr>
+
+
+  <html:tr>
+  <html:td style="white-space: nowrap;">TPU7x</html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[9.0e10]]></fr:tex></html:td>
+
+  <html:td style="white-space: nowrap;"><fr:tex display="inline"><![CDATA[1.8e11]]></fr:tex></html:td>
+</html:tr>
+
+</html:table>
+  </html:div>
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> The bidi column is exactly <fr:tex display="inline"><![CDATA[2 \times ]]></fr:tex> the one-way column in every row, so it carries no extra information — it only names whether you are counting both directions of the link. Which one belongs in a cost model depends on the collective: a ring all-reduce drives both directions at once, a one-directional shift does not. Note also that v3 has the highest per-link bandwidth in the table but the smallest neighbor count, since a <fr:tex display="inline"><![CDATA[32 \times  32]]></fr:tex> pod is a 2D torus — four neighbors per chip rather than the six a 3D torus gives.</html:div>
+</fr:mainmatter>
+                </fr:tree>
                 <fr:tree show-metadata="false">
                   <fr:frontmatter>
                     <fr:authors>
@@ -215,20 +446,18 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
                     <fr:title text="Matrix Multiply Unit (MXU)">Matrix Multiply Unit (MXU)</fr:title>
                     <fr:taxon>Definition</fr:taxon>
                   </fr:frontmatter>
-                  <fr:mainmatter><html:p>A core component of the <fr:link href="/NZZ7/" title="TPU Architecture" uri="https://kellenkanarios.com/NZZ7/" display-uri="NZZ7" type="local">TPU architecture</fr:link> responsible for performing matrix multiplication via a <html:em>systolic array</html:em>.</html:p><html:ul><html:li>256x256 totaling 65,536 <html:em>multiply accumulate</html:em> units i.e. each unit can multiply and add in one cycle.</html:li></html:ul>
+                  <fr:mainmatter><html:p>A core component of the <fr:link href="/NZZ7/" title="TPU Architecture" uri="https://kellenkanarios.com/NZZ7/" display-uri="NZZ7" type="local">TPU architecture</fr:link> responsible for performing matrix multiplication via a weight stationary <fr:link href="/SXP6/" title="Systolic array" uri="https://kellenkanarios.com/SXP6/" display-uri="SXP6" type="local">Systolic array</fr:link>.</html:p><html:ul><html:li><fr:tex display="inline"><![CDATA[128 \times  128]]></fr:tex> — 16,384 <html:em>multiply accumulate</html:em> units, each multiplying and adding in one cycle. v6e/Trillium widens the array to <fr:tex display="inline"><![CDATA[256 \times  256]]></fr:tex>, i.e. 65,536.</html:li>
+  <html:li>The native op is one <html:code>bf16[8,128] @ bf16[128,128] -&gt; f32[8,128]</html:code> every 8 cycles, or about <fr:tex display="inline"><![CDATA[5e13]]></fr:tex> bf16 FLOPs/s per MXU at 1.5 GHz. A v5e chip has enough MXUs to reach ~<fr:tex display="inline"><![CDATA[2e14]]></fr:tex>.</html:li></html:ul>
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
-Can only do 256x256 matrix multiplication, so the order is 
-<html:ol><html:li>Tiling the matrix to load from HBM to VMEM</html:li>
-  <html:li>Compiler tiles from VMEM to 256x256 tiles to load into MXU.</html:li></html:ol>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+The side length is fixed in hardware, so every dimension has to be tiled down to it and any axis shorter than it is padded up to it, wasting the FLOPs spent on the padding. The order is
+<html:ol><html:li>Tiling the matrix to load from <fr:link href="/AI2G/" title="High bandwidth memory" uri="https://kellenkanarios.com/AI2G/" display-uri="AI2G" type="local">HBM</fr:link> to <fr:link href="/GFK2/" title="VMEM" uri="https://kellenkanarios.com/GFK2/" display-uri="GFK2" type="local">VMEM</fr:link>.</html:li>
+  <html:li>Compiler tiles from VMEM to <fr:tex display="inline"><![CDATA[128 \times  128]]></fr:tex> tiles to load into the MXU.</html:li></html:ol>
 </html:div>
-<html:figure><html:img width="30%" src="/bafkrmickrnx5efnigkyxbpwks6lud2meikoqmsfy2llhy6lvb2y2bccpia.png" />
-<html:figcaption>Note the input are offset so that the result from the first column can be accumulated int the second column. Can compute matmul in <fr:tex display="inline"><![CDATA[2n - 1]]></fr:tex> cycles.</html:figcaption></html:figure></fr:mainmatter>
+</fr:mainmatter>
                 </fr:tree>
               </fr:mainmatter>
             </fr:tree>
@@ -253,76 +482,66 @@ Can only do 256x256 matrix multiplication, so the order is
   <html:li>Decoding stage: sequential -&gt; bottleneck!</html:li></html:ul><html:p>As batch size increases, the <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanarios.com/TJLA/" display-uri="TJLA" type="local">KV-cache</fr:link> dominates memory usage.</html:p><html:ul><html:li>KV cache size grows with context length.</html:li>
   <html:li>Tradeoff between context length and batch size.</html:li></html:ul>
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
 Unlike fully-connected cannot batch self-attention because it depends on the individual prompts.
 </html:div>
 <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Recall.</html:strong> operational intensity is <fr:tex display="block"><![CDATA[\frac {\text {compute throughput}}{\text {memory bandwidth}}]]></fr:tex></html:p><html:p><html:strong>Inference much lower operational intensity than GEMM!</html:strong></html:p><html:ul><html:li>Inference only doing matrix <fr:tex display="inline"><![CDATA[\times ]]></fr:tex> row</html:li>
   <html:li>If embedding dim is <fr:tex display="inline"><![CDATA[D]]></fr:tex>, then this is only <fr:tex display="inline"><![CDATA[D]]></fr:tex> ops / byte.</html:li></html:ul><html:p>Processing in memory (PIM) enables faster memory bandwidth.</html:p>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 55, 45, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(200, 55, 45, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(200, 55, 45, 0.85);">Problem.</html:span> Has lower memory capacity (fewer GB) due to added processing units (PU).
-</html:div>
-
   
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(40, 150, 80, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(40, 150, 80, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(40, 150, 80, 0.9);" /> 
-  <html:details><html:summary><html:span class="foldout" style="font-weight: 600; color: rgba(40, 150, 80, 0.9);">Solution.</html:span></html:summary>Use Compute eXpress Link (CXL) to do memory expansion to get high memory bandwidth + expend memory capacity.</html:details>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(121, 65, 66);
+  "><html:span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</html:span> Has lower memory capacity (fewer GB) due to added processing units (PU).
 </html:div>
 
 
+  
+  
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(121, 65, 66);
+  "><html:span style="font-weight: 500; color: rgb(121, 65, 66);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-weight: 500; color: rgb(121, 65, 66);">Solution.</html:span></html:summary>Use Compute eXpress Link (CXL) to do memory expansion to get high memory bandwidth + expend memory capacity.</html:details>
+</html:div>
+
+
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
 Put high use operations i.e. vector multiplication, element-wise multiplication in PIM module (99% usage). Put more complicated operations on PNM accelerator. TODO: ISAs for each specified on slides (not available yet).
 </html:div>
 
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
 CENT supports inter and intra-device communication via connecting communication controller to shared buffer and CXL port.
 </html:div>
 <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Communcation primitives.</html:strong> multicast and gather</html:p><html:ul><html:li>Multicast: send to all CXL devices.</html:li>
   <html:li>Gather: receive data sequentially from all CXL devices.</html:li>
   <html:li>Multicsat-gather -&gt; tensor parallel.</html:li></html:ul><html:p><html:em>Peer-to-peer:</html:em> can also support pipeline parallelism.</html:p>
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
 For fast communication, use tensor parallelism i.e. if connected via NVLink. If slower communication use pipeline parallelism. Can mix.
 </html:div>
 
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
 Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not scale. Cannot arbitrarily add PIM.
 </html:div>
 </fr:mainmatter>

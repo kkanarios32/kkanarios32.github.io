@@ -31,18 +31,35 @@ window.addEventListener('load', function () {
 <li class="meta-item"><a class="link external" href="https://arxiv.org/abs/1911.02150">https://arxiv.org/abs/1911.02150</a></li>
 </ul>
 </div></header></summary><pre>@misc{shazeerFastTransformerDecoding2019,
- title = {Fast {{Transformer Decoding}}: {{One Write-Head}} Is {{All You Need}}},
+ title = {Fast {{Transformer Decoding}}: {{One Write-Head}} Is {{All You Need}}
+},
  author = {Shazeer, Noam},
  year = {2019},
  doi = {10.48550/arXiv.1911.02150},
  urldate = {2025-07-14},
  number = {arXiv:1911.02150},
  publisher = {arXiv},
- file = {/home/kellen/Downloads/papers/Fast Transformer Decoding One Write-Head is All You Need - Shazeer.pdf},
- keywords = {Computer Science - Computation and Language,Computer Science - Machine Learning,Computer Science - Neural and Evolutionary Computing},
+ file = {/home/kellen/Downloads/papers/Fast Transformer Decoding One Write-Head
+is All You Need - Shazeer.pdf},
+ keywords = {Computer Science - Computation and Language,Computer Science -
+Machine Learning,Computer Science - Neural and Evolutionary
+Computing},
  langid = {english},
  archiveprefix = {arXiv},
- abstract = {Multi-head attention layers, as used in the Transformer neural sequence model, are a powerful alternative to RNNs for moving information across and between sequences. While training these layers is generally fast and simple, due to parallelizability across the length of the sequence, incremental inference (where such paralleization is impossible) is often slow, due to the memory-bandwidth cost of repeatedly loading the large "keys" and "values" tensors. We propose a variant called multi-query attention, where the keys and values are shared across all of the different attention "heads", greatly reducing the size of these tensors and hence the memory bandwidth requirements of incremental decoding. We verify experimentally that the resulting models can indeed be much faster to decode, and incur only minor quality degradation from the baseline.},
+ abstract = {Multi-head attention layers, as used in the Transformer neural
+sequence model, are a powerful alternative to RNNs for moving
+information across and between sequences. While training these
+layers is generally fast and simple, due to parallelizability
+across the length of the sequence, incremental inference (where
+such paralleization is impossible) is often slow, due to the
+memory-bandwidth cost of repeatedly loading the large "keys" and "
+values" tensors. We propose a variant called multi-query attention,
+where the keys and values are shared across all of the different
+attention "heads", greatly reducing the size of these tensors and
+hence the memory bandwidth requirements of incremental decoding. We
+verify experimentally that the resulting models can indeed be much
+faster to decode, and incur only minor quality degradation from the
+baseline.},
  primaryclass = {cs},
  eprint = {1911.02150},
  month = {November},
@@ -71,11 +88,11 @@ This gives high arithmetic intensity
 \[O\left (\left (\frac {n}{d} + \frac {1}{b}\right )^{-1}\right ),\]
 which requires large batch and short sequence length.
 </p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 I believe we just ignore the softmax memory contribution in the inference case because it does not scale with \(n\) anymore as we are computing the logits just for the next token. Therefore, it becomes a \(\frac {d}{h}\) term, which we can safely ignore?
 </div>
 <p xmlns="http://www.w3.org/1999/xhtml">The key is that the \(\frac {n}{d}\) term comes from the \(bn^2d\) term, where we are loading \(h\) \((b \times  n \times  d / h)\) \(K\) and \(V\) matrices \(n\) times. Thus, we can improve the \(\frac {n}{d}\) term by a factor of \(h\) by simply not using a different \(K\) and \(V\) matrix for each head. This is the entire idea behind <span xmlns="" class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">MQA</a></span>.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1em 0 1em 0.25em;   padding: 0.5em 1.1em 0.5em 1.2em;   border-left: 4px solid rgba(90, 90, 110, 0.7);   border-radius: var(--radius);   background-color: rgba(90, 90, 110, 0.05);   "><span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</span> 
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Similar to the <span xmlns="" class="link local"><a href="/TJLA/" title="KV-cache [TJLA]">KV-cache</a></span>, we still can use \(h\) \(Q\) matrices because we do not need to load \(n\) of them into memory because only the last one matters for inference.
 </div>
 <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>

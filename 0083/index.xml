@@ -56,13 +56,13 @@
             <fr:title text="Normalizing Flows">Normalizing Flows</fr:title>
           </fr:frontmatter>
           <fr:mainmatter><html:p>Brief notes on <fr:link href="/rezendeVariationalInferenceNormalizing/" title="Variational Inference with Normalizing Flows" uri="https://kellenkanarios.com/rezendeVariationalInferenceNormalizing/" display-uri="rezendeVariationalInferenceNormalizing" type="local">Variational Inference with Normalizing Flows</fr:link> to motivate <fr:link href="/008A/" title="Flow Matching: What, Why, and How?" uri="https://kellenkanarios.com/008A/" display-uri="008A" type="local">flow matching</fr:link>.</html:p>
+  
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(190, 50, 130, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(190, 50, 130, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</html:span> We are concerned with the problem of <html:em>density estimation</html:em>. Given a dataset <fr:tex display="inline"><![CDATA[\mathcal {X}]]></fr:tex>, consisting of samples <fr:tex display="inline"><![CDATA[\mathbf {x}_i \sim  p(\mathbf {x})]]></fr:tex>, we want to learn <fr:tex display="inline"><![CDATA[p(\mathbf {x})]]></fr:tex>.</html:div>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Goal.</html:span> We are concerned with the problem of <html:em>density estimation</html:em>. Given a dataset <fr:tex display="inline"><![CDATA[\mathcal {X}]]></fr:tex>, consisting of samples <fr:tex display="inline"><![CDATA[\mathbf {x}_i \sim  p(\mathbf {x})]]></fr:tex>, we want to learn <fr:tex display="inline"><![CDATA[p(\mathbf {x})]]></fr:tex>.</html:div>
+
 <html:p>One popular way to do this is via <html:em>variational inference</html:em>. As a brief recap, in variational inference, we assume that there is actually a joint distribution <fr:tex display="inline"><![CDATA[p(\mathbf {x}, \mathbf {z})]]></fr:tex>, where <fr:tex display="inline"><![CDATA[\mathbf {z}]]></fr:tex> is a <fr:link href="/0083/" title="Latent Variable" uri="https://kellenkanarios.com/0083/" display-uri="0083" type="local">latent variable</fr:link>. We then find <fr:tex display="inline"><![CDATA[p(\mathbf {x})]]></fr:tex> by maximizing the log-likelihood <fr:tex display="inline"><![CDATA[\log  \int  p(\mathbf {x} \mid  \mathbf {z}) \mathrm {d}\mathbf {z}]]></fr:tex></html:p><html:p>
  For an example of this, see my post on <fr:link href="/0088/" title="Expectation Maximization" uri="https://kellenkanarios.com/0088/" display-uri="0088" type="local">expectation maximization</fr:link>. In that post, we utilize the <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link> to learn a latent variable model <fr:tex display="inline"><![CDATA[q_{\phi }(\mathbf {z} | \mathbf {x})]]></fr:tex>. As discussed in my post on <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link>, in order to learn <fr:tex display="inline"><![CDATA[p(\mathbf {x})]]></fr:tex>, we must have that <fr:tex display="inline"><![CDATA[p(\mathbf {z} | \mathbf {x})]]></fr:tex> is in the family <fr:tex display="inline"><![CDATA[q_{\phi }]]></fr:tex>. However, <fr:tex display="inline"><![CDATA[q_
  {\phi }]]></fr:tex> is usually a Gaussian parametrized by <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>, so that we can easily learn <fr:tex display="inline"><![CDATA[\phi ]]></fr:tex>. In this case, it is very unlikely that <fr:tex display="inline"><![CDATA[p(\mathbf {z} \mid  x)]]></fr:tex> lies in the family of <fr:tex display="inline"><![CDATA[q_{\phi }]]></fr:tex> and therefore we have no hope of learning the true <fr:tex display="inline"><![CDATA[p(\mathbf {x})]]></fr:tex>.
@@ -89,43 +89,41 @@
           <fr:mainmatter><html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Setup.</html:strong>
 We are given a joint distribution <fr:tex display="inline"><![CDATA[p(X, Z; \theta )]]></fr:tex>, where <fr:tex display="inline"><![CDATA[X]]></fr:tex> and <fr:tex display="inline"><![CDATA[Z]]></fr:tex> are random variables with their joint parametrized by <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex>. We are also given a dataset <fr:tex display="inline"><![CDATA[\mathcal {D}]]></fr:tex> containing realizations of <html:strong>only</html:strong> <fr:tex display="inline"><![CDATA[X]]></fr:tex> i.e. <fr:tex display="inline"><![CDATA[Z]]></fr:tex> is a <fr:link href="/0083/" title="Latent Variable" uri="https://kellenkanarios.com/0083/" display-uri="0083" type="local">latent random variable</fr:link>.
   </html:p>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(190, 50, 130, 0.85);
-  border-radius: var(--radius);
-  background-color: rgba(190, 50, 130, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(190, 50, 130, 0.85);">Goal.</html:span> We want to learn <fr:tex display="inline"><![CDATA[p(x; \theta )]]></fr:tex>.</html:div>
-<html:p> However, <fr:tex display="block"><![CDATA[p(x; \theta ) = \int  p(x, z; \theta ) \mathrm {d}z = \int  p(x | z; \theta )p(z) \mathrm {d}z,]]></fr:tex> which is computationally intractable for most continuous <fr:tex display="inline"><![CDATA[Z]]></fr:tex>.</html:p>
- <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(200, 130, 0, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(200, 130, 0, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(200, 130, 0, 0.9);">Question.</html:span> Can we update <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> for a given realization of <fr:tex display="inline"><![CDATA[x]]></fr:tex> and <fr:tex display="inline"><![CDATA[z]]></fr:tex>?</html:div>
-
   
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(0, 140, 120, 0.9);
-  border-radius: var(--radius);
-  background-color: rgba(0, 140, 120, 0.06);
-  "><html:span style="font-weight: 600; color: rgba(0, 140, 120, 0.9);" /> 
-  <html:details><html:summary><html:span class="foldout" style="font-weight: 600; color: rgba(0, 140, 120, 0.9);">Answer.</html:span></html:summary>Yes!!!</html:details>
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Goal.</html:span> We want to learn <fr:tex display="inline"><![CDATA[p(x; \theta )]]></fr:tex>.</html:div>
+
+<html:p> However, <fr:tex display="block"><![CDATA[p(x; \theta ) = \int  p(x, z; \theta ) \mathrm {d}z = \int  p(x | z; \theta )p(z) \mathrm {d}z,]]></fr:tex> which is computationally intractable for most continuous <fr:tex display="inline"><![CDATA[Z]]></fr:tex>.</html:p>
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);">Question.</html:span> Can we update <fr:tex display="inline"><![CDATA[\theta ]]></fr:tex> for a given realization of <fr:tex display="inline"><![CDATA[x]]></fr:tex> and <fr:tex display="inline"><![CDATA[z]]></fr:tex>?</html:div>
+
+
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-weight: 500; color: rgb(115, 73, 35);">Answer.</html:span></html:summary>Yes!!!</html:details>
 </html:div>
+
 
 <html:p><html:strong style="font-family: var(--sans); font-weight: 500;">Motivation.</html:strong> Suppose we had some <fr:tex display="inline"><![CDATA[q(z)]]></fr:tex> that we could sample realizations of <fr:tex display="inline"><![CDATA[Z]]></fr:tex> from. Then we want to find some reasonable <fr:tex display="inline"><![CDATA[\ell _{\theta }]]></fr:tex>, such that
 <fr:tex display="block"><![CDATA[\theta ^* \approx  \arg \max _{\theta } \mathbb {E}_{x, \sim  p(x; \theta ^*), z \sim  q(z)}[\ell _{\theta }(X, Z)]]]></fr:tex>
 
  <html:div class="jms-callout" style="
-  margin: 1em 0 1em 0.25em;
-  padding: 0.5em 1.1em 0.5em 1.2em;
-  border-left: 4px solid rgba(90, 90, 110, 0.7);
-  border-radius: var(--radius);
-  background-color: rgba(90, 90, 110, 0.05);
-  "><html:span style="font-weight: 600; color: rgba(90, 90, 110, 0.7);">Remark.</html:span> 
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
 <fr:tex display="inline"><![CDATA[q(z)]]></fr:tex> can potentially (and will) depend on the sample <fr:tex display="inline"><![CDATA[x_i]]></fr:tex>. This is OK because we are given <fr:tex display="inline"><![CDATA[x_i]]></fr:tex>'s, which we can then just pass to <fr:tex display="inline"><![CDATA[q]]></fr:tex> to get the corresponding <fr:tex display="inline"><![CDATA[z_i]]></fr:tex>.
 </html:div>
 

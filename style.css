@@ -74,6 +74,20 @@
      the \paragraph run-in labels. Swap this one value to change the site's
      sans; the serif body font is set directly on `body`. */
   --sans: 'Hanken Grotesk';
+
+  /* The two palette values the theme draws itself, mirrored from \paper and
+     \cal-algorithm in trees/evergreen/base-macros.tree, which is the source of
+     truth — the callouts are inline-styled from there and cannot see a CSS
+     variable. Only these two are restated: the page ground, which is no
+     macro's to set, and the Card accent, which keys off a taxon that no macro
+     can reach. Everything else colored on this site is a callout, and a
+     callout is a macro's job. Held as bare triples for the same reason
+     base-macros holds them that way — rgb(var(--cal-algorithm)) and
+     rgba(var(--cal-algorithm), 0.4) then come off one definition instead of
+     two. Change them in both places or not at all. Nothing here fills, so no
+     tint is restated; the palette's tints live in base-macros alone. */
+  --paper: 253, 251, 247;
+  --cal-algorithm: 63, 83, 127;
 }
 
 h1,
@@ -249,6 +263,10 @@ table.hljs-ln {
 }
 
 body {
+  /* Vellum, not white. The callout tints are mixed against this ground, so the
+     page and its asides sit in one light rather than reading as paper laid on
+     a screen. */
+  background: rgb(var(--paper));
   font-family: XCharter, Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
   font-size: 12pt;
   line-height: 1.55;
@@ -352,14 +370,48 @@ section section[data-taxon="Person"]>details>summary>header>h1>.taxon {
   display: none;
 }
 
-/* Spaced-repetition cards (trees/cards/, \taxon{Card}) carry no block styling
-   of their own. They used to be painted as a blue flashcard, question and
-   answer together, which fought with every other taxon on the page and gave
-   away the answer besides. A card is structurally an exercise — a question
-   whose answer you should attempt before reading — so it now renders like
-   one: an ordinary taxon heading with the answer behind \foldout's triangle
-   (see \prompt in base-macros). Nothing to style here; the fold-out rules
-   below do the work. */
+/* Spaced-repetition cards (trees/cards/, \taxon{Card}) get the same treatment
+   every callout gets — a rule in the margin, no fill, square — except that
+   this one runs the height of a whole block rather than a paragraph. A concept
+   note transcludes the cards that test it, so a card lands in the middle of
+   prose it is not part of; the rule is what says "this is a prompt, not the
+   next paragraph", and what holds the heading, the question and the folded
+   answer together when several cards stack up.
+
+   Unlike every other block treatment here it has to key off the taxon in the
+   theme, because a macro can only wrap the body: the heading it needs to
+   enclose is emitted from frontmatter, above anything \prompt can reach. The
+   answer inside (\prompt) draws the same blue, a card being one object rather
+   than a box with a stranger in it.
+
+   border-radius has to be said out loud. Two generic `.block` rules further
+   down round every block on the site, so a card left to itself comes out with
+   the corners the rest of the vellum work took off. */
+section[data-taxon="Card"] {
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(var(--cal-algorithm));
+  border-radius: 0;
+  background: none;
+}
+
+/* The label wears the rule's accent, the way a callout's label wears its own —
+   the two are one object, and a grey "Card" against a blue rule reads as two. */
+section[data-taxon="Card"] span.taxon {
+  color: rgb(var(--cal-algorithm));
+}
+
+/* With no fill the block's own margin is the gap below it, so the margins that
+   assume open air underneath double it: section.block>details supplies one,
+   and the answer callout carries \calloutbare's own. Same reasoning as
+   .jms-callout>details:has(>summary>.foldout) further down. */
+section.block[data-taxon="Card"]>details {
+  margin-bottom: 0;
+}
+
+section[data-taxon="Card"] .jms-callout:last-child {
+  margin-bottom: 0;
+}
 
 footer>section {
   margin-bottom: 1em;
@@ -574,6 +626,11 @@ section.block>details[open] {
   display: inline-block;
   /* Fixed box so the label does not shift sideways when the glyph swaps. */
   width: 1.1em;
+  /* A shade behind its label, whatever color that label happens to be — the
+     glyph is a hint, and at full strength a solid triangle out-weighs the word
+     it points at. As a fraction rather than a color it holds for the grey
+     control and for every callout accent alike. */
+  opacity: .7;
 }
 
 details[open]>summary>.foldout::before {
