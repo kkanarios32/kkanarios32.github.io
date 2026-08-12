@@ -68,7 +68,47 @@
   src: url('fonts/HankenGrotesk-Italic-Variable.woff2') format('woff2-variations');
 }
 
+/* Iosevka — code blocks and inline code. The stock cut, 0.5em advance: half
+   again narrower than the DejaVu Sans Mono it replaces, which is Iosevka's
+   whole reason for existing and what lets a long line of code sit inside this
+   measure without wrapping. The Extended cut (0.6em, the ordinary monospace
+   width) is the swap if these ever read as squeezed — same subsetting recipe,
+   pick the 'Extended' faces out of the TTC instead, no CSS change.
+
+   Subset to Latin-1 plus the punctuation, arrows, and box-drawing a code
+   block on this site actually uses, and cut to kern/ccmp/mark: Iosevka's
+   `calt` carries its programming ligatures (-> => != drawn as one glyph),
+   which are an editor affordance and a misreading hazard in prose you are
+   quoting from. 12-14KB a face. License: OFL, theme/LICENSES/Iosevka.txt */
+@font-face {
+  font-display: swap;
+  font-family: 'Iosevka';
+  font-style: normal;
+  font-weight: 400;
+  src: url('fonts/Iosevka-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Iosevka';
+  font-style: normal;
+  font-weight: 700;
+  src: url('fonts/Iosevka-Bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Iosevka';
+  font-style: italic;
+  font-weight: 400;
+  src: url('fonts/Iosevka-Italic.woff2') format('woff2');
+}
+
 :root {
+  /* One definition for the monospace stack, since code blocks, inline code,
+     and the code-block filename all have to agree. */
+  --mono: 'Iosevka', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
   --radius: 5px;
   /* Sans family for structural chrome — titles, wordmark, TOC, metadata, and
      the \paragraph run-in labels. Swap this one value to change the site's
@@ -78,8 +118,9 @@
   /* The palette values the theme draws itself, mirrored from \cal-* in
      trees/evergreen/base-macros.tree, which is the source of truth — the
      callouts are inline-styled from there and cannot see a CSS variable. Only
-     what the theme itself draws is restated: the rule under a code block, and
-     the Card accent, which keys off a taxon no macro can reach. Everything else colored on this site is a callout, and a
+     what the theme itself draws is restated: the neutral rule and ink the
+     chrome uses, and the Card accent, which keys off a taxon no macro can
+     reach. Everything else colored on this site is a callout, and a
      callout is a macro's job. Held as bare triples for the same reason
      base-macros holds them that way — rgb(var(--cal-algorithm)) and
      rgba(var(--cal-algorithm), 0.4) then come off one definition instead of
@@ -128,18 +169,26 @@ center {
   overflow-y: hidden;
 }
 
-/* Code blocks wear what every other block on the site wears: a hairline in
-   the margin, no fill, square. A <pre> needs no panel to be legible — the
-   monospace and the hard line breaks do that on their own — and a filled box
-   around every snippet in a systems note is most of what made those pages
-   read as a stack of blocks. Slightly more vertical padding than a callout
-   gets: code has no leading of its own to sit on. */
+/* Code blocks are the one thing on the page that keeps a panel. Everything
+   else dropped its fill under vellum, but code is not prose: it is a quoted
+   artifact with its own indentation, and a warm ground says so in a way a
+   margin rule cannot. The fill is a tint of the paper rather than a grey, so
+   it sits in the same family as the callout palette; the 1px border is what
+   keeps it from reading as a smudge on a white page.
+
+   Sized in em, not points, so it tracks the body — including down the
+   breakpoints, where body is the only thing that changes. 0.88 rather than
+   the 0.84 this started at because Iosevka's x-height is 0.52em against
+   DejaVu's 0.545: at the same nominal size it renders a notch smaller than
+   the fallback it replaced, and the ratio has to be read off the font that is
+   actually shipping. */
 pre {
-  border-radius: 0;
-  background: none;
-  border-left: 2px solid rgb(var(--cal-neutral-rule));
-  padding: 0.3rem 0 0.3rem 0.9rem;
-  font-size: 11pt;
+  background: #f6f4ee;
+  border: 1px solid #e4e1d8;
+  border-radius: 3px;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.88em;
+  line-height: 1.75;
   margin-top: 0em;
   overflow-x: auto;
   white-space: pre-wrap;
@@ -154,6 +203,7 @@ code {
   background-color: rgba(0, 100, 100, 0.04);
   padding: 0.2em;
   font-size: 0.9em;
+  font-family: var(--mono);
 }
 
 /* A <code> inside a <pre> (the \codeblock highlight.js target) must not carry
@@ -165,56 +215,49 @@ pre code.hljs {
   padding: 0;
   border-radius: 0;
   font-size: inherit;
+  font-family: var(--mono);
 }
 
-/* highlight.js token theme — a light, GitHub-flavored palette tuned to the
-   site's serif/teal aesthetic. Tied to the vendored highlight.min.js (run from
-   tree.xsl), so it lives here rather than in a base-macro. */
+/* highlight.js token theme. Four colors and a default, against the old
+   GitHub palette's eight — the red keywords and purple function names were
+   doing the loudest work on pages that are mostly code, and a page of code
+   with eight hues on it is a page you skim rather than read.
+
+   What survives is the distinction that is actually load-bearing when reading
+   an unfamiliar snippet: what is not code (comments, receded), what is
+   structure (keywords, slate), and what is a literal (strings olive, numbers
+   brown). Identifiers — function names, variables, parameters, types, tags —
+   are left at the body ink deliberately: they are the part you are reading,
+   and coloring them says nothing the position in the line does not.
+
+   Tied to the vendored highlight.min.js (run from tree.xsl), so it lives here
+   rather than in a base-macro. Anything highlight.js emits that is not named
+   below inherits, which is the intended default and not an oversight. */
 .hljs-comment,
-.hljs-quote {
-  color: #6a737d;
-  font-style: italic;
+.hljs-quote,
+.hljs-meta {
+  color: #96938b;
+  /* Upright. Italic monospace is a synthesized oblique in most of this stack,
+     and a whole leading comment block set in it is genuinely harder to read
+     than the code under it. The grey already says "not executed". */
+  font-style: normal;
 }
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-literal,
-.hljs-doctag {
-  color: #d73a49;
+.hljs-doctag,
+.hljs-built_in {
+  color: #3f4e6b;
 }
 .hljs-string,
 .hljs-regexp,
 .hljs-meta .hljs-string {
-  color: #032f62;
+  color: #5f6b3c;
 }
 .hljs-number,
-.hljs-built_in,
-.hljs-builtin-name,
-.hljs-attr,
 .hljs-symbol,
 .hljs-bullet {
-  color: #005cc5;
-}
-.hljs-title,
-.hljs-title.function_,
-.hljs-section,
-.hljs-name,
-.hljs-type,
-.hljs-class .hljs-title {
-  color: #6f42c1;
-}
-.hljs-variable,
-.hljs-template-variable,
-.hljs-params {
-  color: #e36209;
-}
-.hljs-tag,
-.hljs-selector-id,
-.hljs-selector-class {
-  color: #22863a;
-}
-.hljs-meta,
-.hljs-comment.hljs-doctag {
-  color: #6a737d;
+  color: #7a5a2b;
 }
 .hljs-emphasis {
   font-style: italic;
@@ -223,61 +266,65 @@ pre code.hljs {
   font-weight: 600;
 }
 
-/* Line-number gutter (highlightjs-line-numbers.js builds a two-column table
-   inside the highlighted <code>). Scoped to .hljs-ln so the global table/td
-   rules above don't apply their margins and cell padding. */
-table.hljs-ln {
-  margin: 0;
-  border-collapse: collapse;
-}
-.hljs-ln td {
-  padding: 0;
-  border: none;
-  vertical-align: top;
-  white-space: pre;
-}
-.hljs-ln-numbers {
-  text-align: right;
-  padding-right: 1em !important;
-  width: 1%;
-  white-space: nowrap;
-  user-select: none;
-  -webkit-user-select: none;
-  color: rgba(0, 0, 0, 0.28);
-}
-.hljs-ln-code {
-  padding-left: 0 !important;
-}
-.hljs-ln-n::before {
-  content: attr(data-line-number);
-}
+/* Named code block: \codeblockf wraps a \codeblock in a titled panel, and the
+   name goes inside the panel — it is part of the artifact, the way the tab
+   over a file is, not a caption about it.
 
-/* Named code block: \codeblockf wraps a \codeblock in a titled panel — which
-   under vellum is no longer a panel. The filename takes the same rule and the
-   same left inset as the <pre> below it, so the line runs unbroken from the
-   name through the code and the two still read as one unit without a box
-   drawn around them. Tied to the \codeblockf macro, so it lives here. */
+   So the box moves up to .code-figure and the <pre> inside it gives up its
+   own: same fill, same border, same radius, one frame around both. Nothing
+   divides the two rows — no rule, no second fill. Either would make a
+   titlebar out of what should read as one sheet whose first line happens to
+   be its name, and the drop in size and the grey already separate them. Both
+   rows carry the same 0.85rem inset, so the name and the code share a left
+   edge. Tied to \codeblockf, so it lives here. */
 .code-figure {
   margin: 1.1rem 0;
+  background: #f6f4ee;
+  border: 1px solid #e4e1d8;
+  border-radius: 3px;
+  /* The <pre> inside scrolls sideways on a long line; without this its
+     overflow would run out under the figure's rounded corners. */
+  overflow: hidden;
 }
 .code-filename {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.8em;
-  padding: 0 0 0.2em 0.9em;
+  font-family: var(--mono);
+  font-size: 0.78em;
+  /* No bottom padding of its own: the <pre> below brings 0.7rem, which is
+     enough air between the name and the first line of code without the two
+     drifting apart into separate blocks. */
+  padding: 0.55rem 0.85rem 0;
   color: rgb(var(--cal-neutral));
-  border-left: 2px solid rgb(var(--cal-neutral-rule));
 }
 .code-figure pre {
   margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+/* Phones size text off the block, not the page: a mobile browser that decides
+   a <pre> is too narrow to read will inflate that block's type on its own and
+   leave the prose beside it alone, so the one element with a fixed measure
+   ends up the largest thing on the screen. Turning the autosizer off is what
+   makes the ratios below hold everywhere. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   font-family: XCharter, Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
-  /* 11.5pt rather than 11: `pre` is 11pt, and body type at the same size as
-     code would flatten the one distinction the monospace is not already
-     making. The measure is set in ex, so it narrows with the type and the
-     line stays the same length in characters. */
-  font-size: 11.5pt;
+  /* The site's one absolute size — everything else, code included, is set in
+     em against it, so this is the single number that resizes the page, and it
+     is the only place a breakpoint has to touch type.
+
+     Fluid rather than stepped: 11.5pt from about 1000px up, easing to 10.5pt
+     by 380px, with clamp holding both ends. A phone is not a small desk — the
+     reading distance is shorter, so the same physical size is not wanted, but
+     a hard jump at a breakpoint is visible when you rotate the device. The
+     measure is set in ex, so it narrows with the type and the line stays the
+     same length in characters at every width. */
+  font-size: clamp(10.5pt, 13.18px + 0.215vw, 11.5pt);
   line-height: 1.55;
   hyphens: auto;
   /* Nothing set a bottom margin anywhere, so every page ended flush with its
@@ -1432,6 +1479,20 @@ ol li ol li ol {
    below roughly 700px leaves a picture too small to read beside a text column
    too narrow to set. Drop the float and let it run full width above the prose. */
 @media only screen and (max-width: 700px) {
+  /* The panel's inset is a fixed rem while the column is a fraction of the
+     screen, so on a phone the padding is eating a tenth of the measure that
+     the code has to lay out in. Pull it in, and take the block down one more
+     notch relative to the prose — a wrapped line of code costs more here than
+     a small one does, because the indentation is the structure. */
+  pre {
+    padding: 0.55rem 0.65rem;
+    font-size: 0.84em;
+  }
+
+  .code-filename {
+    padding: 0.45rem 0.65rem 0;
+  }
+
   .profile-figure {
     float: none !important;
     width: 100% !important;

@@ -534,6 +534,43 @@ Let <fr:tex display="inline"><![CDATA[A]]></fr:tex> be an array with shape int8[
 
 </fr:mainmatter></fr:tree>
   
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="AllGather">AllGather</fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">Pop Quiz</fr:meta></fr:frontmatter><fr:mainmatter>
+How long does it take to perform the AllGatherY([EY, F]) → [E, F] on a TPU v5e with a 2D mesh <html:code>{'X': 8, 'Y': 4}</html:code>, for <fr:tex display="inline"><![CDATA[E = 2048]]></fr:tex>, <fr:tex display="inline"><![CDATA[F = 8192]]></fr:tex> in bf16? What about for <fr:tex display="inline"><![CDATA[E = F = 256]]></fr:tex>?
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+<html:p>For the large <fr:tex display="inline"><![CDATA[E]]></fr:tex> and <fr:tex display="inline"><![CDATA[F]]></fr:tex>, we will clearly not be latency bound, so we can just perform the ICI cost. We will have <fr:tex display="inline"><![CDATA[N = 2\cdot  2048\cdot  8192]]></fr:tex> bytes and the <fr:link href="/676P/" title="TPU specs" uri="https://kellenkanarios.com/676P/" display-uri="676P" type="local">TPU v5e uni-directional bandwidth</fr:link> is <fr:tex display="inline"><![CDATA[4.5e 10]]></fr:tex>. Since we are only gathering over <fr:tex display="inline"><![CDATA[1]]></fr:tex> dimension, we do not get any additional bandwidth. Thus, it will take <fr:tex display="inline"><![CDATA[\frac {N}{4.5e10} = 3.72\text {ms}]]></fr:tex>.</html:p>
+<html:p>For the small <fr:tex display="inline"><![CDATA[E]]></fr:tex> and <fr:tex display="inline"><![CDATA[F]]></fr:tex>, we now need to consider the latency time given by</html:p> 
+<fr:tex display="block"><![CDATA[T_{\text {latency}} = \frac {|Y|\cdot  T_{\min }{2}} = 2\mu  s.]]></fr:tex>
+<html:p>Computing the ICI cost, we have <fr:tex display="inline"><![CDATA[N = 2\cdot  256\cdot  256]]></fr:tex> bytes and <fr:tex display="inline"><![CDATA[T_{\text {ICI}} = \frac {N}{4.5e 10} = 0.73 \mu  s]]></fr:tex>. Thus, the total time is <fr:tex display="inline"><![CDATA[T = \max  \{T_{\text {latency}}, T_{\text {ICI}} = 2\mu  s]]></fr:tex>.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+I divided the latency time by <fr:tex display="inline"><![CDATA[2]]></fr:tex>, when once again the TPU v5e sub-mesh does not support wrap-around links and therefore the hop count is NOT upperbounded by <fr:tex display="inline"><![CDATA[|Y|]]></fr:tex>. Also the hop count is actually <fr:tex display="inline"><![CDATA[|Y| - 1]]></fr:tex> not <fr:tex display="inline"><![CDATA[|Y|]]></fr:tex>, so the correct answer was just <fr:tex display="inline"><![CDATA[T_{\text {min}}\cdot  (|Y| - 1) = 3\mu  s]]></fr:tex>.
+</html:div>
+
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
 </fr:mainmatter></fr:tree></fr:mainmatter></fr:tree>
   <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>19</fr:day></fr:date><fr:uri>https://kellenkanarios.com/VE8C/</fr:uri><fr:display-uri>VE8C</fr:display-uri><fr:route>/VE8C/</fr:route><fr:title text="Limited Direct Execution">Limited Direct Execution</fr:title></fr:frontmatter><fr:mainmatter><html:p>The OS lets user code run directly on the CPU for speed, but with hardware-enforced limits that prevent a buggy or malicious program from compromising the rest of the system. Two questions motivate the mechanism:</html:p>
   

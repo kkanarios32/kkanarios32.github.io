@@ -1,13 +1,63 @@
 <!DOCTYPE html PUBLIC "" "">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script src="/highlightjs-line-numbers.min.js"></script><script>
+<meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script>
 window.addEventListener('load', function () {
   if (!window.hljs) return;
   document.querySelectorAll('pre code').forEach(function (el) {
     hljs.highlightElement(el);
-    if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
   });
 });
+
+          </script><script>
+window.addEventListener('load', function () { setTimeout(function () {
+  // Openers get the same treatment from the other side: left alone, the
+  // paren in "(\(x\) or \(y\))" can hang at the end of a line.
+  var CLOSE = /^[.,;:!?)\]}%'"’”…]+/;
+  var OPEN = /[(\[{‘“]+$/;
+
+  document.querySelectorAll('.katex').forEach(function (math) {
+    // Display math is a block of its own; nothing can be orphaned beside it.
+    if (math.closest('.katex-display')) return;
+
+    // KaTeX's auto-render gives every formula a bare <span> of its own and
+    // renders into that, so the text around a formula is a sibling of the
+    // wrapper and not of .katex itself. Climb to the outermost span that
+    // holds nothing but this formula, and treat that as the atom.
+    var node = math;
+    while (node.parentNode &&
+           node.parentNode.childNodes.length === 1 &&
+           node.parentNode.nodeName.toLowerCase() === 'span') {
+      node = node.parentNode;
+    }
+
+    var before = node.previousSibling, after = node.nextSibling;
+    var lead = '', trail = '';
+    if (after && after.nodeType === 3 && CLOSE.test(after.data)) {
+      trail = after.data.match(CLOSE)[0];
+    }
+    if (before && before.nodeType === 3 && OPEN.test(before.data)) {
+      lead = before.data.match(OPEN)[0];
+    }
+    if (!lead && !trail) return;
+
+    // createElementNS, not createElement: the page is an XML document that
+    // the browser transforms with this stylesheet, and in an XML document
+    // createElement yields an element in the null namespace — a <span> that
+    // is not an HTML span, and that nothing styles.
+    var glue = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
+    glue.setAttribute('style', 'white-space: nowrap');
+    node.parentNode.insertBefore(glue, node);
+    if (lead) {
+      before.data = before.data.slice(0, before.data.length - lead.length);
+      glue.appendChild(document.createTextNode(lead));
+    }
+    glue.appendChild(node);
+    if (trail) {
+      after.data = after.data.slice(trail.length);
+      glue.appendChild(document.createTextNode(trail));
+    }
+  });
+}, 0); });
           </script><script>
 (function () {
   var LINE = 140;
@@ -134,9 +184,43 @@ Let \(A\) be an array with shape int8[128, 2048], sharding \(A[I_{XY},J]\), and 
 
 </details></section>
   
+
+  
+    
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon">Exercise Pop Quiz. </span>AllGather  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 5, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+How long does it take to perform the AllGatherY([EY, F]) → [E, F] on a TPU v5e with a 2D mesh <code xmlns="http://www.w3.org/1999/xhtml">{'X': 8, 'Y': 4}</code>, for \(E = 2048\), \(F = 8192\) in bf16? What about for \(E = F = 256\)?
+
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+<p>For the large \(E\) and \(F\), we will clearly not be latency bound, so we can just perform the ICI cost. We will have \(N = 2\cdot  2048\cdot  8192\) bytes and the <span xmlns="" class="link local"><a href="/676P/" title="TPU specs [676P]">TPU v5e uni-directional bandwidth</a></span> is \(4.5e 10\). Since we are only gathering over \(1\) dimension, we do not get any additional bandwidth. Thus, it will take \(\frac {N}{4.5e10} = 3.72\text {ms}\).</p>
+<p>For the small \(E\) and \(F\), we now need to consider the latency time given by</p> 
+\[T_{\text {latency}} = \frac {|Y|\cdot  T_{\min }{2}} = 2\mu  s.\]
+<p>Computing the ICI cost, we have \(N = 2\cdot  256\cdot  256\) bytes and \(T_{\text {ICI}} = \frac {N}{4.5e 10} = 0.73 \mu  s\). Thus, the total time is \(T = \max  \{T_{\text {latency}}, T_{\text {ICI}} = 2\mu  s\).</p>
+
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
+I divided the latency time by \(2\), when once again the TPU v5e sub-mesh does not support wrap-around links and therefore the hop count is NOT upperbounded by \(|Y|\). Also the hop count is actually \(|Y| - 1\) not \(|Y|\), so the correct answer was just \(T_{\text {min}}\cdot  (|Y| - 1) = 3\mu  s\).
+</div>
+
+</details>
+</div>
+
+
+
+</details></section>
+  
 </details></section><footer xmlns="">
     
-    <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
 <span class="taxon"></span>Context  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry"><header><h1>
@@ -147,6 +231,15 @@ Let \(A\) be an array with shape int8[128, 2048], sharding \(A[I_{XY},J]\), and 
 </ul></div></header></section>
       </details></section>
     
-    
+    <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/676P/">TPU specs</a> <a class="slug" href="/676P/">[676P]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 10, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
     
   </footer></article></div></body></html>

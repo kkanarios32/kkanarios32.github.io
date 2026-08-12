@@ -27,16 +27,86 @@
         </script>
         <script type="module" src="{/f:tree/@base-url}forester.js"></script>
         <script src="{/f:tree/@base-url}highlight.min.js"></script>
-        <script src="{/f:tree/@base-url}highlightjs-line-numbers.min.js"></script>
         <script>
           <xsl:text disable-output-escaping="yes"><![CDATA[
 window.addEventListener('load', function () {
   if (!window.hljs) return;
   document.querySelectorAll('pre code').forEach(function (el) {
     hljs.highlightElement(el);
-    if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
   });
 });
+
+          ]]></xsl:text>
+        </script>
+        <!-- Glue punctuation to the inline formula it belongs to.
+
+             KaTeX lays inline math out as inline-block boxes, and CSS treats
+             an atomic inline like a replaced character: a line may break on
+             either side of it with no space present. So a sentence ending
+             "...stays linear in \(N\)." could put the full stop alone at the
+             head of the next line, and a list written "\(Q\), \(K\), \(V\)"
+             could strand its commas the same way. Nothing in the markup is
+             wrong, and no CSS selector reaches a bare text node, so this is
+             fixed after the fact: the formula and the punctuation closing it
+             are wrapped together in a nowrap span.
+
+             Ordering: forester.js renders the math from its own load
+             handler, and that is a module, so it executes after every inline
+             script here and registered its handler second. This one therefore
+             runs first, on a page with no math on it yet — hence the
+             setTimeout, which puts the work after every load handler rather
+             than among them. -->
+        <script>
+          <xsl:text disable-output-escaping="yes"><![CDATA[
+window.addEventListener('load', function () { setTimeout(function () {
+  // Openers get the same treatment from the other side: left alone, the
+  // paren in "(\(x\) or \(y\))" can hang at the end of a line.
+  var CLOSE = /^[.,;:!?)\]}%'"’”…]+/;
+  var OPEN = /[(\[{‘“]+$/;
+
+  document.querySelectorAll('.katex').forEach(function (math) {
+    // Display math is a block of its own; nothing can be orphaned beside it.
+    if (math.closest('.katex-display')) return;
+
+    // KaTeX's auto-render gives every formula a bare <span> of its own and
+    // renders into that, so the text around a formula is a sibling of the
+    // wrapper and not of .katex itself. Climb to the outermost span that
+    // holds nothing but this formula, and treat that as the atom.
+    var node = math;
+    while (node.parentNode &&
+           node.parentNode.childNodes.length === 1 &&
+           node.parentNode.nodeName.toLowerCase() === 'span') {
+      node = node.parentNode;
+    }
+
+    var before = node.previousSibling, after = node.nextSibling;
+    var lead = '', trail = '';
+    if (after && after.nodeType === 3 && CLOSE.test(after.data)) {
+      trail = after.data.match(CLOSE)[0];
+    }
+    if (before && before.nodeType === 3 && OPEN.test(before.data)) {
+      lead = before.data.match(OPEN)[0];
+    }
+    if (!lead && !trail) return;
+
+    // createElementNS, not createElement: the page is an XML document that
+    // the browser transforms with this stylesheet, and in an XML document
+    // createElement yields an element in the null namespace — a <span> that
+    // is not an HTML span, and that nothing styles.
+    var glue = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
+    glue.setAttribute('style', 'white-space: nowrap');
+    node.parentNode.insertBefore(glue, node);
+    if (lead) {
+      before.data = before.data.slice(0, before.data.length - lead.length);
+      glue.appendChild(document.createTextNode(lead));
+    }
+    glue.appendChild(node);
+    if (trail) {
+      after.data = after.data.slice(trail.length);
+      glue.appendChild(document.createTextNode(trail));
+    }
+  });
+}, 0); });
           ]]></xsl:text>
         </script>
         <script>

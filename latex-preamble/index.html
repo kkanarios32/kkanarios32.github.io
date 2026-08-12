@@ -1,13 +1,63 @@
 <!DOCTYPE html PUBLIC "" "">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script src="/highlightjs-line-numbers.min.js"></script><script>
+<meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script>
 window.addEventListener('load', function () {
   if (!window.hljs) return;
   document.querySelectorAll('pre code').forEach(function (el) {
     hljs.highlightElement(el);
-    if (hljs.lineNumbersBlock) hljs.lineNumbersBlock(el, { singleLine: true });
   });
 });
+
+          </script><script>
+window.addEventListener('load', function () { setTimeout(function () {
+  // Openers get the same treatment from the other side: left alone, the
+  // paren in "(\(x\) or \(y\))" can hang at the end of a line.
+  var CLOSE = /^[.,;:!?)\]}%'"’”…]+/;
+  var OPEN = /[(\[{‘“]+$/;
+
+  document.querySelectorAll('.katex').forEach(function (math) {
+    // Display math is a block of its own; nothing can be orphaned beside it.
+    if (math.closest('.katex-display')) return;
+
+    // KaTeX's auto-render gives every formula a bare <span> of its own and
+    // renders into that, so the text around a formula is a sibling of the
+    // wrapper and not of .katex itself. Climb to the outermost span that
+    // holds nothing but this formula, and treat that as the atom.
+    var node = math;
+    while (node.parentNode &&
+           node.parentNode.childNodes.length === 1 &&
+           node.parentNode.nodeName.toLowerCase() === 'span') {
+      node = node.parentNode;
+    }
+
+    var before = node.previousSibling, after = node.nextSibling;
+    var lead = '', trail = '';
+    if (after && after.nodeType === 3 && CLOSE.test(after.data)) {
+      trail = after.data.match(CLOSE)[0];
+    }
+    if (before && before.nodeType === 3 && OPEN.test(before.data)) {
+      lead = before.data.match(OPEN)[0];
+    }
+    if (!lead && !trail) return;
+
+    // createElementNS, not createElement: the page is an XML document that
+    // the browser transforms with this stylesheet, and in an XML document
+    // createElement yields an element in the null namespace — a <span> that
+    // is not an HTML span, and that nothing styles.
+    var glue = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
+    glue.setAttribute('style', 'white-space: nowrap');
+    node.parentNode.insertBefore(glue, node);
+    if (lead) {
+      before.data = before.data.slice(0, before.data.length - lead.length);
+      glue.appendChild(document.createTextNode(lead));
+    }
+    glue.appendChild(node);
+    if (trail) {
+      after.data = after.data.slice(trail.length);
+      glue.appendChild(document.createTextNode(trail));
+    }
+  });
+}, 0); });
           </script><script>
 (function () {
   var LINE = 140;
