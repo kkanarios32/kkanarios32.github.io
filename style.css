@@ -329,8 +329,8 @@ body {
   hyphens: auto;
   /* Nothing set a bottom margin anywhere, so every page ended flush with its
      last line. That is worst under the subscribe block, where the field's
-     baseline rule would sit a few pixels off the viewport edge on a short
-     screen and read as a border on the page itself. */
+     border would sit a few pixels off the viewport edge on a short screen and
+     read as a frame on the page itself. */
   padding-bottom: 4em;
 }
 
@@ -1451,28 +1451,37 @@ ol li ol li ol {
    figure, both of which style themselves inline. They live here only because
    :hover and @media cannot be expressed in a style attribute. */
 
-/* A step below the 13pt `details h1` gives a section heading like `About this
-   website`, and level with the listing rows: this is a footer ask, so it should
-   sit under the sections rather than beside them. Stated here rather than left
-   to `details h1` because this h1 sits directly in the flow rather than inside
-   a summary>header, so it is one selector change away from falling back to the
-   browser's 2em default without anything else on the page moving. */
-.subscribe-block h1 {
-  font-size: 12pt;
-  display: inline;
+/* The heading, the divider, and both controls are styled inline in the macro.
+   What is left here is the three states a style attribute cannot express.
+
+   The placeholder is a full step lighter than the neutral ink — it has to read
+   as an example rather than as a value already entered, so it stays a step
+   lighter than the ink that will replace it. Neutral rather than the site's
+   warm greys, and matched to the field's own border: the control is the one
+   place on the page drawn in a plain grey instead of the vellum palette, and a
+   warm placeholder inside it read as a leftover from the palette rather than
+   as part of the field. */
+.embeddable-buttondown-form input[type="email"]::placeholder {
+  color: #8a8a8a;
 }
 
-/* The submit is an underlined word, not a control, so it takes the same hover
-   tint as a.slug and .link rather than a button's fill. */
-.embeddable-buttondown-form input[type="submit"]:hover {
-  background-color: rgba(0, 100, 255, .1);
-}
-
-/* The field is a baseline rule; focus darkens that rule instead of drawing the
-   platform's focus ring, which would put a rounded box back on screen. */
+/* Focus takes the field's hairline up to the accent and adds a soft ring in the
+   same colour, in place of the platform's focus outline — which draws its own
+   square-cornered box a pixel outside a rounded one, and looks like a rendering
+   fault rather than a state. */
 .embeddable-buttondown-form input[type="email"]:focus {
   outline: none;
-  border-bottom-color: rgba(0, 0, 0, 0.85);
+  border-color: rgb(var(--cal-algorithm));
+  box-shadow: 0 0 0 2px rgba(var(--cal-algorithm), 0.12);
+}
+
+/* The submit ships filled, so hover cannot be the fill — it darkens the slate
+   a further step instead, holding the hue and the white label steady. Border
+   and background move together; leaving the border behind would draw a lighter
+   ring around a darker face, which reads as a rendering seam. */
+.embeddable-buttondown-form input[type="submit"]:hover {
+  background-color: #262f43;
+  border-color: #262f43;
 }
 
 /* Narrow screens: the profile figure floats right at 30% of the column, which
