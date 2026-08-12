@@ -1,14 +1,48 @@
 /* SPDX-License-Identifier: CC0-1.0 */
 
+/* The thumbnail a Reference carries in \meta{image}, floated into its own
+   header so the title, date, authors, and links set beside it.
+
+   The width is fluid because the column is. At 80px flat it was a quarter of
+   the measure on a phone — the picture kept its desk size while everything
+   around it shrank, and a two-line title became a four-line one. 18% holds the
+   same proportion at every width, and the clamp keeps it from growing past its
+   desk size on a wide screen or shrinking past legibility on a narrow one.
+   Stated on the float rather than the image so the float's own width is known
+   before layout; the image then fills it. */
 .frontmatter-image {
   float: left;
+  width: clamp(56px, 18%, 80px);
   margin-right: 10px;
   margin-top: 1px;
 }
 
 .frontmatter-image img {
-  max-height: 100%;
-  width: 80px;
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Contain the float in the entry that owns it. An entry is shorter than its
+   thumbnail whenever it carries few metadata lines, and a float that outruns
+   its parent goes on shortening line boxes in whatever follows — so the next
+   paper in the listing was laid out in the leftover column beside the previous
+   paper's picture, indented by the width of an image belonging to something
+   else. Each entry's picture is that entry's business; flow-root says so, and
+   unlike `overflow: hidden` it establishes the block formatting context
+   without also making the section a clipping box (see the note on `section`
+   and sidenotes further down).
+
+   It has to go on the section rather than on the header, which is where the
+   image actually sits: `.index-entry > header` and `details > summary > header`
+   are both `display: inline` on purpose, so the row sets as one line — an
+   inline box cannot contain a float, and a `display` on the header would
+   either lose to those rules or undo them. The two selectors are the collapsed
+   listing row and the expanded tree; the image hangs in a different place in
+   each. */
+section.block:has(> header > .frontmatter-image),
+section.block:has(> details > summary > header > .frontmatter-image) {
+  display: flow-root;
 }
 
 .katex {
@@ -198,20 +232,41 @@ pre {
   word-wrap: break-word;
 }
 
+/* Inline code is the code block in miniature: the same vellum fill, the same
+   hairline, the same 3px corner. A `\code{...}` in a sentence and a
+   \codeblock are the same kind of thing — quoted artifact, not prose — and
+   they were being drawn as two, one on a faint teal wash with a 5px radius and
+   the other on a panel.
+
+   The ink is the keyword slate, always, where a block colors by token. Inline
+   code is a fragment with no syntax to highlight — an identifier, a flag, a
+   path — so there is nothing to distinguish, and one colour applied uniformly
+   is what marks the whole span as not-prose. Slate rather than the body ink
+   because at 0.9em inside a serif line the fill alone is too quiet to catch.
+
+   Padding is a fraction of the block's: 0.7rem around a word in a sentence
+   would push the lines apart. Vertical is near zero for the same reason — the
+   box grows off the glyphs, and the line-height stays the paragraph's. */
 code {
-  border-radius: var(--radius);
-  background-color: rgba(0, 100, 100, 0.04);
-  padding: 0.2em;
+  border: 1px solid #e4e1d8;
+  border-radius: 3px;
+  background-color: #f6f4ee;
+  color: #3f4e6b;
+  padding: 0.05em 0.3em;
   font-size: 0.9em;
   font-family: var(--mono);
 }
 
 /* A <code> inside a <pre> (the \codeblock highlight.js target) must not carry
    the inline-code chrome — the surrounding <pre> already supplies background,
-   padding, and radius. Reset so highlighted blocks read as one panel. */
+   padding, border, and radius. The colour reset is the load-bearing one: the
+   inline rule paints every <code> slate, which inside a block would repaint
+   every token the keyword colour and flatten the highlighting to one hue. */
 pre code,
 pre code.hljs {
   background: none;
+  border: 0;
+  color: inherit;
   padding: 0;
   border-radius: 0;
   font-size: inherit;
