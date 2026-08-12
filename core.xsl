@@ -64,6 +64,26 @@
     </xsl:if>
   </xsl:template>
 
+  <!-- A <pre> keeps every character between its tags, including the ones a
+       pretty-printer put there. Forester's XML writer indents element-only
+       content, and for some trees that means the newline and leading spaces
+       between <pre> and the <code> inside it land in the output — which the
+       browser renders, because inside a <pre> they are content. The MCS lock
+       came out with a blank first line and its opening line pushed six spaces
+       right of the body it introduces, so the indentation of the code read as
+       wrong when it was the markup around it that was wrong.
+
+       Whitespace-only text nodes directly inside a <pre> are never content:
+       \codeblock and \codeblockf both put every character of the snippet
+       inside a <code>, so anything loose at this level is the serializer
+       talking. Text with anything else in it is kept, which leaves a
+       hand-written \<html:pre> holding literal text untouched. -->
+  <xsl:template match="html:pre">
+    <xsl:element namespace="http://www.w3.org/1999/xhtml" name="pre">
+      <xsl:apply-templates select="@* | node()[not(self::text() and normalize-space(.) = '')]" />
+    </xsl:element>
+  </xsl:template>
+
   <xsl:template match="mml:*">
     <xsl:element namespace="http://www.w3.org/1998/Math/MathML" name="{local-name()}">
       <xsl:apply-templates select="@* | node()" />

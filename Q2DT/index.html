@@ -138,7 +138,7 @@ window.addEventListener('load', function () { setTimeout(function () {
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The simplest spin lock. The acquire loop spins on an atomic <code>test_and_set</code>: it writes <code>LOCKED</code> and reads the previous value in one step. If the previous value was <code>UNLOCKED</code>, the caller has the lock; otherwise it tries again.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The simplest spin lock. The acquire loop spins on an atomic <code>test_and_set</code>: it writes <code>LOCKED</code> and reads the previous value in one step. If the previous value was <code>UNLOCKED</code>, the caller has the lock; otherwise it tries again.</p><pre xmlns="http://www.w3.org/1999/xhtml"><code class="language-">acquire(lock_ptr):
   while (true):
     // Perform "test-and-set"
     // UNLOCKED = 0, LOCKED = 1
@@ -148,7 +148,8 @@ window.addEventListener('load', function () { setTimeout(function () {
     // keep spinning, back to top of while loop
 
 release(lock_ptr):
-  store[lock_ptr] &lt;- UNLOCKED</pre>
+  store[lock_ptr] &lt;- UNLOCKED
+</code></pre>
   
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Major coherence traffic. Every spinning core must acquire write permissions and invalidate everyone else on each <code>test_and_set</code>, so contention scales badly with the number of waiters.</div>
 
@@ -158,7 +159,7 @@ release(lock_ptr):
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A refinement of the <span xmlns="" class="link local"><a href="/MJ5L/" title="Test-and-set lock [MJ5L]">Test-and-set lock</a></span> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <code>test_and_set</code> when it does. Spinning is then read-only, so cores can share the cache line.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A refinement of the <span xmlns="" class="link local"><a href="/MJ5L/" title="Test-and-set lock [MJ5L]">Test-and-set lock</a></span> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <code>test_and_set</code> when it does. Spinning is then read-only, so cores can share the cache line.</p><pre xmlns="http://www.w3.org/1999/xhtml"><code class="language-">acquire(lock_ptr):
   while (true):
     // Perform "test"
     load [lock_ptr] -&gt; original_value
@@ -170,7 +171,8 @@ release(lock_ptr):
     // keep spinning, back to top of while loop
 
 release(lock_ptr):
-  store[lock_ptr] &lt;- UNLOCKED</pre>
+  store[lock_ptr] &lt;- UNLOCKED
+</code></pre>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Spinning is a read-only operation now.</div>
 
   
@@ -182,12 +184,13 @@ release(lock_ptr):
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <code>next_ticket</code> and then spins until <code>now_serving</code> equals its ticket. Release simply increments <code>now_serving</code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <code>next_ticket</code> and then spins until <code>now_serving</code> equals its ticket. Release simply increments <code>now_serving</code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</p><pre xmlns="http://www.w3.org/1999/xhtml"><code class="language-">acquire(lock_ptr):
   my_ticket = fetch_and_increment(lock_ptr-&gt;next_ticket)
   while (lock_ptr-&gt;now_serving != my_ticket); // spin
 
 release(lock_ptr):
-  lock_ptr-&gt;now_serving = lock_ptr-&gt;now_serving + 1</pre>
+  lock_ptr-&gt;now_serving = lock_ptr-&gt;now_serving + 1
+</code></pre>
   
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Still \(O(n)\) coherence traffic on release: incrementing <code>now_serving</code> invalidates the line on every waiter, and they all reload it to recheck their ticket.</div>
 
@@ -211,7 +214,7 @@ release(lock_ptr):
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
         <p xmlns="http://www.w3.org/1999/xhtml">A scalable, list-based queue lock. The lock variable is a pointer to the tail of a linked list of per-thread nodes. Each thread enqueues its own node and spins on a flag in its own cache line. The releaser wakes only its direct successor, so coherence traffic per handoff is constant and memory cost is proportional only to threads currently waiting, not to the lock's fanout.</p>
-        <pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock):
+        <pre xmlns="http://www.w3.org/1999/xhtml"><code class="language-">acquire(lock):
   I-&gt;next = null
   predecessor = fetch_and_store(lock, I)
   if predecessor != nil:                   // some node holds the lock
@@ -224,7 +227,8 @@ release(lock):
     if compare_and_swap(lock, I, nil):     // make sure...
       return                               // CAS succeeded; lock freed
     repeat while I-&gt;next == nil            // spin to learn successor
-  I-&gt;next-&gt;must_wait = false               // wake successor</pre>
+  I-&gt;next-&gt;must_wait = false               // wake successor
+</code></pre>
       </details></section>
   </details></section><footer xmlns="">
     

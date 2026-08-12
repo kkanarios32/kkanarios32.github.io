@@ -133,7 +133,7 @@ window.addEventListener('load', function () { setTimeout(function () {
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
     <p xmlns="http://www.w3.org/1999/xhtml">A scalable, list-based queue lock. The lock variable is a pointer to the tail of a linked list of per-thread nodes. Each thread enqueues its own node and spins on a flag in its own cache line. The releaser wakes only its direct successor, so coherence traffic per handoff is constant and memory cost is proportional only to threads currently waiting, not to the lock's fanout.</p>
-    <pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock):
+    <pre xmlns="http://www.w3.org/1999/xhtml"><code class="language-">acquire(lock):
   I-&gt;next = null
   predecessor = fetch_and_store(lock, I)
   if predecessor != nil:                   // some node holds the lock
@@ -146,12 +146,19 @@ release(lock):
     if compare_and_swap(lock, I, nil):     // make sure...
       return                               // CAS succeeded; lock freed
     repeat while I-&gt;next == nil            // spin to learn successor
-  I-&gt;next-&gt;must_wait = false               // wake successor</pre>
+  I-&gt;next-&gt;must_wait = false               // wake successor
+</code></pre>
   </details></section><footer xmlns="">
     
     <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
 <span class="taxon"></span>Context  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/RCNT/">What I've been thinking about</a> <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 5, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
         <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/Q2DT/">Locks</a> <a class="slug" href="/Q2DT/">[Q2DT]</a> </h1>
 <div class="metadata"><ul>

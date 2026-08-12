@@ -192,7 +192,7 @@ os.environ["LIBTPU_INIT_ARGS"] = (
 <div class="metadata"><ul>
 <li class="meta-item">May 22, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Overview.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Dispatch / Cache: caches compilation based on input argument signatures i.e. shapes, dtypes, sharding. If shapes change will need to <strong>recompile</strong>.</li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">Overview.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Dispatch / Cache: caches compilation based on input argument signatures i.e. shapes, dtypes, sharding. If shapes change will need to <strong>recompile</strong>.</li>
   <li>XLA transformation: Python -&gt; JaxPR -&gt; StableHLO, performing fusion and other simplifications to reduce memory overhead (?).</li>
   <li>TPU specific: Further reduced to LLO IR, then <em>very large instruction word</em> (VLIW) scheduling to map dot products to MXU.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
@@ -227,10 +227,10 @@ As soon as python code is traced into jaxpr it is thrown away. Only HLO is input
     <ul><li>Input for XLA compiler.</li>
       <li>Directed acyclic graph of copmutational operations.</li>
       <li>All array dimensions are known at compile time.</li>
-      <li>Limited opcodes i.e. Add, Multiply, Transpose, Dot, etc.</li></ul></ul></ol></details></section><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">XLA Shapes and Memory Layout.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Every data type defined by data type and fixed dimensions, determined at compile time.</li>
+      <li>Limited opcodes i.e. Add, Multiply, Transpose, Dot, etc.</li></ul></ul></ol></details></section><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">XLA Shapes and Memory Layout.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Every data type defined by data type and fixed dimensions, determined at compile time.</li>
   <li>Minor-to-major order i.e. fastest changing to slowesting changin.</li>
   <li>Tiling: arrays are split into smaller blocks to fit into VREG. Want to arrange data to efficiently fit VREG.</li></ul><figure xmlns="http://www.w3.org/1999/xhtml"><img width="60%" src="/bafkrmihanbz63fc3hvqd3drtqlm5shhn2624xbut2oobs3zibpwjw2jiju.png"></img>
-<figcaption>How memory is laid out based on XLA.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Execution.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Move tensors from CPU to HBM. Sharding is taken care of by PJIT if on TPU pod.</li>
+<figcaption>How memory is laid out based on XLA.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">Execution.</strong></p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Move tensors from CPU to HBM. Sharding is taken care of by PJIT if on TPU pod.</li>
   <li>Async: Immediately returns a <code>Future</code> JAX array while the hardware executes VLIW microcode asynchronously.</li>
   <li>Buffer management: Returns pointer to TPU memory. All handled lazily. Not copied back to CPU until <code>jax.block_until_ready()</code>.</li></ul></details></section>
   <hr xmlns="http://www.w3.org/1999/xhtml" style="     margin: 2.5rem 0 2rem;     border: 0;     border-top: 2px solid rgb(219, 216, 215);     height: 0;     background: none;   "></hr>
@@ -331,7 +331,7 @@ As soon as python code is traced into jaxpr it is thrown away. Only HLO is input
     \text {---} &amp; \mathbf {v}^{(n)} &amp; \text {---}
   \end {bmatrix}
 \end {bmatrix} \in  \mathbb {R}^{n \times  d_v}
-\)</p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Intuition 1.</strong> Convex re-weighting of input tokens.
+\)</p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">Intuition 1.</strong> Convex re-weighting of input tokens.
   Note that
 \[
 \begin {align*}
@@ -374,7 +374,7 @@ As soon as python code is traced into jaxpr it is thrown away. Only HLO is input
   \end {bmatrix}
 \end {align*}
   \]
-  <strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Intuition 2.</strong> Context dependent re-weighting.
+  <strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">Intuition 2.</strong> Context dependent re-weighting.
       If \(\mathbf {p} = \mathbb {S}(\mathbf {Q} \mathbf {K}^T)\) then
       \[
         \begin {align*}

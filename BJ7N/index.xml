@@ -78,7 +78,7 @@
                 <fr:route>/MJ5L/</fr:route>
                 <fr:title text="Test-and-set lock">Test-and-set lock</fr:title>
               </fr:frontmatter>
-              <fr:mainmatter><html:p>The simplest spin lock. The acquire loop spins on an atomic <html:code>test_and_set</html:code>: it writes <html:code>LOCKED</html:code> and reads the previous value in one step. If the previous value was <html:code>UNLOCKED</html:code>, the caller has the lock; otherwise it tries again.</html:p><html:pre><![CDATA[acquire(lock_ptr):
+              <fr:mainmatter><html:p>The simplest spin lock. The acquire loop spins on an atomic <html:code>test_and_set</html:code>: it writes <html:code>LOCKED</html:code> and reads the previous value in one step. If the previous value was <html:code>UNLOCKED</html:code>, the caller has the lock; otherwise it tries again.</html:p><html:pre><html:code class="language-">acquire(lock_ptr):
   while (true):
     // Perform "test-and-set"
     // UNLOCKED = 0, LOCKED = 1
@@ -88,7 +88,8 @@
     // keep spinning, back to top of while loop
 
 release(lock_ptr):
-  store[lock_ptr] <- UNLOCKED]]></html:pre>
+  store[lock_ptr] &lt;- UNLOCKED
+</html:code></html:pre>
   
  <html:div class="jms-callout" style="
   margin: 1.1rem 0;
@@ -115,10 +116,10 @@ release(lock_ptr):
                 <fr:route>/PXY9/</fr:route>
                 <fr:title text="Test-and-test-and-set lock">Test-and-test-and-set lock</fr:title>
               </fr:frontmatter>
-              <fr:mainmatter><html:p>A refinement of the <fr:link href="/MJ5L/" title="Test-and-set lock" uri="https://kellenkanarios.com/MJ5L/" display-uri="MJ5L" type="local">Test-and-set lock</fr:link> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <html:code>test_and_set</html:code> when it does. Spinning is then read-only, so cores can share the cache line.</html:p><html:pre><![CDATA[acquire(lock_ptr):
+              <fr:mainmatter><html:p>A refinement of the <fr:link href="/MJ5L/" title="Test-and-set lock" uri="https://kellenkanarios.com/MJ5L/" display-uri="MJ5L" type="local">Test-and-set lock</fr:link> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <html:code>test_and_set</html:code> when it does. Spinning is then read-only, so cores can share the cache line.</html:p><html:pre><html:code class="language-">acquire(lock_ptr):
   while (true):
     // Perform "test"
-    load [lock_ptr] -> original_value
+    load [lock_ptr] -&gt; original_value
     if (original_value == UNLOCKED):
       // Perform "test-and-set"
       test_and_set(old, lock_ptr)
@@ -127,7 +128,8 @@ release(lock_ptr):
     // keep spinning, back to top of while loop
 
 release(lock_ptr):
-  store[lock_ptr] <- UNLOCKED]]></html:pre>
+  store[lock_ptr] &lt;- UNLOCKED
+</html:code></html:pre>
  <html:div class="jms-callout" style="
   margin: 1.1rem 0;
   padding: 0.1rem 0 0.1rem 0.9rem;
@@ -160,12 +162,13 @@ release(lock_ptr):
                 <fr:route>/V7KP/</fr:route>
                 <fr:title text="Ticket lock">Ticket lock</fr:title>
               </fr:frontmatter>
-              <fr:mainmatter><html:p>A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <html:code>next_ticket</html:code> and then spins until <html:code>now_serving</html:code> equals its ticket. Release simply increments <html:code>now_serving</html:code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</html:p><html:pre><![CDATA[acquire(lock_ptr):
-  my_ticket = fetch_and_increment(lock_ptr->next_ticket)
-  while (lock_ptr->now_serving != my_ticket); // spin
+              <fr:mainmatter><html:p>A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <html:code>next_ticket</html:code> and then spins until <html:code>now_serving</html:code> equals its ticket. Release simply increments <html:code>now_serving</html:code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</html:p><html:pre><html:code class="language-">acquire(lock_ptr):
+  my_ticket = fetch_and_increment(lock_ptr-&gt;next_ticket)
+  while (lock_ptr-&gt;now_serving != my_ticket); // spin
 
 release(lock_ptr):
-  lock_ptr->now_serving = lock_ptr->now_serving + 1]]></html:pre>
+  lock_ptr-&gt;now_serving = lock_ptr-&gt;now_serving + 1
+</html:code></html:pre>
   
  <html:div class="jms-callout" style="
   margin: 1.1rem 0;
@@ -223,20 +226,23 @@ release(lock_ptr):
               </fr:frontmatter>
               <fr:mainmatter>
                 <html:p>A scalable, list-based queue lock. The lock variable is a pointer to the tail of a linked list of per-thread nodes. Each thread enqueues its own node and spins on a flag in its own cache line. The releaser wakes only its direct successor, so coherence traffic per handoff is constant and memory cost is proportional only to threads currently waiting, not to the lock's fanout.</html:p>
-                <html:pre><![CDATA[acquire(lock):
-  I->next = null
+                <html:pre>
+                  <html:code class="language-">acquire(lock):
+  I-&gt;next = null
   predecessor = fetch_and_store(lock, I)
   if predecessor != nil:                   // some node holds the lock
-    I->must_wait = true
-    predecessor->next = I                  // predecessor must wake us
-    repeat while I->must_wait              // spin till lock is free
+    I-&gt;must_wait = true
+    predecessor-&gt;next = I                  // predecessor must wake us
+    repeat while I-&gt;must_wait              // spin till lock is free
 
 release(lock):
-  if (I->next == null):                    // no known successor
+  if (I-&gt;next == null):                    // no known successor
     if compare_and_swap(lock, I, nil):     // make sure...
       return                               // CAS succeeded; lock freed
-    repeat while I->next == nil            // spin to learn successor
-  I->next->must_wait = false               // wake successor]]></html:pre>
+    repeat while I-&gt;next == nil            // spin to learn successor
+  I-&gt;next-&gt;must_wait = false               // wake successor
+</html:code>
+                </html:pre>
               </fr:mainmatter>
             </fr:tree>
           </fr:mainmatter>
@@ -285,7 +291,7 @@ release(lock):
                 <fr:route>/MJ5L/</fr:route>
                 <fr:title text="Test-and-set lock">Test-and-set lock</fr:title>
               </fr:frontmatter>
-              <fr:mainmatter><html:p>The simplest spin lock. The acquire loop spins on an atomic <html:code>test_and_set</html:code>: it writes <html:code>LOCKED</html:code> and reads the previous value in one step. If the previous value was <html:code>UNLOCKED</html:code>, the caller has the lock; otherwise it tries again.</html:p><html:pre><![CDATA[acquire(lock_ptr):
+              <fr:mainmatter><html:p>The simplest spin lock. The acquire loop spins on an atomic <html:code>test_and_set</html:code>: it writes <html:code>LOCKED</html:code> and reads the previous value in one step. If the previous value was <html:code>UNLOCKED</html:code>, the caller has the lock; otherwise it tries again.</html:p><html:pre><html:code class="language-">acquire(lock_ptr):
   while (true):
     // Perform "test-and-set"
     // UNLOCKED = 0, LOCKED = 1
@@ -295,7 +301,8 @@ release(lock):
     // keep spinning, back to top of while loop
 
 release(lock_ptr):
-  store[lock_ptr] <- UNLOCKED]]></html:pre>
+  store[lock_ptr] &lt;- UNLOCKED
+</html:code></html:pre>
   
  <html:div class="jms-callout" style="
   margin: 1.1rem 0;
@@ -322,10 +329,10 @@ release(lock_ptr):
                 <fr:route>/PXY9/</fr:route>
                 <fr:title text="Test-and-test-and-set lock">Test-and-test-and-set lock</fr:title>
               </fr:frontmatter>
-              <fr:mainmatter><html:p>A refinement of the <fr:link href="/MJ5L/" title="Test-and-set lock" uri="https://kellenkanarios.com/MJ5L/" display-uri="MJ5L" type="local">Test-and-set lock</fr:link> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <html:code>test_and_set</html:code> when it does. Spinning is then read-only, so cores can share the cache line.</html:p><html:pre><![CDATA[acquire(lock_ptr):
+              <fr:mainmatter><html:p>A refinement of the <fr:link href="/MJ5L/" title="Test-and-set lock" uri="https://kellenkanarios.com/MJ5L/" display-uri="MJ5L" type="local">Test-and-set lock</fr:link> that reduces coherence traffic during the spin. Threads first perform a plain load to check whether the lock looks free, and only attempt the atomic <html:code>test_and_set</html:code> when it does. Spinning is then read-only, so cores can share the cache line.</html:p><html:pre><html:code class="language-">acquire(lock_ptr):
   while (true):
     // Perform "test"
-    load [lock_ptr] -> original_value
+    load [lock_ptr] -&gt; original_value
     if (original_value == UNLOCKED):
       // Perform "test-and-set"
       test_and_set(old, lock_ptr)
@@ -334,7 +341,8 @@ release(lock_ptr):
     // keep spinning, back to top of while loop
 
 release(lock_ptr):
-  store[lock_ptr] <- UNLOCKED]]></html:pre>
+  store[lock_ptr] &lt;- UNLOCKED
+</html:code></html:pre>
  <html:div class="jms-callout" style="
   margin: 1.1rem 0;
   padding: 0.1rem 0 0.1rem 0.9rem;
@@ -367,12 +375,13 @@ release(lock_ptr):
                 <fr:route>/V7KP/</fr:route>
                 <fr:title text="Ticket lock">Ticket lock</fr:title>
               </fr:frontmatter>
-              <fr:mainmatter><html:p>A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <html:code>next_ticket</html:code> and then spins until <html:code>now_serving</html:code> equals its ticket. Release simply increments <html:code>now_serving</html:code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</html:p><html:pre><![CDATA[acquire(lock_ptr):
-  my_ticket = fetch_and_increment(lock_ptr->next_ticket)
-  while (lock_ptr->now_serving != my_ticket); // spin
+              <fr:mainmatter><html:p>A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <html:code>next_ticket</html:code> and then spins until <html:code>now_serving</html:code> equals its ticket. Release simply increments <html:code>now_serving</html:code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</html:p><html:pre><html:code class="language-">acquire(lock_ptr):
+  my_ticket = fetch_and_increment(lock_ptr-&gt;next_ticket)
+  while (lock_ptr-&gt;now_serving != my_ticket); // spin
 
 release(lock_ptr):
-  lock_ptr->now_serving = lock_ptr->now_serving + 1]]></html:pre>
+  lock_ptr-&gt;now_serving = lock_ptr-&gt;now_serving + 1
+</html:code></html:pre>
   
  <html:div class="jms-callout" style="
   margin: 1.1rem 0;
@@ -430,20 +439,23 @@ release(lock_ptr):
               </fr:frontmatter>
               <fr:mainmatter>
                 <html:p>A scalable, list-based queue lock. The lock variable is a pointer to the tail of a linked list of per-thread nodes. Each thread enqueues its own node and spins on a flag in its own cache line. The releaser wakes only its direct successor, so coherence traffic per handoff is constant and memory cost is proportional only to threads currently waiting, not to the lock's fanout.</html:p>
-                <html:pre><![CDATA[acquire(lock):
-  I->next = null
+                <html:pre>
+                  <html:code class="language-">acquire(lock):
+  I-&gt;next = null
   predecessor = fetch_and_store(lock, I)
   if predecessor != nil:                   // some node holds the lock
-    I->must_wait = true
-    predecessor->next = I                  // predecessor must wake us
-    repeat while I->must_wait              // spin till lock is free
+    I-&gt;must_wait = true
+    predecessor-&gt;next = I                  // predecessor must wake us
+    repeat while I-&gt;must_wait              // spin till lock is free
 
 release(lock):
-  if (I->next == null):                    // no known successor
+  if (I-&gt;next == null):                    // no known successor
     if compare_and_swap(lock, I, nil):     // make sure...
       return                               // CAS succeeded; lock freed
-    repeat while I->next == nil            // spin to learn successor
-  I->next->must_wait = false               // wake successor]]></html:pre>
+    repeat while I-&gt;next == nil            // spin to learn successor
+  I-&gt;next-&gt;must_wait = false               // wake successor
+</html:code>
+                </html:pre>
               </fr:mainmatter>
             </fr:tree>
           </fr:mainmatter>

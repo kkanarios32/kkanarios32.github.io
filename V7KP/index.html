@@ -131,12 +131,13 @@ window.addEventListener('load', function () { setTimeout(function () {
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <code>next_ticket</code> and then spins until <code>now_serving</code> equals its ticket. Release simply increments <code>now_serving</code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</p><pre xmlns="http://www.w3.org/1999/xhtml">acquire(lock_ptr):
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A fair spin lock based on two counters. Each arriving thread takes a "ticket" by atomically incrementing <code>next_ticket</code> and then spins until <code>now_serving</code> equals its ticket. Release simply increments <code>now_serving</code>. Threads acquire the lock in FIFO order, which prevents starvation but does not by itself reduce contention.</p><pre xmlns="http://www.w3.org/1999/xhtml"><code class="language-">acquire(lock_ptr):
   my_ticket = fetch_and_increment(lock_ptr-&gt;next_ticket)
   while (lock_ptr-&gt;now_serving != my_ticket); // spin
 
 release(lock_ptr):
-  lock_ptr-&gt;now_serving = lock_ptr-&gt;now_serving + 1</pre>
+  lock_ptr-&gt;now_serving = lock_ptr-&gt;now_serving + 1
+</code></pre>
   
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Still \(O(n)\) coherence traffic on release: incrementing <code>now_serving</code> invalidates the line on every waiter, and they all reload it to recheck their ticket.</div>
 
@@ -145,6 +146,12 @@ release(lock_ptr):
     <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
 <span class="taxon"></span>Context  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/RCNT/">What I've been thinking about</a> <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 5, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
         <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/Q2DT/">Locks</a> <a class="slug" href="/Q2DT/">[Q2DT]</a> </h1>
 <div class="metadata"><ul>

@@ -910,6 +910,33 @@ article > section:not(.index-page) > details > section.block > details > summary
   letter-spacing: -0.01em;
 }
 
+/* The ramp keeps off index pages, which left their listing headings — Research
+   and Blog on the home page — on the bare 13pt of `details h1`, a hair under
+   the 1.2em the page's own title sets. Six percent between them, both bold,
+   both serif: they read as the same size, and a site map that competes with
+   the name at the top of the page has the hierarchy backwards. A step below
+   the article ramp's own h2 puts real distance there. Sized in em rather than
+   the inherited points so it tracks the body down the breakpoints, and the
+   line stays proportioned on a phone.
+
+   The second selector is not optional. Sizing only the first level inverts the
+   hierarchy the moment an index page holds anything two deep: /dev/null
+   transcludes Old Talks, which carries Full Group Meeting Talks and Mini Talks
+   inside it, and those inner headings kept the 13pt fallback while their own
+   parent came down to 1.04em — a subsection set larger than the section
+   containing it. It is a descendant combinator rather than another exact chain
+   so there is no depth at which the fallback comes back; below the first level
+   everything is one size, which is all an index page needs. Size only, no
+   weight: a taxon'd block nested on an index page would otherwise be
+   de-bolded on its way past. */
+article > section.index-page > details > section.block > details > summary > header > h1 {
+  font-size: 1.04em;
+}
+
+article > section.index-page > details > section.block > details section.block > details > summary > header > h1 {
+  font-size: 1em;
+}
+
 /* h3 — a subsection. */
 article > section:not(.index-page) > details > section.block > details > section.block > details > summary > header > h1 {
   font-family: inherit;
@@ -1509,16 +1536,27 @@ ol li ol li ol {
 /* The heading, the divider, and both controls are styled inline in the macro.
    What is left here is the three states a style attribute cannot express.
 
-   The placeholder is a full step lighter than the neutral ink — it has to read
-   as an example rather than as a value already entered, so it stays a step
-   lighter than the ink that will replace it. Neutral rather than the site's
-   warm greys, and matched to the field's own border: the control is the one
-   place on the page drawn in a plain grey instead of the vellum palette, and a
-   warm placeholder inside it read as a leftover from the palette rather than
-   as part of the field. */
+   The placeholder is the field's own border colour exactly, which is as quiet
+   as a hint can be drawn: the box and the example inside it are one mark on
+   the page, and only what the reader types has any weight. Deliberately below
+   the contrast a body text would need — it is an example of the shape of the
+   answer, not information, and the field is already labelled by the sentence
+   above it. Note that it will be hard to read on a bright screen outdoors. */
 .embeddable-buttondown-form input[type="email"]::placeholder {
-  color: #8a8a8a;
+  color: #e5e5e3;
 }
+
+/* !important on both rules below, and it is not a shortcut. The controls are
+   styled in a style attribute, which the cascade puts above every selector in
+   this file no matter how specific — so a :hover or :focus rule that changes a
+   property the macro also sets inline loses silently. Both states were dead
+   from the day the controls were boxed: hover repainted nothing, because
+   background-color and color are declared inline, and focus drew its ring but
+   left the border grey, because border is declared inline too. Only the
+   properties the macro does not set (outline, box-shadow) were ever landing.
+   The alternative is to move the controls' colours out of the macro and into
+   this file, which splits one control's styling across two places to avoid one
+   keyword. Keep the styling with the macro and pay the keyword here. */
 
 /* Focus takes the field's hairline up to the accent and adds a soft ring in the
    same colour, in place of the platform's focus outline — which draws its own
@@ -1526,17 +1564,16 @@ ol li ol li ol {
    fault rather than a state. */
 .embeddable-buttondown-form input[type="email"]:focus {
   outline: none;
-  border-color: rgb(var(--cal-algorithm));
+  border-color: rgb(var(--cal-algorithm)) !important;
   box-shadow: 0 0 0 2px rgba(var(--cal-algorithm), 0.12);
 }
 
-/* The submit ships filled, so hover cannot be the fill — it darkens the slate
-   a further step instead, holding the hue and the white label steady. Border
-   and background move together; leaving the border behind would draw a lighter
-   ring around a darker face, which reads as a rendering seam. */
+/* Hover fills the outline: the slate the button is drawn in becomes its ground
+   and the label drops out to paper. Same colour, so the button does not move
+   or change size — only the figure and ground trade places. */
 .embeddable-buttondown-form input[type="submit"]:hover {
-  background-color: #262f43;
-  border-color: #262f43;
+  background-color: #33405a !important;
+  color: #fff !important;
 }
 
 /* Narrow screens: the profile figure floats right at 30% of the column, which

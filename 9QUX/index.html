@@ -131,32 +131,34 @@ window.addEventListener('load', function () { setTimeout(function () {
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-    <p xmlns="http://www.w3.org/1999/xhtml">A barrier holds threads at a synchronization point until all \(P\) participants have arrived, then releases them simultaneously. The naive implementation uses a shared counter that each arriving thread decrements; the last arrival resets the counter and the rest spin until it returns to \(P\).</p>
-    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A barrier holds threads at a synchronization point until all \(P\) participants have arrived, then releases them simultaneously. The naive implementation uses a shared counter that each arriving thread decrements; the last arrival resets the counter and the rest spin until it returns to \(P\).</p>
+  <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
 <span class="taxon">1. </span>Naive central barrier  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><pre xmlns="http://www.w3.org/1999/xhtml">global (shared) count : integer := P
+</ul></div></header></summary>
+One may think to implement a barrier as follows:
+<pre xmlns="http://www.w3.org/1999/xhtml"><code class="language-">global (shared) count : integer := P
 
 procedure central_barrier
   if fetch_and_decrement(&amp;count) == 1
     count := P
   else
-    repeat until count == P</pre>
+    repeat until count == P
+</code></pre>
+  
   
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> When <code>count == P</code>, a fast thread can reach the next barrier and decrement <code>count</code> again before the slow threads observe the reset. The slow threads then spin forever waiting for a value that has already passed.</div>
 
+
 </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
 <span class="taxon">2. </span>Sense-reversing barrier  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-        <p xmlns="http://www.w3.org/1999/xhtml">The fix is to give each thread a private <code>local_sense</code> that flips on each barrier. The global <code>sense</code> flag is flipped by the last arrival, and waiters spin on <code>sense == local_sense</code>, so a fresh barrier cannot be confused with a stale one.</p>
-        <pre xmlns="http://www.w3.org/1999/xhtml">global (shared) count : integer := P
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The fix is to give each thread a private <code>local_sense</code> that flips on each barrier. The global <code>sense</code> flag is flipped by the last arrival, and waiters spin on <code>sense == local_sense</code>, so a fresh barrier cannot be confused with a stale one.</p><pre xmlns="http://www.w3.org/1999/xhtml"><code class="language-">global (shared) count : integer := P
 global (shared) sense : bool := true
 global (private) local_sense : bool := false
 
@@ -166,13 +168,18 @@ procedure central_barrier
     count := P
     sense = local_sense
   else
-    repeat until sense == local_sense</pre>
-      </details></section>
-  </details></section><footer xmlns="">
+    repeat until sense == local_sense
+</code></pre></details></section></details></section><footer xmlns="">
     
     <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
 <span class="taxon"></span>Context  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/RCNT/">What I've been thinking about</a> <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 5, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
         <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/5P43/">Concurrency</a> <a class="slug" href="/5P43/">[5P43]</a> </h1>
 <div class="metadata"><ul>
