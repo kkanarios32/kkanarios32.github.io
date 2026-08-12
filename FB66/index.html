@@ -90,67 +90,23 @@ window.addEventListener('load', function () {
     <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
 <span class="taxon"></span>Context  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
-        <section lang="en" class="block"><details id="id3"><summary><header><h1>
-<span class="taxon"></span>Free-space management <a class="slug" href="/67X5/">[67X5]</a> </h1>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/67X5/">Free-space management</a> <a class="slug" href="/67X5/">[67X5]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 29, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-            <p xmlns="http://www.w3.org/1999/xhtml">Once we have an <span xmlns="" class="link local"><a href="/7MH4/" title="Address space [7MH4]">Address space</a></span>, we still have to actually allocate physical bytes within it. Free-space management is the discipline of tracking which bytes are free, picking which free chunk to satisfy a request, and merging adjacent freed chunks back together. Two fragmentation hazards to watch:</p>
-            <ol xmlns="http://www.w3.org/1999/xhtml"><li><em>External fragmentation</em>: many small unallocated non-contiguous chunks.</li>
-  <li><em>Internal fragmentation</em>: allocated chunks larger than what the requester uses.</li></ol>
-            <p xmlns="http://www.w3.org/1999/xhtml">Simplifying assumptions for the algorithms below: allocations are immovable once placed, total memory is fixed, and the user does not specify a size in <code>free</code>. The last assumption is handled by storing the size in a header preceding the returned pointer.</p>
-            <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
-<span class="taxon"></span>Malloc placement policies <a class="slug" href="/1ABF/">[1ABF]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">May 12, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-                <p xmlns="http://www.w3.org/1999/xhtml">Given a <em>free list</em> of unallocated memory chunks and a request of size \(n\), which chunk do you carve the allocation out of? Different answers trade off fragmentation against search time.</p>
-                <ol xmlns="http://www.w3.org/1999/xhtml"><li><em>Best fit</em>: find the smallest chunk \(\geq  n\). Minimizes wasted space per allocation but tends to leave many small unusable fragments behind, and requires scanning the whole list.</li>
-  <li><em>Worst fit</em>: find the largest chunk. Aims to leave usefully-sized leftovers but also requires a full scan.</li>
-  <li><em>First fit</em>: take the first chunk that fits. Fast (early exit) but biases small fragments toward the start of the list.</li>
-  <li><em>Next fit</em>: like first fit, but resume the search from where the previous allocation ended. Spreads small fragments more evenly.</li></ol>
-                <p xmlns="http://www.w3.org/1999/xhtml">On free, the allocator searches the list for adjacent free chunks and <em>coalesces</em> them into a larger chunk. The size of each allocation is stored in a <em>header</em> immediately preceding the returned pointer so <code>free</code> doesn't need a size argument.</p>
-              </details></section>
-            <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
-<span class="taxon"></span>Segregated lists <a class="slug" href="/FB66/">[FB66]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">May 12, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A data-structure-level optimization for allocators that maintains separate free lists per common object size. Instead of one global free list scanned by <span xmlns="" class="link local"><a href="/1ABF/" title="Malloc placement policies [1ABF]">Malloc placement policies</a></span>, you keep a list per size class. Allocations of that size pop straight off the matching list — no search.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>Grow a per-size list by requesting larger segments from the main allocator and chopping them up.</li>
-  <li>Drain back to the main list when no references remain.</li>
-  <li>Optionally leave objects pre-initialized on the list to skip constructor/destructor calls.</li></ul>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> This is the structure behind kernel slab allocators and many object-pool patterns. It works when the workload allocates many objects of a few common sizes.</div>
-</details></section>
-            <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
-<span class="taxon"></span>Buddy allocation <a class="slug" href="/8M72/">[8M72]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">May 12, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An allocator for memory of total size \(2^n\) that maintains a binary-tree of free blocks at every power-of-two size. To service a request, walk down to the smallest block \(\geq \) requested size; if no block of that size exists, split a larger one (and its "buddy" becomes free). On free, check whether the freed block's buddy is also free, and if so, coalesce upward — recursively.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="50%" src="/bafkrmigwzou6llta75hya6llhd6ixa6gjzeoyjqecitht2op5xxutkjgnu.png"></img>
-  <figcaption>Memory of size \(2^n\) organized as a buddy system.</figcaption></figure><p xmlns="http://www.w3.org/1999/xhtml">The key trick is that buddies differ by exactly one bit in their address at each level. To check whether a block's buddy is free, flip that bit and consult a bitmap. To coalesce upward, mask off the bit and recurse.</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Internal fragmentation is bounded by 2× the request size (you may have to round up to the next power of two), but external fragmentation is essentially eliminated within the buddy region.</div>
-</details></section>
-          </details></section>
+</ul></div></header></section>
       </details></section>
     
-    <section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
 <span class="taxon"></span>Related  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
-        <section lang="en" class="block"><details id="id8"><summary><header><h1>
-<span class="taxon"></span>Malloc placement policies <a class="slug" href="/1ABF/">[1ABF]</a> </h1>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/1ABF/">Malloc placement policies</a> <a class="slug" href="/1ABF/">[1ABF]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-            <p xmlns="http://www.w3.org/1999/xhtml">Given a <em>free list</em> of unallocated memory chunks and a request of size \(n\), which chunk do you carve the allocation out of? Different answers trade off fragmentation against search time.</p>
-            <ol xmlns="http://www.w3.org/1999/xhtml"><li><em>Best fit</em>: find the smallest chunk \(\geq  n\). Minimizes wasted space per allocation but tends to leave many small unusable fragments behind, and requires scanning the whole list.</li>
-  <li><em>Worst fit</em>: find the largest chunk. Aims to leave usefully-sized leftovers but also requires a full scan.</li>
-  <li><em>First fit</em>: take the first chunk that fits. Fast (early exit) but biases small fragments toward the start of the list.</li>
-  <li><em>Next fit</em>: like first fit, but resume the search from where the previous allocation ended. Spreads small fragments more evenly.</li></ol>
-            <p xmlns="http://www.w3.org/1999/xhtml">On free, the allocator searches the list for adjacent free chunks and <em>coalesces</em> them into a larger chunk. The size of each allocation is stored in a <em>header</em> immediately preceding the returned pointer so <code>free</code> doesn't need a size argument.</p>
-          </details></section>
+</ul></div></header></section>
       </details></section>
     
   </footer></article></div></body></html>

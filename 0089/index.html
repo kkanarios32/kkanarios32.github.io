@@ -92,123 +92,13 @@ where \(\epsilon  \sim  N(0, 1)\). Then, for a given sample \(\epsilon \), we ca
     <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
 <span class="taxon"></span>Backlinks  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
-        <section lang="en" class="block"><details id="id3"><summary><header><h1>
-<span class="taxon"></span>Expectation Maximization <a class="slug" href="/0088/">[0088]</a> </h1>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/0088/">Expectation Maximization</a> <a class="slug" href="/0088/">[0088]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 1, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 <li class="meta-item">6 min read</li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This is the follow up to the previous note on the <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span>. Mainly, here we aim to show how we can use the ELBO to find \(\theta ^*\) i.e. 
-\[
-\begin {align*}
- \theta ^* &amp;= \arg \max  \mathbb {E}_{x \sim  \mathcal {D}} \log  p(x; \theta ) \\ 
- &amp;= \arg \max  \mathbb {E}_{x \sim  \mathcal {D}} \log  \int  p(x, z; \theta ) \mathrm {d}z 
-.\end {align*}
-\]
-Notably, <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> gives us the lower bound 
-\[\log  p(x; \theta ) \geq  \mathbb {E}_{z \sim  q}\left [\log  \frac {p(x,  Z; \theta )}{q(z)}\right ]  \eqqcolon  \mathsf {ELBO}(x, q, \theta )\]
-for a <strong>fixed</strong> theta <strong>and</strong> \(q\). Therefore, <strong>for each</strong> \(\theta  \), we want to find some \(q\), such that
-  \[\mathsf {ELBO}(x, q, \theta ) = \log  p(x, \theta )\]
-  With this, we can easily perform gradient ascent
-  \[\theta _{t + 1} \gets  \theta _t + \nabla _{\theta } \mathsf {ELBO}(x, q, \theta _t),\]
-  to maximize the log-likelihood \(\log  p(x; \theta )\). 
-</p>
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
-Note that the gradient is with respect to \(\theta \), where \(\theta \) is just the third argument to \(\mathsf {ELBO}\) as defined above. Notably, \(\theta _t\) will show up elsewhere later but will <strong>NOT</strong> be backpropagated through.
-</div>
-
-  <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
-<span class="taxon"></span>Expectation  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 1, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">The above motivates the <em>expectation</em> step of the EM algorithm. Namely how can we compute the lower bound expectation for the <strong>best</strong> possible \(q\).</p>
-<p xmlns="http://www.w3.org/1999/xhtml">Recall (or review) from the discussion on <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> that \(q(z) = p(z | x; \theta )\) maximizes the ELBO for a given \(x\) and \(\theta  \). Therefore, we actually want to learn \(q_{\phi }(z, x, \theta ) \approx  p(z | x; \theta )\). To do so, we can simply maximize the ELBO (duh). Formally,
-\[\phi _{t+1} = \argmax _{\phi } \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q}\left [\log  \frac {p(x,  Z; \theta _t)}{q_{\phi }(Z, x, \theta _t)}\right ]\]</p>
-
-  
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);">Question.</span> 
-Now this is all cool theoretically but how TF do we actually maximize this thing? 
-</div>
-
-
-
-  
-  
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(115, 73, 35);">Answer.</span></summary>
-  It is highly dependent on the parametrization of \(p\) and \(q\).
-</details>
-</div>
-
-
-
-
-  
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
-  <p>
-  We define the problem as 
-  <ol><li>\(p(z) \sim  N(0, 1)\)</li>
-    <li>\(p(x | z; \theta ) \sim  N(\mu _{\theta }(z), \sigma _{\theta }(z))\)</li>
-    <li>\(q_{\phi }(z | x, \theta ) \sim  N(\mu _{\phi }(x), \sigma _\phi (x))\)</li></ol>
-  where \(\mu _{\{\phi , \theta \}}, \sigma _{\{\phi , \theta \}}\) are parametrized neural networks. Then we can rewrite the <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> as (ignoring constants)
-  \[
-    \begin {align*}
-     \mathsf {ELBO}(x, q, \theta ) &amp;= \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q(\cdot  \mid  x, \theta )} \left [\log  p(Z) - \log  \frac {p(x \mid  Z; \theta )}{q_{\phi }(Z, x, \theta )}\right ] \\
-&amp;= \mathbb {E}_{x \sim  \mathcal {D}, z \sim  q(\cdot  \mid  x, \theta )} \left [-\frac {Z^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((Z - \mu _{\theta }(Z))^2 - (Z - \mu _{\phi }(x))^2\big )\right ]
-    .\end {align*}
-    \]</p>
-</div>
-
-
-  
-  
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> 
-    We need to sample realization \(z \sim  q_{\phi }(\cdot  |x, \theta )\). So isn't our realization \(z\) a function of \(\phi \). How would we optimize this?
-  </div>
-
-
-  
-  
-  
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
-  <details><summary><span class="foldout" style="font-weight: 500; color: rgb(115, 73, 35);">Answer.</span></summary>
-    The <span xmlns="" class="link local"><a href="/0089/" title="Reparametrization Trick [0089]">reparametrization trick</a></span>!!
-  </details>
-</div>
-
-
-
-  <p xmlns="http://www.w3.org/1999/xhtml">Now for a given sample \(x_i \sim  \mathcal {D}\), we can get a sample \(z_i(\phi ) \sim  q(\cdot  \mid  x_i, \theta )\) that is differentiable with respect to \(\phi \). Using this, we can get the stochastic gradient estimate
-  \[\nabla _q \widetilde {\mathsf {ELBO}}(x, q, \theta ) = \nabla _{\phi } \left [\frac {z_i(\phi )^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((z_i(\phi ) - \mu _{\theta }(z_i(\phi )))^2 - (z_i(\phi ) - \mu _{\phi }(x))^2\big )\right ]\]</p>
-
-  
- <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);">Algorithm.</span> 
-  input \(\theta _t\)
-  <ol><li>Sample \(x_i\) from dataset \(\mathcal {D}\)</li>
-    <li>Sample \(z_i(\phi ) \sim  q_{\phi }(\cdot  \mid  x_i, \theta _t)\) via <span xmlns="" class="link local"><a href="/0089/" title="Reparametrization Trick [0089]">trick</a></span>.</li>
-    <li>Compute \(\nabla _q \widetilde {\mathsf {ELBO}}\)</li>
-    <li>Update via SGD</li></ol>
-</div>
-
-
-</details></section>
-
-  <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
-<span class="taxon"></span>Maximization  </h1>
-<div class="metadata"><ul>
-<li class="meta-item">July 1, 2025</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-<p xmlns="http://www.w3.org/1999/xhtml">Finally, we have reached the maximization step. This step is fairly straightforward after all the progress we have made. Once we have a tight lower bound i.e. \(q(z) \approx  p(z \mid  x; \theta )\) then we simply fix \(q\) and maximize the <span xmlns="" class="link local"><a href="/0082/" title="Evidence Lower Bound [0082]">ELBO</a></span> for \(\theta \) i.e. in the above example and algorithm we instead compute
-\[\nabla _\theta  \widetilde {\mathsf {ELBO}}(x, q, \theta ) = \nabla _{\theta } \left [\frac {z_i(\phi )^2}{2}  - \frac {\sigma _{\phi }(x)^2}{\sigma _{\theta }(z)^2}\big ((z_i(\phi ) - \mu _{\theta }(z_i(\phi )))^2 - (z_i(\phi ) - \mu _{\phi }(x))^2\big )\right ]\]
-Alternating between these steps yields the <em>expectation-maximization</em> algorithm the ML oldheads mythologize.
-</p>
-</details></section>
-
-  
-</details></section>
+</ul></div></header></section>
       </details></section>
     
     

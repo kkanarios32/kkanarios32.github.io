@@ -365,9 +365,9 @@ document.addEventListener('keydown', function(e) {
     <xsl:variable name="is-index-entry" select="
       ../../@expanded = 'false'
       and not(../../@show-heading = 'false')
-      and not(../f:meta[@name = 'index'] = 'true')
-      and not(ancestor::f:backmatter)
-      and ../../ancestor::f:tree[1]/f:frontmatter/f:meta[@name = 'index'] = 'true'" />
+      and (ancestor::f:backmatter
+           or (not(../f:meta[@name = 'index'] = 'true')
+               and ../../ancestor::f:tree[1]/f:frontmatter/f:meta[@name = 'index'] = 'true'))" />
     <xsl:choose>
       <xsl:when test="$is-index-entry and ../f:route">
         <a class="index-entry-link" href="{../f:route}">
@@ -594,6 +594,18 @@ document.addEventListener('keydown', function(e) {
        with no <details>, so clicking navigates to the entry instead of
        unfolding it in place.
 
+       Backmatter — Context, Related, Backlinks — renders the same way, and for
+       the same reason: those rows are a note's position in the graph, a list of
+       places to go rather than content folded away, and unfolding a backlink in
+       place buries the link the reader came for. So the row is the link.
+
+       In backmatter that holds even for an index page. The f:meta exemption
+       below keeps a listing expandable when it is nested inside another
+       listing — that is what leaves Research on the home page a block you can
+       open — but a backlink *to* the home page is a row like any other, and
+       exempting it dragged the entire site map into the footer of every tree
+       the home page links. So the exemption applies outside backmatter only.
+
        Nothing that was visible becomes hidden. The rule fires only on entries
        the page already renders collapsed (@expanded='false'), so anything
        transcluded expanded keeps its body. An index page nested inside another
@@ -608,9 +620,9 @@ document.addEventListener('keydown', function(e) {
   <xsl:template priority="5" match="f:tree[
     @expanded = 'false'
     and not(@show-heading = 'false')
-    and not(f:frontmatter/f:meta[@name = 'index'] = 'true')
-    and not(ancestor::f:backmatter)
-    and ancestor::f:tree[1]/f:frontmatter/f:meta[@name = 'index'] = 'true']">
+    and (ancestor::f:backmatter
+         or (not(f:frontmatter/f:meta[@name = 'index'] = 'true')
+             and ancestor::f:tree[1]/f:frontmatter/f:meta[@name = 'index'] = 'true'))]">
     <section>
       <xsl:choose>
         <xsl:when test="@show-metadata = 'false'">

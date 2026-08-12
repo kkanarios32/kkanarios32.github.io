@@ -93,63 +93,24 @@ Bartlett and Bruno.pdf},
     <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
 <span class="taxon"></span>Backlinks  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
-        <section lang="en" class="block"><details id="id3"><summary><header><h1>
-<span class="taxon"></span>Opening a file in UNIX <a class="slug" href="/JQ3C/">[JQ3C]</a> </h1>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/JQ3C/">Opening a file in UNIX</a> <a class="slug" href="/JQ3C/">[JQ3C]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 9, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-            <p xmlns="http://www.w3.org/1999/xhtml">For more details, see <span class="link-reference"><span xmlns="" class="link local"><a href="/bartlettProgrammingGround/" title="Programming from the Ground Up [bartlettProgrammingGround]">[bartlettProgrammingGround]</a></span></span>.</p>
-            <p xmlns="http://www.w3.org/1999/xhtml">Open a file with the <code>open</code> <span xmlns="" class="link local"><a href="/A5S6/" title="Syscall mechanism [A5S6]">syscall</a></span>. Must be called with the following:</p>
-            <ul xmlns="http://www.w3.org/1999/xhtml"><li><code>eax</code> contains system call number.</li>
-  <li><code>ebx</code> contains pointer to string with name of file to open.</li>
-  <li><code>ecx</code> contains the options for opening the file.</li>
-  <li><code>edx</code> contains permissions used to open the file.</li></ul>
-            <p xmlns="http://www.w3.org/1999/xhtml">Pointers to all command line arguments are stored on the stack.</p>
-            <ul xmlns="http://www.w3.org/1999/xhtml"><li>Number of arguments is stored at \(8\)(<code>esp</code>),</li>
-  <li>Name of program at \(12\)(<code>esp</code>),</li>
-  <li>Arguments at \(16\)(<code>esp</code>) on.</li></ul>
-            <p xmlns="http://www.w3.org/1999/xhtml">These are the <code>argv</code> array in C.</p>
-            <p xmlns="http://www.w3.org/1999/xhtml">
-              <pre>fd (int) → fd table → struct file → struct inode
-   per-process         "open file        the actual file
-                       description"      (one per file)</pre>
-            </p>
-          </details></section>
-        <section lang="en" class="block"><details id="id4"><summary><header><h1>
-<span class="taxon"></span>What happens during a function call <a class="slug" href="/OGBJ/">[OGBJ]</a> </h1>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/OGBJ/">What happens during a function call</a> <a class="slug" href="/OGBJ/">[OGBJ]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 8, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-            <p xmlns="http://www.w3.org/1999/xhtml">For this note, we will assume we are using the C <span xmlns="" class="link local"><a href="/Q602/" title="Calling convention [Q602]">calling convention</a></span>. More details in <span class="link-reference"><span xmlns="" class="link local"><a href="/bartlettProgrammingGround/" title="Programming from the Ground Up [bartlettProgrammingGround]">[bartlettProgrammingGround]</a></span></span>.</p>
-            <p xmlns="http://www.w3.org/1999/xhtml">The first thing we do is push the arguments onto the stack (in reverse order). Then execute a <code>call</code> instruction. The <code>call</code> instruction does two things:</p>
-            <ol xmlns="http://www.w3.org/1999/xhtml"><li>It pushes the return address onto the stack. This is the address of the next instruction after the function call.</li>
-  <li>It then modifies <code>eip</code> to point to the function to be called.</li></ol>
-            <p xmlns="http://www.w3.org/1999/xhtml">Now we have jumped to the function to be called. However, there is still some bookkeeping that must be done within a function. Namely, we must keep track of where the stack started on a function call. To do so, we copy <code>esp</code> (stack pointer) into <code>ebp</code> (base register). This allows us to access each parameter stored to the stack by the caller via \(N*4 + 4\) <code>ebp</code>.</p>
-            <p xmlns="http://www.w3.org/1999/xhtml">Finally, we simply allocate space on the stack by subtracting the size of the arguments from <code>esp</code>. This is the new stack pointer.</p>
-            <p xmlns="http://www.w3.org/1999/xhtml">Now we have to return from the function. To do so, we first store the return value in the special register <code>eax</code>. Then, we must return to where we left off prior to calling the function. Recall that we saved the next instruction address at the top of the stack when we first called the function. There are now other local variables, etc. in the stack so we have to unwind it back. We can do this simply by 
-<pre>movl %ebp, %esp
-popl %ebp
-ret</pre>
-Here, the <code>ret</code> instruction just pops whatever is on the top of the stack and sets <code>rip</code> to it.
-</p>
-            <p xmlns="http://www.w3.org/1999/xhtml">We are now back in the calling code with the return value stored in <code>eax</code>. However, remember that the caller pushed the function parameters onto the stack. Therefore, we must also pop all of these parameters off before continuing execution.</p>
-          </details></section>
-        <section lang="en" class="block"><details id="id5"><summary><header><h1>
-<span class="taxon"></span>Components of a function <a class="slug" href="/VSAV/">[VSAV]</a> </h1>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/VSAV/">Components of a function</a> <a class="slug" href="/VSAV/">[VSAV]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 8, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary>
-            <p xmlns="http://www.w3.org/1999/xhtml">Summarized from <span class="link-reference"><span xmlns="" class="link local"><a href="/bartlettProgrammingGround/" title="Programming from the Ground Up [bartlettProgrammingGround]">[bartlettProgrammingGround]</a></span></span>.</p>
-            <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Local variables.</strong> Local variables are data storage that a function uses while processing that is thrown away when it returns. It’s kind of like a scratch pad of paper. Functions get a new piece of paper every time they are activated, and they have to throw it away when they are finished processing. Local variables of a function are not accessible to any other function within a program.
-</p>
-            <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Static variables.</strong> Static variables are data storage that a function uses while processing that is not thrown away afterwards, but is reused for every time the function’s code is activated. This data is not accessible to any other part of the program. Static variables are generally not used unless absolutely necessary, as they can cause problems later on.</p>
-            <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Global variables.</strong> Global variables are data storage that a function uses for processing which are managed outside the function. For example, a simple text editor may put the entire contents of the file it is working on in a global variable so it doesn’t have to be passed to every function that operates on it.2 Configuration values are also often stored in global variables. return address The return address is an "invisible" parameter in that it isn’t directly used during the function. The return address is a parameter which tells the function</p>
-            <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Return address.</strong> The return address is an "invisible" parameter in that it isn’t directly used during the function. The return address is a parameter which tells the function. where to resume executing after the function is completed. This is needed because functions can be called to do processing from many different parts of your program, and the function needs to be able to get back to wherever it was called from. In most programming languages, this parameter is passed automatically when the function is called. In assembly language, the call instruction handles passing the return address for you, and ret handles using that address to return back to where you called the function from.</p>
-            <p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 700; font-style: italic;">Return value.</strong> The return value is the main method of transferring data back to the main program. Most programming languages only allow a single return value for a function.</p>
-          </details></section>
+</ul></div></header></section>
       </details></section>
     
     
