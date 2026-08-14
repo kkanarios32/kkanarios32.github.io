@@ -71,9 +71,11 @@ Bartlett and Bruno.pdf},
   <html:li>Arguments at <fr:tex display="inline"><![CDATA[16]]></fr:tex>(<html:code>esp</html:code>) on.</html:li></html:ul>
             <html:p>These are the <html:code>argv</html:code> array in C.</html:p>
             <html:p>
-              <html:pre><![CDATA[fd (int) → fd table → struct file → struct inode
+              <html:pre>
+                <html:code class="language-plaintext"><![CDATA[fd (int) → fd table → struct file → struct inode
    per-process         "open file        the actual file
-                       description"      (one per file)]]></html:pre>
+                       description"      (one per file)]]></html:code>
+              </html:pre>
             </html:p>
           </fr:mainmatter>
         </fr:tree>
@@ -102,9 +104,9 @@ Bartlett and Bruno.pdf},
             <html:p>Now we have jumped to the function to be called. However, there is still some bookkeeping that must be done within a function. Namely, we must keep track of where the stack started on a function call. To do so, we copy <html:code>esp</html:code> (stack pointer) into <html:code>ebp</html:code> (base register). This allows us to access each parameter stored to the stack by the caller via <fr:tex display="inline"><![CDATA[N*4 + 4]]></fr:tex> <html:code>ebp</html:code>.</html:p>
             <html:p>Finally, we simply allocate space on the stack by subtracting the size of the arguments from <html:code>esp</html:code>. This is the new stack pointer.</html:p>
             <html:p>Now we have to return from the function. To do so, we first store the return value in the special register <html:code>eax</html:code>. Then, we must return to where we left off prior to calling the function. Recall that we saved the next instruction address at the top of the stack when we first called the function. There are now other local variables, etc. in the stack so we have to unwind it back. We can do this simply by 
-<html:pre><![CDATA[movl %ebp, %esp
+<html:pre><html:code class="language-plaintext"><![CDATA[movl %ebp, %esp
 popl %ebp
-ret]]></html:pre>
+ret]]></html:code></html:pre>
 Here, the <html:code>ret</html:code> instruction just pops whatever is on the top of the stack and sets <html:code>rip</html:code> to it.
 </html:p>
             <html:p>We are now back in the calling code with the return value stored in <html:code>eax</html:code>. However, remember that the caller pushed the function parameters onto the stack. Therefore, we must also pop all of these parameters off before continuing execution.</html:p>

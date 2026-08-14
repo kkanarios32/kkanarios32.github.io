@@ -138,21 +138,43 @@ The side length is fixed in hardware, so every dimension has to be tiled down to
 <ol><li>Tiling the matrix to load from <span xmlns="" class="link local"><a href="/AI2G/" title="High bandwidth memory [AI2G]">HBM</a></span> to <span xmlns="" class="link local"><a href="/GFK2/" title="VMEM [GFK2]">VMEM</a></span>.</li>
   <li>Compiler tiles from VMEM to \(128 \times  128\) tiles to load into the MXU.</li></ol>
 </div>
-</details></section><footer xmlns="">
+<section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Why the MXU pads everything to 128 <a class="slug" href="/HPSO/">[HPSO]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 10, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What is the native op of one <span xmlns="" class="link local"><a href="/OGCRP/" title="Matrix Multiply Unit (MXU) [OGCRP]">Matrix Multiply Unit (MXU)</a></span>, and why does that force padding to 128?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  One <code>bf16[8,128] @ bf16[128,128] -&gt; f32[8,128]</code> every 8 cycles, on a \(128 \times  128\) systolic array — \(256 \times  256\) on v6e/Trillium.
+
+  The array's side length is fixed in hardware, so any matrix axis shorter than 128 (256 on v6e) is <strong>padded</strong> up to it, and the FLOPs spent on the padding are simply wasted. With 2–4 MXUs per core, tiling dimensions want to exceed \(128 \times \) the MXU count.
+
+  Scale: roughly \(5e13\) bf16 FLOPs/s per MXU at 1.5 GHz, so about \(2e14\) per v5e chip. int8 runs ~\(2\times \) faster, int4 ~\(4\times \).
+</details>
+</div>
+
+
+
+</details></section></details></section><footer xmlns="">
     
-    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
 <span class="taxon"></span>Context  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/RCNT/">What I've been thinking about</a> <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 14, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
         <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/TAAK/">Notebook: <span class="link local"><a href="/scaling-book/" title="How to scale your model [scaling-book]">How to scale your model</a></span></a> <a class="slug" href="/TAAK/">[TAAK]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">August 6, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></section>
-        <section class="block index-entry"><header><h1>
-<span class="taxon"></span><a class="index-entry-link" href="/RCNT/">What I've been thinking about</a> <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">August 5, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
         <section class="block index-entry"><header><h1>
@@ -162,11 +184,17 @@ The side length is fixed in hardware, so every dimension has to be tiled down to
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
 <span class="taxon"></span>Backlinks  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry" data-taxon="Definition"><header><h1>
 <span class="taxon">Definition. </span><a class="index-entry-link" href="/IO2I/">TPU memory hierarchy</a> <a class="slug" href="/IO2I/">[IO2I]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 11, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry" data-taxon="Definition"><header><h1>
+<span class="taxon">Definition. </span><a class="index-entry-link" href="/SXP6/">Systolic array</a> <a class="slug" href="/SXP6/">[SXP6]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">August 11, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
@@ -182,7 +210,7 @@ The side length is fixed in hardware, so every dimension has to be tiled down to
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
 <span class="taxon"></span>Related  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry" data-taxon="Definition"><header><h1>
@@ -211,4 +239,6 @@ The side length is fixed in hardware, so every dimension has to be tiled down to
 </ul></div></header></section>
       </details></section>
     
-  </footer></article></div></body></html>
+  </footer></article><nav id="toc"><div class="block"><h1>Table of Contents</h1><ul xmlns="" class="block"><li>
+<a class="bullet" href="/HPSO/" title="Why the MXU pads everything to 128 [HPSO]">■</a><span class="link local" data-target="#id2"><span class="taxon">Card. </span>Why the MXU pads everything to 128</span><ul class="block"></ul>
+</li></ul></div></nav></div></body></html>

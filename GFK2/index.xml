@@ -162,7 +162,28 @@ The side length is fixed in hardware, so every dimension has to be tiled down to
 <html:ol><html:li>Tiling the matrix to load from <fr:link href="/AI2G/" title="High bandwidth memory" uri="https://kellenkanarios.com/AI2G/" display-uri="AI2G" type="local">HBM</fr:link> to <fr:link href="/GFK2/" title="VMEM" uri="https://kellenkanarios.com/GFK2/" display-uri="GFK2" type="local">VMEM</fr:link>.</html:li>
   <html:li>Compiler tiles from VMEM to <fr:tex display="inline"><![CDATA[128 \times  128]]></fr:tex> tiles to load into the MXU.</html:li></html:ol>
 </html:div>
-</fr:mainmatter>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>10</fr:day></fr:date><fr:uri>https://kellenkanarios.com/HPSO/</fr:uri><fr:display-uri>HPSO</fr:display-uri><fr:route>/HPSO/</fr:route><fr:title text="Why the MXU pads everything to 128">Why the MXU pads everything to 128</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1786395976465</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What is the native op of one <fr:link href="/OGCRP/" title="Matrix Multiply Unit (MXU)" uri="https://kellenkanarios.com/OGCRP/" display-uri="OGCRP" type="local">Matrix Multiply Unit (MXU)</fr:link>, and why does that force padding to 128?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  One <html:code>bf16[8,128] @ bf16[128,128] -&gt; f32[8,128]</html:code> every 8 cycles, on a <fr:tex display="inline"><![CDATA[128 \times  128]]></fr:tex> systolic array — <fr:tex display="inline"><![CDATA[256 \times  256]]></fr:tex> on v6e/Trillium.
+
+  The array's side length is fixed in hardware, so any matrix axis shorter than 128 (256 on v6e) is <html:strong>padded</html:strong> up to it, and the FLOPs spent on the padding are simply wasted. With 2–4 MXUs per core, tiling dimensions want to exceed <fr:tex display="inline"><![CDATA[128 \times ]]></fr:tex> the MXU count.
+
+  Scale: roughly <fr:tex display="inline"><![CDATA[5e13]]></fr:tex> bf16 FLOPs/s per MXU at 1.5 GHz, so about <fr:tex display="inline"><![CDATA[2e14]]></fr:tex> per v5e chip. int8 runs ~<fr:tex display="inline"><![CDATA[2\times ]]></fr:tex> faster, int4 ~<fr:tex display="inline"><![CDATA[4\times ]]></fr:tex>.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree></fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>
     </fr:tree>

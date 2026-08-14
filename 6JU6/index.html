@@ -176,8 +176,8 @@ window.addEventListener('load', function () { setTimeout(function () {
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Register renaming is the <span xmlns="" class="link local"><a href="/ITFA/" title="Data hazards stall when an instruction needs a not-yet-written value [ITFA]">data hazard</a></span> mitigation that makes out-of-order execution viable: the hardware dynamically remaps each architectural-register <em>write</em> to a fresh physical register from a larger pool, so two instructions that reuse the same architectural name for <em>independent</em> values never collide. The false data dependency — same architectural register, unrelated values — simply disappears, because each write lands in a different physical register.</p>
   
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> Consider:
-<pre>add r1, r2, r3      // r2 := r1 + r3
-add r4, r5, r2      // r2 := r4 + r5   (reuses r2 for an independent value)</pre>
+<pre><code class="language-plaintext">add r1, r2, r3      // r2 := r1 + r3
+add r4, r5, r2      // r2 := r4 + r5   (reuses r2 for an independent value)</code></pre>
 The second <code>add</code> only depends on <code>r2</code> as a <em>destination</em>, not as a source. Without renaming, it would have to wait for the first instruction's writeback to avoid clobbering. With renaming, the second write goes to a fresh physical register, and the two instructions can proceed in parallel.</div>
 
 <p xmlns="http://www.w3.org/1999/xhtml">The programming model exposes only the architecturally-named registers; the <span xmlns="" class="link local"><a href="/ETWN/" title="Register file [ETWN]">Register file</a></span> hides a larger pool of rename registers underneath. This is one of the central tricks that makes out-of-order execution viable.</p><section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id8" open="open"><summary><header><h1>

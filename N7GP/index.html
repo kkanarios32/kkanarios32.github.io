@@ -957,7 +957,33 @@ release(lock):
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">A core component of the <span xmlns="" class="link local"><a href="/NZZ7/" title="TPU Architecture [NZZ7]">TPU architecture</a></span> responsible for elementwise operations.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>2D <span xmlns="" class="link local"><a href="/Q7ZD/" title="Vector ISA / SIMD [Q7ZD]">SIMD</a></span> execution, where each of 1024 <em>sites</em> execute same program in lockstep.</li>
   <li>Each site contains 4 ALUs, enabling 4096 FLOPs.</li>
-  <li>Fed a 8x128 <span xmlns="" class="link local"><a href="/OGCRO/" title="Vector Register [OGCRO]">Vector Register</a></span> in one cycle.</li></ul></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id57" open="open"><summary><header><h1>
+  <li>Fed a 8x128 <span xmlns="" class="link local"><a href="/OGCRO/" title="Vector Register [OGCRO]">Vector Register</a></span> in one cycle.</li></ul><section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id57" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>The VPU is thirty times smaller than the MXU <a class="slug" href="/JFWY/">[JFWY]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 10, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/OGCRN/" title="Vector Processing Unit [OGCRN]">Vector Processing Unit</a></span>: what is its shape and throughput relative to the <span xmlns="" class="link local"><a href="/OGCRP/" title="Matrix Multiply Unit (MXU) [OGCRP]">Matrix Multiply Unit (MXU)</a></span>, and which reductions are cheap?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Shape \((8\ \text {sublanes}, 128\ \text {lanes})\), with 4 independent ALUs per position and most ops at 1/cycle:
+
+  \[8 \times  128 \times  4 \times  1.75\mathrm {e}9 \approx  7\mathrm {e}12 \text { FLOPs/s}\]
+
+  on v5p — about \(30\times \) less than the ~\(2e14\) MXU FLOPs/s per core. VPU work is fp32.
+
+  <strong>Reductions</strong> along the <strong>sublane</strong> axis (the 8) are cheap: an intra-lane shuffle by 4/2/1 plus three pairwise adds. <strong>Cross-lane</strong> reductions need the separate XLU, which is slow and expensive.
+
+  Control is skewed the other way: a single <span xmlns="" class="link local"><a href="/WY6L/" title="Scalar core (TPU) [WY6L]">scalar core</a></span> fetches and dispatches everything and can issue only <strong>one DMA request per cycle</strong>. Efficient, but it blocks data-dependent vectorization.
+</details>
+</div>
+
+
+
+</details></section></details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id58" open="open"><summary><header><h1>
 <span class="taxon">Definition 7.1.4. </span>Matrix Multiply Unit (MXU) <a class="slug" href="/OGCRP/">[OGCRP]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 22, 2026</li>
@@ -969,7 +995,29 @@ The side length is fixed in hardware, so every dimension has to be tiled down to
 <ol><li>Tiling the matrix to load from <span xmlns="" class="link local"><a href="/AI2G/" title="High bandwidth memory [AI2G]">HBM</a></span> to <span xmlns="" class="link local"><a href="/GFK2/" title="VMEM [GFK2]">VMEM</a></span>.</li>
   <li>Compiler tiles from VMEM to \(128 \times  128\) tiles to load into the MXU.</li></ol>
 </div>
-</details></section></details></section><section lang="en" class="block hide-metadata"><details id="id58" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id59" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Why the MXU pads everything to 128 <a class="slug" href="/HPSO/">[HPSO]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 10, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What is the native op of one <span xmlns="" class="link local"><a href="/OGCRP/" title="Matrix Multiply Unit (MXU) [OGCRP]">Matrix Multiply Unit (MXU)</a></span>, and why does that force padding to 128?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  One <code>bf16[8,128] @ bf16[128,128] -&gt; f32[8,128]</code> every 8 cycles, on a \(128 \times  128\) systolic array — \(256 \times  256\) on v6e/Trillium.
+
+  The array's side length is fixed in hardware, so any matrix axis shorter than 128 (256 on v6e) is <strong>padded</strong> up to it, and the FLOPs spent on the padding are simply wasted. With 2–4 MXUs per core, tiling dimensions want to exceed \(128 \times \) the MXU count.
+
+  Scale: roughly \(5e13\) bf16 FLOPs/s per MXU at 1.5 GHz, so about \(2e14\) per v5e chip. int8 runs ~\(2\times \) faster, int4 ~\(4\times \).
+</details>
+</div>
+
+
+
+</details></section></details></section></details></section><section lang="en" class="block hide-metadata"><details id="id60" open="open"><summary><header><h1>
 <span class="taxon">7.2. </span>Processing in Memory for ML <a class="slug" href="/2BGU/">[2BGU]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">April 6, 2026</li>
@@ -1012,18 +1060,18 @@ For fast communication, use tensor parallelism i.e. if connected via NVLink. If 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not scale. Cannot arbitrarily add PIM.
 </div>
-</details></section></details></section><section lang="en" class="block hide-metadata"><details id="id59" open="open"><summary><header><h1>
+</details></section></details></section><section lang="en" class="block hide-metadata"><details id="id61" open="open"><summary><header><h1>
 <span class="taxon">8. </span>On-chip interconnection networks <a class="slug" href="/667T/">[667T]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">April 8, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The network connecting cores, L2/L3 banks, and memory controllers on a <span xmlns="" class="link local"><a href="/JRP0/" title="Multicore [JRP0]">Multicore</a></span> chip. The same abstractions that govern off-chip networks (topology, routing, flow control) apply, but the constraints are different: wires are abundant but die area is scarce, latency is dominated by hops rather than propagation, and the network is part of the <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">Cache coherence</a></span> critical path.</p><section lang="en" class="block hide-metadata"><details id="id60" open="open"><summary><header><h1>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The network connecting cores, L2/L3 banks, and memory controllers on a <span xmlns="" class="link local"><a href="/JRP0/" title="Multicore [JRP0]">Multicore</a></span> chip. The same abstractions that govern off-chip networks (topology, routing, flow control) apply, but the constraints are different: wires are abundant but die area is scarce, latency is dominated by hops rather than propagation, and the network is part of the <span xmlns="" class="link local"><a href="/GA7N/" title="Cache coherence [GA7N]">Cache coherence</a></span> critical path.</p><section lang="en" class="block hide-metadata"><details id="id62" open="open"><summary><header><h1>
 <span class="taxon">8.1. </span>On-chip network metrics <a class="slug" href="/OMZU/">[OMZU]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The measurements used to compare network topologies and traffic patterns.</p>
-  <section lang="en" class="block hide-metadata"><details id="id61" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id63" open="open"><summary><header><h1>
 <span class="taxon">8.1.1. </span>Traffic-independent  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1040,7 +1088,7 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id62" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id64" open="open"><summary><header><h1>
 <span class="taxon">8.1.2. </span>Traffic-dependent  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1051,7 +1099,7 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
   <li><em>Path diversity</em>: number of distinct shortest paths between two nodes. Higher path diversity allows adaptive routing to spread load.</li></ul>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id63" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id65" open="open"><summary><header><h1>
 <span class="taxon">8.1.3. </span>Performance regimes  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1062,7 +1110,7 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 </details></section>
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Hop count is not the same as latency. Per-hop pipeline depth and link propagation matter — more short hops can beat fewer slow ones. Router pipeline depth isn't always known in advance.</div>
-</details></section><section lang="en" class="block hide-metadata"><details id="id64" open="open"><summary><header><h1>
+</details></section><section lang="en" class="block hide-metadata"><details id="id66" open="open"><summary><header><h1>
 <span class="taxon">8.2. </span>Direct vs indirect networks <a class="slug" href="/95AC/">[95AC]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1071,13 +1119,13 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
   <li><em>Indirect</em> — routers may exist that connect only to other routers, with no terminal attached. <span xmlns="" class="link local"><a href="/5WX9/" title="Butterfly network [5WX9]">Butterfly network</a></span> and <span xmlns="" class="link local"><a href="/YKAN/" title="Clos network [YKAN]">Clos network</a></span> are indirect; a router in their middle stages just shuffles bits between input and output stages.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Indirect networks can shorten the diameter for the same node count, but they pay for extra silicon area for routers that don't serve traffic locally. Often the right call off-chip; usually the wrong call on-chip.</div>
 </details></section>
-  <section lang="en" class="block hide-metadata"><details id="id65" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id67" open="open"><summary><header><h1>
 <span class="taxon">8.3. </span>Topologies  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">April 8, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id66" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id68" open="open"><summary><header><h1>
 <span class="taxon">Definition 8.3.1. </span>Crossbar <a class="slug" href="/YV5J/">[YV5J]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1087,7 +1135,7 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
   <li>Switch area grows as \(O(n \cdot  m)\) — the dominant cost as systems grow.</li></ul>
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Crossbar router area scales as the <em>square</em> of the port count, which is why high-radix routers are dramatically more expensive than low-radix ones.</div>
 <p xmlns="http://www.w3.org/1999/xhtml">Crossbars are common as the inner switch of larger structured networks (<span xmlns="" class="link local"><a href="/YKAN/" title="Clos network [YKAN]">Clos network</a></span>, <span xmlns="" class="link local"><a href="/DFC7/" title="Fat tree [DFC7]">Fat tree</a></span>) — large flat crossbars are impractical at scale, but small crossbars are cheap.</p></details></section>
-<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id67" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id69" open="open"><summary><header><h1>
 <span class="taxon">Definition 8.3.2. </span>Ring topology <a class="slug" href="/UEA0/">[UEA0]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1102,7 +1150,7 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Despite the poor scaling, rings are common in commercial CPUs (Intel's L3 ring bus on Sandy/Ivy Bridge) because they're cheap and 8–16 cores is enough.</div>
 </details></section>
-<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id68" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id70" open="open"><summary><header><h1>
 <span class="taxon">Definition 8.3.3. </span>Mesh topology <a class="slug" href="/9SA2/">[9SA2]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1116,7 +1164,7 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Mesh dominates <span xmlns="" class="link local"><a href="/DDKT/" title="Torus topology [DDKT]">Torus topology</a></span> in practice despite the topology metrics being worse, because torus wrap-around wires are physically long and force expensive folding to equalize link lengths. Manufacturing wins over theoretical performance.</div>
 </details></section>
-<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id69" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id71" open="open"><summary><header><h1>
 <span class="taxon">Definition 8.3.4. </span>Torus topology <a class="slug" href="/DDKT/">[DDKT]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1134,7 +1182,7 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
   <li><em>Asymmetric</em>: \((i, j, k)\)-ary — different node count per dimension.</li>
   <li><em>Mesh</em>: same as torus but <em>without</em> wrap-around.</li>
   <li><em>Ring</em>: \(k\)-ary 1-cube.</li></ul></details></section>
-<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id70" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id72" open="open"><summary><header><h1>
 <span class="taxon">Definition 8.3.5. </span>Butterfly network <a class="slug" href="/5WX9/">[5WX9]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1155,7 +1203,7 @@ Longer context -&gt; better performance for PIM (TODO: why?). HBM + PIM does not
 
 
 </details></section>
-<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id71" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id73" open="open"><summary><header><h1>
 <span class="taxon">Definition 8.3.6. </span>Clos network <a class="slug" href="/YKAN/">[YKAN]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1179,7 +1227,7 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> A <em>folded</em> Clos network — input and output stages combined, making \(n\) input ports and \(m\) output ports bidirectional — is structurally the same as a <span xmlns="" class="link local"><a href="/DFC7/" title="Fat tree [DFC7]">Fat tree</a></span>.</div>
 </details></section>
-<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id72" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id74" open="open"><summary><header><h1>
 <span class="taxon">Definition 8.3.7. </span>Fat tree <a class="slug" href="/DFC7/">[DFC7]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1191,13 +1239,13 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 </details></section>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id73" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id75" open="open"><summary><header><h1>
 <span class="taxon">8.4. </span>Routing  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">April 8, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-<section lang="en" class="block hide-metadata"><details id="id74" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id76" open="open"><summary><header><h1>
 <span class="taxon">8.4.1. </span>Network routing strategies <a class="slug" href="/VTS4/">[VTS4]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1224,7 +1272,7 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Oblivious strategies like <span xmlns="" class="link local"><a href="/83P2/" title="Dimension-order routing [83P2]">Dimension-order routing</a></span> and <span xmlns="" class="link local"><a href="/XLDA/" title="Valiant's routing algorithm [XLDA]">Valiant's routing algorithm</a></span> give deterministic guarantees (deadlock-free, bounded path length) at the cost of giving up the load-balancing of true adaptive routing.</div>
 </details></section>
-<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id75" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id77" open="open"><summary><header><h1>
 <span class="taxon">Definition 8.4.2. </span>Dimension-order routing <a class="slug" href="/83P2/">[83P2]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1232,7 +1280,7 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An oblivious <span xmlns="" class="link local"><a href="/VTS4/" title="Network routing strategies [VTS4]">Network routing strategies</a></span> for \(k\)-ary \(n\)-cube networks (<span xmlns="" class="link local"><a href="/9SA2/" title="Mesh topology [9SA2]">Mesh topology</a></span>, <span xmlns="" class="link local"><a href="/DDKT/" title="Torus topology [DDKT]">Torus topology</a></span>): always exhaust the offset in one dimension completely before changing to the next. E.g. in 2D mesh routing, route X-then-Y — never turn back to X after starting Y.</p><p xmlns="http://www.w3.org/1999/xhtml">The dimension order prevents <em>routing deadlock</em>: cycles in the channel dependency graph are impossible because no packet ever requests a channel in a "lower" dimension once it has started using a higher one. The dependency graph is therefore acyclic, and the standard cycle-equals-deadlock argument applies.</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>(+) Provably deadlock-free without <span xmlns="" class="link local"><a href="/HUDE/" title="Virtual Channels [HUDE]">virtual channels</a></span>.</li>
   <li>(-) Zero path diversity. Hot spots can't be routed around.</li>
   <li>(-) Unaware of current network state — <em>oblivious</em>.</li></ul><p xmlns="http://www.w3.org/1999/xhtml">The standard remedy for the path-diversity problem is <span xmlns="" class="link local"><a href="/XLDA/" title="Valiant's routing algorithm [XLDA]">Valiant's routing algorithm</a></span>, which keeps the deadlock-freedom of dimension-order routing while spreading load with a randomized intermediate hop.</p></details></section>
-<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id76" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id78" open="open"><summary><header><h1>
 <span class="taxon">Definition 8.4.3. </span>Valiant's routing algorithm <a class="slug" href="/XLDA/">[XLDA]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1247,13 +1295,13 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 </details></section>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id77" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id79" open="open"><summary><header><h1>
 <span class="taxon">8.5. </span>Flow control  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">April 8, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-<section lang="en" class="block hide-metadata"><details id="id78" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id80" open="open"><summary><header><h1>
 <span class="taxon">8.5.1. </span>Routing deadlock <a class="slug" href="/DWV1/">[DWV1]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1261,7 +1309,7 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Routing deadlock occurs when a packet cannot make progress because the buffer at its next link is full, and the packet holding that buffer is itself blocked waiting on a buffer this packet holds — a cycle in the channel dependency graph.</p><p xmlns="http://www.w3.org/1999/xhtml">Two structural responses:</p><ol xmlns="http://www.w3.org/1999/xhtml"><li><em>Avoid</em> deadlock by construction. <span xmlns="" class="link local"><a href="/83P2/" title="Dimension-order routing [83P2]">Dimension-order routing</a></span> enforces an ordering on dimension transitions so the dependency graph is acyclic by design.</li>
   <li><em>Detect and recover</em> from deadlock. Allow all turns. Detect cycles via timeouts. Drain stuck packets onto a backup network (a "slow channel" — physical, or more commonly an <em>escape <span xmlns="" class="link local"><a href="/HUDE/" title="Virtual Channels [HUDE]">virtual channel</a></span></em>) that uses dimension-order routing.</li></ol><p xmlns="http://www.w3.org/1999/xhtml">The relationship to other related concepts:</p><ul xmlns="http://www.w3.org/1999/xhtml"><li><em>Backpressure</em> (<span xmlns="" class="link local"><a href="/EZDD/" title="Network backpressure [EZDD]">Network backpressure</a></span>) is the signaling mechanism that lets a router downstream tell upstream it is congested, before the upstream actually fills the link.</li>
   <li>Adaptive routing avoids deadlock locally; backpressure lets adaptive routing react to remote congestion.</li></ul></details></section>
-<section lang="en" class="block hide-metadata"><details id="id79" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id81" open="open"><summary><header><h1>
 <span class="taxon">8.5.2. </span>Network backpressure <a class="slug" href="/EZDD/">[EZDD]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
@@ -1275,7 +1323,7 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 </details></section>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id80" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id82" open="open"><summary><header><h1>
 <span class="taxon">8.6. </span>Interface with the cache hierarchy  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">April 8, 2026</li>
@@ -1299,7 +1347,7 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id81" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id83" open="open"><summary><header><h1>
 <span class="taxon">8.7. </span>Implementation considerations  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">April 8, 2026</li>
@@ -1316,7 +1364,7 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 <p xmlns="http://www.w3.org/1999/xhtml"><strong>Concentration</strong> allocates more cores per router. (-) Decreases throughput per node. (+) Programs with high locality do little remote communication, so concentration is a good fit there.</p>
 </details></section>
 
-  <section lang="en" class="block hide-metadata"><details id="id82" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id84" open="open"><summary><header><h1>
 <span class="taxon">8.8. </span>Custom and hierarchical topologies  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">April 8, 2026</li>
@@ -1328,7 +1376,7 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 <p xmlns="http://www.w3.org/1999/xhtml"><em>Hierarchical</em> topologies use one topology within clusters and another across clusters — common when traffic has locality.</p>
 </details></section>
 </details></section></details></section><footer xmlns="">
-    <section lang="en" class="block hide-metadata"><details id="id83" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id85" open="open"><summary><header><h1>
 <span class="taxon"></span>References  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry" data-taxon="Reference"><header><h1>
@@ -1340,7 +1388,7 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 </div></header></section>
       </details></section>
     
-    <section lang="en" class="block hide-metadata"><details id="id84" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id86" open="open"><summary><header><h1>
 <span class="taxon"></span>Backlinks  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry"><header><h1>
@@ -1350,7 +1398,7 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id85" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id87" open="open"><summary><header><h1>
 <span class="taxon"></span>Related  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry"><header><h1>
@@ -1518,92 +1566,96 @@ Choosing \(n = \sqrt {N}\) and \(m \geq  2n - 1 = O(\sqrt {N})\):
 <a class="bullet" href="/OGCRQ/" title="TensorCore (TPU) [OGCRQ]">■</a><span class="link local" data-target="#id55"><span class="taxon">Definition 7.1.2. </span>TensorCore (TPU)</span><ul class="block"></ul>
 </li>
 <li>
-<a class="bullet" href="/OGCRN/" title="Vector Processing Unit [OGCRN]">■</a><span class="link local" data-target="#id56"><span class="taxon">Definition 7.1.3. </span>Vector Processing Unit</span><ul class="block"></ul>
+<a class="bullet" href="/OGCRN/" title="Vector Processing Unit [OGCRN]">■</a><span class="link local" data-target="#id56"><span class="taxon">Definition 7.1.3. </span>Vector Processing Unit</span><ul class="block"><li>
+<a class="bullet" href="/JFWY/" title="The VPU is thirty times smaller than the MXU [JFWY]">■</a><span class="link local" data-target="#id57"><span class="taxon">Card. </span>The VPU is thirty times smaller than the MXU</span><ul class="block"></ul>
+</li></ul>
 </li>
 <li>
-<a class="bullet" href="/OGCRP/" title="Matrix Multiply Unit (MXU) [OGCRP]">■</a><span class="link local" data-target="#id57"><span class="taxon">Definition 7.1.4. </span>Matrix Multiply Unit (MXU)</span><ul class="block"></ul>
+<a class="bullet" href="/OGCRP/" title="Matrix Multiply Unit (MXU) [OGCRP]">■</a><span class="link local" data-target="#id58"><span class="taxon">Definition 7.1.4. </span>Matrix Multiply Unit (MXU)</span><ul class="block"><li>
+<a class="bullet" href="/HPSO/" title="Why the MXU pads everything to 128 [HPSO]">■</a><span class="link local" data-target="#id59"><span class="taxon">Card. </span>Why the MXU pads everything to 128</span><ul class="block"></ul>
+</li></ul>
 </li>
 </ul>
 </li>
 <li>
-<a class="bullet" href="/2BGU/" title="Processing in Memory for ML [2BGU]">■</a><span class="link local" data-target="#id58"><span class="taxon">7.2. </span>Processing in Memory for ML</span><ul class="block"></ul>
+<a class="bullet" href="/2BGU/" title="Processing in Memory for ML [2BGU]">■</a><span class="link local" data-target="#id60"><span class="taxon">7.2. </span>Processing in Memory for ML</span><ul class="block"></ul>
 </li>
 </ul>
 </li>
 <li>
-<a class="bullet" href="/667T/" title="On-chip interconnection networks [667T]">■</a><span class="link local" data-target="#id59"><span class="taxon">8. </span>On-chip interconnection networks</span><ul class="block">
+<a class="bullet" href="/667T/" title="On-chip interconnection networks [667T]">■</a><span class="link local" data-target="#id61"><span class="taxon">8. </span>On-chip interconnection networks</span><ul class="block">
 <li>
-<a class="bullet" href="/OMZU/" title="On-chip network metrics [OMZU]">■</a><span class="link local" data-target="#id60"><span class="taxon">8.1. </span>On-chip network metrics</span><ul class="block">
+<a class="bullet" href="/OMZU/" title="On-chip network metrics [OMZU]">■</a><span class="link local" data-target="#id62"><span class="taxon">8.1. </span>On-chip network metrics</span><ul class="block">
 <li>
-<a class="bullet" href="#id61" title="Traffic-independent">■</a><span class="link local" data-target="#id61"><span class="taxon">8.1.1. </span>Traffic-independent</span><ul class="block"></ul>
+<a class="bullet" href="#id63" title="Traffic-independent">■</a><span class="link local" data-target="#id63"><span class="taxon">8.1.1. </span>Traffic-independent</span><ul class="block"></ul>
 </li>
 <li>
-<a class="bullet" href="#id62" title="Traffic-dependent">■</a><span class="link local" data-target="#id62"><span class="taxon">8.1.2. </span>Traffic-dependent</span><ul class="block"></ul>
+<a class="bullet" href="#id64" title="Traffic-dependent">■</a><span class="link local" data-target="#id64"><span class="taxon">8.1.2. </span>Traffic-dependent</span><ul class="block"></ul>
 </li>
 <li>
-<a class="bullet" href="#id63" title="Performance regimes">■</a><span class="link local" data-target="#id63"><span class="taxon">8.1.3. </span>Performance regimes</span><ul class="block"></ul>
-</li>
-</ul>
-</li>
-<li>
-<a class="bullet" href="/95AC/" title="Direct vs indirect networks [95AC]">■</a><span class="link local" data-target="#id64"><span class="taxon">8.2. </span>Direct vs indirect networks</span><ul class="block"></ul>
-</li>
-<li>
-<a class="bullet" href="#id65" title="Topologies">■</a><span class="link local" data-target="#id65"><span class="taxon">8.3. </span>Topologies</span><ul class="block">
-<li>
-<a class="bullet" href="/YV5J/" title="Crossbar [YV5J]">■</a><span class="link local" data-target="#id66"><span class="taxon">Definition 8.3.1. </span>Crossbar</span><ul class="block"></ul>
-</li>
-<li>
-<a class="bullet" href="/UEA0/" title="Ring topology [UEA0]">■</a><span class="link local" data-target="#id67"><span class="taxon">Definition 8.3.2. </span>Ring topology</span><ul class="block"></ul>
-</li>
-<li>
-<a class="bullet" href="/9SA2/" title="Mesh topology [9SA2]">■</a><span class="link local" data-target="#id68"><span class="taxon">Definition 8.3.3. </span>Mesh topology</span><ul class="block"></ul>
-</li>
-<li>
-<a class="bullet" href="/DDKT/" title="Torus topology [DDKT]">■</a><span class="link local" data-target="#id69"><span class="taxon">Definition 8.3.4. </span>Torus topology</span><ul class="block"></ul>
-</li>
-<li>
-<a class="bullet" href="/5WX9/" title="Butterfly network [5WX9]">■</a><span class="link local" data-target="#id70"><span class="taxon">Definition 8.3.5. </span>Butterfly network</span><ul class="block"></ul>
-</li>
-<li>
-<a class="bullet" href="/YKAN/" title="Clos network [YKAN]">■</a><span class="link local" data-target="#id71"><span class="taxon">Definition 8.3.6. </span>Clos network</span><ul class="block"></ul>
-</li>
-<li>
-<a class="bullet" href="/DFC7/" title="Fat tree [DFC7]">■</a><span class="link local" data-target="#id72"><span class="taxon">Definition 8.3.7. </span>Fat tree</span><ul class="block"></ul>
+<a class="bullet" href="#id65" title="Performance regimes">■</a><span class="link local" data-target="#id65"><span class="taxon">8.1.3. </span>Performance regimes</span><ul class="block"></ul>
 </li>
 </ul>
 </li>
 <li>
-<a class="bullet" href="#id73" title="Routing">■</a><span class="link local" data-target="#id73"><span class="taxon">8.4. </span>Routing</span><ul class="block">
-<li>
-<a class="bullet" href="/VTS4/" title="Network routing strategies [VTS4]">■</a><span class="link local" data-target="#id74"><span class="taxon">8.4.1. </span>Network routing strategies</span><ul class="block"></ul>
+<a class="bullet" href="/95AC/" title="Direct vs indirect networks [95AC]">■</a><span class="link local" data-target="#id66"><span class="taxon">8.2. </span>Direct vs indirect networks</span><ul class="block"></ul>
 </li>
 <li>
-<a class="bullet" href="/83P2/" title="Dimension-order routing [83P2]">■</a><span class="link local" data-target="#id75"><span class="taxon">Definition 8.4.2. </span>Dimension-order routing</span><ul class="block"></ul>
+<a class="bullet" href="#id67" title="Topologies">■</a><span class="link local" data-target="#id67"><span class="taxon">8.3. </span>Topologies</span><ul class="block">
+<li>
+<a class="bullet" href="/YV5J/" title="Crossbar [YV5J]">■</a><span class="link local" data-target="#id68"><span class="taxon">Definition 8.3.1. </span>Crossbar</span><ul class="block"></ul>
 </li>
 <li>
-<a class="bullet" href="/XLDA/" title="Valiant's routing algorithm [XLDA]">■</a><span class="link local" data-target="#id76"><span class="taxon">Definition 8.4.3. </span>Valiant's routing algorithm</span><ul class="block"></ul>
+<a class="bullet" href="/UEA0/" title="Ring topology [UEA0]">■</a><span class="link local" data-target="#id69"><span class="taxon">Definition 8.3.2. </span>Ring topology</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/9SA2/" title="Mesh topology [9SA2]">■</a><span class="link local" data-target="#id70"><span class="taxon">Definition 8.3.3. </span>Mesh topology</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/DDKT/" title="Torus topology [DDKT]">■</a><span class="link local" data-target="#id71"><span class="taxon">Definition 8.3.4. </span>Torus topology</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/5WX9/" title="Butterfly network [5WX9]">■</a><span class="link local" data-target="#id72"><span class="taxon">Definition 8.3.5. </span>Butterfly network</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/YKAN/" title="Clos network [YKAN]">■</a><span class="link local" data-target="#id73"><span class="taxon">Definition 8.3.6. </span>Clos network</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/DFC7/" title="Fat tree [DFC7]">■</a><span class="link local" data-target="#id74"><span class="taxon">Definition 8.3.7. </span>Fat tree</span><ul class="block"></ul>
 </li>
 </ul>
 </li>
 <li>
-<a class="bullet" href="#id77" title="Flow control">■</a><span class="link local" data-target="#id77"><span class="taxon">8.5. </span>Flow control</span><ul class="block">
+<a class="bullet" href="#id75" title="Routing">■</a><span class="link local" data-target="#id75"><span class="taxon">8.4. </span>Routing</span><ul class="block">
 <li>
-<a class="bullet" href="/DWV1/" title="Routing deadlock [DWV1]">■</a><span class="link local" data-target="#id78"><span class="taxon">8.5.1. </span>Routing deadlock</span><ul class="block"></ul>
+<a class="bullet" href="/VTS4/" title="Network routing strategies [VTS4]">■</a><span class="link local" data-target="#id76"><span class="taxon">8.4.1. </span>Network routing strategies</span><ul class="block"></ul>
 </li>
 <li>
-<a class="bullet" href="/EZDD/" title="Network backpressure [EZDD]">■</a><span class="link local" data-target="#id79"><span class="taxon">8.5.2. </span>Network backpressure</span><ul class="block"></ul>
+<a class="bullet" href="/83P2/" title="Dimension-order routing [83P2]">■</a><span class="link local" data-target="#id77"><span class="taxon">Definition 8.4.2. </span>Dimension-order routing</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/XLDA/" title="Valiant's routing algorithm [XLDA]">■</a><span class="link local" data-target="#id78"><span class="taxon">Definition 8.4.3. </span>Valiant's routing algorithm</span><ul class="block"></ul>
 </li>
 </ul>
 </li>
 <li>
-<a class="bullet" href="#id80" title="Interface with the cache hierarchy">■</a><span class="link local" data-target="#id80"><span class="taxon">8.6. </span>Interface with the cache hierarchy</span><ul class="block"></ul>
+<a class="bullet" href="#id79" title="Flow control">■</a><span class="link local" data-target="#id79"><span class="taxon">8.5. </span>Flow control</span><ul class="block">
+<li>
+<a class="bullet" href="/DWV1/" title="Routing deadlock [DWV1]">■</a><span class="link local" data-target="#id80"><span class="taxon">8.5.1. </span>Routing deadlock</span><ul class="block"></ul>
 </li>
 <li>
-<a class="bullet" href="#id81" title="Implementation considerations">■</a><span class="link local" data-target="#id81"><span class="taxon">8.7. </span>Implementation considerations</span><ul class="block"></ul>
+<a class="bullet" href="/EZDD/" title="Network backpressure [EZDD]">■</a><span class="link local" data-target="#id81"><span class="taxon">8.5.2. </span>Network backpressure</span><ul class="block"></ul>
+</li>
+</ul>
 </li>
 <li>
-<a class="bullet" href="#id82" title="Custom and hierarchical topologies">■</a><span class="link local" data-target="#id82"><span class="taxon">8.8. </span>Custom and hierarchical topologies</span><ul class="block"></ul>
+<a class="bullet" href="#id82" title="Interface with the cache hierarchy">■</a><span class="link local" data-target="#id82"><span class="taxon">8.6. </span>Interface with the cache hierarchy</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id83" title="Implementation considerations">■</a><span class="link local" data-target="#id83"><span class="taxon">8.7. </span>Implementation considerations</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id84" title="Custom and hierarchical topologies">■</a><span class="link local" data-target="#id84"><span class="taxon">8.8. </span>Custom and hierarchical topologies</span><ul class="block"></ul>
 </li>
 </ul>
 </li>

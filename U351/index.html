@@ -126,23 +126,82 @@ window.addEventListener('load', function () { setTimeout(function () {
   if (document.readyState === 'complete') init();
   else window.addEventListener('load', init);
 })();
-          </script><title>AllReduce</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
-<span class="taxon"></span>AllReduce <a class="slug" href="/U351/">[U351]</a> </h1>
+          </script><title>AllReduce</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Definition"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>AllReduce <a class="slug" href="/U351/">[U351]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">August 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
- <div xmlns="http://www.w3.org/1999/xhtml" class="stub-notice" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   color: rgb(38, 97, 69);   font-style: italic;   ">🌱 Stub — this concept is referenced but not yet written.</div>
-</details></section><footer xmlns="">
+    <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Matching contracting shards give partial sums <a class="slug" href="/KIRV/">[KIRV]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/XGI0/" title="Sharding [XGI0]">Sharded</a></span> matmul, case 3: both multiplicands are sharded along the contracting dimension on the same mesh axis, \(A[I, J_X] \cdot  B[J_X, K]\). What happens, and which primitive fixes it?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  The local shards <em>can</em> be multiplied — they share contracting indices — but each device ends up with only a <strong>partial sum</strong>, written \(C[I, K]\{U_X\}\), "unreduced along \(X\)":
+
+  \[A \cdot  B = \sum _i A[:,i] \otimes  B[i,:]\]
+
+  Device \(i\) owns the \(i\)-th column block of \(A\) and the \(i\)-th row block of \(B\), so it computes exactly the \(i\)-th term of that sum.
+
+  <strong>The fix</strong> is <span xmlns="" class="link local"><a href="/U351/" title="AllReduce [U351]">AllReduce</a></span> along \(X\) for a replicated \(C[I, K]\) — or the cheaper \(\mathrm {ReduceScatter}_{X,K} \to  C[I, K_X]\) if you can leave the output sharded. That is <span xmlns="" class="link local"><a href="/MJ7A/" title="AllReduce is two collectives, not one [MJ7A]">half the cost</a></span>, and defers the gather, possibly forever.
+</details>
+</div>
+
+
+
+</details></section>
+  </details></section><footer xmlns="">
     
-    
-    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/RCNT/">What I've been thinking about</a> <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 14, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/TAAK/">Notebook: <span class="link local"><a href="/scaling-book/" title="How to scale your model [scaling-book]">How to scale your model</a></span></a> <a class="slug" href="/TAAK/">[TAAK]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 6, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
 <span class="taxon"></span>Backlinks  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/41OF/">Collectives summary</a> <a class="slug" href="/41OF/">[41OF]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 14, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
         
         
         
+        <section class="block index-entry" data-taxon="Definition"><header><h1>
+<span class="taxon">Definition. </span><a class="index-entry-link" href="/CAGW/">ReduceScatter</a> <a class="slug" href="/CAGW/">[CAGW]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/scaling-ch3/"><span class="link local"><span class="link local"><a href="/scaling-book/" title="How to scale your model [scaling-book]">Scaling Book</a></span><a href="/KZR4/" title="Scaling Book: Exercises [KZR4]">: Exercises</a></span> › Sharded Matrices and How to Multiply Them</a> <a class="slug" href="/scaling-ch3/">[scaling-ch3]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 5, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
       </details></section>
     
     
-  </footer></article></div></body></html>
+  </footer></article><nav id="toc"><div class="block"><h1>Table of Contents</h1><ul xmlns="" class="block"><li>
+<a class="bullet" href="/KIRV/" title="Matching contracting shards give partial sums [KIRV]">■</a><span class="link local" data-target="#id2"><span class="taxon">Card. </span>Matching contracting shards give partial sums</span><ul class="block"></ul>
+</li></ul></div></nav></div></body></html>

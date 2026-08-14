@@ -132,8 +132,14 @@ window.addEventListener('load', function () { setTimeout(function () {
 <li class="meta-item">August 11, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-    <figure xmlns="http://www.w3.org/1999/xhtml"><img width="100%" src="/bafkrmibfw5kqrjaetl7hcdekd2g44m27nsv7cc7apusioaukigeqzjdrgu.png"></img>
-<figcaption>Output stationary systolic array matmul.</figcaption></figure>
+    <p xmlns="http://www.w3.org/1999/xhtml">A grid of processing elements in which every operand moves by one hop per cycle to a fixed neighbour, and nothing is addressed. A PE multiplies what arrives at it, adds what arrived from above, and passes the result on. There is no register file to name, no arbitration, and no scheduler: the dataflow <em>is</em> the wiring, and the only freedom in the design is which of the three operands you decide to hold still.</p>
+    <p xmlns="http://www.w3.org/1999/xhtml">Hold the output still and each PE owns one entry of the result, accumulating in place while both inputs stream past. Hold the weights still — the choice the <span xmlns="" class="link local"><a href="/OGCRP/" title="Matrix Multiply Unit (MXU) [OGCRP]">Matrix Multiply Unit (MXU)</a></span> makes — and each PE pins one \(w_{ij}\) for the whole tile while activations stream in from the left and partial sums fall downward. The second is the one worth being able to draw from memory, because the staggering it requires is where every systolic-array bubble comes from:</p>
+    <div xmlns="http://www.w3.org/1999/xhtml" class="mxu-fig"></div>
+    <script xmlns="http://www.w3.org/1999/xhtml" src="/bafkrmif4d2gpehgdtzbahekx4233odmkp3wkkyxygavijksbcoelen3ogq.js" defer></script>
+    <p xmlns="http://www.w3.org/1999/xhtml">The stagger is the whole trick. Row \(i\) of the activation tape is held back \(i\) cycles, so that \(x_k\) arrives at PE(\(k\), \(j\)) on precisely the cycle the running sum for column \(j\) reaches that row. The set of PEs firing on cycle \(t\) is therefore the anti-diagonal \(i + j = t\), and a finished dot product falls out of the bottom of column \(j\) having been accumulated on the way down — never written to memory, never read back.</p>
+    <p xmlns="http://www.w3.org/1999/xhtml">What you pay for that is the fill and the drain. An \(N \times  N\) array streaming \(M\) samples is busy for \(M + 2N - 2\) cycles but does only \(M N^2\) useful multiply-accumulates, so utilisation is</p>
+    \[\frac {MN^2}{(M + 2N - 2)N^2} = \frac {M}{M + 2N - 2}.\]
+    <p xmlns="http://www.w3.org/1999/xhtml">For the four-by-four array above, four samples give 40%. On a real \(128 \times  128\) MXU the fill is \(2N - 2 = 254\) cycles, so one isolated \(8 \times  128\) tile — the shape of the native op — would run at \(8/262\), near three per cent. That number is not what the hardware achieves, and the gap is the point: consecutive tiles stream in back-to-back with no bubble between them, so the fill is paid <em>once</em> per run of matmuls rather than once per tile. This is the <span xmlns="" class="link local"><a href="/R3DP/" title="The systolic array fill bubble [R3DP]">fill bubble</a></span>, and it is why the cost of a small matmul is dominated by a fixed charge that a large one amortises away.</p>
   </details></section><footer xmlns="">
     
     <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
@@ -142,7 +148,13 @@ window.addEventListener('load', function () { setTimeout(function () {
         <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/RCNT/">What I've been thinking about</a> <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
 <div class="metadata"><ul>
-<li class="meta-item">August 5, 2026</li>
+<li class="meta-item">August 14, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/TAAK/">Notebook: <span class="link local"><a href="/scaling-book/" title="How to scale your model [scaling-book]">How to scale your model</a></span></a> <a class="slug" href="/TAAK/">[TAAK]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 6, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
       </details></section>
@@ -156,6 +168,16 @@ window.addEventListener('load', function () { setTimeout(function () {
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
       </details></section>
-    
+    <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        
+        <section class="block index-entry" data-taxon="Definition"><header><h1>
+<span class="taxon">Definition. </span><a class="index-entry-link" href="/OGCRP/">Matrix Multiply Unit (MXU)</a> <a class="slug" href="/OGCRP/">[OGCRP]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
     
   </footer></article></div></body></html>

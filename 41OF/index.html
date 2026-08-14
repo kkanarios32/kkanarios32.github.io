@@ -1,0 +1,302 @@
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script>
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+  });
+});
+
+          </script><script>
+window.addEventListener('load', function () { setTimeout(function () {
+  // Openers get the same treatment from the other side: left alone, the
+  // paren in "(\(x\) or \(y\))" can hang at the end of a line.
+  var CLOSE = /^[.,;:!?)\]}%'"’”…]+/;
+  var OPEN = /[(\[{‘“]+$/;
+
+  document.querySelectorAll('.katex').forEach(function (math) {
+    // Display math is a block of its own; nothing can be orphaned beside it.
+    if (math.closest('.katex-display')) return;
+
+    // KaTeX's auto-render gives every formula a bare <span> of its own and
+    // renders into that, so the text around a formula is a sibling of the
+    // wrapper and not of .katex itself. Climb to the outermost span that
+    // holds nothing but this formula, and treat that as the atom.
+    var node = math;
+    while (node.parentNode &&
+           node.parentNode.childNodes.length === 1 &&
+           node.parentNode.nodeName.toLowerCase() === 'span') {
+      node = node.parentNode;
+    }
+
+    var before = node.previousSibling, after = node.nextSibling;
+    var lead = '', trail = '';
+    if (after && after.nodeType === 3 && CLOSE.test(after.data)) {
+      trail = after.data.match(CLOSE)[0];
+    }
+    if (before && before.nodeType === 3 && OPEN.test(before.data)) {
+      lead = before.data.match(OPEN)[0];
+    }
+    if (!lead && !trail) return;
+
+    // createElementNS, not createElement: the page is an XML document that
+    // the browser transforms with this stylesheet, and in an XML document
+    // createElement yields an element in the null namespace — a <span> that
+    // is not an HTML span, and that nothing styles.
+    var glue = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
+    glue.setAttribute('style', 'white-space: nowrap');
+    node.parentNode.insertBefore(glue, node);
+    if (lead) {
+      before.data = before.data.slice(0, before.data.length - lead.length);
+      glue.appendChild(document.createTextNode(lead));
+    }
+    glue.appendChild(node);
+    if (trail) {
+      after.data = after.data.slice(trail.length);
+      glue.appendChild(document.createTextNode(trail));
+    }
+  });
+}, 0); });
+          </script><script>
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+      if (found) reveal(found);
+    }
+
+    // Keep the marked row inside the rail. The rail is capped at the viewport
+    // and scrolls internally, so on a long contents the row being read drifts
+    // out of sight and the highlight becomes useless — you can see that you
+    // are somewhere, but not where.
+    //
+    // nav.scrollTop is set directly rather than calling scrollIntoView, which
+    // walks up the ancestor chain and will scroll the window as readily as the
+    // rail: the page would yank itself around while the reader is scrolling
+    // it. Assigning scrollTop can move nothing but the rail. Nudged only when
+    // the row is actually out of the band, so an entry already comfortably in
+    // view does not cause the rail to twitch on every section boundary.
+    function reveal(link) {
+      var pad = 32;
+      var railTop = nav.getBoundingClientRect().top;
+      var railBottom = nav.getBoundingClientRect().bottom;
+      var row = link.getBoundingClientRect();
+      if (row.top < railTop + pad) {
+        nav.scrollTop -= (railTop + pad) - row.top;
+      } else if (row.bottom > railBottom - pad) {
+        nav.scrollTop += row.bottom - (railBottom - pad);
+      }
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
+          </script><title>Collectives summary</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>Collectives summary <a class="slug" href="/41OF/">[41OF]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 14, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The four collectives that <span xmlns="" class="link local"><a href="/XGI0/" title="Sharding [XGI0]">sharded</a></span> matmuls actually need, in the <span class="link-reference"><span xmlns="" class="link local"><a href="/scaling-book/" title="How to scale your model [scaling-book]">[scaling-book]</a></span></span> notation: a subscript is a mesh axis the array is split along, and \(\{U_X\}\) marks an array that is <em>unreduced</em> along \(X\) — every device holds a full-size partial sum. A collective is then a rewrite of that decoration, and its cost is a function of how many bytes have to cross the <span xmlns="" class="link local"><a href="/UEA0/" title="Ring topology [UEA0]">ICI</a></span> to do it.</p>
+  <div xmlns="http://www.w3.org/1999/xhtml" style="     overflow-x: auto;     max-width: 100%;   ">
+    <table>
+
+  <tr>
+  
+  <th>Operation</th>
+
+  
+  <th>Description</th>
+
+  
+  <th>Syntax</th>
+
+  
+  <th>Runtime</th>
+
+</tr>
+
+
+  <tr>
+  
+  <td><span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span></td>
+
+  
+  <td>Gathers all the shards of a sharded array along an axis, removing a subscript.</td>
+
+  
+  <td style="white-space: nowrap;">\([A_X, B] \to  [A, B]\)</td>
+
+  
+  <td>\(\text {bytes} / (W_{\mathrm {ici}}^{\text {bidi}} \cdot  \text {num\_axes})\)</td>
+
+</tr>
+
+
+  <tr>
+  
+  <td><span xmlns="" class="link local"><a href="/CAGW/" title="ReduceScatter [CAGW]">ReduceScatter</a></span></td>
+
+  
+  <td>Sums a partially summed array along an axis and shards it along another axis, adding a subscript.</td>
+
+  
+  <td style="white-space: nowrap;">\([A, B]\{U_X\} \to  [A_X, B]\)</td>
+
+  
+  <td>Same as AllGather</td>
+
+</tr>
+
+
+  <tr>
+  
+  <td><span xmlns="" class="link local"><a href="/U351/" title="AllReduce [U351]">AllReduce</a></span></td>
+
+  
+  <td>Sums a partially summed array along an axis, removing the \(\{U_X\}\). Combines an AllGather and a ReduceScatter.</td>
+
+  
+  <td style="white-space: nowrap;">\([A_X, B]\{U_Y\} \to  [A_X, B]\)</td>
+
+  
+  <td>\(2 \times \) AllGather</td>
+
+</tr>
+
+
+  <tr>
+  
+  <td><span xmlns="" class="link local"><a href="/T470/" title="AllToAll [T470]">AllToAll</a></span></td>
+
+  
+  <td>Gathers (replicates) an axis and shards a different dimension along the same axis.</td>
+
+  
+  <td style="white-space: nowrap;">\([A, B_X] \to  [A_X, B]\)</td>
+
+  
+  <td>AllGather / 4 for a bidirectional ring</td>
+
+</tr>
+
+</table>
+  </div>
+<p xmlns="http://www.w3.org/1999/xhtml">Only two of these are primitives. An AllReduce is a ReduceScatter followed by an AllGather, which is exactly why it costs <span xmlns="" class="link local"><a href="/MJ7A/" title="AllReduce is two collectives, not one [MJ7A]">twice as much</a></span>, and the practical consequence is that you should stop at the ReduceScatter whenever the consumer can accept a sharded input. AllGather and ReduceScatter are <span xmlns="" class="link local"><a href="/HIDN/" title="ReduceScatter is AllGather transposed [HIDN]">transposes of each other</a></span> and hence each other's derivative, so a forward-pass AllGather implies a ReduceScatter on the reverse-mode gradients.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> The runtime column is written relative to the AllGather because every entry is the same ring pass over the same \(V\) bytes — the only thing that changes is how far each byte travels. An AllToAll is \(4\times \) cheaper because a shard's destination is on average a quarter of the ring away rather than all the way around, and no byte is broadcast to every device <span class="link-reference" tid="Ex 3.10" refid="scaling-book"><span xmlns="" class="link local"><a href="/scaling-book/" title="How to scale your model [scaling-book]">[scaling-book, Ex 3.10]</a></span></span>. The \(\text {num\_axes}\) factor in the AllGather row is the trick from <span class="link-reference" tid="Ex 3.2" refid="scaling-book"><span xmlns="" class="link local"><a href="/scaling-book/" title="How to scale your model [scaling-book]">[scaling-book, Ex 3.2]</a></span></span>: gathering over two mesh axes at once buys you both axes' bandwidth.</div>
+
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> Notice what is <em>absent</em> from the runtime column: the number of devices. A ring collective moves \(V\) bytes off each chip <span xmlns="" class="link local"><a href="/RBEJ/" title="AllGather costs the same at any device count [RBEJ]">regardless of how big the ring is</a></span>, so cost depends on the array and the link, not the mesh size, which is what makes these affordable at pod scale and why the <span xmlns="" class="link local"><a href="/scaling-ch1/" title="Scaling Book: Exercises › All about rooflines [scaling-ch1]">roofline</a></span> question is comms-vs-FLOPs rather than comms-vs-devices.</div>
+</details></section><footer xmlns="">
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>References  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry" data-taxon="Reference"><header><h1>
+<span class="taxon">Reference. </span><a class="index-entry-link" href="/scaling-book/">How to scale your model</a> <a class="slug" href="/scaling-book/">[scaling-book]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">2025</li></ul>
+<br><ul><li class="meta-item"><address class="author">Jacob Austin,  Sholto Douglas,  Roy Frostig,  Anselm Levskaya,  Charlie Chen,  Sharad Vikram,  Federico Lebron,  Peter Choy,  Vinay Ramasesh,  Albert Webson,  Reiner Pope</address></li></ul>
+<br><ul></ul>
+</div></header></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/RCNT/">What I've been thinking about</a> <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 14, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/TAAK/">Notebook: <span class="link local"><a href="/scaling-book/" title="How to scale your model [scaling-book]">How to scale your model</a></span></a> <a class="slug" href="/TAAK/">[TAAK]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 6, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
+    
+    <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        
+        
+        
+        <section class="block index-entry" data-taxon="Definition"><header><h1>
+<span class="taxon">Definition. </span><a class="index-entry-link" href="/T470/">AllToAll</a> <a class="slug" href="/T470/">[T470]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry" data-taxon="Definition"><header><h1>
+<span class="taxon">Definition. </span><a class="index-entry-link" href="/U351/">AllReduce</a> <a class="slug" href="/U351/">[U351]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry" data-taxon="Definition"><header><h1>
+<span class="taxon">Definition. </span><a class="index-entry-link" href="/CAGW/">ReduceScatter</a> <a class="slug" href="/CAGW/">[CAGW]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry" data-taxon="Definition"><header><h1>
+<span class="taxon">Definition. </span><a class="index-entry-link" href="/VSDZ/">AllGather</a> <a class="slug" href="/VSDZ/">[VSDZ]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/XGI0/">Sharding</a> <a class="slug" href="/XGI0/">[XGI0]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry" data-taxon="Definition"><header><h1>
+<span class="taxon">Definition. </span><a class="index-entry-link" href="/UEA0/">Ring topology</a> <a class="slug" href="/UEA0/">[UEA0]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/scaling-ch1/"><span class="link local"><span class="link local"><a href="/scaling-book/" title="How to scale your model [scaling-book]">Scaling Book</a></span><a href="/KZR4/" title="Scaling Book: Exercises [KZR4]">: Exercises</a></span> › All about rooflines</a> <a class="slug" href="/scaling-ch1/">[scaling-ch1]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 5, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
+    
+  </footer></article></div></body></html>

@@ -105,6 +105,230 @@ I divided the latency time by <fr:tex display="inline"><![CDATA[2]]></fr:tex>, w
 
 </fr:mainmatter></fr:tree>
   
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="replicated sharding">replicated sharding</fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.1</fr:meta></fr:frontmatter><fr:mainmatter>
+An array is sharded <fr:tex display="inline"><![CDATA[A[I_X,J,K,…]]]></fr:tex> (i.e., only sharded across <fr:tex display="inline"><![CDATA[X]]></fr:tex> ), with a mesh <html:code>Mesh({'X': 4, 'Y': 8, 'Z': 2})</html:code>. What is the ratio of the total number of bytes taken up by <fr:tex display="inline"><![CDATA[A]]></fr:tex> across all chips to the size of one copy of the array?
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+It is sharded across <fr:tex display="inline"><![CDATA[X]]></fr:tex>, so that on each chip there is only <fr:tex display="inline"><![CDATA[1/4]]></fr:tex> of <fr:tex display="inline"><![CDATA[A]]></fr:tex>. However, it must be replicated across <fr:tex display="inline"><![CDATA[Y]]></fr:tex> and <fr:tex display="inline"><![CDATA[Z]]></fr:tex> which are <fr:tex display="inline"><![CDATA[8\cdot  2 = 16]]></fr:tex> copies. This leaves us with <fr:tex display="inline"><![CDATA[16 \times ]]></fr:tex> the total number of bytes across all copies.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="AllGather latency"><fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> latency</fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.2</fr:meta></fr:frontmatter><fr:mainmatter>
+How long should <fr:tex display="inline"><![CDATA[\text {AllGather}_{X}([B_X,D_Y])]]></fr:tex> take on a TPU v4p 4x4x4 slice with mesh <html:code>Mesh({'X': 4, 'Y': 4, 'Z': 4})</html:code> if <fr:tex display="inline"><![CDATA[B=1024]]></fr:tex> and <fr:tex display="inline"><![CDATA[D=4096]]></fr:tex> in bfloat16? How about <fr:tex display="inline"><![CDATA[\text {AllGather}_{XY}([B_X,D_Y])]]></fr:tex> How about <fr:tex display="inline"><![CDATA[\text {AllReduce}_{Z}([B_X,D_Y]\{U_Z\})]]></fr:tex>?
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+<html:ol><html:li><html:p>We cannot use bi-directional because we are on a non-16 dim axes on TPU v4p. Therefore, the ICI bandwidth is <fr:tex display="inline"><![CDATA[W_{\text {ICI}} = 4.5e10]]></fr:tex>. From <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>, we know that the communication time is independent of <fr:tex display="inline"><![CDATA[|X|]]></fr:tex> and is <fr:tex display="inline"><![CDATA[\frac {N}{W_{\text {ICI}}}]]></fr:tex>. For this problem, we have <fr:tex display="inline"><![CDATA[N = 1024\cdot  4096\cdot  2]]></fr:tex>. Thus, it will take <fr:tex display="inline"><![CDATA[.186\text {ms}]]></fr:tex>.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+I do not understand wrap-around rules at all<html:label class="sidenote-ref"><html:input type="checkbox" /></html:label><html:span class="sidenote">or maybe they are just highly unintuitive</html:span>, but we actually do have bi-directional bandwidth. I also needed to take into consideration that <fr:tex display="inline"><![CDATA[|X|]]></fr:tex> cancels out but we only have <fr:tex display="inline"><![CDATA[N/|Y|]]></fr:tex> bytes. Correct answer is 
+<fr:tex display="block"><![CDATA[\frac {1024\cdot  4096\cdot  2}{9e10\cdot  |Y|}]]></fr:tex>
+</html:div>
+
+<html:li><html:p>In this case, we now have double the bandwidth because we are reducing across both dimensions. However, the total number of bytes is now <fr:tex display="inline"><![CDATA[4\times ]]></fr:tex>, which means this will be double the previous part.</html:p></html:li>
+<html:li>
+An <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> requires each device to send the full <fr:tex display="inline"><![CDATA[A]]></fr:tex> across <fr:tex display="inline"><![CDATA[Z]]></fr:tex>. This should be <fr:tex display="inline"><![CDATA[\frac {2BD}{W_{\text {ICI}}}]]></fr:tex> or <fr:tex display="inline"><![CDATA[2 \times  ]]></fr:tex> the previous part.
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+Completely misunderstood this question. For starters, when reducing along the <fr:tex display="inline"><![CDATA[Z]]></fr:tex> axis, we still <html:strong>stay sharded</html:strong> across <fr:tex display="inline"><![CDATA[x]]></fr:tex> and <fr:tex display="inline"><![CDATA[y]]></fr:tex> and therefore do not make hops across those links. Therefore, we must divide by <fr:tex display="inline"><![CDATA[|X| \cdot  |Y|]]></fr:tex>. Also, I guess the heuristic that <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> is roughly <fr:tex display="inline"><![CDATA[2 \times  ]]></fr:tex> <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> is used in calculations, which gives final answer
+<fr:tex display="block"><![CDATA[\frac {4BD}{|X|\cdot  |Y|\cdot  W_{\text {ICI}}}]]></fr:tex>
+</html:div></html:li></html:li></html:ol>
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="latency-bound AllGather">latency-bound <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link></fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.3</fr:meta></fr:frontmatter><fr:mainmatter>
+Let’s say we’re performing an <fr:tex display="inline"><![CDATA[\text {AllGather}_X([B_X])]]></fr:tex> but <fr:tex display="inline"><![CDATA[B]]></fr:tex> is very small (say 128). How long should this take on a TPU v4p 4x4x4 slice with mesh <html:code>Mesh({'X': 4, 'Y': 4, 'Z': 4})</html:code> in bfloat16?
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+<html:p>Since <fr:tex display="inline"><![CDATA[|X| = 4]]></fr:tex>, the hop latency time is <fr:tex display="inline"><![CDATA[\approx  4 \mu ]]></fr:tex>s. We have <fr:tex display="inline"><![CDATA[N = 2\cdot  128 = 256]]></fr:tex>bytes and <fr:tex display="inline"><![CDATA[W_{\text {ICI}} = 9e10]]></fr:tex>. This gives <fr:tex display="inline"><![CDATA[.0028 \mu ]]></fr:tex>s. So we are severely latency bound.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+Only need to do <fr:tex display="inline"><![CDATA[2]]></fr:tex> hops in bi-directional case, so true answer is <fr:tex display="inline"><![CDATA[\approx  2\mu  s]]></fr:tex>: still latency bound.
+</html:div>
+
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="matmul strategies">matmul strategies</fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.4</fr:meta></fr:frontmatter><fr:mainmatter>
+To perform <fr:tex display="inline"><![CDATA[X[B,D]\cdot _D Y[D_X,F] \to  Z[B,F]]]></fr:tex>, in this section we tell you to perform <fr:tex display="inline"><![CDATA[\text {AllGather}_X(Y[D_X,F])]]></fr:tex> and multiply the fully replicated matrices (Case 2, Strategy 1). Instead, you could multiply the local shards like <fr:tex display="inline"><![CDATA[X[B,D_X]\cdot _D Y[D_X,F] \to  Z[B,F]\{U_X\}]]></fr:tex> (Case 3, Strategy 2), and then <fr:tex display="inline"><![CDATA[\text {AllReduce}_X(Z[B,F]\{U_X\})]]></fr:tex>. How many FLOPs and comms does each of these perform? Which is better and why?
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+<html:p><html:em>Case 2, strategy 1</html:em>. In this case, the <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> will take <fr:tex display="inline"><![CDATA[\frac {DF}{W_{\text {ICI}}}]]></fr:tex> for communication over <fr:tex display="inline"><![CDATA[ICI]]></fr:tex> and <fr:tex display="inline"><![CDATA[BD + DF + BF]]></fr:tex> over HBM with <fr:tex display="inline"><![CDATA[2BDF]]></fr:tex> FLOPs.</html:p>
+<html:p><html:em>Case 3, strategy 2</html:em>. For local shards, each will only need to do <fr:tex display="inline"><![CDATA[\frac {2BDF}{X}]]></fr:tex> FLOPs and <fr:tex display="inline"><![CDATA[BD + D_X F + BF]]></fr:tex> HBM cost. However, the ICI cost would then be the whole matrix which is <fr:tex display="inline"><![CDATA[X \times  ]]></fr:tex> as much over ICI.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+<html:p>I was roughly correct. However, an important distinction (and gap in my understanding I gues) is that we have been ignoring HBM cost when communicating over ICI because these transfers are done concurrently and are therefore bottlenecked by the slower one (ICI).</html:p>
+</html:div>
+
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="minimum latency">minimum latency</fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.5</fr:meta></fr:frontmatter><fr:mainmatter>
+Let’s say I want to do a matmul <fr:tex display="inline"><![CDATA[A[I,J]\cdot  JB[J,K]\to  C[I,K]]]></fr:tex> on a TPU v4p 4x4x4 with the lowest possible latency. Assume the inputs can be sharded arbitrarily but the result should be fully replicated. How should my inputs be sharded? What is the total FLOPs and comms time?
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+<html:p>My initial intuition is we <html:strong>do not</html:strong> want to shard along the contracting dimension. If we have a large enough matrix, then I think the best sharding strategy would be to shard <fr:tex display="inline"><![CDATA[A[I_{XYZ}, J], B[J, K]]]></fr:tex>. The multiplication then requires no communication, and the only communication is an <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> across all <fr:tex display="inline"><![CDATA[3]]></fr:tex> axis, which should triple bandwidth. Since we shard over every axis of our mesh, we do not have any additional replicated bytes. This gives us <fr:tex display="inline"><![CDATA[N = 2IK]]></fr:tex>bytes in bf16. Since we are on a <fr:tex display="inline"><![CDATA[4\times  4\times  4]]></fr:tex> cube, we have bi-directional bandwidth availability. Therefore, the communication time on TPU v4p is <fr:tex display="inline"><![CDATA[\frac {2IK}{3\cdot  9e10}]]></fr:tex>. The total flops is still just <fr:tex display="inline"><![CDATA[2IJK]]></fr:tex>.</html:p>
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="comparing shardings">comparing shardings</fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.6</fr:meta></fr:frontmatter><fr:mainmatter>
+Let’s say we want to perform <fr:tex display="inline"><![CDATA[A[I_X,J_Y]\cdot _J B[J_Y,K]\to  C[I_X,K]]]></fr:tex> on TPU v5e 4x4. What communication do we perform? How much time is spent on communication vs. computation?
+<html:ul><html:li>What about <fr:tex display="inline"><![CDATA[A[I_X,J]\cdot _J B[J_X,K_Y]\to  C[I_X,K_Y]]]></fr:tex>? This is the most standard setting for training where we combine data, tensor, and ZeRO sharding.</html:li>
+<html:li>What about <fr:tex display="inline"><![CDATA[A[I_X,J]\cdot _J B[J,K_Y]\to  C[I_X,K_Y]]]></fr:tex>? This is standard for inference, where we do pure tensor parallelism.</html:li></html:ul>
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+<html:ol><html:li><html:p>Since this is a matmul over the sharded axis, we need to perform a reduction at some point. After performing the matmul, we should have <fr:tex display="inline"><![CDATA[C[I_X, K]\{U_Y\}]]></fr:tex>. Therefore, we need to do an <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> over <fr:tex display="inline"><![CDATA[Y]]></fr:tex>. This is then a <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link> and an <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>. For computation, each chip does the partial sum, which takes <fr:tex display="inline"><![CDATA[\frac {2IJK}{|X||Y|}]]></fr:tex> FLOPs. For communication, the <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> is <fr:tex display="inline"><![CDATA[2 \times  ]]></fr:tex> an <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>. We are still sharded over <fr:tex display="inline"><![CDATA[X]]></fr:tex>, so the total bytes is <fr:tex display="inline"><![CDATA[N = \frac {2IK}{|X|}]]></fr:tex>. We do not have bi-directional because the v5e is a 2d topology and <fr:tex display="inline"><![CDATA[4 \times  4]]></fr:tex> is not full in either axis. Thus, the communication is</html:p>
+<fr:tex display="block"><![CDATA[\frac {2\cdot  N}{W_{\text {ICI}}} = \frac {4IK}{4.5e10\cdot  |X|}]]></fr:tex>
+<html:p>To see where we are bound, the v5e can do <fr:tex display="inline"><![CDATA[1.97e 14]]></fr:tex> bf16 FLOPs/s. Therefore, we are compute bound when</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+  \frac {2IJK}{|X|\cdot  |Y|\cdot  1.97e 14} > \frac {4IK}{4.5e10\cdot  |X|}
+\iff  
+  J > \frac {8 \cdot  1.97e 14}{4.5e10}
+  .\end {align*}
+]]></fr:tex>
+<html:p>Thus, we are almost surely communication bound because it is determined by the contracting dimension, which is <fr:link href="/9VZH/" title="Hyperparameter Rules (CS336)" uri="https://kellenkanarios.com/9VZH/" display-uri="9VZH" type="local"><fr:tex display="inline"><![CDATA[d_{\text {model}}]]></fr:tex></fr:link> in practice.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+No solutions available. Prayers up this right...
+</html:div></html:li>
+<html:li><html:p>This is Case 1 with an additional sharding over the contracting dim in <fr:tex display="inline"><![CDATA[B]]></fr:tex>. I believe this means when we do the matmul, we are gonna end up with scattered partial sums i.e. unlike in the <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link> case, where we have partial sums the same dimension as <fr:tex display="inline"><![CDATA[C]]></fr:tex>, the partial sums will now be <fr:tex display="inline"><![CDATA[\frac {I}{|X|} \times  \frac {K}{|Y|}]]></fr:tex>. Another <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link> would cause this smaller matrix to be further divided and scattered, so it is not what we want.</html:p>
+<html:p>Instead, we should just perform <fr:tex display="inline"><![CDATA[\text {AllGather}_X(B[J_X, K_Y])]]></fr:tex>. Then, this will directly reduce to Case 1 and <fr:link href="/QJX1/" title="An unsharded contracting axis needs no comms" uri="https://kellenkanarios.com/QJX1/" display-uri="QJX1" type="local">we will need no further communication</fr:link>. We only need to send <fr:tex display="inline"><![CDATA[N = \frac {2JK}{|Y|}]]></fr:tex> bytes. Once again, we do not have bi-directional bandwidth. Thus, the communication is</html:p>
+<fr:tex display="block"><![CDATA[\frac {N}{W_{\text {ICI}}} = \frac {4JK}{4.5e10\cdot  |Y|}]]></fr:tex>
+<html:p>The FLOPs per-device are still <fr:tex display="inline"><![CDATA[\frac {2IJK}{|X|\cdot  |Y|}]]></fr:tex>. To see where we are bound, the v5e can do <fr:tex display="inline"><![CDATA[1.97e 14]]></fr:tex> bf16 FLOPs/s. Therefore, we are compute bound when</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+  \frac {2IJK}{|X|\cdot  |Y|\cdot  1.97e 14} > \frac {2JK}{4.5e10\cdot  |Y|}
+\iff  
+  I > \frac {4 \cdot  1.97e 14}{4.5e10}
+  .\end {align*}
+]]></fr:tex>
+<html:p>Thus, we have a smaller bound than the previous part but are now dependent on <fr:tex display="inline"><![CDATA[I]]></fr:tex> instead of <fr:tex display="inline"><![CDATA[J]]></fr:tex>. This is likely in practice because <fr:tex display="inline"><![CDATA[I]]></fr:tex> corresponds to sequence length, which can get very large.</html:p></html:li>
+<html:li>This is pure case 1 with <fr:link href="/QJX1/" title="An unsharded contracting axis needs no comms" uri="https://kellenkanarios.com/QJX1/" display-uri="QJX1" type="local">no communication</fr:link>, so we instead need to worry about memory instead of communication overhead.</html:li></html:ol>
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
 </fr:mainmatter>
   <fr:backmatter>
     <fr:tree show-metadata="false" hidden-when-empty="true">
@@ -708,6 +932,230 @@ I divided the latency time by <fr:tex display="inline"><![CDATA[2]]></fr:tex>, w
 
 </fr:mainmatter></fr:tree>
   
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="replicated sharding">replicated sharding</fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.1</fr:meta></fr:frontmatter><fr:mainmatter>
+An array is sharded <fr:tex display="inline"><![CDATA[A[I_X,J,K,…]]]></fr:tex> (i.e., only sharded across <fr:tex display="inline"><![CDATA[X]]></fr:tex> ), with a mesh <html:code>Mesh({'X': 4, 'Y': 8, 'Z': 2})</html:code>. What is the ratio of the total number of bytes taken up by <fr:tex display="inline"><![CDATA[A]]></fr:tex> across all chips to the size of one copy of the array?
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+It is sharded across <fr:tex display="inline"><![CDATA[X]]></fr:tex>, so that on each chip there is only <fr:tex display="inline"><![CDATA[1/4]]></fr:tex> of <fr:tex display="inline"><![CDATA[A]]></fr:tex>. However, it must be replicated across <fr:tex display="inline"><![CDATA[Y]]></fr:tex> and <fr:tex display="inline"><![CDATA[Z]]></fr:tex> which are <fr:tex display="inline"><![CDATA[8\cdot  2 = 16]]></fr:tex> copies. This leaves us with <fr:tex display="inline"><![CDATA[16 \times ]]></fr:tex> the total number of bytes across all copies.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="AllGather latency"><fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> latency</fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.2</fr:meta></fr:frontmatter><fr:mainmatter>
+How long should <fr:tex display="inline"><![CDATA[\text {AllGather}_{X}([B_X,D_Y])]]></fr:tex> take on a TPU v4p 4x4x4 slice with mesh <html:code>Mesh({'X': 4, 'Y': 4, 'Z': 4})</html:code> if <fr:tex display="inline"><![CDATA[B=1024]]></fr:tex> and <fr:tex display="inline"><![CDATA[D=4096]]></fr:tex> in bfloat16? How about <fr:tex display="inline"><![CDATA[\text {AllGather}_{XY}([B_X,D_Y])]]></fr:tex> How about <fr:tex display="inline"><![CDATA[\text {AllReduce}_{Z}([B_X,D_Y]\{U_Z\})]]></fr:tex>?
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+<html:ol><html:li><html:p>We cannot use bi-directional because we are on a non-16 dim axes on TPU v4p. Therefore, the ICI bandwidth is <fr:tex display="inline"><![CDATA[W_{\text {ICI}} = 4.5e10]]></fr:tex>. From <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>, we know that the communication time is independent of <fr:tex display="inline"><![CDATA[|X|]]></fr:tex> and is <fr:tex display="inline"><![CDATA[\frac {N}{W_{\text {ICI}}}]]></fr:tex>. For this problem, we have <fr:tex display="inline"><![CDATA[N = 1024\cdot  4096\cdot  2]]></fr:tex>. Thus, it will take <fr:tex display="inline"><![CDATA[.186\text {ms}]]></fr:tex>.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+I do not understand wrap-around rules at all<html:label class="sidenote-ref"><html:input type="checkbox" /></html:label><html:span class="sidenote">or maybe they are just highly unintuitive</html:span>, but we actually do have bi-directional bandwidth. I also needed to take into consideration that <fr:tex display="inline"><![CDATA[|X|]]></fr:tex> cancels out but we only have <fr:tex display="inline"><![CDATA[N/|Y|]]></fr:tex> bytes. Correct answer is 
+<fr:tex display="block"><![CDATA[\frac {1024\cdot  4096\cdot  2}{9e10\cdot  |Y|}]]></fr:tex>
+</html:div>
+
+<html:li><html:p>In this case, we now have double the bandwidth because we are reducing across both dimensions. However, the total number of bytes is now <fr:tex display="inline"><![CDATA[4\times ]]></fr:tex>, which means this will be double the previous part.</html:p></html:li>
+<html:li>
+An <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> requires each device to send the full <fr:tex display="inline"><![CDATA[A]]></fr:tex> across <fr:tex display="inline"><![CDATA[Z]]></fr:tex>. This should be <fr:tex display="inline"><![CDATA[\frac {2BD}{W_{\text {ICI}}}]]></fr:tex> or <fr:tex display="inline"><![CDATA[2 \times  ]]></fr:tex> the previous part.
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+Completely misunderstood this question. For starters, when reducing along the <fr:tex display="inline"><![CDATA[Z]]></fr:tex> axis, we still <html:strong>stay sharded</html:strong> across <fr:tex display="inline"><![CDATA[x]]></fr:tex> and <fr:tex display="inline"><![CDATA[y]]></fr:tex> and therefore do not make hops across those links. Therefore, we must divide by <fr:tex display="inline"><![CDATA[|X| \cdot  |Y|]]></fr:tex>. Also, I guess the heuristic that <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> is roughly <fr:tex display="inline"><![CDATA[2 \times  ]]></fr:tex> <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> is used in calculations, which gives final answer
+<fr:tex display="block"><![CDATA[\frac {4BD}{|X|\cdot  |Y|\cdot  W_{\text {ICI}}}]]></fr:tex>
+</html:div></html:li></html:li></html:ol>
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="latency-bound AllGather">latency-bound <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link></fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.3</fr:meta></fr:frontmatter><fr:mainmatter>
+Let’s say we’re performing an <fr:tex display="inline"><![CDATA[\text {AllGather}_X([B_X])]]></fr:tex> but <fr:tex display="inline"><![CDATA[B]]></fr:tex> is very small (say 128). How long should this take on a TPU v4p 4x4x4 slice with mesh <html:code>Mesh({'X': 4, 'Y': 4, 'Z': 4})</html:code> in bfloat16?
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+<html:p>Since <fr:tex display="inline"><![CDATA[|X| = 4]]></fr:tex>, the hop latency time is <fr:tex display="inline"><![CDATA[\approx  4 \mu ]]></fr:tex>s. We have <fr:tex display="inline"><![CDATA[N = 2\cdot  128 = 256]]></fr:tex>bytes and <fr:tex display="inline"><![CDATA[W_{\text {ICI}} = 9e10]]></fr:tex>. This gives <fr:tex display="inline"><![CDATA[.0028 \mu ]]></fr:tex>s. So we are severely latency bound.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+Only need to do <fr:tex display="inline"><![CDATA[2]]></fr:tex> hops in bi-directional case, so true answer is <fr:tex display="inline"><![CDATA[\approx  2\mu  s]]></fr:tex>: still latency bound.
+</html:div>
+
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="matmul strategies">matmul strategies</fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.4</fr:meta></fr:frontmatter><fr:mainmatter>
+To perform <fr:tex display="inline"><![CDATA[X[B,D]\cdot _D Y[D_X,F] \to  Z[B,F]]]></fr:tex>, in this section we tell you to perform <fr:tex display="inline"><![CDATA[\text {AllGather}_X(Y[D_X,F])]]></fr:tex> and multiply the fully replicated matrices (Case 2, Strategy 1). Instead, you could multiply the local shards like <fr:tex display="inline"><![CDATA[X[B,D_X]\cdot _D Y[D_X,F] \to  Z[B,F]\{U_X\}]]></fr:tex> (Case 3, Strategy 2), and then <fr:tex display="inline"><![CDATA[\text {AllReduce}_X(Z[B,F]\{U_X\})]]></fr:tex>. How many FLOPs and comms does each of these perform? Which is better and why?
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+<html:p><html:em>Case 2, strategy 1</html:em>. In this case, the <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> will take <fr:tex display="inline"><![CDATA[\frac {DF}{W_{\text {ICI}}}]]></fr:tex> for communication over <fr:tex display="inline"><![CDATA[ICI]]></fr:tex> and <fr:tex display="inline"><![CDATA[BD + DF + BF]]></fr:tex> over HBM with <fr:tex display="inline"><![CDATA[2BDF]]></fr:tex> FLOPs.</html:p>
+<html:p><html:em>Case 3, strategy 2</html:em>. For local shards, each will only need to do <fr:tex display="inline"><![CDATA[\frac {2BDF}{X}]]></fr:tex> FLOPs and <fr:tex display="inline"><![CDATA[BD + D_X F + BF]]></fr:tex> HBM cost. However, the ICI cost would then be the whole matrix which is <fr:tex display="inline"><![CDATA[X \times  ]]></fr:tex> as much over ICI.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+<html:p>I was roughly correct. However, an important distinction (and gap in my understanding I gues) is that we have been ignoring HBM cost when communicating over ICI because these transfers are done concurrently and are therefore bottlenecked by the slower one (ICI).</html:p>
+</html:div>
+
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="minimum latency">minimum latency</fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.5</fr:meta></fr:frontmatter><fr:mainmatter>
+Let’s say I want to do a matmul <fr:tex display="inline"><![CDATA[A[I,J]\cdot  JB[J,K]\to  C[I,K]]]></fr:tex> on a TPU v4p 4x4x4 with the lowest possible latency. Assume the inputs can be sharded arbitrarily but the result should be fully replicated. How should my inputs be sharded? What is the total FLOPs and comms time?
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+<html:p>My initial intuition is we <html:strong>do not</html:strong> want to shard along the contracting dimension. If we have a large enough matrix, then I think the best sharding strategy would be to shard <fr:tex display="inline"><![CDATA[A[I_{XYZ}, J], B[J, K]]]></fr:tex>. The multiplication then requires no communication, and the only communication is an <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> across all <fr:tex display="inline"><![CDATA[3]]></fr:tex> axis, which should triple bandwidth. Since we shard over every axis of our mesh, we do not have any additional replicated bytes. This gives us <fr:tex display="inline"><![CDATA[N = 2IK]]></fr:tex>bytes in bf16. Since we are on a <fr:tex display="inline"><![CDATA[4\times  4\times  4]]></fr:tex> cube, we have bi-directional bandwidth availability. Therefore, the communication time on TPU v4p is <fr:tex display="inline"><![CDATA[\frac {2IK}{3\cdot  9e10}]]></fr:tex>. The total flops is still just <fr:tex display="inline"><![CDATA[2IJK]]></fr:tex>.</html:p>
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="comparing shardings">comparing shardings</fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.6</fr:meta></fr:frontmatter><fr:mainmatter>
+Let’s say we want to perform <fr:tex display="inline"><![CDATA[A[I_X,J_Y]\cdot _J B[J_Y,K]\to  C[I_X,K]]]></fr:tex> on TPU v5e 4x4. What communication do we perform? How much time is spent on communication vs. computation?
+<html:ul><html:li>What about <fr:tex display="inline"><![CDATA[A[I_X,J]\cdot _J B[J_X,K_Y]\to  C[I_X,K_Y]]]></fr:tex>? This is the most standard setting for training where we combine data, tensor, and ZeRO sharding.</html:li>
+<html:li>What about <fr:tex display="inline"><![CDATA[A[I_X,J]\cdot _J B[J,K_Y]\to  C[I_X,K_Y]]]></fr:tex>? This is standard for inference, where we do pure tensor parallelism.</html:li></html:ul>
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+<html:ol><html:li><html:p>Since this is a matmul over the sharded axis, we need to perform a reduction at some point. After performing the matmul, we should have <fr:tex display="inline"><![CDATA[C[I_X, K]\{U_Y\}]]></fr:tex>. Therefore, we need to do an <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> over <fr:tex display="inline"><![CDATA[Y]]></fr:tex>. This is then a <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link> and an <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>. For computation, each chip does the partial sum, which takes <fr:tex display="inline"><![CDATA[\frac {2IJK}{|X||Y|}]]></fr:tex> FLOPs. For communication, the <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> is <fr:tex display="inline"><![CDATA[2 \times  ]]></fr:tex> an <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>. We are still sharded over <fr:tex display="inline"><![CDATA[X]]></fr:tex>, so the total bytes is <fr:tex display="inline"><![CDATA[N = \frac {2IK}{|X|}]]></fr:tex>. We do not have bi-directional because the v5e is a 2d topology and <fr:tex display="inline"><![CDATA[4 \times  4]]></fr:tex> is not full in either axis. Thus, the communication is</html:p>
+<fr:tex display="block"><![CDATA[\frac {2\cdot  N}{W_{\text {ICI}}} = \frac {4IK}{4.5e10\cdot  |X|}]]></fr:tex>
+<html:p>To see where we are bound, the v5e can do <fr:tex display="inline"><![CDATA[1.97e 14]]></fr:tex> bf16 FLOPs/s. Therefore, we are compute bound when</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+  \frac {2IJK}{|X|\cdot  |Y|\cdot  1.97e 14} > \frac {4IK}{4.5e10\cdot  |X|}
+\iff  
+  J > \frac {8 \cdot  1.97e 14}{4.5e10}
+  .\end {align*}
+]]></fr:tex>
+<html:p>Thus, we are almost surely communication bound because it is determined by the contracting dimension, which is <fr:link href="/9VZH/" title="Hyperparameter Rules (CS336)" uri="https://kellenkanarios.com/9VZH/" display-uri="9VZH" type="local"><fr:tex display="inline"><![CDATA[d_{\text {model}}]]></fr:tex></fr:link> in practice.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+No solutions available. Prayers up this right...
+</html:div></html:li>
+<html:li><html:p>This is Case 1 with an additional sharding over the contracting dim in <fr:tex display="inline"><![CDATA[B]]></fr:tex>. I believe this means when we do the matmul, we are gonna end up with scattered partial sums i.e. unlike in the <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link> case, where we have partial sums the same dimension as <fr:tex display="inline"><![CDATA[C]]></fr:tex>, the partial sums will now be <fr:tex display="inline"><![CDATA[\frac {I}{|X|} \times  \frac {K}{|Y|}]]></fr:tex>. Another <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link> would cause this smaller matrix to be further divided and scattered, so it is not what we want.</html:p>
+<html:p>Instead, we should just perform <fr:tex display="inline"><![CDATA[\text {AllGather}_X(B[J_X, K_Y])]]></fr:tex>. Then, this will directly reduce to Case 1 and <fr:link href="/QJX1/" title="An unsharded contracting axis needs no comms" uri="https://kellenkanarios.com/QJX1/" display-uri="QJX1" type="local">we will need no further communication</fr:link>. We only need to send <fr:tex display="inline"><![CDATA[N = \frac {2JK}{|Y|}]]></fr:tex> bytes. Once again, we do not have bi-directional bandwidth. Thus, the communication is</html:p>
+<fr:tex display="block"><![CDATA[\frac {N}{W_{\text {ICI}}} = \frac {4JK}{4.5e10\cdot  |Y|}]]></fr:tex>
+<html:p>The FLOPs per-device are still <fr:tex display="inline"><![CDATA[\frac {2IJK}{|X|\cdot  |Y|}]]></fr:tex>. To see where we are bound, the v5e can do <fr:tex display="inline"><![CDATA[1.97e 14]]></fr:tex> bf16 FLOPs/s. Therefore, we are compute bound when</html:p>
+<fr:tex display="block"><![CDATA[
+  \begin {align*}
+  \frac {2IJK}{|X|\cdot  |Y|\cdot  1.97e 14} > \frac {2JK}{4.5e10\cdot  |Y|}
+\iff  
+  I > \frac {4 \cdot  1.97e 14}{4.5e10}
+  .\end {align*}
+]]></fr:tex>
+<html:p>Thus, we have a smaller bound than the previous part but are now dependent on <fr:tex display="inline"><![CDATA[I]]></fr:tex> instead of <fr:tex display="inline"><![CDATA[J]]></fr:tex>. This is likely in practice because <fr:tex display="inline"><![CDATA[I]]></fr:tex> corresponds to sequence length, which can get very large.</html:p></html:li>
+<html:li>This is pure case 1 with <fr:link href="/QJX1/" title="An unsharded contracting axis needs no comms" uri="https://kellenkanarios.com/QJX1/" display-uri="QJX1" type="local">no communication</fr:link>, so we instead need to worry about memory instead of communication overhead.</html:li></html:ol>
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
 </fr:mainmatter>
             </fr:tree>
           </fr:mainmatter>
@@ -727,6 +1175,309 @@ I divided the latency time by <fr:tex display="inline"><![CDATA[2]]></fr:tex>, w
         <fr:title text="Related">Related</fr:title>
       </fr:frontmatter>
       <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/QJX1/</fr:uri>
+            <fr:display-uri>QJX1</fr:display-uri>
+            <fr:route>/QJX1/</fr:route>
+            <fr:title text="An unsharded contracting axis needs no comms">An unsharded contracting axis needs no comms</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1786546736361</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p><fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharded</fr:link> matmul, case 1: neither multiplicand has a sharded contracting dimension. What communication is required, and what is the output sharding?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong>None at all.</html:strong> Each device does a local block matmul and the result is already sharded correctly:
+
+  <fr:tex display="block"><![CDATA[A[I_X, J] \cdot  B[J, K_Y] \to  C[I_X, K_Y]]]></fr:tex>
+
+  The contracting axis <fr:tex display="inline"><![CDATA[J]]></fr:tex> is unsharded, so every device holds complete contracting slices and the computation does not depend on the sharding. The output simply inherits the input shardings.
+
+  The one caveat: this holds only if the two inputs' <html:em>non-contracting</html:em> dimensions are not sharded over the same mesh axis — that case is <fr:link href="/QBBA/" title="A mesh axis may appear only once" uri="https://kellenkanarios.com/QBBA/" display-uri="QBBA" type="local">invalid</fr:link>.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/U351/</fr:uri>
+            <fr:display-uri>U351</fr:display-uri>
+            <fr:route>/U351/</fr:route>
+            <fr:title text="AllReduce">AllReduce</fr:title>
+            <fr:taxon>Definition</fr:taxon>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>8</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/KIRV/</fr:uri>
+                <fr:display-uri>KIRV</fr:display-uri>
+                <fr:route>/KIRV/</fr:route>
+                <fr:title text="Matching contracting shards give partial sums">Matching contracting shards give partial sums</fr:title>
+                <fr:taxon>Card</fr:taxon>
+                <fr:meta name="anki">1786546736136</fr:meta>
+                <fr:meta name="anki-deck">MLSys</fr:meta>
+              </fr:frontmatter>
+              <fr:mainmatter>
+  <html:p><fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharded</fr:link> matmul, case 3: both multiplicands are sharded along the contracting dimension on the same mesh axis, <fr:tex display="inline"><![CDATA[A[I, J_X] \cdot  B[J_X, K]]]></fr:tex>. What happens, and which primitive fixes it?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The local shards <html:em>can</html:em> be multiplied — they share contracting indices — but each device ends up with only a <html:strong>partial sum</html:strong>, written <fr:tex display="inline"><![CDATA[C[I, K]\{U_X\}]]></fr:tex>, "unreduced along <fr:tex display="inline"><![CDATA[X]]></fr:tex>":
+
+  <fr:tex display="block"><![CDATA[A \cdot  B = \sum _i A[:,i] \otimes  B[i,:]]]></fr:tex>
+
+  Device <fr:tex display="inline"><![CDATA[i]]></fr:tex> owns the <fr:tex display="inline"><![CDATA[i]]></fr:tex>-th column block of <fr:tex display="inline"><![CDATA[A]]></fr:tex> and the <fr:tex display="inline"><![CDATA[i]]></fr:tex>-th row block of <fr:tex display="inline"><![CDATA[B]]></fr:tex>, so it computes exactly the <fr:tex display="inline"><![CDATA[i]]></fr:tex>-th term of that sum.
+
+  <html:strong>The fix</html:strong> is <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> along <fr:tex display="inline"><![CDATA[X]]></fr:tex> for a replicated <fr:tex display="inline"><![CDATA[C[I, K]]]></fr:tex> — or the cheaper <fr:tex display="inline"><![CDATA[\mathrm {ReduceScatter}_{X,K} \to  C[I, K_X]]]></fr:tex> if you can leave the output sharded. That is <fr:link href="/MJ7A/" title="AllReduce is two collectives, not one" uri="https://kellenkanarios.com/MJ7A/" display-uri="MJ7A" type="local">half the cost</fr:link>, and defers the gather, possibly forever.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+            </fr:tree>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/CAGW/</fr:uri>
+            <fr:display-uri>CAGW</fr:display-uri>
+            <fr:route>/CAGW/</fr:route>
+            <fr:title text="ReduceScatter">ReduceScatter</fr:title>
+            <fr:taxon>Definition</fr:taxon>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The collective that resolves partial sums along a mesh axis and leaves the result <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">sharded</fr:link> rather than replicated: <fr:tex display="inline"><![CDATA[[A, B]\{U_X\} \to  [A_X, B]]]></fr:tex>. It is the reduction half of an <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link>, and the transpose of an <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>. Same <fr:link href="/UEA0/" title="Ring topology" uri="https://kellenkanarios.com/UEA0/" display-uri="UEA0" type="local">ring</fr:link> pass, same cost <fr:tex display="inline"><![CDATA[V / W_{\mathrm {ici}}]]></fr:tex>, except each device sums the shard arriving from its left neighbour into its own copy instead of merely keeping it.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Notation.</html:span> Because it <html:em>introduces</html:em> a subscript, you have to say where it goes: <fr:tex display="inline"><![CDATA[\mathrm {ReduceScatter}_{X,K}]]></fr:tex> reduces along mesh axis <fr:tex display="inline"><![CDATA[X]]></fr:tex> and shards the result along <fr:tex display="inline"><![CDATA[K]]></fr:tex>. That freedom is the whole argument for preferring it. Namely, whenever the consumer can accept a sharded input, stopping at the ReduceScatter costs <fr:link href="/MJ7A/" title="AllReduce is two collectives, not one" uri="https://kellenkanarios.com/MJ7A/" display-uri="MJ7A" type="local">half what an AllReduce does</fr:link> and defers the gather, possibly forever.</html:div>
+<html:p>The mechanism is easiest to see as a schedule. Each device starts holding a full-size buffer that is only a partial sum, and on every step forwards one chunk rightward and folds in the chunk arriving from its left. After <fr:tex display="inline"><![CDATA[N-1]]></fr:tex> steps device <fr:tex display="inline"><![CDATA[b]]></fr:tex> holds chunk <fr:tex display="inline"><![CDATA[b]]></fr:tex> summed over all <fr:tex display="inline"><![CDATA[N]]></fr:tex> partials and has forwarded the rest away, which is also why the resident memory falls by <fr:tex display="inline"><![CDATA[N]]></fr:tex>.</html:p>
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);">Question.</html:span> How do we know what chunk to send to who?</html:div>
+
+
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-weight: 500; color: rgb(115, 73, 35);">Answer.</html:span></html:summary>It is actually remarkably easy. If there are <fr:tex display="inline"><![CDATA[N]]></fr:tex> devices, then you just compute which device is <fr:tex display="inline"><![CDATA[N - 1]]></fr:tex> hops away from you. You send that chunk to your right neighbor. Each chunk then propagates through the ring and will end up with the completed chunked sum on the correct device</html:details>
+</html:div>
+
+
+<html:div class="rs-fig" /><html:script src="/bafkrmieffkkwl2ffgpoti6fn2i4ylgxly4fjdmavrrhc3x7ixkwdag6dfa.js" defer="" /><html:p>Note that the steps are not <fr:tex display="inline"><![CDATA[N-1]]></fr:tex> rounds of moving a whole buffer: every link carries <html:strong>one chunk</html:strong> in the same direction at the same time, so the cost is <fr:tex display="inline"><![CDATA[N-1]]></fr:tex> chunk-times, and the <fr:tex display="inline"><![CDATA[N]]></fr:tex> in the chunk size cancels the <fr:tex display="inline"><![CDATA[N-1]]></fr:tex> in the step count. Nothing is ever broadcast, which is the sense in which the ring is optimal and the reason a ReduceScatter is not merely an <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> with a slice at the end.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/HIDN/</fr:uri><fr:display-uri>HIDN</fr:display-uri><fr:route>/HIDN/</fr:route><fr:title text="ReduceScatter is AllGather transposed">ReduceScatter is AllGather transposed</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1786546735759</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p><fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link>: signature, relationship to <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>, and cost?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong>Signature</html:strong> <fr:tex display="inline"><![CDATA[[A, B]\{U_X\} \to  [A_X, B]]]></fr:tex> — it resolves partial sums along <fr:tex display="inline"><![CDATA[X]]></fr:tex> and leaves the result <html:em>sharded</html:em> along a dimension of your choosing. It <html:em>introduces</html:em> a subscript, which is why you have to say where: <fr:tex display="inline"><![CDATA[\mathrm {ReduceScatter}_{X,K}]]></fr:tex>.
+
+  <html:strong>Mechanism</html:strong>: the same ring pass as an AllGather, except you sum the incoming shards instead of keeping them. <html:strong>Cost</html:strong> is therefore identical, <fr:tex display="inline"><![CDATA[V / W_{\mathrm {ici}}]]></fr:tex>.
+
+  <html:strong>Duality</html:strong>: AllGather and ReduceScatter are transposes of each other, hence each other's derivative — an AllGather in the forward pass means a ReduceScatter on the reverse-mode gradients, and vice versa. (Broadcast is <fr:tex display="inline"><![CDATA[u \otimes  I]]></fr:tex>, reduce is <fr:tex display="inline"><![CDATA[u^\top  \otimes  I]]></fr:tex>.)
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/MJ7A/</fr:uri><fr:display-uri>MJ7A</fr:display-uri><fr:route>/MJ7A/</fr:route><fr:title text="AllReduce is two collectives, not one">AllReduce is two collectives, not one</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1786546736236</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p><fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link>: signature, decomposition, and cost relative to an <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong>Signature</html:strong> <fr:tex display="inline"><![CDATA[[A_X, B]\{U_Y\} \to  [A_X, B]]]></fr:tex> — it removes the "unreduced" suffix, leaving every device on the axis holding the same fully-summed value, unsharded along <fr:tex display="inline"><![CDATA[Y]]></fr:tex>.
+
+  <html:strong>It is not really a primitive</html:strong>: an AllReduce is a <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link> followed by an AllGather.
+
+  <fr:tex display="block"><![CDATA[A[I_X, J]\{U_Y\} \xrightarrow {\ \mathrm {ReduceScatter}_{Y,J}\ } A[I_X, J_Y] \xrightarrow {\ \mathrm {AllGather}_Y\ } A[I_X, J]]]></fr:tex>
+
+  <html:strong>Cost</html:strong> <fr:tex display="inline"><![CDATA[2V / W_{\mathrm {ici}}]]></fr:tex>, exactly <fr:tex display="inline"><![CDATA[2\times ]]></fr:tex> an AllGather — which is the practical argument for stopping at the ReduceScatter whenever the consumer can accept a sharded output. The AllGather can then be deferred, or skipped entirely.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree></fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/VSDZ/</fr:uri>
+            <fr:display-uri>VSDZ</fr:display-uri>
+            <fr:route>/VSDZ/</fr:route>
+            <fr:title text="AllGather">AllGather</fr:title>
+            <fr:taxon>Definition</fr:taxon>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>An <html:em>AllGather</html:em> gets resources from all devices onto one device. In <fr:link href="/NZZ7/" title="TPU Architecture" uri="https://kellenkanarios.com/NZZ7/" display-uri="NZZ7" type="local">TPU's</fr:link> <fr:link href="/UEA0/" title="Ring topology" uri="https://kellenkanarios.com/UEA0/" display-uri="UEA0" type="local">Ring topology</fr:link>, this is done in <fr:tex display="inline"><![CDATA[\frac {N}{2}]]></fr:tex> hops via each TPU sending its shard to the neighboring chip.</html:p><html:p>
+Assuming we have <fr:tex display="inline"><![CDATA[X]]></fr:tex> shards and the total bytes is <fr:tex display="inline"><![CDATA[N]]></fr:tex>, then each chip must send <fr:tex display="inline"><![CDATA[\frac {N}{X}]]></fr:tex> bytes. If we have an ICI bandwidth of <fr:tex display="inline"><![CDATA[W_{\text {ICI}}]]></fr:tex>, then for each chip to send to its neighbor will be <fr:tex display="block"><![CDATA[T_{1\text { hop}} = \frac {N}{X\cdot  W_{\text {ICI}}}]]></fr:tex>
+Now each chip must send across <fr:tex display="inline"><![CDATA[X]]></fr:tex> hops, which gives <fr:tex display="inline"><![CDATA[T = X\cdot  T_{1\text { hop}} = \frac {N}{W_{\text {ICI}}}]]></fr:tex>.<html:label class="sidenote-ref"><html:input type="checkbox" /></html:label><html:span class="sidenote">This does not change if we use the bi-directional bandwidth because then we have <fr:tex display="inline"><![CDATA[2N]]></fr:tex> bytes but only need to send at most <fr:tex display="inline"><![CDATA[\frac {X}{2}]]></fr:tex> hops!</html:span></html:p>
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+A super fun trick from <html:span class="link-reference" tid="Ex 3.2" refid="scaling-book"><fr:link href="/scaling-book/" title="How to scale your model" uri="https://kellenkanarios.com/scaling-book/" display-uri="scaling-book" type="local">[scaling-book, Ex 3.2]</fr:link></html:span>: If you have an unused replicated dimension, then you can shard the replicated axis and perform an AllGather over both dimensions to double your bandwidth!
+</html:div>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/RBEJ/</fr:uri><fr:display-uri>RBEJ</fr:display-uri><fr:route>/RBEJ/</fr:route><fr:title text="AllGather costs the same at any device count">AllGather costs the same at any device count</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1786546736461</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p><fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>: signature, mechanism, and cost?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+<html:p><html:em>Signature</html:em> <fr:tex display="inline"><![CDATA[[A_X, B] \to  [A, B]]]></fr:tex> — it removes a subscript, reassembling shards so every device on that axis holds a full copy. It can drop just one of several axes: <fr:tex display="inline"><![CDATA[A[I_{XY}, J] \to  A[I_Y, J]]]></fr:tex>.
+</html:p>
+
+<html:p><html:em>Mechanism</html:em>: pass each shard around the <fr:link href="/UEA0/" title="Ring topology" uri="https://kellenkanarios.com/UEA0/" display-uri="UEA0" type="local">ring</fr:link>, <fr:tex display="inline"><![CDATA[N-1]]></fr:tex> hops in one direction or about <fr:tex display="inline"><![CDATA[N/2]]></fr:tex> bidirectionally.
+</html:p>
+
+<html:p><html:em>Cost</html:em>, when bandwidth-bound: <fr:tex display="inline"><![CDATA[T = V / W_{\mathrm {ici}}]]></fr:tex> on bidirectional bandwidth, or <fr:tex display="inline"><![CDATA[V / (W_{\mathrm {ici}} \cdot  N_{\mathrm {axes}})]]></fr:tex> across several mesh axes. The takeaway is that this is <html:strong>independent of the device count <fr:tex display="inline"><![CDATA[X]]></fr:tex></html:strong> — each hop sends <fr:tex display="inline"><![CDATA[V/X]]></fr:tex> bytes but you make <fr:tex display="inline"><![CDATA[X/2]]></fr:tex> hops. Only array size and link bandwidth matter.
+</html:p>
+
+<html:p><html:em>Latency-bound regime</html:em>: about <fr:tex display="inline"><![CDATA[1\mu \mathrm {s}]]></fr:tex> intrinsic cost per hop, so <fr:tex display="inline"><![CDATA[T = \max (T_{\min } \cdot  \sum _i |X_i| / 2,\; V / (W \cdot  N_{\mathrm {axes}}))]]></fr:tex>. On v5e (<fr:tex display="inline"><![CDATA[4.5e10]]></fr:tex> unidirectional) anything under ~45 kB is latency-bound.
+</html:p>
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/JO4V/</fr:uri><fr:display-uri>JO4V</fr:display-uri><fr:route>/JO4V/</fr:route><fr:title text="Gather before, or reduce after">Gather before, or reduce after</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1786546736036</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p><fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharded</fr:link> matmul, case 2: one multiplicand has a sharded contracting dimension, <fr:tex display="inline"><![CDATA[A[I, J_X] \cdot  B[J, K] \to  C[I, K]]]></fr:tex>. Which primitive, and what is the alternative?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong><fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> the sharded input first, then matmul locally</html:strong>: <fr:tex display="inline"><![CDATA[\mathrm {AllGather}_X(A[I, J_X]) \to  A[I, J]]]></fr:tex>, then <fr:tex display="inline"><![CDATA[A[I, J] \cdot  B[J, K] \to  C[I, K]]]></fr:tex>. You cannot just multiply the local shards, because the sum over <fr:tex display="inline"><![CDATA[J]]></fr:tex> is split across <fr:tex display="inline"><![CDATA[X]]></fr:tex> and each device holds only a partial sum.
+
+  <html:strong>The alternative</html:strong> is to treat it like <fr:link href="/KIRV/" title="Matching contracting shards give partial sums" uri="https://kellenkanarios.com/KIRV/" display-uri="KIRV" type="local">case 3</fr:link>: do the local partial matmul and <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> or <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link> the result. That shards the FLOPs but usually costs more comms. For <fr:tex display="inline"><![CDATA[X[B,D] \cdot  Y[D_X,F]]]></fr:tex>, the gather moves <fr:tex display="inline"><![CDATA[2DF]]></fr:tex> bytes and the reduce moves <fr:tex display="inline"><![CDATA[2 \cdot  2BF]]></fr:tex>, so the reduce path wins roughly when <fr:tex display="inline"><![CDATA[D > 2B]]></fr:tex>.
+
+  Rare in practice, though — the other input is usually sharded along the same axis anyway, as under FSDP.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/QBBA/</fr:uri><fr:display-uri>QBBA</fr:display-uri><fr:route>/QBBA/</fr:route><fr:title text="A mesh axis may appear only once">A mesh axis may appear only once</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1786546736336</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p><fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharded</fr:link> matmul, case 4: both multiplicands have a <html:em>non-contracting</html:em> dimension sharded along the same mesh axis, <fr:tex display="inline"><![CDATA[A[I_X, J] \cdot  B[J, K_X]]]></fr:tex>. Why is this invalid, and how do you resolve it?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  A mesh axis may appear <html:strong>at most once</html:strong> in a sharding. Writing <fr:tex display="inline"><![CDATA[C[I_X, K_X]]]></fr:tex> would give shard <fr:tex display="inline"><![CDATA[i]]></fr:tex> only the <fr:tex display="inline"><![CDATA[(i,i)]]></fr:tex> block — the block diagonal. The off-diagonal blocks of <fr:tex display="inline"><![CDATA[C]]></fr:tex> exist nowhere, so the result is unrecoverable.
+
+  <html:strong>The fix</html:strong> is to <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> one of the two inputs along <fr:tex display="inline"><![CDATA[X]]></fr:tex> first, so that <fr:tex display="inline"><![CDATA[X]]></fr:tex> appears once in the output:
+
+  <html:ul><html:li><fr:tex display="inline"><![CDATA[\mathrm {AllGather}_X(A) \to  A[I, J]]]></fr:tex>, giving <fr:tex display="inline"><![CDATA[C[I, K_X]]]></fr:tex>.</html:li>
+    <html:li><fr:tex display="inline"><![CDATA[\mathrm {AllGather}_X(B) \to  B[J, K]]]></fr:tex>, giving <fr:tex display="inline"><![CDATA[C[I_X, K]]]></fr:tex>.</html:li></html:ul>
+
+  Which one you pick is decided by the sharding the downstream ops want.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree></fr:mainmatter>
+        </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
             <fr:authors>
@@ -967,6 +1718,41 @@ I divided the latency time by <fr:tex display="inline"><![CDATA[2]]></fr:tex>, w
   border-left: 2px solid rgb(219, 216, 215);
   "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> The bidi column is exactly <fr:tex display="inline"><![CDATA[2 \times ]]></fr:tex> the one-way column in every row, so it carries no extra information — it only names whether you are counting both directions of the link. Which one belongs in a cost model depends on the collective: a ring all-reduce drives both directions at once, a one-directional shift does not. Note also that v3 has the highest per-link bandwidth in the table but the smallest neighbor count, since a <fr:tex display="inline"><![CDATA[32 \times  32]]></fr:tex> pod is a 2D torus — four neighbors per chip rather than the six a 3D torus gives.</html:div>
 </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>7</fr:month>
+              <fr:day>14</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/9VZH/</fr:uri>
+            <fr:display-uri>9VZH</fr:display-uri>
+            <fr:route>/9VZH/</fr:route>
+            <fr:title text="Hyperparameter Rules (CS336)">Hyperparameter Rules (<fr:link href="/0085/" title="Notebook: Stanford CS336" uri="https://kellenkanarios.com/0085/" display-uri="0085" type="local">CS336</fr:link>)</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p><html:strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">Rule 1.</html:strong> <fr:tex display="inline"><![CDATA[d_{\text {ff}} = d_{\text {model}}]]></fr:tex>
+<html:ul><html:li><fr:tex display="inline"><![CDATA[d_{\text {model}}]]></fr:tex> is the input dimension</html:li>
+  <html:li><fr:tex display="inline"><![CDATA[d_{\text {ff}}]]></fr:tex> is the hidden dimension</html:li></html:ul></html:p>
+            <html:p><html:strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">Exception 1.</html:strong> in the case of <fr:link href="/K2N7/" title="Gated Linear Unit (GLU)" uri="https://kellenkanarios.com/K2N7/" display-uri="K2N7" type="local">GLUs</fr:link>, we recall that to account for extra parameters we scale <fr:tex display="inline"><![CDATA[\frac {2}{3}]]></fr:tex>. Therefore, <fr:tex display="inline"><![CDATA[d_{\text {ff}} = \frac {8}{3}d_{\text {model}}]]></fr:tex>.</html:p>
+            <html:p><html:strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">Exception 2.</html:strong> In T5, they use <fr:tex display="inline"><![CDATA[d_{\text {ff}} = 64d_{\text {model}}]]></fr:tex>. The logic for this was that we could maximize the <fr:link href="/99G8/" title="Model FLOP Utilization (MFU)" uri="https://kellenkanarios.com/99G8/" display-uri="99G8" type="local">MFU</fr:link> by increasing matrix size. Ended up going back to small <fr:tex display="inline"><![CDATA[d_{\text {model}}]]></fr:tex>.</html:p>
+            <html:p><html:strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">Rule 2.</html:strong> <fr:tex display="inline"><![CDATA[d_{\text {head}} = d_{\text {model}} / \text {num heads}]]></fr:tex>
+<html:ul><html:li>I believe the <fr:tex display="inline"><![CDATA[d_{\text {head}}]]></fr:tex> is the output dim of each head.</html:li>
+  <html:li>This just says the total output dim for <fr:tex display="inline"><![CDATA[n]]></fr:tex> heads is the same as if we did one head.</html:li>
+  <html:li>Means there is something important about splitting up the heads.</html:li></html:ul></html:p>
+            <html:p><html:strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">Rule 3.</html:strong> Aspect ratio = <fr:tex display="inline"><![CDATA[\frac {d_{\text {model}}}{n_{\text {layer}}} \approx  100-200]]></fr:tex>
+<html:ul><html:li>Pipeline dependent: if network speed is fast than parallelizing is easier and shallow networks are better.</html:li>
+  <html:li>If poor network speed then pipeline parallel might be more viable and deeper networks would be more parallelizable.</html:li></html:ul></html:p>
+            <html:p><html:strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">Rule 4.</html:strong> Vocab size
+<html:ul><html:li>For single language models, vocab size is typically <fr:tex display="inline"><![CDATA[30-50k]]></fr:tex></html:li>
+  <html:li>For multi language models, vocab size is typically <fr:tex display="inline"><![CDATA[100-250k]]></fr:tex></html:li></html:ul></html:p>
+          </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>
     </fr:tree>

@@ -218,9 +218,219 @@ I divided the latency time by \(2\), when once again the TPU v5e sub-mesh does n
 
 </details></section>
   
+
+  
+    
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon">Exercise 3.1. </span>replicated sharding  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 5, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+An array is sharded \(A[I_X,J,K,…]\) (i.e., only sharded across \(X\) ), with a mesh <code xmlns="http://www.w3.org/1999/xhtml">Mesh({'X': 4, 'Y': 8, 'Z': 2})</code>. What is the ratio of the total number of bytes taken up by \(A\) across all chips to the size of one copy of the array?
+
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+It is sharded across \(X\), so that on each chip there is only \(1/4\) of \(A\). However, it must be replicated across \(Y\) and \(Z\) which are \(8\cdot  2 = 16\) copies. This leaves us with \(16 \times \) the total number of bytes across all copies.
+</details>
+</div>
+
+
+
+</details></section>
+  
+
+  
+    
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon">Exercise 3.2. </span><span class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span> latency  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 5, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+How long should \(\text {AllGather}_{X}([B_X,D_Y])\) take on a TPU v4p 4x4x4 slice with mesh <code xmlns="http://www.w3.org/1999/xhtml">Mesh({'X': 4, 'Y': 4, 'Z': 4})</code> if \(B=1024\) and \(D=4096\) in bfloat16? How about \(\text {AllGather}_{XY}([B_X,D_Y])\) How about \(\text {AllReduce}_{Z}([B_X,D_Y]\{U_Z\})\)?
+
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+<ol><li><p>We cannot use bi-directional because we are on a non-16 dim axes on TPU v4p. Therefore, the ICI bandwidth is \(W_{\text {ICI}} = 4.5e10\). From <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span>, we know that the communication time is independent of \(|X|\) and is \(\frac {N}{W_{\text {ICI}}}\). For this problem, we have \(N = 1024\cdot  4096\cdot  2\). Thus, it will take \(.186\text {ms}\).</p>
+
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
+I do not understand wrap-around rules at all<label class="sidenote-ref"><input type="checkbox"></input></label><span class="sidenote">or maybe they are just highly unintuitive</span>, but we actually do have bi-directional bandwidth. I also needed to take into consideration that \(|X|\) cancels out but we only have \(N/|Y|\) bytes. Correct answer is 
+\[\frac {1024\cdot  4096\cdot  2}{9e10\cdot  |Y|}\]
+</div>
+
+<li><p>In this case, we now have double the bandwidth because we are reducing across both dimensions. However, the total number of bytes is now \(4\times \), which means this will be double the previous part.</p></li>
+<li>
+An <span xmlns="" class="link local"><a href="/U351/" title="AllReduce [U351]">AllReduce</a></span> requires each device to send the full \(A\) across \(Z\). This should be \(\frac {2BD}{W_{\text {ICI}}}\) or \(2 \times  \) the previous part.
+
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
+Completely misunderstood this question. For starters, when reducing along the \(Z\) axis, we still <strong>stay sharded</strong> across \(x\) and \(y\) and therefore do not make hops across those links. Therefore, we must divide by \(|X| \cdot  |Y|\). Also, I guess the heuristic that <span xmlns="" class="link local"><a href="/U351/" title="AllReduce [U351]">AllReduce</a></span> is roughly \(2 \times  \) <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span> is used in calculations, which gives final answer
+\[\frac {4BD}{|X|\cdot  |Y|\cdot  W_{\text {ICI}}}\]
+</div></li></li></ol>
+</details>
+</div>
+
+
+
+</details></section>
+  
+
+  
+    
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon">Exercise 3.3. </span>latency-bound <span class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 5, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+Let’s say we’re performing an \(\text {AllGather}_X([B_X])\) but \(B\) is very small (say 128). How long should this take on a TPU v4p 4x4x4 slice with mesh <code xmlns="http://www.w3.org/1999/xhtml">Mesh({'X': 4, 'Y': 4, 'Z': 4})</code> in bfloat16?
+
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+<p>Since \(|X| = 4\), the hop latency time is \(\approx  4 \mu \)s. We have \(N = 2\cdot  128 = 256\)bytes and \(W_{\text {ICI}} = 9e10\). This gives \(.0028 \mu \)s. So we are severely latency bound.</p>
+
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
+Only need to do \(2\) hops in bi-directional case, so true answer is \(\approx  2\mu  s\): still latency bound.
+</div>
+
+</details>
+</div>
+
+
+
+</details></section>
+  
+
+  
+    
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id8" open="open"><summary><header><h1>
+<span class="taxon">Exercise 3.4. </span>matmul strategies  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 5, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+To perform \(X[B,D]\cdot _D Y[D_X,F] \to  Z[B,F]\), in this section we tell you to perform \(\text {AllGather}_X(Y[D_X,F])\) and multiply the fully replicated matrices (Case 2, Strategy 1). Instead, you could multiply the local shards like \(X[B,D_X]\cdot _D Y[D_X,F] \to  Z[B,F]\{U_X\}\) (Case 3, Strategy 2), and then \(\text {AllReduce}_X(Z[B,F]\{U_X\})\). How many FLOPs and comms does each of these perform? Which is better and why?
+
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+<p><em>Case 2, strategy 1</em>. In this case, the <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span> will take \(\frac {DF}{W_{\text {ICI}}}\) for communication over \(ICI\) and \(BD + DF + BF\) over HBM with \(2BDF\) FLOPs.</p>
+<p><em>Case 3, strategy 2</em>. For local shards, each will only need to do \(\frac {2BDF}{X}\) FLOPs and \(BD + D_X F + BF\) HBM cost. However, the ICI cost would then be the whole matrix which is \(X \times  \) as much over ICI.</p>
+
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
+<p>I was roughly correct. However, an important distinction (and gap in my understanding I gues) is that we have been ignoring HBM cost when communicating over ICI because these transfers are done concurrently and are therefore bottlenecked by the slower one (ICI).</p>
+</div>
+
+</details>
+</div>
+
+
+
+</details></section>
+  
+
+  
+    
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon">Exercise 3.5. </span>minimum latency  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 5, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+Let’s say I want to do a matmul \(A[I,J]\cdot  JB[J,K]\to  C[I,K]\) on a TPU v4p 4x4x4 with the lowest possible latency. Assume the inputs can be sharded arbitrarily but the result should be fully replicated. How should my inputs be sharded? What is the total FLOPs and comms time?
+
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+<p>My initial intuition is we <strong>do not</strong> want to shard along the contracting dimension. If we have a large enough matrix, then I think the best sharding strategy would be to shard \(A[I_{XYZ}, J], B[J, K]\). The multiplication then requires no communication, and the only communication is an <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span> across all \(3\) axis, which should triple bandwidth. Since we shard over every axis of our mesh, we do not have any additional replicated bytes. This gives us \(N = 2IK\)bytes in bf16. Since we are on a \(4\times  4\times  4\) cube, we have bi-directional bandwidth availability. Therefore, the communication time on TPU v4p is \(\frac {2IK}{3\cdot  9e10}\). The total flops is still just \(2IJK\).</p>
+</details>
+</div>
+
+
+
+</details></section>
+  
+
+  
+    
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id10" open="open"><summary><header><h1>
+<span class="taxon">Exercise 3.6. </span>comparing shardings  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 5, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+Let’s say we want to perform \(A[I_X,J_Y]\cdot _J B[J_Y,K]\to  C[I_X,K]\) on TPU v5e 4x4. What communication do we perform? How much time is spent on communication vs. computation?
+<ul xmlns="http://www.w3.org/1999/xhtml"><li>What about \(A[I_X,J]\cdot _J B[J_X,K_Y]\to  C[I_X,K_Y]\)? This is the most standard setting for training where we combine data, tensor, and ZeRO sharding.</li>
+<li>What about \(A[I_X,J]\cdot _J B[J,K_Y]\to  C[I_X,K_Y]\)? This is standard for inference, where we do pure tensor parallelism.</li></ul>
+
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+<ol><li><p>Since this is a matmul over the sharded axis, we need to perform a reduction at some point. After performing the matmul, we should have \(C[I_X, K]\{U_Y\}\). Therefore, we need to do an <span xmlns="" class="link local"><a href="/U351/" title="AllReduce [U351]">AllReduce</a></span> over \(Y\). This is then a <span xmlns="" class="link local"><a href="/CAGW/" title="ReduceScatter [CAGW]">ReduceScatter</a></span> and an <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span>. For computation, each chip does the partial sum, which takes \(\frac {2IJK}{|X||Y|}\) FLOPs. For communication, the <span xmlns="" class="link local"><a href="/U351/" title="AllReduce [U351]">AllReduce</a></span> is \(2 \times  \) an <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span>. We are still sharded over \(X\), so the total bytes is \(N = \frac {2IK}{|X|}\). We do not have bi-directional because the v5e is a 2d topology and \(4 \times  4\) is not full in either axis. Thus, the communication is</p>
+\[\frac {2\cdot  N}{W_{\text {ICI}}} = \frac {4IK}{4.5e10\cdot  |X|}\]
+<p>To see where we are bound, the v5e can do \(1.97e 14\) bf16 FLOPs/s. Therefore, we are compute bound when</p>
+\[
+  \begin {align*}
+  \frac {2IJK}{|X|\cdot  |Y|\cdot  1.97e 14} &gt; \frac {4IK}{4.5e10\cdot  |X|}
+\iff  
+  J &gt; \frac {8 \cdot  1.97e 14}{4.5e10}
+  .\end {align*}
+\]
+<p>Thus, we are almost surely communication bound because it is determined by the contracting dimension, which is <span xmlns="" class="link local">\(d_{\text {model}}\)</span> in practice.</p>
+
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
+No solutions available. Prayers up this right...
+</div></li>
+<li><p>This is Case 1 with an additional sharding over the contracting dim in \(B\). I believe this means when we do the matmul, we are gonna end up with scattered partial sums i.e. unlike in the <span xmlns="" class="link local"><a href="/CAGW/" title="ReduceScatter [CAGW]">ReduceScatter</a></span> case, where we have partial sums the same dimension as \(C\), the partial sums will now be \(\frac {I}{|X|} \times  \frac {K}{|Y|}\). Another <span xmlns="" class="link local"><a href="/CAGW/" title="ReduceScatter [CAGW]">ReduceScatter</a></span> would cause this smaller matrix to be further divided and scattered, so it is not what we want.</p>
+<p>Instead, we should just perform \(\text {AllGather}_X(B[J_X, K_Y])\). Then, this will directly reduce to Case 1 and <span xmlns="" class="link local"><a href="/QJX1/" title="An unsharded contracting axis needs no comms [QJX1]">we will need no further communication</a></span>. We only need to send \(N = \frac {2JK}{|Y|}\) bytes. Once again, we do not have bi-directional bandwidth. Thus, the communication is</p>
+\[\frac {N}{W_{\text {ICI}}} = \frac {4JK}{4.5e10\cdot  |Y|}\]
+<p>The FLOPs per-device are still \(\frac {2IJK}{|X|\cdot  |Y|}\). To see where we are bound, the v5e can do \(1.97e 14\) bf16 FLOPs/s. Therefore, we are compute bound when</p>
+\[
+  \begin {align*}
+  \frac {2IJK}{|X|\cdot  |Y|\cdot  1.97e 14} &gt; \frac {2JK}{4.5e10\cdot  |Y|}
+\iff  
+  I &gt; \frac {4 \cdot  1.97e 14}{4.5e10}
+  .\end {align*}
+\]
+<p>Thus, we have a smaller bound than the previous part but are now dependent on \(I\) instead of \(J\). This is likely in practice because \(I\) corresponds to sequence length, which can get very large.</p></li>
+<li>This is pure case 1 with <span xmlns="" class="link local"><a href="/QJX1/" title="An unsharded contracting axis needs no comms [QJX1]">no communication</a></span>, so we instead need to worry about memory instead of communication overhead.</li></ol>
+</details>
+</div>
+
+
+
+</details></section>
+  
 </details></section><footer xmlns="">
     
-    <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
 <span class="taxon"></span>Context  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry"><header><h1>
@@ -231,13 +441,38 @@ I divided the latency time by \(2\), when once again the TPU v5e sub-mesh does n
 </ul></div></header></section>
       </details></section>
     
-    <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
 <span class="taxon"></span>Related  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
+        
+        <section class="block index-entry" data-taxon="Definition"><header><h1>
+<span class="taxon">Definition. </span><a class="index-entry-link" href="/U351/">AllReduce</a> <a class="slug" href="/U351/">[U351]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry" data-taxon="Definition"><header><h1>
+<span class="taxon">Definition. </span><a class="index-entry-link" href="/CAGW/">ReduceScatter</a> <a class="slug" href="/CAGW/">[CAGW]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry" data-taxon="Definition"><header><h1>
+<span class="taxon">Definition. </span><a class="index-entry-link" href="/VSDZ/">AllGather</a> <a class="slug" href="/VSDZ/">[VSDZ]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
         <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/676P/">TPU specs</a> <a class="slug" href="/676P/">[676P]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">August 10, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/9VZH/">Hyperparameter Rules (<span class="link local"><a href="/0085/" title="Notebook: Stanford CS336 [0085]">CS336</a></span>)</a> <a class="slug" href="/9VZH/">[9VZH]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 14, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
       </details></section>

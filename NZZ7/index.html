@@ -368,8 +368,35 @@ window.addEventListener('load', function () { setTimeout(function () {
         <ul xmlns="http://www.w3.org/1999/xhtml"><li>2D <span xmlns="" class="link local"><a href="/Q7ZD/" title="Vector ISA / SIMD [Q7ZD]">SIMD</a></span> execution, where each of 1024 <em>sites</em> execute same program in lockstep.</li>
   <li>Each site contains 4 ALUs, enabling 4096 FLOPs.</li>
   <li>Fed a 8x128 <span xmlns="" class="link local"><a href="/OGCRO/" title="Vector Register [OGCRO]">Vector Register</a></span> in one cycle.</li></ul>
+        <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>The VPU is thirty times smaller than the MXU <a class="slug" href="/JFWY/">[JFWY]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 10, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/OGCRN/" title="Vector Processing Unit [OGCRN]">Vector Processing Unit</a></span>: what is its shape and throughput relative to the <span xmlns="" class="link local"><a href="/OGCRP/" title="Matrix Multiply Unit (MXU) [OGCRP]">Matrix Multiply Unit (MXU)</a></span>, and which reductions are cheap?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Shape \((8\ \text {sublanes}, 128\ \text {lanes})\), with 4 independent ALUs per position and most ops at 1/cycle:
+
+  \[8 \times  128 \times  4 \times  1.75\mathrm {e}9 \approx  7\mathrm {e}12 \text { FLOPs/s}\]
+
+  on v5p — about \(30\times \) less than the ~\(2e14\) MXU FLOPs/s per core. VPU work is fp32.
+
+  <strong>Reductions</strong> along the <strong>sublane</strong> axis (the 8) are cheap: an intra-lane shuffle by 4/2/1 plus three pairwise adds. <strong>Cross-lane</strong> reductions need the separate XLU, which is slow and expensive.
+
+  Control is skewed the other way: a single <span xmlns="" class="link local"><a href="/WY6L/" title="Scalar core (TPU) [WY6L]">scalar core</a></span> fetches and dispatches everything and can issue only <strong>one DMA request per cycle</strong>. Efficient, but it blocks data-dependent vectorization.
+</details>
+</div>
+
+
+
+</details></section>
       </details></section>
-    <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id5" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id6" open="open"><summary><header><h1>
 <span class="taxon">Definition 4. </span>Matrix Multiply Unit (MXU) <a class="slug" href="/OGCRP/">[OGCRP]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 22, 2026</li>
@@ -381,9 +408,31 @@ The side length is fixed in hardware, so every dimension has to be tiled down to
 <ol><li>Tiling the matrix to load from <span xmlns="" class="link local"><a href="/AI2G/" title="High bandwidth memory [AI2G]">HBM</a></span> to <span xmlns="" class="link local"><a href="/GFK2/" title="VMEM [GFK2]">VMEM</a></span>.</li>
   <li>Compiler tiles from VMEM to \(128 \times  128\) tiles to load into the MXU.</li></ol>
 </div>
-</details></section>
+<section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Why the MXU pads everything to 128 <a class="slug" href="/HPSO/">[HPSO]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 10, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What is the native op of one <span xmlns="" class="link local"><a href="/OGCRP/" title="Matrix Multiply Unit (MXU) [OGCRP]">Matrix Multiply Unit (MXU)</a></span>, and why does that force padding to 128?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  One <code>bf16[8,128] @ bf16[128,128] -&gt; f32[8,128]</code> every 8 cycles, on a \(128 \times  128\) systolic array — \(256 \times  256\) on v6e/Trillium.
+
+  The array's side length is fixed in hardware, so any matrix axis shorter than 128 (256 on v6e) is <strong>padded</strong> up to it, and the FLOPs spent on the padding are simply wasted. With 2–4 MXUs per core, tiling dimensions want to exceed \(128 \times \) the MXU count.
+
+  Scale: roughly \(5e13\) bf16 FLOPs/s per MXU at 1.5 GHz, so about \(2e14\) per v5e chip. int8 runs ~\(2\times \) faster, int4 ~\(4\times \).
+</details>
+</div>
+
+
+
+</details></section></details></section>
   </details></section><footer xmlns="">
-    <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
 <span class="taxon"></span>References  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry" data-taxon="Reference"><header><h1>
@@ -394,15 +443,9 @@ The side length is fixed in hardware, so every dimension has to be tiled down to
 <br><ul></ul>
 </div></header></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id9" open="open"><summary><header><h1>
 <span class="taxon"></span>Context  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
-        <section class="block index-entry"><header><h1>
-<span class="taxon"></span><a class="index-entry-link" href="/RCNT/">What I've been thinking about</a> <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">August 5, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></section>
         <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/OGCRS/">ASIC accelerators</a> <a class="slug" href="/OGCRS/">[OGCRS]</a> </h1>
 <div class="metadata"><ul>
@@ -410,9 +453,15 @@ The side length is fixed in hardware, so every dimension has to be tiled down to
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id10" open="open"><summary><header><h1>
 <span class="taxon"></span>Backlinks  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry" data-taxon="Definition"><header><h1>
+<span class="taxon">Definition. </span><a class="index-entry-link" href="/VSDZ/">AllGather</a> <a class="slug" href="/VSDZ/">[VSDZ]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
         <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/3AIF/">Bringing <em xmlns="http://www.w3.org/1999/xhtml">Speed-of-Light</em> <span class="link local"><a href="/dongFlexAttentionProgramming2024/" title="Flex Attention: A Programming Model for Generating Optimized Attention Kernels [dongFlexAttentionProgramming2024]">FlexAttention</a></span> to TPU</a> <a class="slug" href="/3AIF/">[3AIF]</a> </h1>
 <div class="metadata"><ul>
@@ -466,9 +515,13 @@ The side length is fixed in hardware, so every dimension has to be tiled down to
 <a class="bullet" href="/OGCRQ/" title="TensorCore (TPU) [OGCRQ]">■</a><span class="link local" data-target="#id3"><span class="taxon">Definition 2. </span>TensorCore (TPU)</span><ul class="block"></ul>
 </li>
 <li>
-<a class="bullet" href="/OGCRN/" title="Vector Processing Unit [OGCRN]">■</a><span class="link local" data-target="#id4"><span class="taxon">Definition 3. </span>Vector Processing Unit</span><ul class="block"></ul>
+<a class="bullet" href="/OGCRN/" title="Vector Processing Unit [OGCRN]">■</a><span class="link local" data-target="#id4"><span class="taxon">Definition 3. </span>Vector Processing Unit</span><ul class="block"><li>
+<a class="bullet" href="/JFWY/" title="The VPU is thirty times smaller than the MXU [JFWY]">■</a><span class="link local" data-target="#id5"><span class="taxon">Card. </span>The VPU is thirty times smaller than the MXU</span><ul class="block"></ul>
+</li></ul>
 </li>
 <li>
-<a class="bullet" href="/OGCRP/" title="Matrix Multiply Unit (MXU) [OGCRP]">■</a><span class="link local" data-target="#id5"><span class="taxon">Definition 4. </span>Matrix Multiply Unit (MXU)</span><ul class="block"></ul>
+<a class="bullet" href="/OGCRP/" title="Matrix Multiply Unit (MXU) [OGCRP]">■</a><span class="link local" data-target="#id6"><span class="taxon">Definition 4. </span>Matrix Multiply Unit (MXU)</span><ul class="block"><li>
+<a class="bullet" href="/HPSO/" title="Why the MXU pads everything to 128 [HPSO]">■</a><span class="link local" data-target="#id7"><span class="taxon">Card. </span>Why the MXU pads everything to 128</span><ul class="block"></ul>
+</li></ul>
 </li>
 </ul></div></nav></div></body></html>
