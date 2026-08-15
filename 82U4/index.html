@@ -287,11 +287,133 @@ window.addEventListener('load', function () { setTimeout(function () {
  <div xmlns="http://www.w3.org/1999/xhtml" class="stub-notice" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   color: rgb(38, 97, 69);   font-style: italic;   ">🌱 Stub — this concept is referenced but not yet written.</div>
 </details></section><section lang="en" class="block hide-metadata" data-taxon="Definition"><details id="id14" open="open"><summary><header><h1>
 <span class="taxon">Definition 9. </span>Cooperative Thread Array (CTA) <a class="slug" href="/W2D5/">[W2D5]</a> </h1>
-<div class="metadata"><ul><li class="meta-item">June 1, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">NVIDIA's hardware-level term for what CUDA programmers call a thread block.</p><p xmlns="http://www.w3.org/1999/xhtml">A CTA is a group of threads that execute on the same Streaming Multiprocessor (SM), can synchronize via barriers (<code>__syncthreads()</code>), and share fast on-chip <em>shared memory</em> (<span xmlns="" class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">Shared memory (GPU)</a></span>). Threads within a CTA are scheduled and executed in groups of 32 called <span xmlns="" class="link local"><a href="/OGCS5/" title="Warp (GPU) [OGCS5]">warps</a></span>. </p></details></section></details></section><footer xmlns="">
+<div class="metadata"><ul><li class="meta-item">June 1, 2026</li></ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">NVIDIA's hardware-level term for what CUDA programmers call a thread block.</p><p xmlns="http://www.w3.org/1999/xhtml">A CTA is a group of threads that execute on the same Streaming Multiprocessor (SM), can synchronize via barriers (<code>__syncthreads()</code>), and share fast on-chip <em>shared memory</em> (<span xmlns="" class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">Shared memory (GPU)</a></span>). Threads within a CTA are scheduled and executed in groups of 32 called <span xmlns="" class="link local"><a href="/OGCS5/" title="Warp (GPU) [OGCS5]">warps</a></span>. </p></details></section><p xmlns="http://www.w3.org/1999/xhtml">None of the above is one machine. Each generation adds instructions the previous one cannot express — a <span xmlns="" class="link local"><a href="/EGSP/" title="Tensor Core [EGSP]">Tensor Core</a></span> MMA, an asynchronous copy engine, a memory the register file cannot see — and a kernel is compiled against exactly one of them:</p><section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
+<span class="taxon">10. </span>NVIDIA architecture targets <a class="slug" href="/UT52/">[UT52]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 14, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An <code>sm_XX</code> target is the compute capability a <span xmlns="" class="link local"><a href="/82U4/" title="GPU architecture [82U4]">GPU</a></span> kernel is compiled against — <code>nvcc -arch=sm_90a</code> — and it names an instruction surface, not a performance tier. What follows is the coverage a <span xmlns="" class="link local"><a href="/EGSP/" title="Tensor Core [EGSP]">tensor-core</a></span> kernel actually has to care about: which MMA instruction family exists, and which of the asynchronous data-movement features it depends on came with it.</p>
+  <div xmlns="http://www.w3.org/1999/xhtml" style="     overflow-x: auto;     max-width: 100%;   ">
+    <table>
+
+  <tr>
+  
+  <th>Target</th>
+
+  
+  <th>SKU</th>
+
+  
+  <th>Tensor-core path and notable features</th>
+
+</tr>
+
+
+  <tr>
+  
+  <td style="white-space: nowrap;"><code>sm_80</code></td>
+
+  
+  <td style="white-space: nowrap;">A100</td>
+
+  
+  <td><code>mma.sync</code>, <code>ldmatrix</code>, <code>cp.async</code>; no <span xmlns="" class="link local"><a href="/JHA9/" title="Tensor Memory Accelerator (TMA) [JHA9]">TMA</a></span>, <span xmlns="" class="link local"><a href="/695N/" title="Thread block cluster [695N]">clusters</a></span>, or <span xmlns="" class="link local"><a href="/YCAO/" title="Tensor Memory (TMEM) [YCAO]">TMEM</a></span></td>
+
+</tr>
+
+
+  <tr>
+  
+  <td style="white-space: nowrap;"><code>sm_89</code></td>
+
+  
+  <td style="white-space: nowrap;">L40S / RTX 6000 Ada</td>
+
+  
+  <td><code>mma.sync</code>, <code>ldmatrix</code>, <code>cp.async</code>; <span xmlns="" class="link local"><a href="/DEQV/" title="Low Precision Data Types [DEQV]">FP8</a></span> tensor cores, no TMA or TMEM</td>
+
+</tr>
+
+
+  <tr>
+  
+  <td style="white-space: nowrap;"><code>sm_90a</code></td>
+
+  
+  <td style="white-space: nowrap;">H100 / H200</td>
+
+  
+  <td><code>wgmma</code> + <code>mma.sync</code>; <span xmlns="" class="link local"><a href="/JHA9/" title="Tensor Memory Accelerator (TMA) [JHA9]">TMA</a></span>, <span xmlns="" class="link local"><a href="/695N/" title="Thread block cluster [695N]">thread-block clusters</a></span>, async barriers, <span xmlns="" class="link local"><a href="/OGCS8/" title="Distributed Shared Memory (GPU) [OGCS8]">DSM</a></span></td>
+
+</tr>
+
+
+  <tr>
+  
+  <td style="white-space: nowrap;"><code>sm_100a</code></td>
+
+  
+  <td style="white-space: nowrap;">B200</td>
+
+  
+  <td><code>tcgen05.mma</code> + <span xmlns="" class="link local"><a href="/YCAO/" title="Tensor Memory (TMEM) [YCAO]">TMEM</a></span>; 2-CTA MMA (<code>cta_group::2</code>), <code>tcgen05.ld</code> / <code>.cp</code> / <code>.shift</code></td>
+
+</tr>
+
+
+  <tr>
+  
+  <td style="white-space: nowrap;"><code>sm_103a</code></td>
+
+  
+  <td style="white-space: nowrap;">B300</td>
+
+  
+  <td>adds <code>tcgen05.ld.red</code>, \(K = 96\) block-scaled MMA</td>
+
+</tr>
+
+
+  <tr>
+  
+  <td style="white-space: nowrap;"><code>sm_120a</code></td>
+
+  
+  <td style="white-space: nowrap;">RTX 5090 / RTX PRO 6000</td>
+
+  
+  <td><code>mma.sync</code> + <code>ldmatrix</code>, <span xmlns="" class="link local"><a href="/JHA9/" title="Tensor Memory Accelerator (TMA) [JHA9]">TMA</a></span>, <span xmlns="" class="link local"><a href="/695N/" title="Thread block cluster [695N]">clusters</a></span>, <span xmlns="" class="link local"><a href="/OGCS8/" title="Distributed Shared Memory (GPU) [OGCS8]">DSM</a></span>; no <code>tcgen05</code> or TMEM</td>
+
+</tr>
+
+
+  <tr>
+  
+  <td style="white-space: nowrap;"><code>sm_121a</code></td>
+
+  
+  <td style="white-space: nowrap;">DGX Spark (GB10)</td>
+
+  
+  <td>same instruction surface as <code>sm_120a</code>, separate cubin, different SFU rates</td>
+
+</tr>
+
+</table>
+  </div>
+<p xmlns="http://www.w3.org/1999/xhtml">Read down the third column and the datacenter line tells one story: each generation moves the matrix multiply further away from the individual thread. <code>mma.sync</code> is issued by a <span xmlns="" class="link local"><a href="/X9VZ/" title="Warp [X9VZ]">warp</a></span> and the operands live in its registers; <code>wgmma</code> is issued by a warpgroup of four and can read the \(A\) operand straight out of <span xmlns="" class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">shared memory</a></span>; <code>tcgen05.mma</code> is issued by a single thread on behalf of a <span xmlns="" class="link local"><a href="/W2D5/" title="Cooperative Thread Array (CTA) [W2D5]">CTA</a></span> pair and keeps its accumulator in <span xmlns="" class="link local"><a href="/YCAO/" title="Tensor Memory (TMEM) [YCAO]">Tensor Memory (TMEM)</a></span>, a memory the register file does not see. The data movement follows the same arc — <code>cp.async</code> is a per-thread copy, <span xmlns="" class="link local"><a href="/JHA9/" title="Tensor Memory Accelerator (TMA) [JHA9]">Tensor Memory Accelerator (TMA)</a></span> is a descriptor a single thread hands to a hardware engine.</p><p xmlns="http://www.w3.org/1999/xhtml">The trap in the table is <code>sm_120a</code>. Consumer Blackwell shares the marketing generation with B200 but not the tensor-core path: it has Hopper-era conveniences (TMA, clusters, <span xmlns="" class="link local"><a href="/OGCS8/" title="Distributed Shared Memory (GPU) [OGCS8]">Distributed Shared Memory (GPU)</a></span>) and Ampere-era MMA, with no <code>tcgen05</code> and no TMEM at all. A kernel written against <code>sm_100a</code> does not merely run slower on a 5090 — it does not compile. Treat <code>sm_120a</code> as the branch point in a kernel's dispatch, not as a small delta from <code>sm_100a</code>.</p>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> The trailing <code>a</code> means <em>architecture-specific</em>: the target enables instructions exclusive to that exact chip and gives up forward compatibility, so the resulting cubin will not PTX-JIT onto a later architecture the way a plain <code>sm_90</code> binary would. Every generation from Hopper on ships its tensor-core ISA only behind an <code>a</code> target, which is why a real build matrix has one entry per row above rather than one per generation. <code>sm_121a</code> is the extreme case — the same instruction surface as <code>sm_120a</code> and still its own cubin.</div>
+</details></section></details></section><footer xmlns="">
     
-    <section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
 <span class="taxon"></span>Context  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/RCNT/">What I've been thinking about</a> <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 14, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
         <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/N7GP/">Notebook: Computer Architecture</a> <a class="slug" href="/N7GP/">[N7GP]</a> </h1>
 <div class="metadata"><ul>
@@ -299,9 +421,15 @@ window.addEventListener('load', function () { setTimeout(function () {
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id17" open="open"><summary><header><h1>
 <span class="taxon"></span>Backlinks  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/UT52/">NVIDIA architecture targets</a> <a class="slug" href="/UT52/">[UT52]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 14, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
         <section class="block index-entry" data-taxon="Definition"><header><h1>
 <span class="taxon">Definition. </span><a class="index-entry-link" href="/XPAA/">GPU register scoreboard</a> <a class="slug" href="/XPAA/">[XPAA]</a> </h1>
 <div class="metadata"><ul>
@@ -321,9 +449,15 @@ window.addEventListener('load', function () { setTimeout(function () {
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id17" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id18" open="open"><summary><header><h1>
 <span class="taxon"></span>Related  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/EGSP/">Tensor Core</a> <a class="slug" href="/EGSP/">[EGSP]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 14, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
         <section class="block index-entry" data-taxon="Definition"><header><h1>
 <span class="taxon">Definition. </span><a class="index-entry-link" href="/XPAA/">GPU register scoreboard</a> <a class="slug" href="/XPAA/">[XPAA]</a> </h1>
 <div class="metadata"><ul>
@@ -397,5 +531,8 @@ window.addEventListener('load', function () { setTimeout(function () {
 </li>
 <li>
 <a class="bullet" href="/W2D5/" title="Cooperative Thread Array (CTA) [W2D5]">■</a><span class="link local" data-target="#id14"><span class="taxon">Definition 9. </span>Cooperative Thread Array (CTA)</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/UT52/" title="NVIDIA architecture targets [UT52]">■</a><span class="link local" data-target="#id15"><span class="taxon">10. </span>NVIDIA architecture targets</span><ul class="block"></ul>
 </li>
 </ul></div></nav></div></body></html>
