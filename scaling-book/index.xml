@@ -2205,6 +2205,45 @@ No solutions available. Prayers up this right...
 
 </fr:mainmatter></fr:tree>
   
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="transformer block">transformer block</fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.7</fr:meta></fr:frontmatter><fr:mainmatter>
+A typical Transformer block has two matrices <fr:tex display="inline"><![CDATA[W_{in}[D,F]]]></fr:tex> and <fr:tex display="inline"><![CDATA[W_{out}[F,D]]]></fr:tex> where <fr:tex display="inline"><![CDATA[F \gg  DF \gg  D]]></fr:tex> . Say we have a batch size B. Then the full block is <fr:tex display="inline"><![CDATA[In[B,D]\cdot  W_{in}[D,F]\cdot  W_{out}[F,D]]]></fr:tex>. Let’s pick D=8192 , F=32768, and B=128 and assume everything is in bfloat16. Assume we’re running on a TPU v5e 2x2 slice but let’s pretend each TPU only has 300MB of free memory. How should In, <fr:tex display="inline"><![CDATA[W_{in}]]></fr:tex>, <fr:tex display="inline"><![CDATA[W_{out}]]></fr:tex>, and Out be sharded to stay below the memory limit while minimizing overall time? How much time is spent on comms and FLOPs? Hint: the final output doesn’t need to be fully replicated, but it should be sharded the same as the input so the “layer” can be repeated.
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary><html:p>To start, lets compute how big everything is.</html:p>
+<fr:tex display="block"><![CDATA[
+\begin {align*}
+In &= 2\cdot  B\cdot  D \\ 
+&= 2\cdot  8192\cdot  128 = 2^{21} \\
+W_{in} &= 2\cdot  D\cdot  F \\ 
+&= 2\cdot  8192\cdot  32768 = 2^{29} \\
+W_{out} &= 2\cdot  D\cdot  F \\ 
+&= 2\cdot  8192\cdot  32768 = 2^{29}
+\end {align*}
+]]></fr:tex>
+<html:p>and each TPU has <fr:tex display="inline"><![CDATA[300]]></fr:tex>MB <fr:tex display="inline"><![CDATA[\approx  300 \cdot  2^{20} \approx  2^{28}]]></fr:tex> in this example. Therefore, each TPU can fit just over one half of <fr:tex display="inline"><![CDATA[W_{in}]]></fr:tex> and <fr:tex display="inline"><![CDATA[W_{out}]]></fr:tex>, which leads us to have to fully shard both across <fr:tex display="inline"><![CDATA[X]]></fr:tex> and <fr:tex display="inline"><![CDATA[Y]]></fr:tex>. The remaining <fr:tex display="inline"><![CDATA[11 \cdot  2^{22}]]></fr:tex> can fit <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex>. However, we need to satisfy the constraint that <fr:tex display="inline"><![CDATA[\text {Out}]]></fr:tex> is sharded in the same way as <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex>. I propose first</html:p>
+<html:ul><html:li><html:p>Shard <fr:tex display="inline"><![CDATA[\text {In}[B_{XY}, D]]]></fr:tex>, <fr:tex display="inline"><![CDATA[W_{in}[D,F_{XY}]]]></fr:tex></html:p></html:li></html:ul>
+<html:p>Then, we are in case 1 and have an output of <fr:tex display="inline"><![CDATA[W_{mid}[B_{XY}, F_{XY}]]]></fr:tex> with no communication necessary. However, we now need to multiply <fr:tex display="inline"><![CDATA[W_{mid}]]></fr:tex> with <fr:tex display="inline"><![CDATA[W_{out}]]></fr:tex>. I propose to</html:p>
+<html:ul><html:li>Shard <fr:tex display="inline"><![CDATA[W_{out}[F, D_{XY}]]]></fr:tex></html:li></html:ul>
+<html:p>This then requires two <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>'s. First, we have to AllGather <fr:tex display="inline"><![CDATA[W_{mid}]]></fr:tex> along <fr:tex display="inline"><![CDATA[F]]></fr:tex>. Then we perform the matmul between <fr:tex display="inline"><![CDATA[W_{mid}]]></fr:tex> and <fr:tex display="inline"><![CDATA[W_{out}]]></fr:tex>, which gives <fr:tex display="inline"><![CDATA[Out[B_{XY}, D_{XY}]]]></fr:tex>. To provide <fr:tex display="inline"><![CDATA[\text {Out}]]></fr:tex> as <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex> to the next layer, we then must <fr:tex display="inline"><![CDATA[\text {AllGather}_{XY}]]></fr:tex> along <fr:tex display="inline"><![CDATA[D]]></fr:tex>.</html:p>
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
 </fr:mainmatter>
             </fr:tree>
           </fr:mainmatter>

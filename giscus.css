@@ -1,0 +1,301 @@
+/* SPDX-License-Identifier: CC0-1.0 */
+
+/* giscus theme for kellenkanarios.com.
+ *
+ * giscus renders its thread in an iframe on giscus.app, so nothing in
+ * style.css reaches it — a cross-origin document is closed to the embedding
+ * page. What giscus does accept is a stylesheet of its own: pass a URL as
+ * `data-theme` and it appends a <link> to the iframe's <head>. That is the one
+ * seam, and this file is what goes through it. It is also the reason the site
+ * runs giscus rather than utterances, whose themes are a closed set of names
+ * resolved against utteranc.es and cannot be replaced or extended.
+ *
+ * Because the <link> is appended last, these rules land after giscus's own and
+ * win at equal specificity. No !important is needed anywhere below, and none
+ * should be added without first checking that the plain rule actually loses.
+ *
+ * DEPLOY ORDER. The URL in \comments is absolute and points at the live site,
+ * because a relative one would resolve against giscus.app. So the styling a
+ * reader sees is whatever was last deployed, not what is in this checkout —
+ * editing this file changes nothing until the site ships. Same trap as the
+ * newsletter's formula PNGs, and it fails the same quiet way: the thread just
+ * renders in stock Primer and looks like an embed again.
+ *
+ * Fonts are pulled from the site by absolute URL. That works because fonts,
+ * unlike stylesheets, are CORS-restricted, and GitHub Pages serves everything
+ * with `access-control-allow-origin: *`. If the site ever moves off Pages,
+ * check that header first — without it these @font-face rules fail silently
+ * and the stack below falls back to Charter/Georgia, which is close enough
+ * that the breakage is easy to miss.
+ *
+ * The palette is the one in base-macros and style.css, spelled out as literals
+ * here since neither this file's var() names nor the site's cross the origin.
+ * Change a colour in base-macros and it has to change here too, or not at all:
+ *   #2c2a26  darkest ink        #6d6765  neutral (cal-neutral)
+ *   #dbd8d7  hairline           #e5e5e3  control border
+ *   #f6f4ee  paper / panel      #e4e1d8  panel border
+ *   #3f537f  accent             #33405a  slate (buttons)
+ */
+
+@font-face {
+  font-display: swap;
+  font-family: 'XCharter';
+  font-style: normal;
+  font-weight: 400;
+  src: url('https://kellenkanarios.com/fonts/XCharter-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'XCharter';
+  font-style: italic;
+  font-weight: 400;
+  src: url('https://kellenkanarios.com/fonts/XCharter-Italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'XCharter';
+  font-style: normal;
+  font-weight: 700;
+  src: url('https://kellenkanarios.com/fonts/XCharter-Bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 100 900;
+  src: url('https://kellenkanarios.com/fonts/HankenGrotesk-Variable.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Iosevka';
+  font-style: normal;
+  font-weight: 400;
+  src: url('https://kellenkanarios.com/fonts/Iosevka-Regular.woff2') format('woff2');
+}
+
+/* Primer's variables, which is what a giscus theme actually is. giscus scopes
+   them to `main`, so that is where the overrides go. Everything giscus draws
+   reads from these, which is why most of the thread retones without a single
+   element selector below. */
+main {
+  --color-fg-default: #2c2a26;
+  --color-fg-muted: #6d6765;
+  --color-fg-subtle: #8a837f;
+
+  --color-canvas-default: #fff;
+  --color-canvas-overlay: #fff;
+  --color-canvas-inset: #f6f4ee;
+  --color-canvas-subtle: #f6f4ee;
+
+  --color-border-default: #dbd8d7;
+  --color-border-muted: #e5e5e3;
+  --color-neutral-muted: #dbd8d740;
+
+  --color-accent-fg: #3f537f;
+  --color-accent-emphasis: #3f537f;
+  --color-accent-muted: #3f537f66;
+  --color-accent-subtle: #eef1f7;
+
+  /* Ordinary buttons — the tab strip, the markdown toolbar, pagination. Drawn
+     as an outline on paper and filled with the panel tint on hover, so they
+     match the site's one button (the subscribe submit) rather than Primer's
+     grey-on-grey chrome. The shadows are zeroed: nothing on this site is
+     raised, and a 1px inset highlight is what makes an embed look like an
+     embed. */
+  --color-btn-text: #33405a;
+  --color-btn-bg: #fff;
+  --color-btn-border: #dbd8d7;
+  --color-btn-shadow: 0 0 #0000;
+  --color-btn-inset-shadow: 0 0 #0000;
+  --color-btn-hover-bg: #f6f4ee;
+  --color-btn-hover-border: #33405a;
+  --color-btn-active-bg: #efece3;
+  --color-btn-active-border: #33405a;
+  --color-btn-selected-bg: #f6f4ee;
+
+  /* The Comment button. Primer draws it as GitHub green, which is the single
+     loudest thing in the thread and belongs to another site. Slate, same as
+     the subscribe submit, and by the same logic: an outline at rest that takes
+     ink only once the pointer says the reader is considering it. */
+  --color-btn-primary-text: #33405a;
+  --color-btn-primary-bg: transparent;
+  --color-btn-primary-border: #33405a;
+  --color-btn-primary-shadow: 0 0 #0000;
+  --color-btn-primary-inset-shadow: 0 0 #0000;
+  --color-btn-primary-hover-bg: #33405a;
+  --color-btn-primary-hover-border: #33405a;
+  --color-btn-primary-selected-bg: #2a3550;
+  --color-btn-primary-selected-shadow: 0 0 #0000;
+  --color-btn-primary-disabled-text: #33405a80;
+  --color-btn-primary-disabled-bg: transparent;
+  --color-btn-primary-disabled-border: #dbd8d7;
+
+  --color-success-fg: #266145;
+  --color-danger-fg: #794142;
+  --color-attention-fg: #734923;
+
+  --color-social-reaction-bg-hover: #f6f4ee;
+  --color-social-reaction-bg-reacted-hover: #eef1f7;
+
+  --color-primer-shadow-inset: 0 0 #0000;
+}
+
+/* The hover fill has to be stated for the primary button as well as declared.
+   Primer sets the button's text colour from --color-btn-primary-text on the
+   base rule only, so the label stays slate on a slate ground on hover — the
+   button goes to a dark rectangle with invisible text. Filling means the
+   figure and ground trade places, which takes both halves. */
+main .btn-primary:hover:not(:disabled) {
+  color: #fff;
+}
+
+/* Comment bodies are prose and set like the site's prose: serif, same leading.
+   The chrome around them is not prose and is handled below. */
+main {
+  font-family: XCharter, Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+  line-height: 1.55;
+}
+
+/* Chrome in the sans, small and tracked, in the neutral ink — the register the
+   TOC rail and the metadata line use. This is what keeps the thread reading as
+   apparatus at the foot of a post rather than as a second article: the names,
+   timestamps, counts, and controls recede, and only what people wrote is set
+   in the body face. */
+main .gsc-header,
+main .gsc-comments-count,
+main .gsc-comment-author,
+main .gsc-comment-header,
+main .gsc-comment-footer,
+main .gsc-comment-edited,
+main .gsc-replies-count,
+main .gsc-comment-replies-count,
+main .gsc-pagination,
+main .gsc-comment-box-tabs,
+main .gsc-comment-box-markdown-hint,
+main .gsc-loading-text,
+main .btn {
+  font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+}
+
+main .gsc-comment-author,
+main .gsc-comment-header,
+main .gsc-comments-count,
+main .gsc-replies-count {
+  letter-spacing: 0.01em;
+}
+
+/* Code inside a comment gets the site's treatment: Iosevka on the panel tint
+   behind the panel hairline, at the same slightly-reduced size, so a snippet
+   someone pastes into a reply sits in the page the way \code and \codeblock
+   do. Iosevka's x-height runs small, which is why the site sets 0.9em rather
+   than the usual 0.85 — same number here for the same reason. */
+main code,
+main pre {
+  font-family: 'Iosevka', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+main code {
+  background-color: #f6f4ee;
+  border: 1px solid #e4e1d8;
+  border-radius: 3px;
+  color: #3f4e6b;
+  font-size: 0.9em;
+  padding: 0.05em 0.3em;
+}
+
+main pre {
+  background: #f6f4ee;
+  border: 1px solid #e4e1d8;
+  border-radius: 3px;
+}
+
+/* A <code> inside a <pre> is already on the panel, so it must not draw a
+   second box on top of the first. Same rule the site keeps in style.css. */
+main pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+/* The textbox. This is the control the whole custom theme exists for, and it
+   is drawn as the subscribe field's twin: a hairline in plain neutral grey, a
+   3px radius, no fill, and the sans — a control is chrome, not content. The
+   grey is deliberate and is the same exception style.css documents: the
+   palette's hairline is warm, and at the size of a field, over a fill, that
+   warmth stops reading as grey and starts reading as cream. */
+main .gsc-comment-box-textarea,
+main .gsc-comment-box-preview {
+  background-color: transparent;
+  border: 1px solid #e5e5e3;
+  border-radius: 3px;
+  color: #2c2a26;
+  font-family: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+main .gsc-comment-box-textarea::placeholder {
+  color: #b6b1ab;
+}
+
+/* Focus takes the hairline up to the accent and adds a soft ring in the same
+   colour, in place of the platform outline — which draws a square-cornered box
+   a pixel outside a rounded one and reads as a rendering fault. Identical to
+   what style.css does for the subscribe field. */
+main .gsc-comment-box-textarea:focus,
+main .gsc-comment-box-textarea:focus-visible {
+  border-color: #3f537f;
+  box-shadow: 0 0 0 2px #3f537f1f;
+  outline: none;
+}
+
+/* The box around the whole composer, and the box around each posted comment.
+   Both come from Primer as panels with a fill; on this site a comment is a
+   quoted contribution, not a card, so they lose the fill and keep the
+   hairline. */
+main .gsc-comment-box,
+main .gsc-comment > div {
+  background-color: transparent;
+  border-color: #dbd8d7;
+}
+
+main .gsc-comment-box-bottom,
+main .gsc-comment-box-md-toolbar {
+  background-color: transparent;
+  border-color: #e5e5e3;
+}
+
+/* Links in comment bodies get the site's dotted underline, which is how a
+   reader is told a run of body text is secretly a link. The header links —
+   author names, timestamps, permalinks — are chrome and stay undotted, the
+   same distinction a.slug draws. */
+main .gsc-comment-content a {
+  color: #3f537f;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+}
+
+main .gsc-comment-header a,
+main .gsc-comment-author a {
+  text-decoration: none;
+}
+
+/* Reaction pills sit on the panel tint rather than Primer's blue-grey. */
+main .gsc-social-reaction-summary-item,
+main .gsc-direct-reaction-button-emoji {
+  border-color: #dbd8d7;
+}
+
+/* The thread should sit at the measure of the post it hangs off, and it
+   already does: giscus injects its wrapper into the article, which style.css
+   caps at 90ex, and the iframe fills that. What is left is giscus's own inner
+   column, which cannot see the host page and so picks a width blind. Release
+   it and let the frame decide, rather than have two columns disagree about
+   where the right margin is. */
+main .gsc-main {
+  max-width: none;
+}

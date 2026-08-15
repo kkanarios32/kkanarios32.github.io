@@ -242,6 +242,23 @@ document.addEventListener('keydown', function(e) {
         <title>
           <xsl:value-of select="/f:tree/f:frontmatter/f:title/@text" />
         </title>
+        <!-- The page title again, as Open Graph. Two readers care.
+
+             giscus keys each thread to this: \comments maps by og:title, so a
+             post's discussion is called `Forward-backward algorithm` rather
+             than the pathname, which after the /F3T0/ -> /F3T0/index.xml
+             redirect would come out as the useless `F3T0/index`. Changing this
+             value renames nothing — it orphans the old thread and opens a new
+             one — so treat a published post's title as fixed, the same way its
+             id is.
+
+             The other reader is anything that unfurls a link: chat clients,
+             social cards, and previews all read og:title before <title>.
+
+             @text, not the title tree: a title may carry \em or a link, and
+             this is a plain-text attribute. Same expression <title> uses, so
+             the two cannot drift. -->
+        <meta property="og:title" content="{/f:tree/f:frontmatter/f:title/@text}" />
       </head>
       <body>
         <ninja-keys placeholder="Start typing a note title or ID"></ninja-keys>

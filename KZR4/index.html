@@ -126,7 +126,7 @@ window.addEventListener('load', function () { setTimeout(function () {
   if (document.readyState === 'complete') init();
   else window.addEventListener('load', init);
 })();
-          </script><title>Scaling Book: Exercises</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+          </script><title>Scaling Book: Exercises</title><meta property="og:title" content="Scaling Book: Exercises"></meta></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
 <span class="taxon"></span><span class="link local"><a href="/scaling-book/" title="How to scale your model [scaling-book]">Scaling Book</a></span>: Exercises <a class="slug" href="/KZR4/">[KZR4]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">August 5, 2026</li>
@@ -849,9 +849,49 @@ No solutions available. Prayers up this right...
 
 </details></section>
   
+
+  
+    
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id26" open="open"><summary><header><h1>
+<span class="taxon">Exercise 3.7. </span>transformer block  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 5, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+A typical Transformer block has two matrices \(W_{in}[D,F]\) and \(W_{out}[F,D]\) where \(F \gg  DF \gg  D\) . Say we have a batch size B. Then the full block is \(In[B,D]\cdot  W_{in}[D,F]\cdot  W_{out}[F,D]\). Let’s pick D=8192 , F=32768, and B=128 and assume everything is in bfloat16. Assume we’re running on a TPU v5e 2x2 slice but let’s pretend each TPU only has 300MB of free memory. How should In, \(W_{in}\), \(W_{out}\), and Out be sharded to stay below the memory limit while minimizing overall time? How much time is spent on comms and FLOPs? Hint: the final output doesn’t need to be fully replicated, but it should be sharded the same as the input so the “layer” can be repeated.
+
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary><p>To start, lets compute how big everything is.</p>
+\[
+\begin {align*}
+In &amp;= 2\cdot  B\cdot  D \\ 
+&amp;= 2\cdot  8192\cdot  128 = 2^{21} \\
+W_{in} &amp;= 2\cdot  D\cdot  F \\ 
+&amp;= 2\cdot  8192\cdot  32768 = 2^{29} \\
+W_{out} &amp;= 2\cdot  D\cdot  F \\ 
+&amp;= 2\cdot  8192\cdot  32768 = 2^{29}
+\end {align*}
+\]
+<p>and each TPU has \(300\)MB \(\approx  300 \cdot  2^{20} \approx  2^{28}\) in this example. Therefore, each TPU can fit just over one half of \(W_{in}\) and \(W_{out}\), which leads us to have to fully shard both across \(X\) and \(Y\). The remaining \(11 \cdot  2^{22}\) can fit \(\text {In}\). However, we need to satisfy the constraint that \(\text {Out}\) is sharded in the same way as \(\text {In}\). I propose first</p>
+<ul><li><p>Shard \(\text {In}[B_{XY}, D]\), \(W_{in}[D,F_{XY}]\)</p></li></ul>
+<p>Then, we are in case 1 and have an output of \(W_{mid}[B_{XY}, F_{XY}]\) with no communication necessary. However, we now need to multiply \(W_{mid}\) with \(W_{out}\). I propose to</p>
+<ul><li>Shard \(W_{out}[F, D_{XY}]\)</li></ul>
+<p>This then requires two <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span>'s. First, we have to AllGather \(W_{mid}\) along \(F\). Then we perform the matmul between \(W_{mid}\) and \(W_{out}\), which gives \(Out[B_{XY}, D_{XY}]\). To provide \(\text {Out}\) as \(\text {In}\) to the next layer, we then must \(\text {AllGather}_{XY}\) along \(D\).</p>
+</details>
+</div>
+
+
+
+</details></section>
+  
 </details></section>
   </details></section><footer xmlns="">
-    <section lang="en" class="block hide-metadata"><details id="id26" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id27" open="open"><summary><header><h1>
 <span class="taxon"></span>References  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry" data-taxon="Reference"><header><h1>
@@ -862,23 +902,23 @@ No solutions available. Prayers up this right...
 <br><ul></ul>
 </div></header></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id27" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id28" open="open"><summary><header><h1>
 <span class="taxon"></span>Context  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
-        <section class="block index-entry"><header><h1>
-<span class="taxon"></span><a class="index-entry-link" href="/RCNT/">What I've been thinking about</a> <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
-<div class="metadata"><ul>
-<li class="meta-item">August 14, 2026</li>
-<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></section>
         <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/914H/">Solution Manuals</a> <a class="slug" href="/914H/">[914H]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 28, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/RCNT/">What I've been thinking about</a> <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id28" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id29" open="open"><summary><header><h1>
 <span class="taxon"></span>Backlinks  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry"><header><h1>
