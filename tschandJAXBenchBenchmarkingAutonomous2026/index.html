@@ -1,0 +1,170 @@
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script>
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+  });
+});
+
+          </script><script>
+window.addEventListener('load', function () { setTimeout(function () {
+  // Openers get the same treatment from the other side: left alone, the
+  // paren in "(\(x\) or \(y\))" can hang at the end of a line.
+  var CLOSE = /^[.,;:!?)\]}%'"’”…]+/;
+  var OPEN = /[(\[{‘“]+$/;
+
+  document.querySelectorAll('.katex').forEach(function (math) {
+    // Display math is a block of its own; nothing can be orphaned beside it.
+    if (math.closest('.katex-display')) return;
+
+    // KaTeX's auto-render gives every formula a bare <span> of its own and
+    // renders into that, so the text around a formula is a sibling of the
+    // wrapper and not of .katex itself. Climb to the outermost span that
+    // holds nothing but this formula, and treat that as the atom.
+    var node = math;
+    while (node.parentNode &&
+           node.parentNode.childNodes.length === 1 &&
+           node.parentNode.nodeName.toLowerCase() === 'span') {
+      node = node.parentNode;
+    }
+
+    var before = node.previousSibling, after = node.nextSibling;
+    var lead = '', trail = '';
+    if (after && after.nodeType === 3 && CLOSE.test(after.data)) {
+      trail = after.data.match(CLOSE)[0];
+    }
+    if (before && before.nodeType === 3 && OPEN.test(before.data)) {
+      lead = before.data.match(OPEN)[0];
+    }
+    if (!lead && !trail) return;
+
+    // createElementNS, not createElement: the page is an XML document that
+    // the browser transforms with this stylesheet, and in an XML document
+    // createElement yields an element in the null namespace — a <span> that
+    // is not an HTML span, and that nothing styles.
+    var glue = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
+    glue.setAttribute('style', 'white-space: nowrap');
+    node.parentNode.insertBefore(glue, node);
+    if (lead) {
+      before.data = before.data.slice(0, before.data.length - lead.length);
+      glue.appendChild(document.createTextNode(lead));
+    }
+    glue.appendChild(node);
+    if (trail) {
+      after.data = after.data.slice(trail.length);
+      glue.appendChild(document.createTextNode(trail));
+    }
+  });
+}, 0); });
+          </script><script>
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+      if (found) reveal(found);
+    }
+
+    // Keep the marked row inside the rail. The rail is capped at the viewport
+    // and scrolls internally, so on a long contents the row being read drifts
+    // out of sight and the highlight becomes useless — you can see that you
+    // are somewhere, but not where.
+    //
+    // nav.scrollTop is set directly rather than calling scrollIntoView, which
+    // walks up the ancestor chain and will scroll the window as readily as the
+    // rail: the page would yank itself around while the reader is scrolling
+    // it. Assigning scrollTop can move nothing but the rail. Nudged only when
+    // the row is actually out of the band, so an entry already comfortably in
+    // view does not cause the rail to twitch on every section boundary.
+    function reveal(link) {
+      var pad = 32;
+      var railTop = nav.getBoundingClientRect().top;
+      var railBottom = nav.getBoundingClientRect().bottom;
+      var row = link.getBoundingClientRect();
+      if (row.top < railTop + pad) {
+        nav.scrollTop -= (railTop + pad) - row.top;
+      } else if (row.bottom > railBottom - pad) {
+        nav.scrollTop += row.bottom - (railBottom - pad);
+      }
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
+          </script><title>JAXBench: Benchmarking Autonomous TPU Kernel Optimization</title></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Reference"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon">Reference. </span>JAXBench: Benchmarking Autonomous TPU Kernel Optimization <a class="slug" href="/tschandJAXBenchBenchmarkingAutonomous2026/">[tschandJAXBenchBenchmarkingAutonomous2026]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">May, 2026</li></ul>
+<br><ul><li class="meta-item"><address class="author">Arya Tschand,  Charles Hong,  Julian Walker,  Nina Cai,  Shangkun Wang,  Suvinay Subramanian,  Sundar Dev,  Vijay Janapa Reddi,  Amir Yazdanbakhsh,  Sethu Sankaran</address></li></ul>
+<br><ul>
+<li class="meta-item"><a class="doi link" href="https://www.doi.org/10.48550/arXiv.2607.20466">10.48550/arXiv.2607.20466</a></li>
+<li class="meta-item"><a class="link external" href="https://arxiv.org/abs/2607.20466">https://arxiv.org/abs/2607.20466</a></li>
+</ul>
+</div></header></summary><pre>@misc{tschandJAXBenchBenchmarkingAutonomous2026,
+ title = {{{JAXBench}}: {{Benchmarking Autonomous TPU Kernel Optimization}}},
+ author = {Tschand, Arya and Hong, Charles and Walker, Julian and Cai, Nina and Wang, Shangkun and Subramanian, Suvinay and Dev, Sundar and Reddi, Vijay Janapa and Yazdanbakhsh, Amir and Sankaran, Sethu},
+ year = {2026},
+ doi = {10.48550/arXiv.2607.20466},
+ urldate = {2026-08-03},
+ number = {arXiv:2607.20466},
+ publisher = {arXiv},
+ file = {/home/kellen/Downloads/papers/JAXBench Benchmarking Autonomous TPU Kernel Optimization - Tschand et al..pdf},
+ keywords = {Computer Science - Artificial Intelligence},
+ langid = {english},
+ archiveprefix = {arXiv},
+ abstract = {Rigorous benchmarks have driven progress in autonomous GPU kernel performance optimization by establishing a shared target to hillclimb on, but no equivalent exists for TPUs. We present JAXBench, a TPU-native benchmark suite for AI-generated kernel optimization on Google Cloud TPUs. JAXBench comprises 50 JAX workloads that are both relevant and provide headroom for optimization. We extract 17 production ML operators from architectures in the public MaxText library such as Llama-3.1, DeepSeek-V3, Mixtral, Mamba-2, and AlphaFold2, and translate 33 operators from KernelBench that are validated for correctness and set with new problem sizes that achieve high TPU v6e MXU utilization. Eight of the 17 production operators ship with hand-optimized Pallas kernels from the public Tokamax library and block-size tuned to establish an expert upper-bound baseline. We evaluate four feedback-driven methods on generating candidate Pallas kernels for JAXBench. Across the full suite with Gemini 3 Flash, we find that target-specific context matters more than model scale on a sparsely-documented DSL like Pallas. Conditioning on curated TPU documentation raises per-sample correctness from 5.8\% to 37.3\% and solves 48 of 50 benchmarks at a 1.28x geomean speedup. Search structure yields significant gains once correctness is achieved, with Autocomp's beam-search pipeline reaching a 1.36x geomean speedup over XLA. On the 8 hand-tuned kernels, Autocomp reaches 1.60x geomean over XLA, recovering most of the 2.08x Tokamax upper bound but trailing on the specialized paged and ragged attention operators. High-quality TPU kernel optimization remains a challenging task, and we release the JAXBench benchmark, evaluation harness, and baseline results to support open source contributions.},
+ primaryclass = {cs.AI},
+ eprint = {2607.20466},
+ month = {May},
+ shorttitle = {{{JAXBench}}}
+}</pre></details></section><footer xmlns="">
+    
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/2026-W33/">Weekly Review 2026-W33</a> <a class="slug" href="/2026-W33/">[2026-W33]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 14, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
+    
+    
+  </footer></article></div></body></html>
