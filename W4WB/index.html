@@ -200,8 +200,32 @@ where \(\mathrm {ReLU}\) is the <span xmlns="" class="link local"><a href="/BEA2
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 The matrix \(\mathbf {V}\) introduces additional learnable parameters. Therefore, an architecture that uses gating typically reduces their other parameters by a factor of \(\frac {2}{3}\).
 </div>
-</details></section></details></section>
-    <section lang="en" class="block hide-metadata"><details id="id9" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Gating splits the up-projection in two <a class="slug" href="/Y4Y8/">[Y4Y8]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 18, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">For one <span xmlns="" class="link local"><a href="/YB7M/" title="Transformer [YB7M]">Transformer</a></span> layer with a gated MLP, what are the parameter count and training FLOPs — and why is the coefficient three rather than two?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <strong>Parameters:</strong> \(3DF\), from \(W_{in1}[D,F]\), \(W_{in2}[D,F]\), \(W_{out}[F,D]\).
+
+  <strong>Training FLOPs:</strong> \(18BTDF\) — three matmuls at \(6BTDF\) each, by the <span xmlns="" class="link local">\(6NPM\)</span> rule.
+
+  <strong>Where the third matrix comes from.</strong> A <span xmlns="" class="link local"><a href="/K2N7/" title="Gated Linear Unit (GLU) [K2N7]">Gated Linear Unit (GLU)</a></span> splits the up-projection into two matrices whose outputs are multiplied elementwise, \(\sigma (AW_{in1}) \odot  (AW_{in2})\), so one of them acts as a gate on the other. LLaMA, DeepSeek and most current models do this. A non-gated MLP has a single \(W_{in}\) and so \(2DF\) params — and typically scales \(D\) and \(F\) up to compensate, which is why the two families cost about the same at equal quality.
+
+  The gate itself is \(O(BTF)\) — elementwise, no contraction, and negligible against \(BTDF\).
+</details>
+</div>
+
+
+
+</details></section></details></section></details></section>
+    <section lang="en" class="block hide-metadata"><details id="id10" open="open"><summary><header><h1>
 <span class="taxon">3. </span>Computing FFN and MHA in parallel is free speedup <a class="slug" href="/ZAR4/">[ZAR4]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 16, 2026</li>
@@ -213,7 +237,7 @@ Another small trick is to parallelize computation. Traditionally, one computes t
 However, this requires waiting for the \(\mathrm {MHA}\) to complete before performing the \(\mathrm {FFN}\) computation. It has been found that performing these in parallel does not cause any severe degradation in performance. Explicitly, instead they do
 \[\mathbf {y} = \mathbf {x} + \mathrm {FFN}(\mathrm {LN}(\mathbf {x})) + \mathrm {MHA}(\mathrm {LN}(\mathbf {x}))\]</p>
       </details></section>
-    <section lang="en" class="block hide-metadata" data-taxon="Question"><details id="id10" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata" data-taxon="Question"><details id="id11" open="open"><summary><header><h1>
 <span class="taxon">Question 4. </span>What is the role of weight decay in training large models? <a class="slug" href="/U52K/">[U52K]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 16, 2026</li>
@@ -224,7 +248,7 @@ However, this requires waiting for the \(\mathrm {MHA}\) to complete before perf
       </details></section>
   </details></section><footer xmlns="">
     
-    <section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
 <span class="taxon"></span>Context  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry"><header><h1>
@@ -255,14 +279,16 @@ However, this requires waiting for the \(\mathrm {MHA}\) to complete before perf
 <a class="bullet" href="/OZD8/" title="Swish Activation [OZD8]">■</a><span class="link local" data-target="#id7"><span class="taxon">Definition 2.3. </span>Swish Activation</span><ul class="block"></ul>
 </li>
 <li>
-<a class="bullet" href="/K2N7/" title="Gated Linear Unit (GLU) [K2N7]">■</a><span class="link local" data-target="#id8"><span class="taxon">Definition 2.4. </span>Gated Linear Unit (GLU)</span><ul class="block"></ul>
+<a class="bullet" href="/K2N7/" title="Gated Linear Unit (GLU) [K2N7]">■</a><span class="link local" data-target="#id8"><span class="taxon">Definition 2.4. </span>Gated Linear Unit (GLU)</span><ul class="block"><li>
+<a class="bullet" href="/Y4Y8/" title="Gating splits the up-projection in two [Y4Y8]">■</a><span class="link local" data-target="#id9"><span class="taxon">Card. </span>Gating splits the up-projection in two</span><ul class="block"></ul>
+</li></ul>
 </li>
 </ul>
 </li>
 <li>
-<a class="bullet" href="/ZAR4/" title="Computing FFN and MHA in parallel is free speedup [ZAR4]">■</a><span class="link local" data-target="#id9"><span class="taxon">3. </span>Computing FFN and MHA in parallel is free speedup</span><ul class="block"></ul>
+<a class="bullet" href="/ZAR4/" title="Computing FFN and MHA in parallel is free speedup [ZAR4]">■</a><span class="link local" data-target="#id10"><span class="taxon">3. </span>Computing FFN and MHA in parallel is free speedup</span><ul class="block"></ul>
 </li>
 <li>
-<a class="bullet" href="/U52K/" title="What is the role of weight decay in training large models? [U52K]">■</a><span class="link local" data-target="#id10"><span class="taxon">Question 4. </span>What is the role of weight decay in training large models?</span><ul class="block"></ul>
+<a class="bullet" href="/U52K/" title="What is the role of weight decay in training large models? [U52K]">■</a><span class="link local" data-target="#id11"><span class="taxon">Question 4. </span>What is the role of weight decay in training large models?</span><ul class="block"></ul>
 </li>
 </ul></div></nav></div></body></html>

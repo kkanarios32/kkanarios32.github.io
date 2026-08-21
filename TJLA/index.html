@@ -126,20 +126,63 @@ window.addEventListener('load', function () { setTimeout(function () {
   if (document.readyState === 'complete') init();
   else window.addEventListener('load', init);
 })();
-          </script><title>KV-cache</title><meta property="og:title" content="KV-cache"></meta></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
-<span class="taxon"></span>KV-cache <a class="slug" href="/TJLA/">[TJLA]</a> </h1>
+          </script><title>KV-cache</title><meta property="og:title" content="KV-cache"></meta></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Definition"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon">Definition. </span>KV-cache <a class="slug" href="/TJLA/">[TJLA]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 14, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The keys and values of every token seen so far, held in memory across decoding steps so that each is projected once rather than once per step. <span xmlns="" class="link local"><a href="/004G/" title="Self-Attention [004G]">Attention</a></span> at step \(t\) needs \(k_j\) and \(v_j\) for every \(j \le  t\), and each of those is a function of token \(j\) and the weights alone — nothing about it depends on \(t\). So it is computable once and never again, and the only real question is whether you will spend memory to avoid recomputing it.</p><p xmlns="http://www.w3.org/1999/xhtml">The cost of not spending it is quadratic, which is easy to miss because per step it looks merely linear: admitting token \(t\) means rebuilding \(t+1\) key–value pairs, so a sequence of \(S\) tokens costs \(\sum _{t=1}^{S} t = S(S+1)/2\) projections rather than \(S\). The query is the asymmetry that makes the trade available at all — only the newest position needs one, so \(q_t\) is a single row either way, and decoding is a matrix–vector product against a \(K\) and \(V\) that grow by one row a step.</p><div xmlns="http://www.w3.org/1999/xhtml" class="kv-fig"></div><script xmlns="http://www.w3.org/1999/xhtml" src="/bafkrmiaub5secxo2sxo5iwiednjjl44l2tc6mwubpkxpi522gae6jmgsoq.js" defer></script>
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Notation.</span> Following the <span xmlns="" class="link local"><a href="/scaling-book/" title="How to scale your model [scaling-book]">scaling book</a></span>: \(S\) is the KV sequence length, \(K\) the number of key/value heads, \(H\) the head dimension, \(L\) the layers, \(B\) the batch. The clash between \(K\) as a matrix and \(K\) as a head count is unfortunate and universal.</div>
+<p xmlns="http://www.w3.org/1999/xhtml">What the cache costs is memory, and the shape of that cost is the reason it governs inference planning. Each token contributes a key and a value in every layer, so a batch holds</p>\[2 \cdot  B \cdot  S \cdot  L \cdot  K \cdot  H \cdot  \mathrm {bytes}\]<p xmlns="http://www.w3.org/1999/xhtml">which is linear in the sequence length and — unlike the weights — <em>per sequence</em>, so it cannot be amortised over the batch. Context length and batch size are therefore drawn from the same <span xmlns="" class="link local"><a href="/AI2G/" title="High bandwidth memory [AI2G]">High bandwidth memory</a></span> budget, and past a certain context the cache dominates residency outright, which is <span xmlns="" class="link local"><a href="/2BGU/" title="Processing in Memory for ML [2BGU]">Processing in Memory for ML</a></span>'s framing of the memory wall.</p><p xmlns="http://www.w3.org/1999/xhtml">It also decides what decoding is bound by. At step \(t\) the model streams the entire cache through the <span xmlns="" class="link local"><a href="/OGCRP/" title="Matrix Multiply Unit (MXU) [OGCRP]">Matrix Multiply Unit (MXU)</a></span> to do \(O(S)\) multiply-accumulates against a single query row, so the <span xmlns="" class="link local"><a href="/YBQD/" title="Arithmetic intensity [YBQD]">Arithmetic intensity</a></span> is roughly one FLOP per byte read — far below the ridge point of any accelerator, and flat in \(S\). Decoding is bandwidth-bound, and the cache is what it is bound by.</p><p xmlns="http://www.w3.org/1999/xhtml">Every fix for that attacks a factor in the expression above rather than the idea of caching. <span xmlns="" class="link local"><a href="/W4YP/" title="POTW: Fast Transformer Decoding: One Write-Head is All You Need [W4YP]">MQA</a></span> sets \(K = 1\) and shares one key/value head across all query heads; <span xmlns="" class="link local"><a href="/XUVV/" title="Group Query Attention [XUVV]">Group Query Attention</a></span> sets it to a group count and interpolates; <span xmlns="" class="link local"><a href="/WM3M/" title="Sliding Window Attention [WM3M]">Sliding Window Attention</a></span> bounds \(S\) instead by refusing to attend past a window. The FLOPs are unchanged in all three — what changes is how many bytes have to move to supply them.</p><section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>The KV cache scales with K, and is per-sequence <a class="slug" href="/J65M/">[J65M]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 18, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
-    <figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmihprg6l426763bwcofqggs77ajdcw3x7n6htbsgfptkjy752yzile.gif"></img>
-<figcaption>Great animation from <span xmlns="" class="link external"><a href="https://medium.com/@joaolages/kv-caching-explained-276520203249" title="">here</a></span></figcaption></figure>
-  </details></section><footer xmlns="">
-    
-    
-    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+  <p xmlns="http://www.w3.org/1999/xhtml">How large is a <span xmlns="" class="link local"><a href="/TJLA/" title="KV-cache [TJLA]">KV-cache</a></span>, and which dimension actually drives it?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  The cache has shape \([2, S, L, K, H]\) per sequence — the leading 2 is keys and values — so in int8 it is \(2SLKH\) bytes.
+
+  <strong>Worked:</strong> \(S = 8\mathrm {k}\), \(L = 64\), \(KH = D = 8192\) gives \(2 \cdot  8192 \cdot  64 \cdot  8192 \approx  8\) GiB for a <em>single</em> sequence.
+
+  <strong>Two things in that expression decide inference planning.</strong> It scales with \(K\), the number of key/value heads, and not with the \(N\) query heads — which is the whole argument for <span xmlns="" class="link local"><a href="/XUVV/" title="Group Query Attention [XUVV]">Group Query Attention</a></span> and <span xmlns="" class="link local"><a href="/W4YP/" title="POTW: Fast Transformer Decoding: One Write-Head is All You Need [W4YP]">MQA</a></span> at \(K \ll  N\). And it is per sequence, so unlike the weights it cannot be amortised over the batch: it competes with batch size for the same <span xmlns="" class="link local"><a href="/AI2G/" title="High bandwidth memory [AI2G]">High bandwidth memory</a></span> budget, and generation is bandwidth-bound on streaming it.
+</details>
+</div>
+
+
+
+</details></section></details></section><footer xmlns="">
+    <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon"></span>References  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry" data-taxon="Reference"><header><h1>
+<span class="taxon">Reference. </span><a class="index-entry-link" href="/scaling-book/">How to scale your model</a> <a class="slug" href="/scaling-book/">[scaling-book]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">2025</li></ul>
+<br><ul><li class="meta-item"><address class="author">Jacob Austin,  Sholto Douglas,  Roy Frostig,  Anselm Levskaya,  Charlie Chen,  Sharad Vikram,  Federico Lebron,  Peter Choy,  Vinay Ramasesh,  Albert Webson,  Reiner Pope</address></li></ul>
+<br><ul></ul>
+</div></header></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/RCNT/">What I've been thinking about</a> <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 14, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
 <span class="taxon"></span>Backlinks  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
+        
+        
+        
         <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/2BGU/">Processing in Memory for ML</a> <a class="slug" href="/2BGU/">[2BGU]</a> </h1>
 <div class="metadata"><ul>
@@ -153,6 +196,59 @@ window.addEventListener('load', function () { setTimeout(function () {
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
       </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/YBQD/">Arithmetic intensity</a> <a class="slug" href="/YBQD/">[YBQD]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 18, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/AI2G/">High bandwidth memory</a> <a class="slug" href="/AI2G/">[AI2G]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 10, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry" data-taxon="Definition"><header><h1>
+<span class="taxon">Definition. </span><a class="index-entry-link" href="/OGCRP/">Matrix Multiply Unit (MXU)</a> <a class="slug" href="/OGCRP/">[OGCRP]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/2BGU/">Processing in Memory for ML</a> <a class="slug" href="/2BGU/">[2BGU]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">April 6, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/WM3M/">Sliding Window Attention</a> <a class="slug" href="/WM3M/">[WM3M]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 14, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/XUVV/">Group Query Attention</a> <a class="slug" href="/XUVV/">[XUVV]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 14, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/W4YP/"><span class="link local"><a href="/005G/" title="Papers of a week [005G]">POTW</a></span>: <span class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">Fast Transformer Decoding: One Write-Head is All You Need</a></span></a> <a class="slug" href="/W4YP/">[W4YP]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 14, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/004G/">Self-Attention</a> <a class="slug" href="/004G/">[004G]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">February 1, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
     
-    
-  </footer></article></div></body></html>
+  </footer></article><nav id="toc"><div class="block"><h1>Table of Contents</h1><ul xmlns="" class="block"><li>
+<a class="bullet" href="/J65M/" title="The KV cache scales with K, and is per-sequence [J65M]">■</a><span class="link local" data-target="#id2"><span class="taxon">Card. </span>The KV cache scales with K, and is per-sequence</span><ul class="block"></ul>
+</li></ul></div></nav></div></body></html>

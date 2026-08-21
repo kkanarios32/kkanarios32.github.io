@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors>
+      <fr:author>
+        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+      </fr:author>
+    </fr:authors>
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>8</fr:month>
+      <fr:day>18</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/ZUVW/</fr:uri>
+    <fr:display-uri>ZUVW</fr:display-uri>
+    <fr:route>/ZUVW/</fr:route>
+    <fr:title text="Mixture of Experts (MoE)">Mixture of Experts (MoE)</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter>
+ <html:div class="stub-notice" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  color: rgb(38, 97, 69);
+  font-style: italic;
+  ">🌱 Stub — this concept is referenced but not yet written.</html:div>
+</fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>18</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/2NWW/</fr:uri>
+            <fr:display-uri>2NWW</fr:display-uri>
+            <fr:route>/2NWW/</fr:route>
+            <fr:title text="Sparsity sets the batch an MoE needs">Sparsity sets the batch an MoE needs</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787063263693</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>A <fr:link href="/ZUVW/" title="Mixture of Experts (MoE)" uri="https://kellenkanarios.com/ZUVW/" display-uri="ZUVW" type="local">Mixture of Experts (MoE)</fr:link> has <fr:tex display="inline"><![CDATA[E]]></fr:tex> experts and top-<fr:tex display="inline"><![CDATA[k]]></fr:tex> routing, int8 weights on a TPU v5e (ridge point around 240 FLOPs/byte). What batch size does it need to be compute-bound, and what is that for DeepSeek v3?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong><fr:tex display="inline"><![CDATA[B > 120E/k]]></fr:tex> tokens.</html:strong> For DeepSeek v3, with <fr:tex display="inline"><![CDATA[E = 256]]></fr:tex> routed experts and <fr:tex display="inline"><![CDATA[k = 8]]></fr:tex>, that is <html:strong><fr:tex display="inline"><![CDATA[B > 3840]]></fr:tex> tokens</html:strong> — a startlingly large batch to require at generation time.
+
+  <html:strong>Per weight matrix:</html:strong> a full batch touches every expert, so all <fr:tex display="inline"><![CDATA[E]]></fr:tex> copies get loaded — <fr:tex display="inline"><![CDATA[EDF]]></fr:tex> bytes — while only <fr:tex display="inline"><![CDATA[k]]></fr:tex> experts fire per token, so the work is <fr:tex display="inline"><![CDATA[2kBDF]]></fr:tex> FLOPs. The <fr:link href="/YBQD/" title="Arithmetic intensity" uri="https://kellenkanarios.com/YBQD/" display-uri="YBQD" type="local">arithmetic intensity</fr:link> is therefore
+
+  <fr:tex display="block"><![CDATA[\frac {2kBDF}{EDF} = \frac {2kB}{E}]]></fr:tex>
+
+  and int8 weights against bf16 arithmetic need that above roughly 240, giving <fr:tex display="inline"><![CDATA[kB/E > 120]]></fr:tex>.
+
+  <html:strong>The framing that makes this obvious:</html:strong> an MoE is a dense model with <fr:tex display="inline"><![CDATA[E]]></fr:tex> MLP blocks per layer. Total parameters scale with <fr:tex display="inline"><![CDATA[E]]></fr:tex>; parameters activated per token scale with <fr:tex display="inline"><![CDATA[k]]></fr:tex>. The sparsity <fr:tex display="inline"><![CDATA[E/k]]></fr:tex> — typically 8 to 64, and 32 for DeepSeek v3 — is exactly the factor by which the required batch inflates. The other cost is routing: two <fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAlls</fr:link> per MoE block, out to the experts and back.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

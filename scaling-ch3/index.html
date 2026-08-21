@@ -456,11 +456,102 @@ W_{out} &amp;= 2\cdot  D\cdot  F \\
 &amp;= 2\cdot  8192\cdot  32768 = 2^{29}
 \end {align*}
 \]
-<p>and each TPU has \(300\)MB \(\approx  300 \cdot  2^{20} \approx  2^{28}\) in this example. Therefore, each TPU can fit just over one half of \(W_{in}\) and \(W_{out}\), which leads us to have to fully shard both across \(X\) and \(Y\). The remaining \(11 \cdot  2^{22}\) can fit \(\text {In}\). However, we need to satisfy the constraint that \(\text {Out}\) is sharded in the same way as \(\text {In}\). I propose first</p>
-<ul><li><p>Shard \(\text {In}[B_{XY}, D]\), \(W_{in}[D,F_{XY}]\)</p></li></ul>
-<p>Then, we are in case 1 and have an output of \(W_{mid}[B_{XY}, F_{XY}]\) with no communication necessary. However, we now need to multiply \(W_{mid}\) with \(W_{out}\). I propose to</p>
-<ul><li>Shard \(W_{out}[F, D_{XY}]\)</li></ul>
-<p>This then requires two <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span>'s. First, we have to AllGather \(W_{mid}\) along \(F\). Then we perform the matmul between \(W_{mid}\) and \(W_{out}\), which gives \(Out[B_{XY}, D_{XY}]\). To provide \(\text {Out}\) as \(\text {In}\) to the next layer, we then must \(\text {AllGather}_{XY}\) along \(D\).</p>
+<p>and each TPU has \(300\)MB \(\approx  300 \cdot  2^{20} \approx  2^{28}\) in this example. Therefore, each TPU can fit just over one half of \(W_{in}\) and \(W_{out}\), which leads us to have to fully shard both across \(X\) and \(Y\). The remaining \(11 \cdot  2^{22}\) can fit \(\text {In}\). However, we need to satisfy the constraint that \(\text {Out}\) is sharded in the same way as \(\text {In}\). We adopt the following strategy:</p>
+<ol><li>Shard \(\text {In}[B_{XY}, D]\), \(W_{in}[D,F_{XY}]\)</li>
+  <ul><li>First, we need to <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span> \(\text {In}\) along \(B\).</li>
+    <li>Then, we have \(\text {In}[B, D]\cdot  W_{in}[D, F_{XY}]\to  \text {Tmp}[B, F_{XY}]\)</li></ul>
+  <li>Shard \(W_{out}[F_{XY}, D]\)</li>
+<ul><li>Now we have \(\text {Tmp}[B, F_{XY}]\cdot  W_{out}[F_{XY}, D] \to  \text {Out}[B, D]\{U_{XY}\}  \)</li>
+  <li>Then we need to do a <span xmlns="" class="link local"><a href="/CAGW/" title="ReduceScatter [CAGW]">ReduceScatter</a></span> over \(XY\) in the \(B\) axis to get back to our input shape.</li></ul></ol>
+<p>Now lets count up the communication cost.</p>
+<ol><li>First, we have an <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span> over \(XY\) of \(\text {In}\). This is \(N = 2\cdot  B\cdot  D\) bytes. We only have unidirectional bandwidth. However, we are gathering over 2 axes, which doubles our bandwidth. Thus, this will take
+\[\frac {2\cdot  128\cdot  8192}{2\cdot  4.5e 10} = 23.3\mu  s\]
+<li>Then we have a <span xmlns="" class="link local"><a href="/CAGW/" title="ReduceScatter [CAGW]">ReduceScatter</a></span> of \(\text {Out}[B, D]\{U_{XY}\}\), which takes the same time as <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span> and is another \(23.3 \mu  s\).</li></li></ol>
+<p>Thus, the whole communication cost is only \(46.6 \mu  s\).</p>
+
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
+In the solution, they instead propose to shard \(\text {In}[B, D_{XY}]\), which is equivalent in communication cost. According to <em>Claude</em>, there is a subtle distinction.
+<ol><li>If you are in decoding (i.e. \(B = 1\)), then you cannot even shard along \(B\) but can still shard along \(D\).</li>
+  <li>However, it seems preferable to shard over \(B\) if you can. This way, for activations / reductions over \(D\) you do not need any communication.</li></ol>
+</div>
+
+</details>
+</div>
+
+
+
+</details></section>
+  
+
+  
+    
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id12" open="open"><summary><header><h1>
+<span class="taxon">Exercise 3.9. </span>another strategy for sharded matmuls  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 5, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+Above we claimed that when only one input to a matmul is sharded along its contracting dimension, we should AllGather the sharded matrix and perform the resulting contraction locally. Another strategy you might think of is to perform the sharded matmul and then AllReduce the result (as if both inputs were sharded along the contracting dimension), i.e. \(A[I,J_X]\cdot _J B[J,K]\to  C[I,K]\) by way of
+<ol xmlns="http://www.w3.org/1999/xhtml"><li>\(C[I, K]\{U_{X}\} = A[I, J_{X}]\cdot  B[J_{x}, K] \)</li>
+  <li>\(C[I, K]\{U_{X}\} = \text {AllReduce}(C[I,K]\{U_{X}\})\)</li></ol>
+Answer the following
+<ol xmlns="http://www.w3.org/1999/xhtml"><li>Explicitly write out this algorithm for matrices \(A[N,M]\) and \(B[M,K]\), using indices to show exactly what computation is done on what device. Assume \(A\) is sharded as \(A[I,J_X]\) across ND devices, and you want your output to be replicated across all devices.</li>
+<li>Now suppose you are ok with the final result not being replicated on each device, but instead sharded (across either the N or K dimension). How would the algorithm above change?</li>
+<li>Looking purely at the communication cost of the strategy above (in part 2, not 1), how does this communication cost compare to the communication cost of the algorithm in which we first AllGather A and then do the matmul?</li></ol>
+
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+<ol><li>On the device, we can only make use of the \(J_{X}\) rows of \(B\) and compute the corresponding partial sums. This corresponds to the outer product
+\[C'[i] = \sum _{n=i\cdot  \frac {J}{ND}}^{i(\frac {J}{ND} + 1)} A_{:,n} \oplus  B_{n,:}\]</li>
+  <li>The above algorithm would change by replacing the <span xmlns="" class="link local"><a href="/U351/" title="AllReduce [U351]">AllReduce</a></span> with a <span xmlns="" class="link local"><a href="/CAGW/" title="ReduceScatter [CAGW]">ReduceScatter</a></span>. This is better communication wise because <span xmlns="" class="link local"><a href="/MJ7A/" title="AllReduce is two collectives, not one [MJ7A]">AllReduce is two collectives, not one</a></span>.</li>
+<li>The communication cost is the same because <span xmlns="" class="link local"><a href="/CAGW/" title="ReduceScatter [CAGW]">ReduceScatter</a></span>  has the same communication cost as <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span>, but it is likely preferable if you are compute bound because you can distribute computation across devices.
+
+ <div class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
+In the solutions, they make the (excellent) point that in the <span xmlns="" class="link local"><a href="/CAGW/" title="ReduceScatter [CAGW]">ReduceScatter</a></span> case we are sending the output \(N\times  K\) matrix, whereas in the <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span> case we are sending the \(N\times  M\) matrix. Therefore, if we have a large contraction dim, then the second case might also be preferable.
+</div></li></ol>
+</details>
+</div>
+
+
+
+</details></section>
+  
+
+  
+    
+    
+    
+    <section lang="en" class="block hide-metadata" data-taxon="Exercise"><details id="id13" open="open"><summary><header><h1>
+<span class="taxon">Exercise 3.10. </span>Fun with <span class="link local"><a href="/T470/" title="AllToAll [T470]">AllToAll</a></span>  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 5, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+In the table above, it was noted that the time to perform an AllToAll is a factor of 4 lower than the time to perform an AllGather or ReduceScatter (in the regime where we are throughput-bound). In this problem we will see where that factor of 4 comes from, and also see how this factor would change if we only had single-direction ICI links, rather than bidirectional ICI links.
+<ol xmlns="http://www.w3.org/1999/xhtml"><li>Let’s start with the single-direction case first. Imagine we have D devices in a ring topology and want to do either an AllGather or a ReduceScatter on an N x N matrix \(A[I_X,J]\) (say D divides N for simplicity). Describe the comms involved in these two collectives, and calculate the total number of scalars (floats or ints) which are transferred across a single ICI link during the entirety of this algorithm.</li>
+<li>Now let’s think about an AllToAll, still in the single-directional ICI case. How is the algorithm different in this case than the all-gather case? Calculate the number of scalars that are transferred across a single ICI link in this algorithm.</li>
+<li>You should have found that the ratio between your answers to part (a) and part (b) is a nice number. Explain where this factor comes from in simple terms.</li>
+<li>Now let’s add bidirectional communication. How does this affect the total time needed in the all-gather case?</li>
+<li>How does adding bidirectional communication affect the total time needed in the AllToAll case?</li>
+<li>Now simply explain the ratio between AllGather time and AllToAll time in a bidirectional ring.</li></ol>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(115, 73, 35);   "><span style="font-weight: 500; color: rgb(115, 73, 35);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</span></summary>
+<ol><li>The communication involved in either of these collectives is each chip in the ring sending a chunk of \(A\) of size \(\frac {N^2}{D}\) to the right neighbor. A single ICI link sees every chunk and therefore \(N^2(D-1)\) scalars must cross a single ICI link. The \(D - 1\) comes from the fact that each device already owns one \(\frac {N^2}{D}\) chunk.
+</li>
+<li><span xmlns="" class="link local"><a href="/T470/" title="AllToAll [T470]">AllToAll</a></span> differs than <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span> because each subsequent forwarding is \(\frac {N^2}{D^2}\) less bytes. Namely, each device has an \(\frac {N^2}{D}\) shard of \(A\). Then in <span xmlns="" class="link local"><a href="/T470/" title="AllToAll [T470]">AllToAll</a></span>, you forward to a neighbor who takes a \(\frac {1}{D}\) of this chunk and forwards the remaining. Therefore, a single ICI link only sees the following bytes of ICI traffic
+\[\frac {N^2}{D} \sum _{i=1}^{D} (D - i) = \frac {N^2\cdot  D(D-1)}{2D} = \frac {N^2(D-1)}{2}\]</li>
+<li>From the previous 2 parts, we see that the ratio is exactly \(\frac {1}{2}\). This comes from the fact that, for farther devices, a link needs to transfer a much smaller number of bytes in <span xmlns="" class="link local"><a href="/T470/" title="AllToAll [T470]">AllToAll</a></span>. Whereas, in <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span>, you must see all bytes of a chunk for every device uniformly.</li>
+<li>In the <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span> case, bidirectional communication still requires each link to see every byte. Therefore, only the ICI bandiwdth changes and not the total bytes seen per-link.</li>
+<li>In the <span xmlns="" class="link local"><a href="/T470/" title="AllToAll [T470]">AllToAll</a></span> case, each chip only needs its sub-chunk of each chunk. Therefore, we can divide the chunk into the front and back half and send in each direction. This halves the total bytes seen per link, reducing to \(\frac {N^2(D-1)}{4}\).</li>
+<li>In the bidirectional case, we can effectively reduce our <span xmlns="" class="link local"><a href="/T470/" title="AllToAll [T470]">AllToAll</a></span> to 2 unidirectional <span xmlns="" class="link local"><a href="/T470/" title="AllToAll [T470]">AllToAll</a></span>'s of half the size. This then halves the bytes-per-link, which was already half of an <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span>. Since every device needs every byte of each chunk in the <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span> case, it gets no reduction in the bidirectional case.</li></ol>
 </details>
 </div>
 
@@ -470,7 +561,7 @@ W_{out} &amp;= 2\cdot  D\cdot  F \\
   
 </details></section><footer xmlns="">
     
-    <section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id14" open="open"><summary><header><h1>
 <span class="taxon"></span>Context  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry"><header><h1>
@@ -481,10 +572,17 @@ W_{out} &amp;= 2\cdot  D\cdot  F \\
 </ul></div></header></section>
       </details></section>
     
-    <section lang="en" class="block hide-metadata"><details id="id13" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
 <span class="taxon"></span>Related  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         
+        
+        <section class="block index-entry" data-taxon="Definition"><header><h1>
+<span class="taxon">Definition. </span><a class="index-entry-link" href="/T470/">AllToAll</a> <a class="slug" href="/T470/">[T470]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
         <section class="block index-entry" data-taxon="Definition"><header><h1>
 <span class="taxon">Definition. </span><a class="index-entry-link" href="/U351/">AllReduce</a> <a class="slug" href="/U351/">[U351]</a> </h1>
 <div class="metadata"><ul>

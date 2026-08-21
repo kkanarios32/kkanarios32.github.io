@@ -131,7 +131,7 @@ window.addEventListener('load', function () { setTimeout(function () {
 <div class="metadata"><ul>
 <li class="meta-item">May 25, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-<li class="meta-item">16 min read</li>
+<li class="meta-item">17 min read</li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">This will be a brief tour through all the fundamentals needed to understand the first instantiation of <em>FlashAttention</em> as introduced in <span xmlns="" class="link local"><a href="/daoFlashAttentionFastMemoryEfficient2022/" title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness [daoFlashAttentionFastMemoryEfficient2022]">FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness</a></span>.</p><section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
 <span class="taxon">1. </span>Online Softmax <a class="slug" href="/PI7N/">[PI7N]</a> </h1>
 <div class="metadata"><ul>
@@ -412,6 +412,32 @@ Neither ever requires an \(N \times  N\) intermediate.
   <li>\(d\mathbf {K}_j = \sum _i \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {Q}_i\), accumulated over query tiles.</li></ol>
 <p xmlns="http://www.w3.org/1999/xhtml">Each accumulator is \(O(d)\) per row or column, so the whole backward pass stays linear in \(N\).</p>
 </details></section>
+</details></section><section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id14" open="open"><summary><header><h1>
+<span class="taxon">Card 4. </span>The running max makes the chunk merge exact <a class="slug" href="/6UFW/">[6UFW]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 18, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">In <span xmlns="" class="link local"><a href="/R0PM/" title="Flash Attention (v1) [R0PM]">flash attention</a></span>, what running statistics travel between KV chunks, and how are two chunks merged?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Each query block carries three: \(M\), the running maximum of \(q \cdot  k\); \(L\), the running <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">softmax</a></span> denominator; and \(O\), the running output.
+
+  Merging chunks with local maxima \(M^1, M^2\) and sums \(L^1, L^2\) rescales each to the shared maximum:
+
+  \[L = e^{M^1 - \max (M^1, M^2)}L^1 + e^{M^2 - \max (M^1, M^2)}L^2\]
+
+  <strong>This is exact, not an approximation.</strong> It is only \(\sum _i e^{a_i + b} = e^b \sum _i e^{a_i}\): pulling a constant out of a sum of exponentials. The maximum is subtracted for <span xmlns="" class="link local"><a href="/7TMH/" title="Stabilizing Softmax in Attention [7TMH]">numerical stability</a></span> and put back by the same identity — see <span xmlns="" class="link local"><a href="/PI7N/" title="Online Softmax [PI7N]">Online Softmax</a></span> for the one-pass version of the argument.
+
+  <strong>The payoff is memory, not FLOPs.</strong> The \([B,T,S,N]\) attention matrix is never materialised, so memory is \(O(1)\) in the number of chunks while the FLOP count stays quadratic. The query block sits in <span xmlns="" class="link local"><a href="/GFK2/" title="VMEM [GFK2]">VMEM</a></span> and only the KV chunks stream in, which is also what raises the <span xmlns="" class="link local"><a href="/YBQD/" title="Arithmetic intensity [YBQD]">arithmetic intensity</a></span>.
+</details>
+</div>
+
+
+
 </details></section>
   <div xmlns="http://www.w3.org/1999/xhtml" class="comments">
     
@@ -420,7 +446,7 @@ Neither ever requires an \(N \times  N\) intermediate.
     <script src="https://giscus.app/client.js" data-repo="kkanarios32/website-comments" data-repo-id="R_kgDON4lIRA" data-category="Announcements" data-category-id="DIC_kwDON4lIRM4DDdwI" data-mapping="og:title" data-term="" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="https://kellenkanarios.com/giscus.css" data-lang="en" data-loading="lazy" crossorigin="anonymous" async=""></script>
   </div>
 </details></section><footer xmlns="">
-    <section lang="en" class="block hide-metadata"><details id="id14" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
 <span class="taxon"></span>References  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry" data-taxon="Reference"><header><h1>
@@ -434,9 +460,15 @@ Neither ever requires an \(N \times  N\) intermediate.
 </ul>
 </div></header></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id15" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
 <span class="taxon"></span>Context  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/RCNT/">What I've been thinking about</a> <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 14, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
         <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/005G/">Papers of a week</a> <a class="slug" href="/005G/">[005G]</a> </h1>
 <div class="metadata"><ul>
@@ -444,9 +476,10 @@ Neither ever requires an \(N \times  N\) intermediate.
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id17" open="open"><summary><header><h1>
 <span class="taxon"></span>Backlinks  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
+        
         <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/PI7N/">Online Softmax</a> <a class="slug" href="/PI7N/">[PI7N]</a> </h1>
 <div class="metadata"><ul>
@@ -495,5 +528,8 @@ Neither ever requires an \(N \times  N\) intermediate.
 <a class="bullet" href="#id13" title="Summary">■</a><span class="link local" data-target="#id13"><span class="taxon">3.2. </span>Summary</span><ul class="block"></ul>
 </li>
 </ul>
+</li>
+<li>
+<a class="bullet" href="/6UFW/" title="The running max makes the chunk merge exact [6UFW]">■</a><span class="link local" data-target="#id14"><span class="taxon">Card 4. </span>The running max makes the chunk merge exact</span><ul class="block"></ul>
 </li>
 </ul></div></nav></div></body></html>

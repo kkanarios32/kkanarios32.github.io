@@ -135,8 +135,33 @@ window.addEventListener('load', function () { setTimeout(function () {
     <p xmlns="http://www.w3.org/1999/xhtml"><em>Group query attention</em> is the same idea as <span xmlns="" class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">MQA</a></span> but instead of using one \(K\) and \(V\) for every head, they use a <em>group</em> of them. Where obviously the number of groups needs to be less than the number of heads.</p>
     <figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmicmjlgi2o3oetsssjdwk6y2pqce4vrdwiw2ah4wwe3ulnt74upkiu.png"></img>
 <figcaption>Grouped query uses subset of \(K\) and \(V\) matrices.</figcaption></figure>
+    <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>GQA saves cache, not projection FLOPs <a class="slug" href="/59OV/">[59OV]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 18, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Per layer, what do the QKVO projections cost in parameters and training FLOPs under <span xmlns="" class="link local"><a href="/XUVV/" title="Group Query Attention [XUVV]">Group Query Attention</a></span> with \(N\) query heads, \(K\) key/value heads, and head dimension \(H\)?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <strong>Parameters:</strong> \(2D(N+K)H\), from \(W_Q[D,N,H]\) and \(W_O[N,H,D]\) at \(DNH\) each, plus \(W_K, W_V[D,K,H]\) at \(DKH\) each.
+
+  <strong>Training FLOPs:</strong> \(12BTD(N+K)H\) — each projection is \(6BTD \cdot  (\text {heads}) \cdot  H\).
+
+  <strong>The variants are one knob.</strong> \(K = N\) is plain multi-head attention; \(K = 1\) is <span xmlns="" class="link local"><a href="/W4YP/" title="POTW: Fast Transformer Decoding: One Write-Head is All You Need [W4YP]">MQA</a></span>; \(1 &lt; K &lt; N\) with \(K \mid  N\) is grouped-query, with group size \(G = N/K\).
+
+  <strong>Read the formula for what shrinking \(K\) actually buys.</strong> It touches only the \(K\) term, so the projection cost falls from \(2N\) to \(N + K\) — at most a factor of two, and usually far less. That is not why anyone uses GQA. The payoff is the <span xmlns="" class="link local"><a href="/TJLA/" title="KV-cache [TJLA]">KV-cache</a></span>, which scales with \(K\) alone and is the binding constraint at generation time.
+</details>
+</div>
+
+
+
+</details></section>
   </details></section><footer xmlns="">
-    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
 <span class="taxon"></span>References  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry" data-taxon="Reference"><header><h1>
@@ -150,7 +175,7 @@ window.addEventListener('load', function () { setTimeout(function () {
 </ul>
 </div></header></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
 <span class="taxon"></span>Context  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry"><header><h1>
@@ -159,8 +184,27 @@ window.addEventListener('load', function () { setTimeout(function () {
 <li class="meta-item">July 14, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/RCNT/">What I've been thinking about</a> <a class="slug" href="/RCNT/">[RCNT]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 14, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        
+        
+        <section class="block index-entry" data-taxon="Definition"><header><h1>
+<span class="taxon">Definition. </span><a class="index-entry-link" href="/TJLA/">KV-cache</a> <a class="slug" href="/TJLA/">[TJLA]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 14, 2025</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
       </details></section>
     
     
-    
-  </footer></article></div></body></html>
+  </footer></article><nav id="toc"><div class="block"><h1>Table of Contents</h1><ul xmlns="" class="block"><li>
+<a class="bullet" href="/59OV/" title="GQA saves cache, not projection FLOPs [59OV]">■</a><span class="link local" data-target="#id2"><span class="taxon">Card. </span>GQA saves cache, not projection FLOPs</span><ul class="block"></ul>
+</li></ul></div></nav></div></body></html>

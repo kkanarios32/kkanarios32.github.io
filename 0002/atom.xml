@@ -538,6 +538,31 @@ Neither ever requires an <code>N \times  N</code> intermediate.
   <li><code>d\mathbf {K}_j = \sum _i \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {Q}_i</code>, accumulated over query tiles.</li></ol>
 <p>Each accumulator is <code>O(d)</code> per row or column, so the whole backward pass stays linear in <code>N</code>.</p>
 </section>
+</section><section><header><h2>The running max makes the chunk merge exact</h2></header>
+  <p>In <a href="https://kellenkanarios.com/R0PM/">flash attention</a>, what running statistics travel between KV chunks, and how are two chunks merged?</p>
+  
+  
+  
+ <div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Each query block carries three: <code>M</code>, the running maximum of <code>q \cdot  k</code>; <code>L</code>, the running <a href="https://kellenkanarios.com/C00V/">softmax</a> denominator; and <code>O</code>, the running output.
+
+  Merging chunks with local maxima <code>M^1, M^2</code> and sums <code>L^1, L^2</code> rescales each to the shared maximum:
+
+  <code>L = e^{M^1 - \max (M^1, M^2)}L^1 + e^{M^2 - \max (M^1, M^2)}L^2</code>
+
+  <strong>This is exact, not an approximation.</strong> It is only <code>\sum _i e^{a_i + b} = e^b \sum _i e^{a_i}</code>: pulling a constant out of a sum of exponentials. The maximum is subtracted for <a href="https://kellenkanarios.com/7TMH/">numerical stability</a> and put back by the same identity — see <a href="https://kellenkanarios.com/PI7N/">Online Softmax</a> for the one-pass version of the argument.
+
+  <strong>The payoff is memory, not FLOPs.</strong> The <code>[B,T,S,N]</code> attention matrix is never materialised, so memory is <code>O(1)</code> in the number of chunks while the FLOP count stays quadratic. The query block sits in <a href="https://kellenkanarios.com/GFK2/">VMEM</a> and only the KV chunks stream in, which is also what raises the <a href="https://kellenkanarios.com/YBQD/">arithmetic intensity</a>.
+</details>
+</div>
+
+
+
 </section>
   <div class="comments">
     
@@ -4031,7 +4056,20 @@ Once <code>PutE</code> or <code>PutM</code> has been sent, <code>EI^A</code> and
 <figure><img width="100%" src="https://kellenkanarios.com/bafkrmifqg6owj5m5bnsuqphk73uuwqzybmwczbbwx432u5j3zju3fe52i4.png" />
 <figcaption>Final MESI directory controller.</figcaption></figure>
 </section>
-</section>      </div>
+</section>
+  <div class="comments">
+    
+  <hr style="
+    margin: 2.5rem 0 2rem;
+    border: 0;
+    border-top: 2px solid rgb(219, 216, 215);
+    height: 0;
+    background: none;
+  " />
+
+    <script src="https://giscus.app/client.js" data-repo="kkanarios32/website-comments" data-repo-id="R_kgDON4lIRA" data-category="Announcements" data-category-id="DIC_kwDON4lIRM4DDdwI" data-mapping="og:title" data-term="" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="https://kellenkanarios.com/giscus.css" data-lang="en" data-loading="lazy" crossorigin="anonymous" async="" />
+  </div>
+      </div>
     </content>
   </entry>
   <entry>

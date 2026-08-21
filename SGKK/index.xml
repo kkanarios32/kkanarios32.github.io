@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors>
+      <fr:author>
+        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+      </fr:author>
+    </fr:authors>
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>8</fr:month>
+      <fr:day>18</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/SGKK/</fr:uri>
+    <fr:display-uri>SGKK</fr:display-uri>
+    <fr:route>/SGKK/</fr:route>
+    <fr:title text="Backpropagation">Backpropagation</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter>
+ <html:div class="stub-notice" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  color: rgb(38, 97, 69);
+  font-style: italic;
+  ">🌱 Stub — this concept is referenced but not yet written.</html:div>
+</fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>18</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/WCLV/</fr:uri>
+            <fr:display-uri>WCLV</fr:display-uri>
+            <fr:route>/WCLV/</fr:route>
+            <fr:title text="Remat buys memory with a third more FLOPs">Remat buys memory with a third more FLOPs</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787063265971</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>What does block-level <fr:link href="/WQAM/" title="Gradient checkpointing" uri="https://kellenkanarios.com/WQAM/" display-uri="WQAM" type="local">gradient checkpointing</fr:link> cost, and what does it save?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong>Saves:</html:strong> only the input to each layer is kept — one checkpoint per layer instead of the roughly twenty intermediate nodes a layer produces. In the book's setting (<fr:tex display="inline"><![CDATA[BT = 4]]></fr:tex>M, <fr:tex display="inline"><![CDATA[L = 64]]></fr:tex>, <fr:tex display="inline"><![CDATA[D = 8192]]></fr:tex>, bf16) that is 84 TB of activations down to 4.2 TB.
+
+  <html:strong>Costs:</html:strong> the forward pass is run a second time inside the backward pass, so training goes from about <fr:tex display="inline"><![CDATA[6 \cdot  \mathrm {params} \cdot  \mathrm {tokens}]]></fr:tex> to about <fr:tex display="inline"><![CDATA[8]]></fr:tex> — a third more FLOPs for a twentyfold cut in activation memory.
+
+  <html:strong>Why twenty nodes.</html:strong> <fr:link href="/SGKK/" title="Backpropagation" uri="https://kellenkanarios.com/SGKK/" display-uri="SGKK" type="local">Backpropagation</fr:link> needs whatever the derivative mentions. For <fr:tex display="inline"><![CDATA[f(x) = \exp (g(x))]]></fr:tex> we have <fr:tex display="inline"><![CDATA[df/dx = \exp (g(x)) \cdot  dg/dx]]></fr:tex>, so <html:em>both</html:em> <fr:tex display="inline"><![CDATA[g(x)]]></fr:tex> and <fr:tex display="inline"><![CDATA[\exp (g(x))]]></fr:tex> have to survive to the backward pass. Counting every such intermediate across a layer lands around twenty.
+
+  <html:strong>The middle setting is usually the right one:</html:strong> save just the outputs of the big matmuls — about seven per layer — and no large matmul is ever recomputed, only the cheap elementwise work between them.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>18</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/92HA/</fr:uri>
+            <fr:display-uri>92HA</fr:display-uri>
+            <fr:route>/92HA/</fr:route>
+            <fr:title text="The backward pass is two matmuls, not one">The backward pass is two matmuls, not one</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787063264071</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>One matmul <fr:tex display="inline"><![CDATA[C = AB]]></fr:tex> with <fr:tex display="inline"><![CDATA[A[N,P]]]></fr:tex>, <fr:tex display="inline"><![CDATA[B[P,M]]]></fr:tex> costs <fr:tex display="inline"><![CDATA[2NPM]]></fr:tex> FLOPs at inference but <fr:tex display="inline"><![CDATA[6NPM]]></fr:tex> in training. Where do the other two thirds come from?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The forward pass contracts over <fr:tex display="inline"><![CDATA[P]]></fr:tex> and costs <fr:tex display="inline"><![CDATA[2NPM]]></fr:tex>. <fr:link href="/SGKK/" title="Backpropagation" uri="https://kellenkanarios.com/SGKK/" display-uri="SGKK" type="local">Backpropagation</fr:link> then needs <html:em>two</html:em> matmuls of exactly that size, not one:
+
+  <html:ul><html:li><fr:tex display="inline"><![CDATA[\partial  L/\partial  B = A^{\top }(\partial  L/\partial  C)]]></fr:tex>, contracting over <fr:tex display="inline"><![CDATA[N]]></fr:tex> — the parameter gradient;</html:li>
+    <html:li><fr:tex display="inline"><![CDATA[\partial  L/\partial  A = (\partial  L/\partial  C)B^{\top }]]></fr:tex>, contracting over <fr:tex display="inline"><![CDATA[M]]></fr:tex> — not a parameter gradient at all, but the signal handed to earlier layers.</html:li></html:ul>
+
+  Each of the three contracts a different axis of the same <fr:tex display="inline"><![CDATA[N \times  P \times  M]]></fr:tex> box, so each costs <fr:tex display="inline"><![CDATA[2NPM]]></fr:tex> and the total is <fr:tex display="inline"><![CDATA[6NPM]]></fr:tex>, three times the forward pass. It is easy to remember only the first backward matmul and land on <fr:tex display="inline"><![CDATA[4NPM]]></fr:tex>; the activation gradient is the one that goes missing.
+
+  <html:strong>Why the constant is worth memorising.</html:strong> <fr:tex display="inline"><![CDATA[PM]]></fr:tex> is the parameter count of that matrix and <fr:tex display="inline"><![CDATA[N]]></fr:tex> is the token count, so <fr:tex display="inline"><![CDATA[6NPM]]></fr:tex> is precisely the <fr:tex display="inline"><![CDATA[6 \cdot  \mathrm {params} \cdot  \mathrm {tokens}]]></fr:tex> rule of thumb — the whole training cost of a <fr:link href="/YB7M/" title="Transformer" uri="https://kellenkanarios.com/YB7M/" display-uri="YB7M" type="local">Transformer</fr:link> is a sum of such terms.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

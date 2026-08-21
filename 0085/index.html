@@ -474,7 +474,31 @@ where \(\mathrm {ReLU}\) is the <span xmlns="" class="link local"><a href="/BEA2
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 The matrix \(\mathbf {V}\) introduces additional learnable parameters. Therefore, an architecture that uses gating typically reduces their other parameters by a factor of \(\frac {2}{3}\).
 </div>
-</details></section></details></section><section lang="en" class="block hide-metadata"><details id="id25" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id25" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Gating splits the up-projection in two <a class="slug" href="/Y4Y8/">[Y4Y8]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 18, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">For one <span xmlns="" class="link local"><a href="/YB7M/" title="Transformer [YB7M]">Transformer</a></span> layer with a gated MLP, what are the parameter count and training FLOPs — and why is the coefficient three rather than two?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <strong>Parameters:</strong> \(3DF\), from \(W_{in1}[D,F]\), \(W_{in2}[D,F]\), \(W_{out}[F,D]\).
+
+  <strong>Training FLOPs:</strong> \(18BTDF\) — three matmuls at \(6BTDF\) each, by the <span xmlns="" class="link local">\(6NPM\)</span> rule.
+
+  <strong>Where the third matrix comes from.</strong> A <span xmlns="" class="link local"><a href="/K2N7/" title="Gated Linear Unit (GLU) [K2N7]">Gated Linear Unit (GLU)</a></span> splits the up-projection into two matrices whose outputs are multiplied elementwise, \(\sigma (AW_{in1}) \odot  (AW_{in2})\), so one of them acts as a gate on the other. LLaMA, DeepSeek and most current models do this. A non-gated MLP has a single \(W_{in}\) and so \(2DF\) params — and typically scales \(D\) and \(F\) up to compensate, which is why the two families cost about the same at equal quality.
+
+  The gate itself is \(O(BTF)\) — elementwise, no contraction, and negligible against \(BTDF\).
+</details>
+</div>
+
+
+
+</details></section></details></section></details></section><section lang="en" class="block hide-metadata"><details id="id26" open="open"><summary><header><h1>
 <span class="taxon">7.3. </span>Computing FFN and MHA in parallel is free speedup <a class="slug" href="/ZAR4/">[ZAR4]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 16, 2026</li>
@@ -483,12 +507,12 @@ The matrix \(\mathbf {V}\) introduces additional learnable parameters. Therefore
 Another small trick is to parallelize computation. Traditionally, one computes the \(\mathrm {MHA}\) output and then passes this to the \(\mathrm {FFN}\) i.e.
 \[\mathbf {y} = \mathbf {x} + \mathrm {FFN}(\mathrm {LN}(\mathbf {x} + \mathrm {MHA}(\mathrm {LN}(\mathbf {x})))).\]
 However, this requires waiting for the \(\mathrm {MHA}\) to complete before performing the \(\mathrm {FFN}\) computation. It has been found that performing these in parallel does not cause any severe degradation in performance. Explicitly, instead they do
-\[\mathbf {y} = \mathbf {x} + \mathrm {FFN}(\mathrm {LN}(\mathbf {x})) + \mathrm {MHA}(\mathrm {LN}(\mathbf {x}))\]</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Question"><details id="id26" open="open"><summary><header><h1>
+\[\mathbf {y} = \mathbf {x} + \mathrm {FFN}(\mathrm {LN}(\mathbf {x})) + \mathrm {MHA}(\mathrm {LN}(\mathbf {x}))\]</p></details></section><section lang="en" class="block hide-metadata" data-taxon="Question"><details id="id27" open="open"><summary><header><h1>
 <span class="taxon">Question 7.4. </span>What is the role of weight decay in training large models? <a class="slug" href="/U52K/">[U52K]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 16, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Since there is so much data, it is not feasible to train your model for multiple epochs. This is actually nice in the sense that we do not have to worry about overfitting and performing regularization.</p><p xmlns="http://www.w3.org/1999/xhtml">However, many of the large models are still trained with weight decay. Tatsu claims that this is not to do with regularization but actually due to some weird interaction with the learning rate schedule. I am not sure I entirely understood this part.</p></details></section></details></section><section lang="en" class="block hide-metadata"><details id="id27" open="open"><summary><header><h1>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Since there is so much data, it is not feasible to train your model for multiple epochs. This is actually nice in the sense that we do not have to worry about overfitting and performing regularization.</p><p xmlns="http://www.w3.org/1999/xhtml">However, many of the large models are still trained with weight decay. Tatsu claims that this is not to do with regularization but actually due to some weird interaction with the learning rate schedule. I am not sure I entirely understood this part.</p></details></section></details></section><section lang="en" class="block hide-metadata"><details id="id28" open="open"><summary><header><h1>
 <span class="taxon">8. </span>Rotary Position Embeddings (ROPE) <a class="slug" href="/TOD6/">[TOD6]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 14, 2025</li>
@@ -519,14 +543,14 @@ The \(\theta _i\)'s are fixed and chosen according to some schedule to capture d
 \[W_K = \mathrm {ROT}(W_K), \quad  W_Q = \mathrm {ROT}(W_Q)\]
 These are then what is used in self-attention.
 </p></details></section>
-  <section lang="en" class="block hide-metadata"><details id="id28" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id29" open="open"><summary><header><h1>
 <span class="taxon">9. </span>The little details  </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 1, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
   <p xmlns="http://www.w3.org/1999/xhtml">A lot of deep learning is empirical magic. A quick look behind the curtain into this magic awaits below... </p>
-  <section lang="en" class="block hide-metadata"><details id="id29" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id30" open="open"><summary><header><h1>
 <span class="taxon">9.1. </span>Hyperparameter Rules (<span class="link local"><a href="/0085/" title="Notebook: Stanford CS336 [0085]">CS336</a></span>) <a class="slug" href="/9VZH/">[9VZH]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 14, 2025</li>
@@ -541,7 +565,7 @@ These are then what is used in self-attention.
   <li>If poor network speed then pipeline parallel might be more viable and deeper networks would be more parallelizable.</li></ul></p><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">Rule 4.</strong> Vocab size
 <ul><li>For single language models, vocab size is typically \(30-50k\)</li>
   <li>For multi language models, vocab size is typically \(100-250k\)</li></ul></p></details></section>
-  <section lang="en" class="block hide-metadata"><details id="id30" open="open"><summary><header><h1>
+  <section lang="en" class="block hide-metadata"><details id="id31" open="open"><summary><header><h1>
 <span class="taxon">9.2. </span>Stabilizing <span class="link local"><a href="/C00V/" title="Softmax [C00V]">Softmax</a></span> in <span class="link local"><a href="/004G/" title="Self-Attention [004G]">Attention</a></span> <a class="slug" href="/7TMH/">[7TMH]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 16, 2026</li>
@@ -554,7 +578,7 @@ With the \(\nabla  D(\mathbf {x})\) should be \(0\) and we are effectively only 
    </li>
    <li>For the <span xmlns="" class="link local"><a href="/004G/" title="Self-Attention [004G]">attention</a></span>, they primarily operate on the <em>logits</em> prior to the softmax. One way is via <span xmlns="" class="link local"><a href="/LVV4/" title="Layer Normalization [LVV4]">layer norm</a></span> before the <span xmlns="" class="link local"><a href="/C00V/" title="Softmax [C00V]">softmax</a></span>. Another is via <span xmlns="" class="link local"><a href="/39ZN/" title="Softcapping [39ZN]">Softcapping</a></span></li></ul></p></details></section>
 </details></section>
-<section lang="en" class="block hide-metadata"><details id="id31" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id32" open="open"><summary><header><h1>
 <span class="taxon">10. </span><span class="link local"><a href="/005G/" title="Papers of a week [005G]">POTW</a></span>: <span class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">Fast Transformer Decoding: One Write-Head is All You Need</a></span> <a class="slug" href="/W4YP/">[W4YP]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 14, 2025</li>
@@ -580,20 +604,44 @@ I believe we just ignore the softmax memory contribution in the inference case b
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   "><span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</span> 
 Similar to the <span xmlns="" class="link local"><a href="/TJLA/" title="KV-cache [TJLA]">KV-cache</a></span>, we still can use \(h\) \(Q\) matrices because we do not need to load \(n\) of them into memory because only the last one matters for inference.
 </div>
-<section lang="en" class="block hide-metadata"><details id="id32" open="open"><summary><header><h1>
+<section lang="en" class="block hide-metadata"><details id="id33" open="open"><summary><header><h1>
 <span class="taxon">10.1. </span>Group Query Attention <a class="slug" href="/XUVV/">[XUVV]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 14, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml"><em>Group query attention</em> is the same idea as <span xmlns="" class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">MQA</a></span> but instead of using one \(K\) and \(V\) for every head, they use a <em>group</em> of them. Where obviously the number of groups needs to be less than the number of heads.</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmicmjlgi2o3oetsssjdwk6y2pqce4vrdwiw2ah4wwe3ulnt74upkiu.png"></img>
-<figcaption>Grouped query uses subset of \(K\) and \(V\) matrices.</figcaption></figure></details></section><p xmlns="http://www.w3.org/1999/xhtml">Also inspired by this idea of reducing the dependence of \(K\) and \(V\) on the sequence length is sliding window attention.</p><section lang="en" class="block hide-metadata"><details id="id33" open="open"><summary><header><h1>
+<figcaption>Grouped query uses subset of \(K\) and \(V\) matrices.</figcaption></figure><section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id34" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>GQA saves cache, not projection FLOPs <a class="slug" href="/59OV/">[59OV]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 18, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Per layer, what do the QKVO projections cost in parameters and training FLOPs under <span xmlns="" class="link local"><a href="/XUVV/" title="Group Query Attention [XUVV]">Group Query Attention</a></span> with \(N\) query heads, \(K\) key/value heads, and head dimension \(H\)?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <strong>Parameters:</strong> \(2D(N+K)H\), from \(W_Q[D,N,H]\) and \(W_O[N,H,D]\) at \(DNH\) each, plus \(W_K, W_V[D,K,H]\) at \(DKH\) each.
+
+  <strong>Training FLOPs:</strong> \(12BTD(N+K)H\) — each projection is \(6BTD \cdot  (\text {heads}) \cdot  H\).
+
+  <strong>The variants are one knob.</strong> \(K = N\) is plain multi-head attention; \(K = 1\) is <span xmlns="" class="link local"><a href="/W4YP/" title="POTW: Fast Transformer Decoding: One Write-Head is All You Need [W4YP]">MQA</a></span>; \(1 &lt; K &lt; N\) with \(K \mid  N\) is grouped-query, with group size \(G = N/K\).
+
+  <strong>Read the formula for what shrinking \(K\) actually buys.</strong> It touches only the \(K\) term, so the projection cost falls from \(2N\) to \(N + K\) — at most a factor of two, and usually far less. That is not why anyone uses GQA. The payoff is the <span xmlns="" class="link local"><a href="/TJLA/" title="KV-cache [TJLA]">KV-cache</a></span>, which scales with \(K\) alone and is the binding constraint at generation time.
+</details>
+</div>
+
+
+
+</details></section></details></section><p xmlns="http://www.w3.org/1999/xhtml">Also inspired by this idea of reducing the dependence of \(K\) and \(V\) on the sequence length is sliding window attention.</p><section lang="en" class="block hide-metadata"><details id="id35" open="open"><summary><header><h1>
 <span class="taxon">10.2. </span>Sliding Window Attention <a class="slug" href="/WM3M/">[WM3M]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">July 14, 2025</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The idea behind <em>sliding window attention</em> is to ensure the number of weight matrices needed for the keys \(K\) and values \(V\) does not scale with the sequence length. Intuitively, this means allowing each word to "attend" to only some fixed number of previous words rather than the whole sequence</p><figure xmlns="http://www.w3.org/1999/xhtml"><img width="80%" src="/bafkrmidqeoo6wx6s4ry6u74fcelfzxvwreyf7d44whnql4ffnnyd2dwcha.png"></img>
 <figcaption>"the" only sees "on" and "sat" rather than the full sentence.</figcaption></figure></details></section></details></section></details></section><footer xmlns="">
-    <section lang="en" class="block hide-metadata"><details id="id34" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id36" open="open"><summary><header><h1>
 <span class="taxon"></span>References  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry" data-taxon="Reference"><header><h1>
@@ -608,7 +656,7 @@ Similar to the <span xmlns="" class="link local"><a href="/TJLA/" title="KV-cach
 </div></header></section>
       </details></section>
     
-    <section lang="en" class="block hide-metadata"><details id="id35" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id37" open="open"><summary><header><h1>
 <span class="taxon"></span>Backlinks  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry"><header><h1>
@@ -624,7 +672,7 @@ Similar to the <span xmlns="" class="link local"><a href="/TJLA/" title="KV-cach
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
       </details></section>
-    <section lang="en" class="block hide-metadata"><details id="id36" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id38" open="open"><summary><header><h1>
 <span class="taxon"></span>Related  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry" data-taxon="Definition"><header><h1>
@@ -721,38 +769,42 @@ Similar to the <span xmlns="" class="link local"><a href="/TJLA/" title="KV-cach
 <a class="bullet" href="/OZD8/" title="Swish Activation [OZD8]">■</a><span class="link local" data-target="#id23"><span class="taxon">Definition 7.2.3. </span>Swish Activation</span><ul class="block"></ul>
 </li>
 <li>
-<a class="bullet" href="/K2N7/" title="Gated Linear Unit (GLU) [K2N7]">■</a><span class="link local" data-target="#id24"><span class="taxon">Definition 7.2.4. </span>Gated Linear Unit (GLU)</span><ul class="block"></ul>
+<a class="bullet" href="/K2N7/" title="Gated Linear Unit (GLU) [K2N7]">■</a><span class="link local" data-target="#id24"><span class="taxon">Definition 7.2.4. </span>Gated Linear Unit (GLU)</span><ul class="block"><li>
+<a class="bullet" href="/Y4Y8/" title="Gating splits the up-projection in two [Y4Y8]">■</a><span class="link local" data-target="#id25"><span class="taxon">Card. </span>Gating splits the up-projection in two</span><ul class="block"></ul>
+</li></ul>
 </li>
 </ul>
 </li>
 <li>
-<a class="bullet" href="/ZAR4/" title="Computing FFN and MHA in parallel is free speedup [ZAR4]">■</a><span class="link local" data-target="#id25"><span class="taxon">7.3. </span>Computing FFN and MHA in parallel is free speedup</span><ul class="block"></ul>
+<a class="bullet" href="/ZAR4/" title="Computing FFN and MHA in parallel is free speedup [ZAR4]">■</a><span class="link local" data-target="#id26"><span class="taxon">7.3. </span>Computing FFN and MHA in parallel is free speedup</span><ul class="block"></ul>
 </li>
 <li>
-<a class="bullet" href="/U52K/" title="What is the role of weight decay in training large models? [U52K]">■</a><span class="link local" data-target="#id26"><span class="taxon">Question 7.4. </span>What is the role of weight decay in training large models?</span><ul class="block"></ul>
-</li>
-</ul>
-</li>
-<li>
-<a class="bullet" href="/TOD6/" title="Rotary Position Embeddings (ROPE) [TOD6]">■</a><span class="link local" data-target="#id27"><span class="taxon">8. </span>Rotary Position Embeddings (ROPE)</span><ul class="block"></ul>
-</li>
-<li>
-<a class="bullet" href="#id28" title="The little details">■</a><span class="link local" data-target="#id28"><span class="taxon">9. </span>The little details</span><ul class="block">
-<li>
-<a class="bullet" href="/9VZH/" title="Hyperparameter Rules (CS336) [9VZH]">■</a><span class="link local" data-target="#id29"><span class="taxon">9.1. </span>Hyperparameter Rules (<span class="link local"><a href="/0085/" title="Notebook: Stanford CS336 [0085]">CS336</a></span>)</span><ul class="block"></ul>
-</li>
-<li>
-<a class="bullet" href="/7TMH/" title="Stabilizing Softmax in Attention [7TMH]">■</a><span class="link local" data-target="#id30"><span class="taxon">9.2. </span>Stabilizing <span class="link local"><a href="/C00V/" title="Softmax [C00V]">Softmax</a></span> in <span class="link local"><a href="/004G/" title="Self-Attention [004G]">Attention</a></span></span><ul class="block"></ul>
+<a class="bullet" href="/U52K/" title="What is the role of weight decay in training large models? [U52K]">■</a><span class="link local" data-target="#id27"><span class="taxon">Question 7.4. </span>What is the role of weight decay in training large models?</span><ul class="block"></ul>
 </li>
 </ul>
 </li>
 <li>
-<a class="bullet" href="/W4YP/" title="POTW: Fast Transformer Decoding: One Write-Head is All You Need [W4YP]">■</a><span class="link local" data-target="#id31"><span class="taxon">10. </span><span class="link local"><a href="/005G/" title="Papers of a week [005G]">POTW</a></span>: <span class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">Fast Transformer Decoding: One Write-Head is All You Need</a></span></span><ul class="block">
-<li>
-<a class="bullet" href="/XUVV/" title="Group Query Attention [XUVV]">■</a><span class="link local" data-target="#id32"><span class="taxon">10.1. </span>Group Query Attention</span><ul class="block"></ul>
+<a class="bullet" href="/TOD6/" title="Rotary Position Embeddings (ROPE) [TOD6]">■</a><span class="link local" data-target="#id28"><span class="taxon">8. </span>Rotary Position Embeddings (ROPE)</span><ul class="block"></ul>
 </li>
 <li>
-<a class="bullet" href="/WM3M/" title="Sliding Window Attention [WM3M]">■</a><span class="link local" data-target="#id33"><span class="taxon">10.2. </span>Sliding Window Attention</span><ul class="block"></ul>
+<a class="bullet" href="#id29" title="The little details">■</a><span class="link local" data-target="#id29"><span class="taxon">9. </span>The little details</span><ul class="block">
+<li>
+<a class="bullet" href="/9VZH/" title="Hyperparameter Rules (CS336) [9VZH]">■</a><span class="link local" data-target="#id30"><span class="taxon">9.1. </span>Hyperparameter Rules (<span class="link local"><a href="/0085/" title="Notebook: Stanford CS336 [0085]">CS336</a></span>)</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="/7TMH/" title="Stabilizing Softmax in Attention [7TMH]">■</a><span class="link local" data-target="#id31"><span class="taxon">9.2. </span>Stabilizing <span class="link local"><a href="/C00V/" title="Softmax [C00V]">Softmax</a></span> in <span class="link local"><a href="/004G/" title="Self-Attention [004G]">Attention</a></span></span><ul class="block"></ul>
+</li>
+</ul>
+</li>
+<li>
+<a class="bullet" href="/W4YP/" title="POTW: Fast Transformer Decoding: One Write-Head is All You Need [W4YP]">■</a><span class="link local" data-target="#id32"><span class="taxon">10. </span><span class="link local"><a href="/005G/" title="Papers of a week [005G]">POTW</a></span>: <span class="link local"><a href="/shazeerFastTransformerDecoding2019/" title="Fast Transformer Decoding: One Write-Head is All You Need [shazeerFastTransformerDecoding2019]">Fast Transformer Decoding: One Write-Head is All You Need</a></span></span><ul class="block">
+<li>
+<a class="bullet" href="/XUVV/" title="Group Query Attention [XUVV]">■</a><span class="link local" data-target="#id33"><span class="taxon">10.1. </span>Group Query Attention</span><ul class="block"><li>
+<a class="bullet" href="/59OV/" title="GQA saves cache, not projection FLOPs [59OV]">■</a><span class="link local" data-target="#id34"><span class="taxon">Card. </span>GQA saves cache, not projection FLOPs</span><ul class="block"></ul>
+</li></ul>
+</li>
+<li>
+<a class="bullet" href="/WM3M/" title="Sliding Window Attention [WM3M]">■</a><span class="link local" data-target="#id35"><span class="taxon">10.2. </span>Sliding Window Attention</span><ul class="block"></ul>
 </li>
 </ul>
 </li>

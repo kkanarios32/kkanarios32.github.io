@@ -859,12 +859,151 @@ W_{out} &= 2\cdot  D\cdot  F \\
 &= 2\cdot  8192\cdot  32768 = 2^{29}
 \end {align*}
 ]]></fr:tex>
-<html:p>and each TPU has <fr:tex display="inline"><![CDATA[300]]></fr:tex>MB <fr:tex display="inline"><![CDATA[\approx  300 \cdot  2^{20} \approx  2^{28}]]></fr:tex> in this example. Therefore, each TPU can fit just over one half of <fr:tex display="inline"><![CDATA[W_{in}]]></fr:tex> and <fr:tex display="inline"><![CDATA[W_{out}]]></fr:tex>, which leads us to have to fully shard both across <fr:tex display="inline"><![CDATA[X]]></fr:tex> and <fr:tex display="inline"><![CDATA[Y]]></fr:tex>. The remaining <fr:tex display="inline"><![CDATA[11 \cdot  2^{22}]]></fr:tex> can fit <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex>. However, we need to satisfy the constraint that <fr:tex display="inline"><![CDATA[\text {Out}]]></fr:tex> is sharded in the same way as <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex>. I propose first</html:p>
-<html:ul><html:li><html:p>Shard <fr:tex display="inline"><![CDATA[\text {In}[B_{XY}, D]]]></fr:tex>, <fr:tex display="inline"><![CDATA[W_{in}[D,F_{XY}]]]></fr:tex></html:p></html:li></html:ul>
-<html:p>Then, we are in case 1 and have an output of <fr:tex display="inline"><![CDATA[W_{mid}[B_{XY}, F_{XY}]]]></fr:tex> with no communication necessary. However, we now need to multiply <fr:tex display="inline"><![CDATA[W_{mid}]]></fr:tex> with <fr:tex display="inline"><![CDATA[W_{out}]]></fr:tex>. I propose to</html:p>
-<html:ul><html:li>Shard <fr:tex display="inline"><![CDATA[W_{out}[F, D_{XY}]]]></fr:tex></html:li></html:ul>
-<html:p>This then requires two <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>'s. First, we have to AllGather <fr:tex display="inline"><![CDATA[W_{mid}]]></fr:tex> along <fr:tex display="inline"><![CDATA[F]]></fr:tex>. Then we perform the matmul between <fr:tex display="inline"><![CDATA[W_{mid}]]></fr:tex> and <fr:tex display="inline"><![CDATA[W_{out}]]></fr:tex>, which gives <fr:tex display="inline"><![CDATA[Out[B_{XY}, D_{XY}]]]></fr:tex>. To provide <fr:tex display="inline"><![CDATA[\text {Out}]]></fr:tex> as <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex> to the next layer, we then must <fr:tex display="inline"><![CDATA[\text {AllGather}_{XY}]]></fr:tex> along <fr:tex display="inline"><![CDATA[D]]></fr:tex>.</html:p>
+<html:p>and each TPU has <fr:tex display="inline"><![CDATA[300]]></fr:tex>MB <fr:tex display="inline"><![CDATA[\approx  300 \cdot  2^{20} \approx  2^{28}]]></fr:tex> in this example. Therefore, each TPU can fit just over one half of <fr:tex display="inline"><![CDATA[W_{in}]]></fr:tex> and <fr:tex display="inline"><![CDATA[W_{out}]]></fr:tex>, which leads us to have to fully shard both across <fr:tex display="inline"><![CDATA[X]]></fr:tex> and <fr:tex display="inline"><![CDATA[Y]]></fr:tex>. The remaining <fr:tex display="inline"><![CDATA[11 \cdot  2^{22}]]></fr:tex> can fit <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex>. However, we need to satisfy the constraint that <fr:tex display="inline"><![CDATA[\text {Out}]]></fr:tex> is sharded in the same way as <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex>. We adopt the following strategy:</html:p>
+<html:ol><html:li>Shard <fr:tex display="inline"><![CDATA[\text {In}[B_{XY}, D]]]></fr:tex>, <fr:tex display="inline"><![CDATA[W_{in}[D,F_{XY}]]]></fr:tex></html:li>
+  <html:ul><html:li>First, we need to <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex> along <fr:tex display="inline"><![CDATA[B]]></fr:tex>.</html:li>
+    <html:li>Then, we have <fr:tex display="inline"><![CDATA[\text {In}[B, D]\cdot  W_{in}[D, F_{XY}]\to  \text {Tmp}[B, F_{XY}]]]></fr:tex></html:li></html:ul>
+  <html:li>Shard <fr:tex display="inline"><![CDATA[W_{out}[F_{XY}, D]]]></fr:tex></html:li>
+<html:ul><html:li>Now we have <fr:tex display="inline"><![CDATA[\text {Tmp}[B, F_{XY}]\cdot  W_{out}[F_{XY}, D] \to  \text {Out}[B, D]\{U_{XY}\}  ]]></fr:tex></html:li>
+  <html:li>Then we need to do a <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link> over <fr:tex display="inline"><![CDATA[XY]]></fr:tex> in the <fr:tex display="inline"><![CDATA[B]]></fr:tex> axis to get back to our input shape.</html:li></html:ul></html:ol>
+<html:p>Now lets count up the communication cost.</html:p>
+<html:ol><html:li>First, we have an <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> over <fr:tex display="inline"><![CDATA[XY]]></fr:tex> of <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex>. This is <fr:tex display="inline"><![CDATA[N = 2\cdot  B\cdot  D]]></fr:tex> bytes. We only have unidirectional bandwidth. However, we are gathering over 2 axes, which doubles our bandwidth. Thus, this will take
+<fr:tex display="block"><![CDATA[\frac {2\cdot  128\cdot  8192}{2\cdot  4.5e 10} = 23.3\mu  s]]></fr:tex>
+<html:li>Then we have a <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link> of <fr:tex display="inline"><![CDATA[\text {Out}[B, D]\{U_{XY}\}]]></fr:tex>, which takes the same time as <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> and is another <fr:tex display="inline"><![CDATA[23.3 \mu  s]]></fr:tex>.</html:li></html:li></html:ol>
+<html:p>Thus, the whole communication cost is only <fr:tex display="inline"><![CDATA[46.6 \mu  s]]></fr:tex>.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+In the solution, they instead propose to shard <fr:tex display="inline"><![CDATA[\text {In}[B, D_{XY}]]]></fr:tex>, which is equivalent in communication cost. According to <html:em>Claude</html:em>, there is a subtle distinction.
+<html:ol><html:li>If you are in decoding (i.e. <fr:tex display="inline"><![CDATA[B = 1]]></fr:tex>), then you cannot even shard along <fr:tex display="inline"><![CDATA[B]]></fr:tex> but can still shard along <fr:tex display="inline"><![CDATA[D]]></fr:tex>.</html:li>
+  <html:li>However, it seems preferable to shard over <fr:tex display="inline"><![CDATA[B]]></fr:tex> if you can. This way, for activations / reductions over <fr:tex display="inline"><![CDATA[D]]></fr:tex> you do not need any communication.</html:li></html:ol>
+</html:div>
+
 </html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="another strategy for sharded matmuls">another strategy for sharded matmuls</fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.9</fr:meta></fr:frontmatter><fr:mainmatter>
+Above we claimed that when only one input to a matmul is sharded along its contracting dimension, we should AllGather the sharded matrix and perform the resulting contraction locally. Another strategy you might think of is to perform the sharded matmul and then AllReduce the result (as if both inputs were sharded along the contracting dimension), i.e. <fr:tex display="inline"><![CDATA[A[I,J_X]\cdot _J B[J,K]\to  C[I,K]]]></fr:tex> by way of
+<html:ol><html:li><fr:tex display="inline"><![CDATA[C[I, K]\{U_{X}\} = A[I, J_{X}]\cdot  B[J_{x}, K] ]]></fr:tex></html:li>
+  <html:li><fr:tex display="inline"><![CDATA[C[I, K]\{U_{X}\} = \text {AllReduce}(C[I,K]\{U_{X}\})]]></fr:tex></html:li></html:ol>
+Answer the following
+<html:ol><html:li>Explicitly write out this algorithm for matrices <fr:tex display="inline"><![CDATA[A[N,M]]]></fr:tex> and <fr:tex display="inline"><![CDATA[B[M,K]]]></fr:tex>, using indices to show exactly what computation is done on what device. Assume <fr:tex display="inline"><![CDATA[A]]></fr:tex> is sharded as <fr:tex display="inline"><![CDATA[A[I,J_X]]]></fr:tex> across ND devices, and you want your output to be replicated across all devices.</html:li>
+<html:li>Now suppose you are ok with the final result not being replicated on each device, but instead sharded (across either the N or K dimension). How would the algorithm above change?</html:li>
+<html:li>Looking purely at the communication cost of the strategy above (in part 2, not 1), how does this communication cost compare to the communication cost of the algorithm in which we first AllGather A and then do the matmul?</html:li></html:ol>
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+<html:ol><html:li>On the device, we can only make use of the <fr:tex display="inline"><![CDATA[J_{X}]]></fr:tex> rows of <fr:tex display="inline"><![CDATA[B]]></fr:tex> and compute the corresponding partial sums. This corresponds to the outer product
+<fr:tex display="block"><![CDATA[C'[i] = \sum _{n=i\cdot  \frac {J}{ND}}^{i(\frac {J}{ND} + 1)} A_{:,n} \oplus  B_{n,:}]]></fr:tex></html:li>
+  <html:li>The above algorithm would change by replacing the <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> with a <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link>. This is better communication wise because <fr:link href="/MJ7A/" title="AllReduce is two collectives, not one" uri="https://kellenkanarios.com/MJ7A/" display-uri="MJ7A" type="local">AllReduce is two collectives, not one</fr:link>.</html:li>
+<html:li>The communication cost is the same because <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link>  has the same communication cost as <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>, but it is likely preferable if you are compute bound because you can distribute computation across devices.
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+In the solutions, they make the (excellent) point that in the <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link> case we are sending the output <fr:tex display="inline"><![CDATA[N\times  K]]></fr:tex> matrix, whereas in the <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> case we are sending the <fr:tex display="inline"><![CDATA[N\times  M]]></fr:tex> matrix. Therefore, if we have a large contraction dim, then the second case might also be preferable.
+</html:div></html:li></html:ol>
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="Fun with AllToAll">Fun with <fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAll</fr:link></fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.10</fr:meta></fr:frontmatter><fr:mainmatter>
+In the table above, it was noted that the time to perform an AllToAll is a factor of 4 lower than the time to perform an AllGather or ReduceScatter (in the regime where we are throughput-bound). In this problem we will see where that factor of 4 comes from, and also see how this factor would change if we only had single-direction ICI links, rather than bidirectional ICI links.
+<html:ol><html:li>Let’s start with the single-direction case first. Imagine we have D devices in a ring topology and want to do either an AllGather or a ReduceScatter on an N x N matrix <fr:tex display="inline"><![CDATA[A[I_X,J]]]></fr:tex> (say D divides N for simplicity). Describe the comms involved in these two collectives, and calculate the total number of scalars (floats or ints) which are transferred across a single ICI link during the entirety of this algorithm.</html:li>
+<html:li>Now let’s think about an AllToAll, still in the single-directional ICI case. How is the algorithm different in this case than the all-gather case? Calculate the number of scalars that are transferred across a single ICI link in this algorithm.</html:li>
+<html:li>You should have found that the ratio between your answers to part (a) and part (b) is a nice number. Explain where this factor comes from in simple terms.</html:li>
+<html:li>Now let’s add bidirectional communication. How does this affect the total time needed in the all-gather case?</html:li>
+<html:li>How does adding bidirectional communication affect the total time needed in the AllToAll case?</html:li>
+<html:li>Now simply explain the ratio between AllGather time and AllToAll time in a bidirectional ring.</html:li></html:ol>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+<html:ol><html:li>The communication involved in either of these collectives is each chip in the ring sending a chunk of <fr:tex display="inline"><![CDATA[A]]></fr:tex> of size <fr:tex display="inline"><![CDATA[\frac {N^2}{D}]]></fr:tex> to the right neighbor. A single ICI link sees every chunk and therefore <fr:tex display="inline"><![CDATA[N^2(D-1)]]></fr:tex> scalars must cross a single ICI link. The <fr:tex display="inline"><![CDATA[D - 1]]></fr:tex> comes from the fact that each device already owns one <fr:tex display="inline"><![CDATA[\frac {N^2}{D}]]></fr:tex> chunk.
+</html:li>
+<html:li><fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAll</fr:link> differs than <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> because each subsequent forwarding is <fr:tex display="inline"><![CDATA[\frac {N^2}{D^2}]]></fr:tex> less bytes. Namely, each device has an <fr:tex display="inline"><![CDATA[\frac {N^2}{D}]]></fr:tex> shard of <fr:tex display="inline"><![CDATA[A]]></fr:tex>. Then in <fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAll</fr:link>, you forward to a neighbor who takes a <fr:tex display="inline"><![CDATA[\frac {1}{D}]]></fr:tex> of this chunk and forwards the remaining. Therefore, a single ICI link only sees the following bytes of ICI traffic
+<fr:tex display="block"><![CDATA[\frac {N^2}{D} \sum _{i=1}^{D} (D - i) = \frac {N^2\cdot  D(D-1)}{2D} = \frac {N^2(D-1)}{2}]]></fr:tex></html:li>
+<html:li>From the previous 2 parts, we see that the ratio is exactly <fr:tex display="inline"><![CDATA[\frac {1}{2}]]></fr:tex>. This comes from the fact that, for farther devices, a link needs to transfer a much smaller number of bytes in <fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAll</fr:link>. Whereas, in <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>, you must see all bytes of a chunk for every device uniformly.</html:li>
+<html:li>In the <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> case, bidirectional communication still requires each link to see every byte. Therefore, only the ICI bandiwdth changes and not the total bytes seen per-link.</html:li>
+<html:li>In the <fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAll</fr:link> case, each chip only needs its sub-chunk of each chunk. Therefore, we can divide the chunk into the front and back half and send in each direction. This halves the total bytes seen per link, reducing to <fr:tex display="inline"><![CDATA[\frac {N^2(D-1)}{4}]]></fr:tex>.</html:li>
+<html:li>In the bidirectional case, we can effectively reduce our <fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAll</fr:link> to 2 unidirectional <fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAll</fr:link>'s of half the size. This then halves the bytes-per-link, which was already half of an <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>. Since every device needs every byte of each chunk in the <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> case, it gets no reduction in the bidirectional case.</html:li></html:ol>
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>5</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/scaling-ch4/</fr:uri>
+            <fr:display-uri>scaling-ch4</fr:display-uri>
+            <fr:route>/scaling-ch4/</fr:route>
+            <fr:title text="All the Transformer Math You Need to Know">All the Transformer Math You Need to Know</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="parameter counting">parameter counting</fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">4.1</fr:meta></fr:frontmatter><fr:mainmatter>
+How many parameters does a model with D=4096 , F=4⋅D, V=32,000, and L=64 have? What fraction of these are attention parameters? How large are our KV caches per token? You can assume N⋅H=D and multi-head attention with int8 KVs.
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+  </html:details>
 </html:div>
 
 
@@ -2728,9 +2867,7 @@ Stats: IO Busy  15 (71.43%)]]></html:code></html:pre>
             <fr:taxon>Reference</fr:taxon>
             <fr:meta name="bibtex"><![CDATA[@article{scaling-book,
  title = {How to Scale Your Model},
- author = {Austin, Jacob and Douglas, Sholto and Frostig, Roy and Levskaya,
-Anselm and Chen, Charlie and Vikram, Sharad and Lebron, Federico and
-Choy, Peter and Ramasesh, Vinay and Webson, Albert and Pope, Reiner},
+ author = {Austin, Jacob and Douglas, Sholto and Frostig, Roy and Levskaya, Anselm and Chen, Charlie and Vikram, Sharad and Lebron, Federico and Choy, Peter and Ramasesh, Vinay and Webson, Albert and Pope, Reiner},
  year = {2025},
  howpublished = {Online},
  publisher = {Google DeepMind},
@@ -2857,14 +2994,158 @@ Choy, Peter and Ramasesh, Vinay and Webson, Albert and Pope, Reiner},
   ">
 <html:img src="/bafkrmid5a3hs57pywaebuamscbl5pfjo6x42lmhvhno6sw4hmhyp6izgzm.png" />
 <html:figcaption style="
-  font-size: 0.9em;
-  line-height: 0.85;
+  font-family: var(--serif);
+  font-size: 0.82em;
+  line-height: 1.15;
+  font-style: normal;
+  color: rgb(55, 55, 55);
   ">
-  <html:p>Ann Arbor, MI</html:p>
-  <html:p>EECS 4107</html:p>
-  <html:a href="mailto:kellenkk@umich.edu">kellenkk@umich.edu</html:a></html:figcaption>
+  <html:p><html:span style="white-space: nowrap">
+  <html:span aria-hidden="true" style="
+   display: inline-block;
+   width: 0.95em;
+   height: 0.95em;
+   vertical-align: -0.15em;
+   background-color: currentColor;
+   -webkit-mask-image: url(/bafkrmigflqbkd47qdncmovy2c7l2kiiay7cfh3exvfd7t4pgsl7crweyqy.svg);
+   mask-image: url(/bafkrmigflqbkd47qdncmovy2c7l2kiiay7cfh3exvfd7t4pgsl7crweyqy.svg);
+   -webkit-mask-repeat: no-repeat;
+   mask-repeat: no-repeat;
+   -webkit-mask-position: center;
+   mask-position: center;
+   -webkit-mask-size: contain;
+   mask-size: contain;
+  " />
+<html:span style="margin-left: 0.36em;">Ann Arbor, MI</html:span></html:span></html:p>
+  <html:p />
+  
+  <html:div style="
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   gap: 0.85em;
+   margin-top: 0.15em;
+  ">
+   
+  <html:a class="link" href="mailto:kellenkk@umich.edu" title="Email kellenkk@umich.edu" aria-label="Email kellenkk@umich.edu" style="
+    display: inline-block;
+    line-height: 0;
+    color: inherit;
+  ">
+  <html:span aria-hidden="true" style="
+   display: inline-block;
+   width: 1.15em;
+   height: 1.15em;
+   vertical-align: -0.15em;
+   background-color: currentColor;
+   -webkit-mask-image: url(/bafkrmiaps3vipzs3xygazlexst4lllqjzffkhewgsnhec4tioxwdpsyejm.svg);
+   mask-image: url(/bafkrmiaps3vipzs3xygazlexst4lllqjzffkhewgsnhec4tioxwdpsyejm.svg);
+   -webkit-mask-repeat: no-repeat;
+   mask-repeat: no-repeat;
+   -webkit-mask-position: center;
+   mask-position: center;
+   -webkit-mask-size: contain;
+   mask-size: contain;
+  " />
+</html:a>
+
+   
+  <html:a class="link" href="https://github.com/kkanarios32" title="GitHub" aria-label="GitHub" style="
+    display: inline-block;
+    line-height: 0;
+    color: inherit;
+  ">
+  <html:span aria-hidden="true" style="
+   display: inline-block;
+   width: 1.15em;
+   height: 1.15em;
+   vertical-align: -0.15em;
+   background-color: currentColor;
+   -webkit-mask-image: url(/bafkrmih5aebefjvoug6zsajbrz3d4vvvse2sdjcacotlh7goqvg6xbjwuu.svg);
+   mask-image: url(/bafkrmih5aebefjvoug6zsajbrz3d4vvvse2sdjcacotlh7goqvg6xbjwuu.svg);
+   -webkit-mask-repeat: no-repeat;
+   mask-repeat: no-repeat;
+   -webkit-mask-position: center;
+   mask-position: center;
+   -webkit-mask-size: contain;
+   mask-size: contain;
+  " />
+</html:a>
+
+   
+  <html:a class="link" href="https://scholar.google.com/scholar?q=Kellen+Kanarios" title="Google Scholar" aria-label="Google Scholar" style="
+    display: inline-block;
+    line-height: 0;
+    color: inherit;
+  ">
+  <html:span aria-hidden="true" style="
+   display: inline-block;
+   width: 1.15em;
+   height: 1.15em;
+   vertical-align: -0.15em;
+   background-color: currentColor;
+   -webkit-mask-image: url(/bafkrmib6qcf3byeriwarwlvinvbum4oz5sdih3cxo6dkkv6wsevdzrvuqa.svg);
+   mask-image: url(/bafkrmib6qcf3byeriwarwlvinvbum4oz5sdih3cxo6dkkv6wsevdzrvuqa.svg);
+   -webkit-mask-repeat: no-repeat;
+   mask-repeat: no-repeat;
+   -webkit-mask-position: center;
+   mask-position: center;
+   -webkit-mask-size: contain;
+   mask-size: contain;
+  " />
+</html:a>
+
+   
+  <html:a class="link" href="https://www.linkedin.com/in/KellenKanarios" title="LinkedIn" aria-label="LinkedIn" style="
+    display: inline-block;
+    line-height: 0;
+    color: inherit;
+  ">
+  <html:span aria-hidden="true" style="
+   display: inline-block;
+   width: 1.15em;
+   height: 1.15em;
+   vertical-align: -0.15em;
+   background-color: currentColor;
+   -webkit-mask-image: url(/bafkrmicigd6vxn5jcoh2to24bn5oviwuiox2rngmz62l4cxtzl2tz5fsau.svg);
+   mask-image: url(/bafkrmicigd6vxn5jcoh2to24bn5oviwuiox2rngmz62l4cxtzl2tz5fsau.svg);
+   -webkit-mask-repeat: no-repeat;
+   mask-repeat: no-repeat;
+   -webkit-mask-position: center;
+   mask-position: center;
+   -webkit-mask-size: contain;
+   mask-size: contain;
+  " />
+</html:a>
+
+   
+  <html:a class="link" href="/bafkrmib6s7b6k3lty7xgj43skjedxmx7f57r47ukjitkm4ww4frlfl2zui.pdf" title="Resume" aria-label="Resume" style="
+    display: inline-block;
+    line-height: 0;
+    color: inherit;
+  ">
+  <html:span aria-hidden="true" style="
+   display: inline-block;
+   width: 1.15em;
+   height: 1.15em;
+   vertical-align: -0.15em;
+   background-color: currentColor;
+   -webkit-mask-image: url(/bafkrmibnwu5wdbkxbfpghkvynqt63oj5pkoelhhvk5cnxppp4ielyrtxdi.svg);
+   mask-image: url(/bafkrmibnwu5wdbkxbfpghkvynqt63oj5pkoelhhvk5cnxppp4ielyrtxdi.svg);
+   -webkit-mask-repeat: no-repeat;
+   mask-repeat: no-repeat;
+   -webkit-mask-position: center;
+   mask-position: center;
+   -webkit-mask-size: contain;
+   mask-size: contain;
+  " />
+</html:a>
+
+  </html:div>
+
+  </html:figcaption>
 </html:figure><html:p>I am a PhD student at the <fr:link href="/umich/" title="University of Michigan" uri="https://kellenkanarios.com/umich/" display-uri="umich" type="local">University of Michigan</fr:link> as part of the <fr:link href="https://ece.engin.umich.edu/" type="external">Electrical and Computer Engineering program</fr:link>, where my work <fr:tex display="inline"><![CDATA[\in ]]></fr:tex> {programming languages} <fr:tex display="inline"><![CDATA[\cap ]]></fr:tex> {computer architecture} <fr:tex display="inline"><![CDATA[\cap ]]></fr:tex> {LLMs} <fr:tex display="inline"><![CDATA[\cap ]]></fr:tex> {reinforcement learning}. I am co-advised by <fr:link href="/xinyuwang/" title="Xinyu Wang" uri="https://kellenkanarios.com/xinyuwang/" display-uri="xinyuwang" type="local">Xinyu Wang</fr:link> and <fr:link href="/satishnarayanasamy/" title="Satish Narayanasamy" uri="https://kellenkanarios.com/satishnarayanasamy/" display-uri="satishnarayanasamy" type="local">Satish Narayanasamy</fr:link>. Currently, <html:mark>I am interested in automated kernel generation across accelerators backends. In particular, neurosymbolic approaches to preserve guarantees and limit costs</html:mark>. With this, I am looking into {<fr:link href="/5PSC/" title="Kernel DSLs" uri="https://kellenkanarios.com/5PSC/" display-uri="5PSC" type="local">kernel DSLs</fr:link>, <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link>, <fr:link href="/Q30B/" title="Kernel Synthesis" uri="https://kellenkanarios.com/Q30B/" display-uri="Q30B" type="local">formal synthesis</fr:link>, LLM "<fr:link href="/AV36/" title="Vibe compilers" uri="https://kellenkanarios.com/AV36/" display-uri="AV36" type="local">vibe compilers</fr:link>"}. I am also recreationally interested in Unix (see my <fr:link href="https://github.com/kkanarios32/dotfiles" type="external">dotfiles</fr:link>) and in a past life I did research in <fr:link href="/bib/" title="Research" uri="https://kellenkanarios.com/bib/" display-uri="bib" type="local">reinforcement learning algorithms</fr:link>.
-</html:p><html:p>I earned my BS in Mathematics and Computer Science from the <fr:link href="/umich/" title="University of Michigan" uri="https://kellenkanarios.com/umich/" display-uri="umich" type="local">University of Michigan</fr:link>, graduating with honors and high honors, followed by an MS in <fr:link href="https://ece.engin.umich.edu/" type="external">Electrical and Computer Engineering</fr:link>. During this time, I was fortunate enough to be advised by <fr:link href="/leiying/" title="Lei Ying" uri="https://kellenkanarios.com/leiying/" display-uri="leiying" type="local">Lei Ying</fr:link>. My resume is available <html:a style="text-decoration: underline;" href="/bafkrmib6s7b6k3lty7xgj43skjedxmx7f57r47ukjitkm4ww4frlfl2zui.pdf">here</html:a>. 
+</html:p><html:p>I earned my BS in Mathematics and Computer Science from the <fr:link href="/umich/" title="University of Michigan" uri="https://kellenkanarios.com/umich/" display-uri="umich" type="local">University of Michigan</fr:link>, graduating with honors and high honors, followed by an MS in <fr:link href="https://ece.engin.umich.edu/" type="external">Electrical and Computer Engineering</fr:link>. During this time, I was fortunate enough to be advised by <fr:link href="/leiying/" title="Lei Ying" uri="https://kellenkanarios.com/leiying/" display-uri="leiying" type="local">Lei Ying</fr:link>.
 </html:p><html:p>This is my <fr:link href="https://www.forester-notes.org/index/index.xml" type="external">forest</fr:link> (shoutout to <fr:link href="/jonmsterling/" title="Jon Sterling" uri="https://kellenkanarios.com/jonmsterling/" display-uri="jonmsterling" type="local">Jon Sterling</fr:link> who is remarkably helpful). This website functions both as a <fr:link href="https://en.wikipedia.org/wiki/Personal_knowledge_management" type="external">personal knowledge management system</fr:link>, where I store my notes in <fr:link href="/0015/" title="Notebooks" uri="https://kellenkanarios.com/0015/" display-uri="0015" type="local">notebooks</fr:link>, some accompanying solutions in the <fr:link href="/914H/" title="Solution Manuals" uri="https://kellenkanarios.com/914H/" display-uri="914H" type="local">solution manuals</fr:link>, and any external resources I have made in <fr:link href="/0004/" title="/dev/null" uri="https://kellenkanarios.com/0004/" display-uri="0004" type="local">/dev/null</fr:link>. Explore this site via <html:code>Ctrl+K</html:code>.
 </html:p>
   
@@ -3379,6 +3660,31 @@ Neither ever requires an <fr:tex display="inline"><![CDATA[N \times  N]]></fr:te
   <html:li><fr:tex display="inline"><![CDATA[d\mathbf {K}_j = \sum _i \mathbf {P}_{ij}(d\mathbf {O}_i \cdot  \mathbf {V}_j - \mathbf {D}_i)\mathbf {Q}_i]]></fr:tex>, accumulated over query tiles.</html:li></html:ol>
 <html:p>Each accumulator is <fr:tex display="inline"><![CDATA[O(d)]]></fr:tex> per row or column, so the whole backward pass stays linear in <fr:tex display="inline"><![CDATA[N]]></fr:tex>.</html:p>
 </fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>18</fr:day></fr:date><fr:uri>https://kellenkanarios.com/6UFW/</fr:uri><fr:display-uri>6UFW</fr:display-uri><fr:route>/6UFW/</fr:route><fr:title text="The running max makes the chunk merge exact">The running max makes the chunk merge exact</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787063263978</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>In <fr:link href="/R0PM/" title="Flash Attention (v1)" uri="https://kellenkanarios.com/R0PM/" display-uri="R0PM" type="local">flash attention</fr:link>, what running statistics travel between KV chunks, and how are two chunks merged?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Each query block carries three: <fr:tex display="inline"><![CDATA[M]]></fr:tex>, the running maximum of <fr:tex display="inline"><![CDATA[q \cdot  k]]></fr:tex>; <fr:tex display="inline"><![CDATA[L]]></fr:tex>, the running <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax</fr:link> denominator; and <fr:tex display="inline"><![CDATA[O]]></fr:tex>, the running output.
+
+  Merging chunks with local maxima <fr:tex display="inline"><![CDATA[M^1, M^2]]></fr:tex> and sums <fr:tex display="inline"><![CDATA[L^1, L^2]]></fr:tex> rescales each to the shared maximum:
+
+  <fr:tex display="block"><![CDATA[L = e^{M^1 - \max (M^1, M^2)}L^1 + e^{M^2 - \max (M^1, M^2)}L^2]]></fr:tex>
+
+  <html:strong>This is exact, not an approximation.</html:strong> It is only <fr:tex display="inline"><![CDATA[\sum _i e^{a_i + b} = e^b \sum _i e^{a_i}]]></fr:tex>: pulling a constant out of a sum of exponentials. The maximum is subtracted for <fr:link href="/7TMH/" title="Stabilizing Softmax in Attention" uri="https://kellenkanarios.com/7TMH/" display-uri="7TMH" type="local">numerical stability</fr:link> and put back by the same identity — see <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">Online Softmax</fr:link> for the one-pass version of the argument.
+
+  <html:strong>The payoff is memory, not FLOPs.</html:strong> The <fr:tex display="inline"><![CDATA[[B,T,S,N]]]></fr:tex> attention matrix is never materialised, so memory is <fr:tex display="inline"><![CDATA[O(1)]]></fr:tex> in the number of chunks while the FLOP count stays quadratic. The query block sits in <fr:link href="/GFK2/" title="VMEM" uri="https://kellenkanarios.com/GFK2/" display-uri="GFK2" type="local">VMEM</fr:link> and only the KV chunks stream in, which is also what raises the <fr:link href="/YBQD/" title="Arithmetic intensity" uri="https://kellenkanarios.com/YBQD/" display-uri="YBQD" type="local">arithmetic intensity</fr:link>.
+</html:details>
+</html:div>
+
+
+
 </fr:mainmatter></fr:tree>
   <html:div class="comments">
     
@@ -6857,7 +7163,20 @@ Once <html:code>PutE</html:code> or <html:code>PutM</html:code> has been sent, <
 <html:figure><html:img width="100%" src="/bafkrmifqg6owj5m5bnsuqphk73uuwqzybmwczbbwx432u5j3zju3fe52i4.png" />
 <html:figcaption>Final MESI directory controller.</html:figcaption></html:figure>
 </fr:mainmatter></fr:tree>
-</fr:mainmatter></fr:tree></fr:mainmatter></fr:tree><fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:uri>https://kellenkanarios.com/0088/</fr:uri><fr:display-uri>0088</fr:display-uri><fr:route>/0088/</fr:route><fr:title text="Expectation Maximization">Expectation Maximization</fr:title><fr:meta name="reading-time">true</fr:meta></fr:frontmatter><fr:mainmatter><html:p>This is the follow up to the previous note on the <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link>. Mainly, here we aim to show how we can use the ELBO to find <fr:tex display="inline"><![CDATA[\theta ^*]]></fr:tex> i.e. 
+</fr:mainmatter></fr:tree>
+  <html:div class="comments">
+    
+  <html:hr style="
+    margin: 2.5rem 0 2rem;
+    border: 0;
+    border-top: 2px solid rgb(219, 216, 215);
+    height: 0;
+    background: none;
+  " />
+
+    <html:script src="https://giscus.app/client.js" data-repo="kkanarios32/website-comments" data-repo-id="R_kgDON4lIRA" data-category="Announcements" data-category-id="DIC_kwDON4lIRM4DDdwI" data-mapping="og:title" data-term="" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="https://kellenkanarios.com/giscus.css" data-lang="en" data-loading="lazy" crossorigin="anonymous" async="" />
+  </html:div>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="true" expanded="false" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2025</fr:year><fr:month>7</fr:month><fr:day>1</fr:day></fr:date><fr:uri>https://kellenkanarios.com/0088/</fr:uri><fr:display-uri>0088</fr:display-uri><fr:route>/0088/</fr:route><fr:title text="Expectation Maximization">Expectation Maximization</fr:title><fr:meta name="reading-time">true</fr:meta></fr:frontmatter><fr:mainmatter><html:p>This is the follow up to the previous note on the <fr:link href="/0082/" title="Evidence Lower Bound" uri="https://kellenkanarios.com/0082/" display-uri="0082" type="local">ELBO</fr:link>. Mainly, here we aim to show how we can use the ELBO to find <fr:tex display="inline"><![CDATA[\theta ^*]]></fr:tex> i.e. 
 <fr:tex display="block"><![CDATA[
 \begin {align*}
  \theta ^* &= \arg \max  \mathbb {E}_{x \sim  \mathcal {D}} \log  p(x; \theta ) \\ 

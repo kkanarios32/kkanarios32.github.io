@@ -809,6 +809,231 @@ A super fun trick from <html:span class="link-reference" tid="Ex 3.2" refid="sca
   "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> Notice what is <html:em>absent</html:em> from the runtime column: the number of devices. A ring collective moves <fr:tex display="inline"><![CDATA[V]]></fr:tex> bytes off each chip <fr:link href="/RBEJ/" title="AllGather costs the same at any device count" uri="https://kellenkanarios.com/RBEJ/" display-uri="RBEJ" type="local">regardless of how big the ring is</fr:link>, so cost depends on the array and the link, not the mesh size, which is what makes these affordable at pod scale and why the <fr:link href="/scaling-ch1/" title="Scaling Book: Exercises › All about rooflines" uri="https://kellenkanarios.com/scaling-ch1/" display-uri="scaling-ch1" type="local">roofline</fr:link> question is comms-vs-FLOPs rather than comms-vs-devices.</html:div>
 </fr:mainmatter></fr:tree>
 </fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>6</fr:day></fr:date><fr:title text="Transformer Math">Transformer Math</fr:title></fr:frontmatter><fr:mainmatter>
+  
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>18</fr:day></fr:date><fr:uri>https://kellenkanarios.com/LARD/</fr:uri><fr:display-uri>LARD</fr:display-uri><fr:route>/LARD/</fr:route><fr:title text="Every axis label appears once in the FLOP count">Every axis label appears once in the FLOP count</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787063265272</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>An <fr:link href="/7Y0G/" title="Einsum" uri="https://kellenkanarios.com/7Y0G/" display-uri="7Y0G" type="local">einsum</fr:link> contracts <fr:tex display="inline"><![CDATA[C[GHIJKL]]]></fr:tex> with <fr:tex display="inline"><![CDATA[D[GHMNKL]]]></fr:tex>, where <fr:tex display="inline"><![CDATA[GH]]></fr:tex> are batching axes and <fr:tex display="inline"><![CDATA[KL]]></fr:tex> are contracting axes. How many FLOPs?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Two times the product of every <html:em>distinct</html:em> label, each counted once:
+
+  <fr:tex display="block"><![CDATA[2 \cdot  GH \cdot  IJ \cdot  MN \cdot  KL]]></fr:tex>
+
+  <html:strong>Why.</html:strong> Every output element is a dot product over the contracted axes, and a dot product spends one multiply and one add per term — that is the factor of two. The batch axes index independent subproblems, so they multiply the total work but appear only once in the product, exactly as the contracted axes do.
+
+  <html:strong>The vocabulary is what makes the rule mechanical.</html:strong> A <html:em>contracting</html:em> label appears in both inputs and is absent from the output; a <html:em>batching</html:em> label appears in both inputs <html:em>and</html:em> the output. Everything else is a free axis of one input. Once the labels are sorted that way, the count is read off the einsum string without thinking about the shape of the loop nest.
+
+  <html:strong>Caveat.</html:strong> With no contracting axes there is no dot product — the operation is an elementwise product, and the factor of two goes away.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>18</fr:day></fr:date><fr:uri>https://kellenkanarios.com/92HA/</fr:uri><fr:display-uri>92HA</fr:display-uri><fr:route>/92HA/</fr:route><fr:title text="The backward pass is two matmuls, not one">The backward pass is two matmuls, not one</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787063264071</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>One matmul <fr:tex display="inline"><![CDATA[C = AB]]></fr:tex> with <fr:tex display="inline"><![CDATA[A[N,P]]]></fr:tex>, <fr:tex display="inline"><![CDATA[B[P,M]]]></fr:tex> costs <fr:tex display="inline"><![CDATA[2NPM]]></fr:tex> FLOPs at inference but <fr:tex display="inline"><![CDATA[6NPM]]></fr:tex> in training. Where do the other two thirds come from?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The forward pass contracts over <fr:tex display="inline"><![CDATA[P]]></fr:tex> and costs <fr:tex display="inline"><![CDATA[2NPM]]></fr:tex>. <fr:link href="/SGKK/" title="Backpropagation" uri="https://kellenkanarios.com/SGKK/" display-uri="SGKK" type="local">Backpropagation</fr:link> then needs <html:em>two</html:em> matmuls of exactly that size, not one:
+
+  <html:ul><html:li><fr:tex display="inline"><![CDATA[\partial  L/\partial  B = A^{\top }(\partial  L/\partial  C)]]></fr:tex>, contracting over <fr:tex display="inline"><![CDATA[N]]></fr:tex> — the parameter gradient;</html:li>
+    <html:li><fr:tex display="inline"><![CDATA[\partial  L/\partial  A = (\partial  L/\partial  C)B^{\top }]]></fr:tex>, contracting over <fr:tex display="inline"><![CDATA[M]]></fr:tex> — not a parameter gradient at all, but the signal handed to earlier layers.</html:li></html:ul>
+
+  Each of the three contracts a different axis of the same <fr:tex display="inline"><![CDATA[N \times  P \times  M]]></fr:tex> box, so each costs <fr:tex display="inline"><![CDATA[2NPM]]></fr:tex> and the total is <fr:tex display="inline"><![CDATA[6NPM]]></fr:tex>, three times the forward pass. It is easy to remember only the first backward matmul and land on <fr:tex display="inline"><![CDATA[4NPM]]></fr:tex>; the activation gradient is the one that goes missing.
+
+  <html:strong>Why the constant is worth memorising.</html:strong> <fr:tex display="inline"><![CDATA[PM]]></fr:tex> is the parameter count of that matrix and <fr:tex display="inline"><![CDATA[N]]></fr:tex> is the token count, so <fr:tex display="inline"><![CDATA[6NPM]]></fr:tex> is precisely the <fr:tex display="inline"><![CDATA[6 \cdot  \mathrm {params} \cdot  \mathrm {tokens}]]></fr:tex> rule of thumb — the whole training cost of a <fr:link href="/YB7M/" title="Transformer" uri="https://kellenkanarios.com/YB7M/" display-uri="YB7M" type="local">Transformer</fr:link> is a sum of such terms.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>18</fr:day></fr:date><fr:uri>https://kellenkanarios.com/Y4Y8/</fr:uri><fr:display-uri>Y4Y8</fr:display-uri><fr:route>/Y4Y8/</fr:route><fr:title text="Gating splits the up-projection in two">Gating splits the up-projection in two</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787063265996</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>For one <fr:link href="/YB7M/" title="Transformer" uri="https://kellenkanarios.com/YB7M/" display-uri="YB7M" type="local">Transformer</fr:link> layer with a gated MLP, what are the parameter count and training FLOPs — and why is the coefficient three rather than two?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong>Parameters:</html:strong> <fr:tex display="inline"><![CDATA[3DF]]></fr:tex>, from <fr:tex display="inline"><![CDATA[W_{in1}[D,F]]]></fr:tex>, <fr:tex display="inline"><![CDATA[W_{in2}[D,F]]]></fr:tex>, <fr:tex display="inline"><![CDATA[W_{out}[F,D]]]></fr:tex>.
+
+  <html:strong>Training FLOPs:</html:strong> <fr:tex display="inline"><![CDATA[18BTDF]]></fr:tex> — three matmuls at <fr:tex display="inline"><![CDATA[6BTDF]]></fr:tex> each, by the <fr:link href="/92HA/" title="The backward pass is two matmuls, not one" uri="https://kellenkanarios.com/92HA/" display-uri="92HA" type="local"><fr:tex display="inline"><![CDATA[6NPM]]></fr:tex></fr:link> rule.
+
+  <html:strong>Where the third matrix comes from.</html:strong> A <fr:link href="/K2N7/" title="Gated Linear Unit (GLU)" uri="https://kellenkanarios.com/K2N7/" display-uri="K2N7" type="local">Gated Linear Unit (GLU)</fr:link> splits the up-projection into two matrices whose outputs are multiplied elementwise, <fr:tex display="inline"><![CDATA[\sigma (AW_{in1}) \odot  (AW_{in2})]]></fr:tex>, so one of them acts as a gate on the other. LLaMA, DeepSeek and most current models do this. A non-gated MLP has a single <fr:tex display="inline"><![CDATA[W_{in}]]></fr:tex> and so <fr:tex display="inline"><![CDATA[2DF]]></fr:tex> params — and typically scales <fr:tex display="inline"><![CDATA[D]]></fr:tex> and <fr:tex display="inline"><![CDATA[F]]></fr:tex> up to compensate, which is why the two families cost about the same at equal quality.
+
+  The gate itself is <fr:tex display="inline"><![CDATA[O(BTF)]]></fr:tex> — elementwise, no contraction, and negligible against <fr:tex display="inline"><![CDATA[BTDF]]></fr:tex>.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>18</fr:day></fr:date><fr:uri>https://kellenkanarios.com/59OV/</fr:uri><fr:display-uri>59OV</fr:display-uri><fr:route>/59OV/</fr:route><fr:title text="GQA saves cache, not projection FLOPs">GQA saves cache, not projection FLOPs</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787063263870</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Per layer, what do the QKVO projections cost in parameters and training FLOPs under <fr:link href="/XUVV/" title="Group Query Attention" uri="https://kellenkanarios.com/XUVV/" display-uri="XUVV" type="local">Group Query Attention</fr:link> with <fr:tex display="inline"><![CDATA[N]]></fr:tex> query heads, <fr:tex display="inline"><![CDATA[K]]></fr:tex> key/value heads, and head dimension <fr:tex display="inline"><![CDATA[H]]></fr:tex>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong>Parameters:</html:strong> <fr:tex display="inline"><![CDATA[2D(N+K)H]]></fr:tex>, from <fr:tex display="inline"><![CDATA[W_Q[D,N,H]]]></fr:tex> and <fr:tex display="inline"><![CDATA[W_O[N,H,D]]]></fr:tex> at <fr:tex display="inline"><![CDATA[DNH]]></fr:tex> each, plus <fr:tex display="inline"><![CDATA[W_K, W_V[D,K,H]]]></fr:tex> at <fr:tex display="inline"><![CDATA[DKH]]></fr:tex> each.
+
+  <html:strong>Training FLOPs:</html:strong> <fr:tex display="inline"><![CDATA[12BTD(N+K)H]]></fr:tex> — each projection is <fr:tex display="inline"><![CDATA[6BTD \cdot  (\text {heads}) \cdot  H]]></fr:tex>.
+
+  <html:strong>The variants are one knob.</html:strong> <fr:tex display="inline"><![CDATA[K = N]]></fr:tex> is plain multi-head attention; <fr:tex display="inline"><![CDATA[K = 1]]></fr:tex> is <fr:link href="/W4YP/" title="POTW: Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/W4YP/" display-uri="W4YP" type="local">MQA</fr:link>; <fr:tex display="inline"><![CDATA[1 < K < N]]></fr:tex> with <fr:tex display="inline"><![CDATA[K \mid  N]]></fr:tex> is grouped-query, with group size <fr:tex display="inline"><![CDATA[G = N/K]]></fr:tex>.
+
+  <html:strong>Read the formula for what shrinking <fr:tex display="inline"><![CDATA[K]]></fr:tex> actually buys.</html:strong> It touches only the <fr:tex display="inline"><![CDATA[K]]></fr:tex> term, so the projection cost falls from <fr:tex display="inline"><![CDATA[2N]]></fr:tex> to <fr:tex display="inline"><![CDATA[N + K]]></fr:tex> — at most a factor of two, and usually far less. That is not why anyone uses GQA. The payoff is the <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanarios.com/TJLA/" display-uri="TJLA" type="local">KV-cache</fr:link>, which scales with <fr:tex display="inline"><![CDATA[K]]></fr:tex> alone and is the binding constraint at generation time.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>18</fr:day></fr:date><fr:uri>https://kellenkanarios.com/CRO4/</fr:uri><fr:display-uri>CRO4</fr:display-uri><fr:route>/CRO4/</fr:route><fr:title text="Attention dominates only past 8D tokens">Attention dominates only past 8D tokens</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787063264246</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Dot-product attention costs <fr:tex display="inline"><![CDATA[12BT^2NH]]></fr:tex> FLOPs in training. At what sequence length does it start to dominate the matmul FLOPs, and why that number?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong>Past <fr:tex display="inline"><![CDATA[T > 8D]]></fr:tex>.</html:strong> With the usual proportions <fr:tex display="inline"><![CDATA[F = 4D]]></fr:tex>, <fr:tex display="inline"><![CDATA[D = NH]]></fr:tex>, <fr:tex display="inline"><![CDATA[N = K]]></fr:tex>, the ratio of attention to everything else is
+
+  <fr:tex display="block"><![CDATA[\frac {12BT^2NH}{18BTDF + 24BTDNH} = \frac {12BT^2D}{72BTD^2 + 24BTD^2} = \frac {T}{8D}]]></fr:tex>
+
+  <html:strong>What that means in practice.</html:strong> At <fr:tex display="inline"><![CDATA[D \approx  8\mathrm {k}]]></fr:tex> attention only takes over past roughly 64k tokens; Gemma-27B, with <fr:tex display="inline"><![CDATA[D = 4608]]></fr:tex>, crosses at about 37k. Larger models push the crossover <html:em>further out</html:em>, so the quadratic term is not what stops large models training on long context — the <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanarios.com/TJLA/" display-uri="TJLA" type="local">KV-cache</fr:link> at inference is a much earlier wall.
+
+  The <fr:tex display="inline"><![CDATA[12BT^2NH]]></fr:tex> is two matmuls, <fr:tex display="inline"><![CDATA[QK^{\top }]]></fr:tex> and <fr:tex display="inline"><![CDATA[SV]]></fr:tex>, each <fr:tex display="inline"><![CDATA[6BTSNH]]></fr:tex> and each batched over <fr:tex display="inline"><![CDATA[B]]></fr:tex> and the head axis.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>18</fr:day></fr:date><fr:uri>https://kellenkanarios.com/J65M/</fr:uri><fr:display-uri>J65M</fr:display-uri><fr:route>/J65M/</fr:route><fr:title text="The KV cache scales with K, and is per-sequence">The KV cache scales with K, and is per-sequence</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787063264798</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>How large is a <fr:link href="/TJLA/" title="KV-cache" uri="https://kellenkanarios.com/TJLA/" display-uri="TJLA" type="local">KV-cache</fr:link>, and which dimension actually drives it?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The cache has shape <fr:tex display="inline"><![CDATA[[2, S, L, K, H]]]></fr:tex> per sequence — the leading 2 is keys and values — so in int8 it is <fr:tex display="inline"><![CDATA[2SLKH]]></fr:tex> bytes.
+
+  <html:strong>Worked:</html:strong> <fr:tex display="inline"><![CDATA[S = 8\mathrm {k}]]></fr:tex>, <fr:tex display="inline"><![CDATA[L = 64]]></fr:tex>, <fr:tex display="inline"><![CDATA[KH = D = 8192]]></fr:tex> gives <fr:tex display="inline"><![CDATA[2 \cdot  8192 \cdot  64 \cdot  8192 \approx  8]]></fr:tex> GiB for a <html:em>single</html:em> sequence.
+
+  <html:strong>Two things in that expression decide inference planning.</html:strong> It scales with <fr:tex display="inline"><![CDATA[K]]></fr:tex>, the number of key/value heads, and not with the <fr:tex display="inline"><![CDATA[N]]></fr:tex> query heads — which is the whole argument for <fr:link href="/XUVV/" title="Group Query Attention" uri="https://kellenkanarios.com/XUVV/" display-uri="XUVV" type="local">Group Query Attention</fr:link> and <fr:link href="/W4YP/" title="POTW: Fast Transformer Decoding: One Write-Head is All You Need" uri="https://kellenkanarios.com/W4YP/" display-uri="W4YP" type="local">MQA</fr:link> at <fr:tex display="inline"><![CDATA[K \ll  N]]></fr:tex>. And it is per sequence, so unlike the weights it cannot be amortised over the batch: it competes with batch size for the same <fr:link href="/AI2G/" title="High bandwidth memory" uri="https://kellenkanarios.com/AI2G/" display-uri="AI2G" type="local">High bandwidth memory</fr:link> budget, and generation is bandwidth-bound on streaming it.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>18</fr:day></fr:date><fr:uri>https://kellenkanarios.com/WCLV/</fr:uri><fr:display-uri>WCLV</fr:display-uri><fr:route>/WCLV/</fr:route><fr:title text="Remat buys memory with a third more FLOPs">Remat buys memory with a third more FLOPs</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787063265971</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What does block-level <fr:link href="/WQAM/" title="Gradient checkpointing" uri="https://kellenkanarios.com/WQAM/" display-uri="WQAM" type="local">gradient checkpointing</fr:link> cost, and what does it save?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong>Saves:</html:strong> only the input to each layer is kept — one checkpoint per layer instead of the roughly twenty intermediate nodes a layer produces. In the book's setting (<fr:tex display="inline"><![CDATA[BT = 4]]></fr:tex>M, <fr:tex display="inline"><![CDATA[L = 64]]></fr:tex>, <fr:tex display="inline"><![CDATA[D = 8192]]></fr:tex>, bf16) that is 84 TB of activations down to 4.2 TB.
+
+  <html:strong>Costs:</html:strong> the forward pass is run a second time inside the backward pass, so training goes from about <fr:tex display="inline"><![CDATA[6 \cdot  \mathrm {params} \cdot  \mathrm {tokens}]]></fr:tex> to about <fr:tex display="inline"><![CDATA[8]]></fr:tex> — a third more FLOPs for a twentyfold cut in activation memory.
+
+  <html:strong>Why twenty nodes.</html:strong> <fr:link href="/SGKK/" title="Backpropagation" uri="https://kellenkanarios.com/SGKK/" display-uri="SGKK" type="local">Backpropagation</fr:link> needs whatever the derivative mentions. For <fr:tex display="inline"><![CDATA[f(x) = \exp (g(x))]]></fr:tex> we have <fr:tex display="inline"><![CDATA[df/dx = \exp (g(x)) \cdot  dg/dx]]></fr:tex>, so <html:em>both</html:em> <fr:tex display="inline"><![CDATA[g(x)]]></fr:tex> and <fr:tex display="inline"><![CDATA[\exp (g(x))]]></fr:tex> have to survive to the backward pass. Counting every such intermediate across a layer lands around twenty.
+
+  <html:strong>The middle setting is usually the right one:</html:strong> save just the outputs of the big matmuls — about seven per layer — and no large matmul is ever recomputed, only the cheap elementwise work between them.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>18</fr:day></fr:date><fr:uri>https://kellenkanarios.com/6UFW/</fr:uri><fr:display-uri>6UFW</fr:display-uri><fr:route>/6UFW/</fr:route><fr:title text="The running max makes the chunk merge exact">The running max makes the chunk merge exact</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787063263978</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>In <fr:link href="/R0PM/" title="Flash Attention (v1)" uri="https://kellenkanarios.com/R0PM/" display-uri="R0PM" type="local">flash attention</fr:link>, what running statistics travel between KV chunks, and how are two chunks merged?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Each query block carries three: <fr:tex display="inline"><![CDATA[M]]></fr:tex>, the running maximum of <fr:tex display="inline"><![CDATA[q \cdot  k]]></fr:tex>; <fr:tex display="inline"><![CDATA[L]]></fr:tex>, the running <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax</fr:link> denominator; and <fr:tex display="inline"><![CDATA[O]]></fr:tex>, the running output.
+
+  Merging chunks with local maxima <fr:tex display="inline"><![CDATA[M^1, M^2]]></fr:tex> and sums <fr:tex display="inline"><![CDATA[L^1, L^2]]></fr:tex> rescales each to the shared maximum:
+
+  <fr:tex display="block"><![CDATA[L = e^{M^1 - \max (M^1, M^2)}L^1 + e^{M^2 - \max (M^1, M^2)}L^2]]></fr:tex>
+
+  <html:strong>This is exact, not an approximation.</html:strong> It is only <fr:tex display="inline"><![CDATA[\sum _i e^{a_i + b} = e^b \sum _i e^{a_i}]]></fr:tex>: pulling a constant out of a sum of exponentials. The maximum is subtracted for <fr:link href="/7TMH/" title="Stabilizing Softmax in Attention" uri="https://kellenkanarios.com/7TMH/" display-uri="7TMH" type="local">numerical stability</fr:link> and put back by the same identity — see <fr:link href="/PI7N/" title="Online Softmax" uri="https://kellenkanarios.com/PI7N/" display-uri="PI7N" type="local">Online Softmax</fr:link> for the one-pass version of the argument.
+
+  <html:strong>The payoff is memory, not FLOPs.</html:strong> The <fr:tex display="inline"><![CDATA[[B,T,S,N]]]></fr:tex> attention matrix is never materialised, so memory is <fr:tex display="inline"><![CDATA[O(1)]]></fr:tex> in the number of chunks while the FLOP count stays quadratic. The query block sits in <fr:link href="/GFK2/" title="VMEM" uri="https://kellenkanarios.com/GFK2/" display-uri="GFK2" type="local">VMEM</fr:link> and only the KV chunks stream in, which is also what raises the <fr:link href="/YBQD/" title="Arithmetic intensity" uri="https://kellenkanarios.com/YBQD/" display-uri="YBQD" type="local">arithmetic intensity</fr:link>.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>18</fr:day></fr:date><fr:uri>https://kellenkanarios.com/2NWW/</fr:uri><fr:display-uri>2NWW</fr:display-uri><fr:route>/2NWW/</fr:route><fr:title text="Sparsity sets the batch an MoE needs">Sparsity sets the batch an MoE needs</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787063263693</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>A <fr:link href="/ZUVW/" title="Mixture of Experts (MoE)" uri="https://kellenkanarios.com/ZUVW/" display-uri="ZUVW" type="local">Mixture of Experts (MoE)</fr:link> has <fr:tex display="inline"><![CDATA[E]]></fr:tex> experts and top-<fr:tex display="inline"><![CDATA[k]]></fr:tex> routing, int8 weights on a TPU v5e (ridge point around 240 FLOPs/byte). What batch size does it need to be compute-bound, and what is that for DeepSeek v3?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong><fr:tex display="inline"><![CDATA[B > 120E/k]]></fr:tex> tokens.</html:strong> For DeepSeek v3, with <fr:tex display="inline"><![CDATA[E = 256]]></fr:tex> routed experts and <fr:tex display="inline"><![CDATA[k = 8]]></fr:tex>, that is <html:strong><fr:tex display="inline"><![CDATA[B > 3840]]></fr:tex> tokens</html:strong> — a startlingly large batch to require at generation time.
+
+  <html:strong>Per weight matrix:</html:strong> a full batch touches every expert, so all <fr:tex display="inline"><![CDATA[E]]></fr:tex> copies get loaded — <fr:tex display="inline"><![CDATA[EDF]]></fr:tex> bytes — while only <fr:tex display="inline"><![CDATA[k]]></fr:tex> experts fire per token, so the work is <fr:tex display="inline"><![CDATA[2kBDF]]></fr:tex> FLOPs. The <fr:link href="/YBQD/" title="Arithmetic intensity" uri="https://kellenkanarios.com/YBQD/" display-uri="YBQD" type="local">arithmetic intensity</fr:link> is therefore
+
+  <fr:tex display="block"><![CDATA[\frac {2kBDF}{EDF} = \frac {2kB}{E}]]></fr:tex>
+
+  and int8 weights against bf16 arithmetic need that above roughly 240, giving <fr:tex display="inline"><![CDATA[kB/E > 120]]></fr:tex>.
+
+  <html:strong>The framing that makes this obvious:</html:strong> an MoE is a dense model with <fr:tex display="inline"><![CDATA[E]]></fr:tex> MLP blocks per layer. Total parameters scale with <fr:tex display="inline"><![CDATA[E]]></fr:tex>; parameters activated per token scale with <fr:tex display="inline"><![CDATA[k]]></fr:tex>. The sparsity <fr:tex display="inline"><![CDATA[E/k]]></fr:tex> — typically 8 to 64, and 32 for DeepSeek v3 — is exactly the factor by which the required batch inflates. The other cost is routing: two <fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAlls</fr:link> per MoE block, out to the experts and back.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
 </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>
@@ -1175,11 +1400,108 @@ W_{out} &= 2\cdot  D\cdot  F \\
 &= 2\cdot  8192\cdot  32768 = 2^{29}
 \end {align*}
 ]]></fr:tex>
-<html:p>and each TPU has <fr:tex display="inline"><![CDATA[300]]></fr:tex>MB <fr:tex display="inline"><![CDATA[\approx  300 \cdot  2^{20} \approx  2^{28}]]></fr:tex> in this example. Therefore, each TPU can fit just over one half of <fr:tex display="inline"><![CDATA[W_{in}]]></fr:tex> and <fr:tex display="inline"><![CDATA[W_{out}]]></fr:tex>, which leads us to have to fully shard both across <fr:tex display="inline"><![CDATA[X]]></fr:tex> and <fr:tex display="inline"><![CDATA[Y]]></fr:tex>. The remaining <fr:tex display="inline"><![CDATA[11 \cdot  2^{22}]]></fr:tex> can fit <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex>. However, we need to satisfy the constraint that <fr:tex display="inline"><![CDATA[\text {Out}]]></fr:tex> is sharded in the same way as <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex>. I propose first</html:p>
-<html:ul><html:li><html:p>Shard <fr:tex display="inline"><![CDATA[\text {In}[B_{XY}, D]]]></fr:tex>, <fr:tex display="inline"><![CDATA[W_{in}[D,F_{XY}]]]></fr:tex></html:p></html:li></html:ul>
-<html:p>Then, we are in case 1 and have an output of <fr:tex display="inline"><![CDATA[W_{mid}[B_{XY}, F_{XY}]]]></fr:tex> with no communication necessary. However, we now need to multiply <fr:tex display="inline"><![CDATA[W_{mid}]]></fr:tex> with <fr:tex display="inline"><![CDATA[W_{out}]]></fr:tex>. I propose to</html:p>
-<html:ul><html:li>Shard <fr:tex display="inline"><![CDATA[W_{out}[F, D_{XY}]]]></fr:tex></html:li></html:ul>
-<html:p>This then requires two <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>'s. First, we have to AllGather <fr:tex display="inline"><![CDATA[W_{mid}]]></fr:tex> along <fr:tex display="inline"><![CDATA[F]]></fr:tex>. Then we perform the matmul between <fr:tex display="inline"><![CDATA[W_{mid}]]></fr:tex> and <fr:tex display="inline"><![CDATA[W_{out}]]></fr:tex>, which gives <fr:tex display="inline"><![CDATA[Out[B_{XY}, D_{XY}]]]></fr:tex>. To provide <fr:tex display="inline"><![CDATA[\text {Out}]]></fr:tex> as <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex> to the next layer, we then must <fr:tex display="inline"><![CDATA[\text {AllGather}_{XY}]]></fr:tex> along <fr:tex display="inline"><![CDATA[D]]></fr:tex>.</html:p>
+<html:p>and each TPU has <fr:tex display="inline"><![CDATA[300]]></fr:tex>MB <fr:tex display="inline"><![CDATA[\approx  300 \cdot  2^{20} \approx  2^{28}]]></fr:tex> in this example. Therefore, each TPU can fit just over one half of <fr:tex display="inline"><![CDATA[W_{in}]]></fr:tex> and <fr:tex display="inline"><![CDATA[W_{out}]]></fr:tex>, which leads us to have to fully shard both across <fr:tex display="inline"><![CDATA[X]]></fr:tex> and <fr:tex display="inline"><![CDATA[Y]]></fr:tex>. The remaining <fr:tex display="inline"><![CDATA[11 \cdot  2^{22}]]></fr:tex> can fit <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex>. However, we need to satisfy the constraint that <fr:tex display="inline"><![CDATA[\text {Out}]]></fr:tex> is sharded in the same way as <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex>. We adopt the following strategy:</html:p>
+<html:ol><html:li>Shard <fr:tex display="inline"><![CDATA[\text {In}[B_{XY}, D]]]></fr:tex>, <fr:tex display="inline"><![CDATA[W_{in}[D,F_{XY}]]]></fr:tex></html:li>
+  <html:ul><html:li>First, we need to <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex> along <fr:tex display="inline"><![CDATA[B]]></fr:tex>.</html:li>
+    <html:li>Then, we have <fr:tex display="inline"><![CDATA[\text {In}[B, D]\cdot  W_{in}[D, F_{XY}]\to  \text {Tmp}[B, F_{XY}]]]></fr:tex></html:li></html:ul>
+  <html:li>Shard <fr:tex display="inline"><![CDATA[W_{out}[F_{XY}, D]]]></fr:tex></html:li>
+<html:ul><html:li>Now we have <fr:tex display="inline"><![CDATA[\text {Tmp}[B, F_{XY}]\cdot  W_{out}[F_{XY}, D] \to  \text {Out}[B, D]\{U_{XY}\}  ]]></fr:tex></html:li>
+  <html:li>Then we need to do a <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link> over <fr:tex display="inline"><![CDATA[XY]]></fr:tex> in the <fr:tex display="inline"><![CDATA[B]]></fr:tex> axis to get back to our input shape.</html:li></html:ul></html:ol>
+<html:p>Now lets count up the communication cost.</html:p>
+<html:ol><html:li>First, we have an <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> over <fr:tex display="inline"><![CDATA[XY]]></fr:tex> of <fr:tex display="inline"><![CDATA[\text {In}]]></fr:tex>. This is <fr:tex display="inline"><![CDATA[N = 2\cdot  B\cdot  D]]></fr:tex> bytes. We only have unidirectional bandwidth. However, we are gathering over 2 axes, which doubles our bandwidth. Thus, this will take
+<fr:tex display="block"><![CDATA[\frac {2\cdot  128\cdot  8192}{2\cdot  4.5e 10} = 23.3\mu  s]]></fr:tex>
+<html:li>Then we have a <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link> of <fr:tex display="inline"><![CDATA[\text {Out}[B, D]\{U_{XY}\}]]></fr:tex>, which takes the same time as <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> and is another <fr:tex display="inline"><![CDATA[23.3 \mu  s]]></fr:tex>.</html:li></html:li></html:ol>
+<html:p>Thus, the whole communication cost is only <fr:tex display="inline"><![CDATA[46.6 \mu  s]]></fr:tex>.</html:p>
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+In the solution, they instead propose to shard <fr:tex display="inline"><![CDATA[\text {In}[B, D_{XY}]]]></fr:tex>, which is equivalent in communication cost. According to <html:em>Claude</html:em>, there is a subtle distinction.
+<html:ol><html:li>If you are in decoding (i.e. <fr:tex display="inline"><![CDATA[B = 1]]></fr:tex>), then you cannot even shard along <fr:tex display="inline"><![CDATA[B]]></fr:tex> but can still shard along <fr:tex display="inline"><![CDATA[D]]></fr:tex>.</html:li>
+  <html:li>However, it seems preferable to shard over <fr:tex display="inline"><![CDATA[B]]></fr:tex> if you can. This way, for activations / reductions over <fr:tex display="inline"><![CDATA[D]]></fr:tex> you do not need any communication.</html:li></html:ol>
+</html:div>
+
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="another strategy for sharded matmuls">another strategy for sharded matmuls</fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.9</fr:meta></fr:frontmatter><fr:mainmatter>
+Above we claimed that when only one input to a matmul is sharded along its contracting dimension, we should AllGather the sharded matrix and perform the resulting contraction locally. Another strategy you might think of is to perform the sharded matmul and then AllReduce the result (as if both inputs were sharded along the contracting dimension), i.e. <fr:tex display="inline"><![CDATA[A[I,J_X]\cdot _J B[J,K]\to  C[I,K]]]></fr:tex> by way of
+<html:ol><html:li><fr:tex display="inline"><![CDATA[C[I, K]\{U_{X}\} = A[I, J_{X}]\cdot  B[J_{x}, K] ]]></fr:tex></html:li>
+  <html:li><fr:tex display="inline"><![CDATA[C[I, K]\{U_{X}\} = \text {AllReduce}(C[I,K]\{U_{X}\})]]></fr:tex></html:li></html:ol>
+Answer the following
+<html:ol><html:li>Explicitly write out this algorithm for matrices <fr:tex display="inline"><![CDATA[A[N,M]]]></fr:tex> and <fr:tex display="inline"><![CDATA[B[M,K]]]></fr:tex>, using indices to show exactly what computation is done on what device. Assume <fr:tex display="inline"><![CDATA[A]]></fr:tex> is sharded as <fr:tex display="inline"><![CDATA[A[I,J_X]]]></fr:tex> across ND devices, and you want your output to be replicated across all devices.</html:li>
+<html:li>Now suppose you are ok with the final result not being replicated on each device, but instead sharded (across either the N or K dimension). How would the algorithm above change?</html:li>
+<html:li>Looking purely at the communication cost of the strategy above (in part 2, not 1), how does this communication cost compare to the communication cost of the algorithm in which we first AllGather A and then do the matmul?</html:li></html:ol>
+
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+<html:ol><html:li>On the device, we can only make use of the <fr:tex display="inline"><![CDATA[J_{X}]]></fr:tex> rows of <fr:tex display="inline"><![CDATA[B]]></fr:tex> and compute the corresponding partial sums. This corresponds to the outer product
+<fr:tex display="block"><![CDATA[C'[i] = \sum _{n=i\cdot  \frac {J}{ND}}^{i(\frac {J}{ND} + 1)} A_{:,n} \oplus  B_{n,:}]]></fr:tex></html:li>
+  <html:li>The above algorithm would change by replacing the <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> with a <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link>. This is better communication wise because <fr:link href="/MJ7A/" title="AllReduce is two collectives, not one" uri="https://kellenkanarios.com/MJ7A/" display-uri="MJ7A" type="local">AllReduce is two collectives, not one</fr:link>.</html:li>
+<html:li>The communication cost is the same because <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link>  has the same communication cost as <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>, but it is likely preferable if you are compute bound because you can distribute computation across devices.
+
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
+In the solutions, they make the (excellent) point that in the <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link> case we are sending the output <fr:tex display="inline"><![CDATA[N\times  K]]></fr:tex> matrix, whereas in the <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> case we are sending the <fr:tex display="inline"><![CDATA[N\times  M]]></fr:tex> matrix. Therefore, if we have a large contraction dim, then the second case might also be preferable.
+</html:div></html:li></html:ol>
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  
+
+  
+    
+    
+    
+    <fr:tree show-metadata="false" expanded="true" toc="false" numbered="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>5</fr:day></fr:date><fr:title text="Fun with AllToAll">Fun with <fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAll</fr:link></fr:title><fr:taxon>Exercise</fr:taxon><fr:meta name="number">3.10</fr:meta></fr:frontmatter><fr:mainmatter>
+In the table above, it was noted that the time to perform an AllToAll is a factor of 4 lower than the time to perform an AllGather or ReduceScatter (in the regime where we are throughput-bound). In this problem we will see where that factor of 4 comes from, and also see how this factor would change if we only had single-direction ICI links, rather than bidirectional ICI links.
+<html:ol><html:li>Let’s start with the single-direction case first. Imagine we have D devices in a ring topology and want to do either an AllGather or a ReduceScatter on an N x N matrix <fr:tex display="inline"><![CDATA[A[I_X,J]]]></fr:tex> (say D divides N for simplicity). Describe the comms involved in these two collectives, and calculate the total number of scalars (floats or ints) which are transferred across a single ICI link during the entirety of this algorithm.</html:li>
+<html:li>Now let’s think about an AllToAll, still in the single-directional ICI case. How is the algorithm different in this case than the all-gather case? Calculate the number of scalars that are transferred across a single ICI link in this algorithm.</html:li>
+<html:li>You should have found that the ratio between your answers to part (a) and part (b) is a nice number. Explain where this factor comes from in simple terms.</html:li>
+<html:li>Now let’s add bidirectional communication. How does this affect the total time needed in the all-gather case?</html:li>
+<html:li>How does adding bidirectional communication affect the total time needed in the AllToAll case?</html:li>
+<html:li>Now simply explain the ratio between AllGather time and AllToAll time in a bidirectional ring.</html:li></html:ol>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(115, 73, 35);
+  "><html:span style="font-weight: 500; color: rgb(115, 73, 35);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Solution</html:span></html:summary>
+<html:ol><html:li>The communication involved in either of these collectives is each chip in the ring sending a chunk of <fr:tex display="inline"><![CDATA[A]]></fr:tex> of size <fr:tex display="inline"><![CDATA[\frac {N^2}{D}]]></fr:tex> to the right neighbor. A single ICI link sees every chunk and therefore <fr:tex display="inline"><![CDATA[N^2(D-1)]]></fr:tex> scalars must cross a single ICI link. The <fr:tex display="inline"><![CDATA[D - 1]]></fr:tex> comes from the fact that each device already owns one <fr:tex display="inline"><![CDATA[\frac {N^2}{D}]]></fr:tex> chunk.
+</html:li>
+<html:li><fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAll</fr:link> differs than <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> because each subsequent forwarding is <fr:tex display="inline"><![CDATA[\frac {N^2}{D^2}]]></fr:tex> less bytes. Namely, each device has an <fr:tex display="inline"><![CDATA[\frac {N^2}{D}]]></fr:tex> shard of <fr:tex display="inline"><![CDATA[A]]></fr:tex>. Then in <fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAll</fr:link>, you forward to a neighbor who takes a <fr:tex display="inline"><![CDATA[\frac {1}{D}]]></fr:tex> of this chunk and forwards the remaining. Therefore, a single ICI link only sees the following bytes of ICI traffic
+<fr:tex display="block"><![CDATA[\frac {N^2}{D} \sum _{i=1}^{D} (D - i) = \frac {N^2\cdot  D(D-1)}{2D} = \frac {N^2(D-1)}{2}]]></fr:tex></html:li>
+<html:li>From the previous 2 parts, we see that the ratio is exactly <fr:tex display="inline"><![CDATA[\frac {1}{2}]]></fr:tex>. This comes from the fact that, for farther devices, a link needs to transfer a much smaller number of bytes in <fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAll</fr:link>. Whereas, in <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>, you must see all bytes of a chunk for every device uniformly.</html:li>
+<html:li>In the <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> case, bidirectional communication still requires each link to see every byte. Therefore, only the ICI bandiwdth changes and not the total bytes seen per-link.</html:li>
+<html:li>In the <fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAll</fr:link> case, each chip only needs its sub-chunk of each chunk. Therefore, we can divide the chunk into the front and back half and send in each direction. This halves the total bytes seen per link, reducing to <fr:tex display="inline"><![CDATA[\frac {N^2(D-1)}{4}]]></fr:tex>.</html:li>
+<html:li>In the bidirectional case, we can effectively reduce our <fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAll</fr:link> to 2 unidirectional <fr:link href="/T470/" title="AllToAll" uri="https://kellenkanarios.com/T470/" display-uri="T470" type="local">AllToAll</fr:link>'s of half the size. This then halves the bytes-per-link, which was already half of an <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>. Since every device needs every byte of each chunk in the <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> case, it gets no reduction in the bidirectional case.</html:li></html:ol>
 </html:details>
 </html:div>
 

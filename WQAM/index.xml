@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors>
+      <fr:author>
+        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+      </fr:author>
+    </fr:authors>
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>8</fr:month>
+      <fr:day>18</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/WQAM/</fr:uri>
+    <fr:display-uri>WQAM</fr:display-uri>
+    <fr:route>/WQAM/</fr:route>
+    <fr:title text="Gradient checkpointing">Gradient checkpointing</fr:title>
+  </fr:frontmatter>
+  <fr:mainmatter>
+ <html:div class="stub-notice" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  color: rgb(38, 97, 69);
+  font-style: italic;
+  ">🌱 Stub — this concept is referenced but not yet written.</html:div>
+</fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>18</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/WCLV/</fr:uri>
+            <fr:display-uri>WCLV</fr:display-uri>
+            <fr:route>/WCLV/</fr:route>
+            <fr:title text="Remat buys memory with a third more FLOPs">Remat buys memory with a third more FLOPs</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787063265971</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>What does block-level <fr:link href="/WQAM/" title="Gradient checkpointing" uri="https://kellenkanarios.com/WQAM/" display-uri="WQAM" type="local">gradient checkpointing</fr:link> cost, and what does it save?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong>Saves:</html:strong> only the input to each layer is kept — one checkpoint per layer instead of the roughly twenty intermediate nodes a layer produces. In the book's setting (<fr:tex display="inline"><![CDATA[BT = 4]]></fr:tex>M, <fr:tex display="inline"><![CDATA[L = 64]]></fr:tex>, <fr:tex display="inline"><![CDATA[D = 8192]]></fr:tex>, bf16) that is 84 TB of activations down to 4.2 TB.
+
+  <html:strong>Costs:</html:strong> the forward pass is run a second time inside the backward pass, so training goes from about <fr:tex display="inline"><![CDATA[6 \cdot  \mathrm {params} \cdot  \mathrm {tokens}]]></fr:tex> to about <fr:tex display="inline"><![CDATA[8]]></fr:tex> — a third more FLOPs for a twentyfold cut in activation memory.
+
+  <html:strong>Why twenty nodes.</html:strong> <fr:link href="/SGKK/" title="Backpropagation" uri="https://kellenkanarios.com/SGKK/" display-uri="SGKK" type="local">Backpropagation</fr:link> needs whatever the derivative mentions. For <fr:tex display="inline"><![CDATA[f(x) = \exp (g(x))]]></fr:tex> we have <fr:tex display="inline"><![CDATA[df/dx = \exp (g(x)) \cdot  dg/dx]]></fr:tex>, so <html:em>both</html:em> <fr:tex display="inline"><![CDATA[g(x)]]></fr:tex> and <fr:tex display="inline"><![CDATA[\exp (g(x))]]></fr:tex> have to survive to the backward pass. Counting every such intermediate across a layer lands around twenty.
+
+  <html:strong>The middle setting is usually the right one:</html:strong> save just the outputs of the big matmuls — about seven per layer — and no large matmul is ever recomputed, only the cheap elementwise work between them.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>
