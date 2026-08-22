@@ -47,7 +47,7 @@
   padding: 0.1rem 0 0.1rem 0.9rem;
   border-left: 2px solid rgb(219, 216, 215);
   "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> The GPU memory hierarchy is software-managed at L1 (shared memory) and coherent only at L2 — by restricting L1 to local-to-block scope, the architecture sidesteps the cost of a global <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> protocol on a thousand-way-parallel chip.</html:div>
-<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/U1FO/</fr:uri><fr:display-uri>U1FO</fr:display-uri><fr:route>/U1FO/</fr:route><fr:title text="Memory coalescing merges a warp's accesses into one transaction per cache line">Memory coalescing merges a warp's accesses into one transaction per cache line</fr:title></fr:frontmatter><fr:mainmatter><html:p>The hardware optimization on GPUs that combines simultaneous memory accesses by threads in a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link> into a single transaction — when the accessed addresses fall in the same cache line.</html:p><html:p>Global memory latency on a GPU is 400–800 cycles. Coalescing is the primary way to keep the SM fed:</html:p><html:ul><html:li>If all 32 threads in a warp access addresses within one cache line: one memory transaction, full bandwidth.</html:li>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/U1FO/</fr:uri><fr:display-uri>U1FO</fr:display-uri><fr:route>/U1FO/</fr:route><fr:title text="Memory coalescing merges a warp's accesses into one transaction per cache line">Memory coalescing merges a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link>'s accesses into one transaction per cache line</fr:title></fr:frontmatter><fr:mainmatter><html:p>The hardware optimization on GPUs that combines simultaneous memory accesses by threads in a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link> into a single transaction — when the accessed addresses fall in the same cache line.</html:p><html:p>Global memory latency on a GPU is 400–800 cycles. Coalescing is the primary way to keep the SM fed:</html:p><html:ul><html:li>If all 32 threads in a warp access addresses within one cache line: one memory transaction, full bandwidth.</html:li>
   <html:li>If addresses span multiple cache lines: the hardware serializes into multiple transactions; bandwidth drops proportionally.</html:li></html:ul>
  <html:div class="jms-callout" style="
   margin: 1.1rem 0;
@@ -154,7 +154,7 @@
 </html:tr>
 
 </html:table>
-<html:p>The GPU equivalent of a core is a <html:em>streaming multiprocessor</html:em> (SM). Each SM executes the same instruction across many threads in lockstep — the <fr:link href="/7F19/" title="SIMT" uri="https://kellenkanarios.com/7F19/" display-uri="7F19" type="local">SIMT</fr:link> programming model — and uses a per-register <fr:link href="/XPAA/" title="GPU register scoreboard" uri="https://kellenkanarios.com/XPAA/" display-uri="XPAA" type="local">GPU register scoreboard</fr:link> rather than CPU-style <fr:link href="/UJPD/" title="Issue queue wakeup-select" uri="https://kellenkanarios.com/UJPD/" display-uri="UJPD" type="local">wakeup-select</fr:link> to decide which warp can issue next.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>13</fr:day></fr:date><fr:uri>https://kellenkanarios.com/7F19/</fr:uri><fr:display-uri>7F19</fr:display-uri><fr:route>/7F19/</fr:route><fr:title text="SIMT">SIMT</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p><html:em>Single instruction, multiple threads</html:em>. A <fr:link href="/82U4/" title="GPU architecture" uri="https://kellenkanarios.com/82U4/" display-uri="82U4" type="local">GPU</fr:link> streaming multiprocessor issues one instruction per cycle to a group of threads — a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link> — but each thread within the group keeps its own program counter and register state. The hardware enforces lockstep execution within the warp while preserving the <html:em>illusion</html:em> of independent threads to the programmer.</html:p><html:p>SIMT is the GPU's answer to a question the <fr:link href="/Q7ZD/" title="Vector ISA / SIMD" uri="https://kellenkanarios.com/Q7ZD/" display-uri="Q7ZD" type="local">Vector ISA / SIMD</fr:link> world struggled with: how do you get the throughput of wide vector execution without forcing the programmer to manually vectorize? Two mechanisms make this work.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>6</fr:day></fr:date><fr:uri>https://kellenkanarios.com/OGCSM/</fr:uri><fr:display-uri>OGCSM</fr:display-uri><fr:route>/OGCSM/</fr:route><fr:title text="Warp divergence serializes both sides of a branch">Warp divergence serializes both sides of a branch</fr:title></fr:frontmatter><fr:mainmatter><html:p>When threads in a warp take different branches of a conditional, the warp does not split into smaller warps. Instead, the active mask selects which lanes execute each branch; lanes on the inactive side run <html:em>dummy</html:em> instructions until the warp reconverges at the post-conditional join point. The programmer writes ordinary scalar code with <html:code>if</html:code>/<html:code>else</html:code>, and the hardware silently masks the inactive lanes.</html:p><html:p>This is the chief ergonomic win over SIMD: the compiler does not have to prove that all lanes will take the same path. The cost is that divergent code pays for both sides — a 32-wide warp where 16 threads take the if-branch and 16 take the else-branch executes both branches sequentially with half the lanes idle each time.</html:p><html:p>The hardware sequences the two paths with a <fr:link href="/KY0M/" title="A reconvergence stack sequences a warp's divergent paths and can deadlock" uri="https://kellenkanarios.com/KY0M/" display-uri="KY0M" type="local">reconvergence stack</fr:link> — or, on recent GPUs, a barrier-based equivalent that avoids its deadlocks. The standard software mitigation is <fr:link href="/JKNL/" title="Warp Specialization" uri="https://kellenkanarios.com/JKNL/" display-uri="JKNL" type="local">Warp Specialization</fr:link>: group threads with the same control-flow trajectory into one warp so the branch never diverges in the first place.</html:p></fr:mainmatter></fr:tree>
+<html:p>The GPU equivalent of a core is a <html:em>streaming multiprocessor</html:em> (SM). Each SM executes the same instruction across many threads in lockstep — the <fr:link href="/7F19/" title="SIMT" uri="https://kellenkanarios.com/7F19/" display-uri="7F19" type="local">SIMT</fr:link> programming model — and uses a per-register <fr:link href="/XPAA/" title="GPU register scoreboard" uri="https://kellenkanarios.com/XPAA/" display-uri="XPAA" type="local">GPU register scoreboard</fr:link> rather than CPU-style <fr:link href="/UJPD/" title="Issue queue wakeup-select" uri="https://kellenkanarios.com/UJPD/" display-uri="UJPD" type="local">wakeup-select</fr:link> to decide which warp can issue next.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>13</fr:day></fr:date><fr:uri>https://kellenkanarios.com/7F19/</fr:uri><fr:display-uri>7F19</fr:display-uri><fr:route>/7F19/</fr:route><fr:title text="SIMT">SIMT</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p><html:em>Single instruction, multiple threads</html:em>. A <fr:link href="/82U4/" title="GPU architecture" uri="https://kellenkanarios.com/82U4/" display-uri="82U4" type="local">GPU</fr:link> streaming multiprocessor issues one instruction per cycle to a group of threads — a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link> — but each thread within the group keeps its own program counter and register state. The hardware enforces lockstep execution within the warp while preserving the <html:em>illusion</html:em> of independent threads to the programmer.</html:p><html:p>SIMT is the GPU's answer to a question the <fr:link href="/Q7ZD/" title="Vector ISA / SIMD" uri="https://kellenkanarios.com/Q7ZD/" display-uri="Q7ZD" type="local">Vector ISA / SIMD</fr:link> world struggled with: how do you get the throughput of wide vector execution without forcing the programmer to manually vectorize? Two mechanisms make this work.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>6</fr:day></fr:date><fr:uri>https://kellenkanarios.com/OGCSM/</fr:uri><fr:display-uri>OGCSM</fr:display-uri><fr:route>/OGCSM/</fr:route><fr:title text="Warp divergence serializes both sides of a branch"><fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">Warp</fr:link> divergence serializes both sides of a branch</fr:title></fr:frontmatter><fr:mainmatter><html:p>When threads in a warp take different branches of a conditional, the warp does not split into smaller warps. Instead, the active mask selects which lanes execute each branch; lanes on the inactive side run <html:em>dummy</html:em> instructions until the warp reconverges at the post-conditional join point. The programmer writes ordinary scalar code with <html:code>if</html:code>/<html:code>else</html:code>, and the hardware silently masks the inactive lanes.</html:p><html:p>This is the chief ergonomic win over SIMD: the compiler does not have to prove that all lanes will take the same path. The cost is that divergent code pays for both sides — a 32-wide warp where 16 threads take the if-branch and 16 take the else-branch executes both branches sequentially with half the lanes idle each time.</html:p><html:p>The hardware sequences the two paths with a <fr:link href="/KY0M/" title="A reconvergence stack sequences a warp's divergent paths and can deadlock" uri="https://kellenkanarios.com/KY0M/" display-uri="KY0M" type="local">reconvergence stack</fr:link> — or, on recent GPUs, a barrier-based equivalent that avoids its deadlocks. The standard software mitigation is <fr:link href="/JKNL/" title="Warp Specialization" uri="https://kellenkanarios.com/JKNL/" display-uri="JKNL" type="local">Warp Specialization</fr:link>: group threads with the same control-flow trajectory into one warp so the branch never diverges in the first place.</html:p></fr:mainmatter></fr:tree>
   <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>13</fr:day></fr:date><fr:title text="Grouping flexibility">Grouping flexibility</fr:title></fr:frontmatter><fr:mainmatter>
 <html:p>Threads are assigned to warps based on warp-ID, but the hardware and compiler are free to regroup. <fr:link href="/JKNL/" title="Warp Specialization" uri="https://kellenkanarios.com/JKNL/" display-uri="JKNL" type="local">Warp Specialization</fr:link> re-bundles threads with similar control-flow trajectories into the same warp so that future branches stay non-divergent. This is a class of optimization that pure SIMD cannot express — a SIMD ISA fixes the lane assignment at compile time.</html:p>
 </fr:mainmatter></fr:tree>
@@ -164,7 +164,7 @@
   padding: 0.1rem 0 0.1rem 0.9rem;
   border-left: 2px solid rgb(219, 216, 215);
   "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> SIMT is sometimes described as "SIMD with a per-lane PC," which captures the implementation but understates the programming-model impact: vectorization becomes a runtime, not a compile-time, decision.</html:div>
-</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>11</fr:day></fr:date><fr:uri>https://kellenkanarios.com/1PWL/</fr:uri><fr:display-uri>1PWL</fr:display-uri><fr:route>/1PWL/</fr:route><fr:title text="Warp scheduling hides memory latency by switching among resident warps">Warp scheduling hides memory latency by switching among resident warps</fr:title></fr:frontmatter><fr:mainmatter><html:p>A GPU keeps many <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warps</fr:link> resident on each <fr:link href="/OGCS6/" title="Streaming Multiprocessor (SM)" uri="https://kellenkanarios.com/OGCS6/" display-uri="OGCS6" type="local">Streaming Multiprocessor (SM)</fr:link> and switches between them on every stall. When a warp issues a memory op that misses cache it is dead for hundreds of cycles — but with dozens of resident warps the scheduler always has a runnable one, so aggregate throughput stays high even though single-warp latency is awful. This is the <fr:link href="/G4ML/" title="Thread-level parallelism" uri="https://kellenkanarios.com/G4ML/" display-uri="G4ML" type="local">Thread-level parallelism</fr:link> design point cashed out on the GPU: spend silicon on resident warp state rather than on latency-reduction machinery. The switch is free because each SM's <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">register file</fr:link> is large enough to hold every resident warp's registers at once, so a context switch is just changing which warp the scheduler picks — not saving state to memory the way a CPU <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link> must.</html:p><html:p>Two things bound how well this works. <fr:link href="/EPUD/" title="Occupancy bounds how much latency a GPU can hide" uri="https://kellenkanarios.com/EPUD/" display-uri="EPUD" type="local">Occupancy</fr:link> — how many warps are resident — sets the ceiling on latency hiding: with too few warps the scheduler runs out of runnable candidates. And the scheduler itself must stay cheap enough to choose a warp every cycle, which it does with a <fr:link href="/7SGF/" title="A two-loop scheduler makes warp readiness a constant-time scoreboard check" uri="https://kellenkanarios.com/7SGF/" display-uri="7SGF" type="local">two-loop scoreboard check</fr:link>, marshalling each issued instruction's register reads through an <fr:link href="/7QAW/" title="An operand collector serializes register reads to dodge register-file bank conflicts" uri="https://kellenkanarios.com/7QAW/" display-uri="7QAW" type="local">operand collector</fr:link>.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>13</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XPAA/</fr:uri><fr:display-uri>XPAA</fr:display-uri><fr:route>/XPAA/</fr:route><fr:title text="GPU register scoreboard">GPU register scoreboard</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>The readiness-tracking structure that lets a GPU issue instructions out of program order without any of the CAM machinery a CPU needs. A scoreboard is a small table — typically one busy bit per architectural register — that records whether some in-flight instruction is still computing a value that something else might want to read.</html:p><html:p>The protocol is trivial. When an instruction issues, it sets the busy bit on its destination register. When it writes back, it clears the bit. Before any instruction can read its sources, the hardware checks the corresponding bits: if any source is busy, the instruction (or its entire warp) waits. The check is a single table lookup per source, so the per-instruction cost is <fr:tex display="inline"><![CDATA[O(1)]]></fr:tex> regardless of how many other instructions are in flight.</html:p><html:p>This is enough because GPUs lean on <fr:link href="/G4ML/" title="Thread-level parallelism" uri="https://kellenkanarios.com/G4ML/" display-uri="G4ML" type="local">Thread-level parallelism</fr:link> rather than <fr:link href="/JAZI/" title="Instruction-level parallelism" uri="https://kellenkanarios.com/JAZI/" display-uri="JAZI" type="local">Instruction-level parallelism</fr:link>. When a warp's next instruction reads a busy register, the <fr:link href="/82U4/" title="GPU architecture" uri="https://kellenkanarios.com/82U4/" display-uri="82U4" type="local">GPU architecture</fr:link> scheduler does not stall — it picks a different ready warp from the dozens of resident warps and runs that one instead. The scoreboard's job is only to answer "is this warp ready? yes/no," which is far cheaper than the broadcast/compare a CPU <fr:link href="/UJPD/" title="Issue queue wakeup-select" uri="https://kellenkanarios.com/UJPD/" display-uri="UJPD" type="local">Issue queue wakeup-select</fr:link> does to find dependency satisfaction in a single thread's instruction window.</html:p><html:p>The size difference falls out of this. CPU issue queues hold tens of entries; GPU instruction windows can hold many warps' worth of in-flight work, because every additional warp costs a row in the scoreboard and a register-file allocation, not a quadratic CAM expansion. See <fr:link href="/RJEB/" title="ILP vs TLP" uri="https://kellenkanarios.com/RJEB/" display-uri="RJEB" type="local">ILP vs TLP</fr:link> for why the design fork sits where it does.</html:p>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>11</fr:day></fr:date><fr:uri>https://kellenkanarios.com/1PWL/</fr:uri><fr:display-uri>1PWL</fr:display-uri><fr:route>/1PWL/</fr:route><fr:title text="Warp scheduling hides memory latency by switching among resident warps"><fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">Warp</fr:link> scheduling hides memory latency by switching among resident warps</fr:title></fr:frontmatter><fr:mainmatter><html:p>A GPU keeps many <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warps</fr:link> resident on each <fr:link href="/OGCS6/" title="Streaming Multiprocessor (SM)" uri="https://kellenkanarios.com/OGCS6/" display-uri="OGCS6" type="local">Streaming Multiprocessor (SM)</fr:link> and switches between them on every stall. When a warp issues a memory op that misses cache it is dead for hundreds of cycles — but with dozens of resident warps the scheduler always has a runnable one, so aggregate throughput stays high even though single-warp latency is awful. This is the <fr:link href="/G4ML/" title="Thread-level parallelism" uri="https://kellenkanarios.com/G4ML/" display-uri="G4ML" type="local">Thread-level parallelism</fr:link> design point cashed out on the GPU: spend silicon on resident warp state rather than on latency-reduction machinery. The switch is free because each SM's <fr:link href="/ETWN/" title="Register file" uri="https://kellenkanarios.com/ETWN/" display-uri="ETWN" type="local">register file</fr:link> is large enough to hold every resident warp's registers at once, so a context switch is just changing which warp the scheduler picks — not saving state to memory the way a CPU <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">context switch</fr:link> must.</html:p><html:p>Two things bound how well this works. <fr:link href="/EPUD/" title="Occupancy bounds how much latency a GPU can hide" uri="https://kellenkanarios.com/EPUD/" display-uri="EPUD" type="local">Occupancy</fr:link> — how many warps are resident — sets the ceiling on latency hiding: with too few warps the scheduler runs out of runnable candidates. And the scheduler itself must stay cheap enough to choose a warp every cycle, which it does with a <fr:link href="/7SGF/" title="A two-loop scheduler makes warp readiness a constant-time scoreboard check" uri="https://kellenkanarios.com/7SGF/" display-uri="7SGF" type="local">two-loop scoreboard check</fr:link>, marshalling each issued instruction's register reads through an <fr:link href="/7QAW/" title="An operand collector serializes register reads to dodge register-file bank conflicts" uri="https://kellenkanarios.com/7QAW/" display-uri="7QAW" type="local">operand collector</fr:link>.</html:p></fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>13</fr:day></fr:date><fr:uri>https://kellenkanarios.com/XPAA/</fr:uri><fr:display-uri>XPAA</fr:display-uri><fr:route>/XPAA/</fr:route><fr:title text="GPU register scoreboard">GPU register scoreboard</fr:title><fr:taxon>Definition</fr:taxon></fr:frontmatter><fr:mainmatter><html:p>The readiness-tracking structure that lets a GPU issue instructions out of program order without any of the CAM machinery a CPU needs. A scoreboard is a small table — typically one busy bit per architectural register — that records whether some in-flight instruction is still computing a value that something else might want to read.</html:p><html:p>The protocol is trivial. When an instruction issues, it sets the busy bit on its destination register. When it writes back, it clears the bit. Before any instruction can read its sources, the hardware checks the corresponding bits: if any source is busy, the instruction (or its entire warp) waits. The check is a single table lookup per source, so the per-instruction cost is <fr:tex display="inline"><![CDATA[O(1)]]></fr:tex> regardless of how many other instructions are in flight.</html:p><html:p>This is enough because GPUs lean on <fr:link href="/G4ML/" title="Thread-level parallelism" uri="https://kellenkanarios.com/G4ML/" display-uri="G4ML" type="local">Thread-level parallelism</fr:link> rather than <fr:link href="/JAZI/" title="Instruction-level parallelism" uri="https://kellenkanarios.com/JAZI/" display-uri="JAZI" type="local">Instruction-level parallelism</fr:link>. When a warp's next instruction reads a busy register, the <fr:link href="/82U4/" title="GPU architecture" uri="https://kellenkanarios.com/82U4/" display-uri="82U4" type="local">GPU architecture</fr:link> scheduler does not stall — it picks a different ready warp from the dozens of resident warps and runs that one instead. The scoreboard's job is only to answer "is this warp ready? yes/no," which is far cheaper than the broadcast/compare a CPU <fr:link href="/UJPD/" title="Issue queue wakeup-select" uri="https://kellenkanarios.com/UJPD/" display-uri="UJPD" type="local">Issue queue wakeup-select</fr:link> does to find dependency satisfaction in a single thread's instruction window.</html:p><html:p>The size difference falls out of this. CPU issue queues hold tens of entries; GPU instruction windows can hold many warps' worth of in-flight work, because every additional warp costs a row in the scoreboard and a register-file allocation, not a quadratic CAM expansion. See <fr:link href="/RJEB/" title="ILP vs TLP" uri="https://kellenkanarios.com/RJEB/" display-uri="RJEB" type="local">ILP vs TLP</fr:link> for why the design fork sits where it does.</html:p>
  <html:div class="jms-callout" style="
   margin: 1.1rem 0;
   padding: 0.1rem 0 0.1rem 0.9rem;
@@ -201,7 +201,7 @@
   padding: 0.1rem 0 0.1rem 0.9rem;
   border-left: 2px solid rgb(219, 216, 215);
   "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> The GPU memory hierarchy is software-managed at L1 (shared memory) and coherent only at L2 — by restricting L1 to local-to-block scope, the architecture sidesteps the cost of a global <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> protocol on a thousand-way-parallel chip.</html:div>
-<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/U1FO/</fr:uri><fr:display-uri>U1FO</fr:display-uri><fr:route>/U1FO/</fr:route><fr:title text="Memory coalescing merges a warp's accesses into one transaction per cache line">Memory coalescing merges a warp's accesses into one transaction per cache line</fr:title></fr:frontmatter><fr:mainmatter><html:p>The hardware optimization on GPUs that combines simultaneous memory accesses by threads in a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link> into a single transaction — when the accessed addresses fall in the same cache line.</html:p><html:p>Global memory latency on a GPU is 400–800 cycles. Coalescing is the primary way to keep the SM fed:</html:p><html:ul><html:li>If all 32 threads in a warp access addresses within one cache line: one memory transaction, full bandwidth.</html:li>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/U1FO/</fr:uri><fr:display-uri>U1FO</fr:display-uri><fr:route>/U1FO/</fr:route><fr:title text="Memory coalescing merges a warp's accesses into one transaction per cache line">Memory coalescing merges a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link>'s accesses into one transaction per cache line</fr:title></fr:frontmatter><fr:mainmatter><html:p>The hardware optimization on GPUs that combines simultaneous memory accesses by threads in a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link> into a single transaction — when the accessed addresses fall in the same cache line.</html:p><html:p>Global memory latency on a GPU is 400–800 cycles. Coalescing is the primary way to keep the SM fed:</html:p><html:ul><html:li>If all 32 threads in a warp access addresses within one cache line: one memory transaction, full bandwidth.</html:li>
   <html:li>If addresses span multiple cache lines: the hardware serializes into multiple transactions; bandwidth drops proportionally.</html:li></html:ul>
  <html:div class="jms-callout" style="
   margin: 1.1rem 0;
@@ -354,7 +354,7 @@
 
 </html:table>
   </html:div>
-<html:p>Read down the third column and the datacenter line tells one story: each generation moves the matrix multiply further away from the individual thread. <html:code>mma.sync</html:code> is issued by a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link> and the operands live in its registers; <html:code>wgmma</html:code> is issued by a warpgroup of four and can read the <fr:tex display="inline"><![CDATA[A]]></fr:tex> operand straight out of <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link>; <html:code>tcgen05.mma</html:code> is issued by a single thread on behalf of a <fr:link href="/W2D5/" title="Cooperative Thread Array (CTA)" uri="https://kellenkanarios.com/W2D5/" display-uri="W2D5" type="local">CTA</fr:link> pair and keeps its accumulator in <fr:link href="/YCAO/" title="Tensor Memory (TMEM)" uri="https://kellenkanarios.com/YCAO/" display-uri="YCAO" type="local">Tensor Memory (TMEM)</fr:link>, a memory the register file does not see. The data movement follows the same arc — <html:code>cp.async</html:code> is a per-thread copy, <fr:link href="/JHA9/" title="Tensor Memory Accelerator (TMA)" uri="https://kellenkanarios.com/JHA9/" display-uri="JHA9" type="local">Tensor Memory Accelerator (TMA)</fr:link> is a descriptor a single thread hands to a hardware engine.</html:p><html:p>The trap in the table is <html:code>sm_120a</html:code>. Consumer Blackwell shares the marketing generation with B200 but not the tensor-core path: it has Hopper-era conveniences (TMA, clusters, <fr:link href="/OGCS8/" title="Distributed Shared Memory (GPU)" uri="https://kellenkanarios.com/OGCS8/" display-uri="OGCS8" type="local">Distributed Shared Memory (GPU)</fr:link>) and Ampere-era MMA, with no <html:code>tcgen05</html:code> and no TMEM at all. A kernel written against <html:code>sm_100a</html:code> does not merely run slower on a 5090 — it does not compile. Treat <html:code>sm_120a</html:code> as the branch point in a kernel's dispatch, not as a small delta from <html:code>sm_100a</html:code>.</html:p>
+<html:p>Read down the third column and the datacenter line tells one story: each generation moves the matrix multiply further away from the individual thread. <html:code>mma.sync</html:code> is issued by a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link> and the operands live in its registers; <html:code>wgmma</html:code> is issued by a warpgroup of four and can read the <fr:tex display="inline"><![CDATA[A]]></fr:tex> operand straight out of <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link>; <html:code>tcgen05.mma</html:code> is issued by a single thread on behalf of a <fr:link href="/W2D5/" title="Cooperative Thread Array (CTA)" uri="https://kellenkanarios.com/W2D5/" display-uri="W2D5" type="local">CTA</fr:link> pair and keeps its accumulator in <fr:link href="/YCAO/" title="Tensor Memory (TMEM)" uri="https://kellenkanarios.com/YCAO/" display-uri="YCAO" type="local">Tensor Memory (TMEM)</fr:link>, a memory the register file does not see. The data movement follows the same arc — <html:code>cp.async</html:code> is a per-thread copy, <fr:link href="/JHA9/" title="Tensor Memory Accelerator (TMA)" uri="https://kellenkanarios.com/JHA9/" display-uri="JHA9" type="local">Tensor Memory Accelerator (TMA)</fr:link> is a descriptor a single thread hands to a hardware engine.</html:p><html:p>The trap in the table is <html:code>sm_120a</html:code>. Consumer Blackwell shares the marketing generation with B200 but not the tensor-core path: it has Hopper-era conveniences (TMA, clusters, <fr:link href="/OGCS8/" title="Distributed Shared Memory (GPU)" uri="https://kellenkanarios.com/OGCS8/" display-uri="OGCS8" type="local">Distributed <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">Shared Memory (GPU)</fr:link></fr:link>) and Ampere-era MMA, with no <html:code>tcgen05</html:code> and no TMEM at all. A kernel written against <html:code>sm_100a</html:code> does not merely run slower on a 5090 — it does not compile. Treat <html:code>sm_120a</html:code> as the branch point in a kernel's dispatch, not as a small delta from <html:code>sm_100a</html:code>.</html:p>
  <html:div class="jms-callout" style="
   margin: 1.1rem 0;
   padding: 0.1rem 0 0.1rem 0.9rem;
@@ -370,6 +370,248 @@
         <fr:title text="Backlinks">Backlinks</fr:title>
       </fr:frontmatter>
       <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/CQ6W/</fr:uri>
+            <fr:display-uri>CQ6W</fr:display-uri>
+            <fr:route>/CQ6W/</fr:route>
+            <fr:title text="Triton">Triton</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>A Python-embedded <fr:link href="/5PSC/" title="Kernel DSLs" uri="https://kellenkanarios.com/5PSC/" display-uri="5PSC" type="local">DSL</fr:link> for GPU kernels in which you write <html:em>block</html:em>-level code — load a tile, do arithmetic on it, store it — and the compiler decides how the tile maps onto threads <html:span class="link-reference"><fr:link href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations" uri="https://kellenkanarios.com/tilletTritonIntermediateLanguage2019/" display-uri="tilletTritonIntermediateLanguage2019" type="local">[tilletTritonIntermediateLanguage2019]</fr:link></html:span>. That is the trade against CUDA: you give up control of the thread indexing that <fr:link href="/U1FO/" title="Memory coalescing merges a warp's accesses into one transaction per cache line" uri="https://kellenkanarios.com/U1FO/" display-uri="U1FO" type="local">memory coalescing</fr:link> depends on, and in exchange you stop writing it.</html:p>
+            <html:p>The compiler is built on <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link>, with two custom dialects, and the boundary between them is the single most useful thing to know when a kernel is slow (<fr:link href="/9N7G/" title="The prefix says which side of layout assignment" uri="https://kellenkanarios.com/9N7G/" display-uri="9N7G" type="local">The prefix says which side of layout assignment</fr:link>). <html:code>ttir</html:code> (<html:code>tt.</html:code> ops) is the target-independent tensor level — roughly what you wrote. <html:code>ttgir</html:code> (<html:code>ttg.</html:code> ops) is after layout assignment, where every tensor carries an <html:em>encoding</html:em> saying which lane holds which element (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>).</html:p>
+            <html:p><html:strong>So a Triton performance problem is one of two things, and the dialect prefix tells you which.</html:strong> At the <html:code>tt.</html:code> level it is your algorithm — the tiling, the loop structure, the arithmetic. At the <html:code>ttg.</html:code> level it is the compiler's distribution of it, and the usual culprit is a <html:code>ttg.convert_layout</html:code> that round-trips a tensor through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link> inside a loop (<fr:link href="/B4XO/" title="A convert_layout round-trips through shared memory" uri="https://kellenkanarios.com/B4XO/" display-uri="B4XO" type="local">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:link>). The second kind is invisible in your source and obvious in the IR, which is the argument for reading the IR.</html:p>
+            <html:p>From XLA's side a Triton kernel is an opaque <html:code>@triton_kernel_call</html:code> custom call (<fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">XLA custom call</fr:link>, <fr:link href="/2MM7/" title="A custom call is a black box XLA cannot fuse across" uri="https://kellenkanarios.com/2MM7/" display-uri="2MM7" type="local">A <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link> is a black box <fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA</fr:link> cannot fuse across</fr:link>), so nothing fuses across it — the same bargain <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> makes on TPU.</html:p>
+            <fr:tree show-metadata="false" toc="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>8</fr:month>
+                  <fr:day>22</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/9N7G/</fr:uri>
+                <fr:display-uri>9N7G</fr:display-uri>
+                <fr:route>/9N7G/</fr:route>
+                <fr:title text="The prefix says which side of layout assignment">The prefix says which side of layout assignment</fr:title>
+                <fr:taxon>Card</fr:taxon>
+                <fr:meta name="anki">1787404867320</fr:meta>
+                <fr:meta name="anki-deck">MLSys</fr:meta>
+              </fr:frontmatter>
+              <fr:mainmatter>
+  <html:p>What do the <html:code>tt.</html:code> and <html:code>ttg.</html:code> (<html:code>triton_gpu</html:code>) prefixes separate in <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> IR?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong><html:code>tt.</html:code></html:strong> is the target-independent tensor level: <html:code>tt.load</html:code>, <html:code>tt.store</html:code>, <html:code>tt.dot</html:code>, <html:code>tt.make_range</html:code>, and pointer arithmetic on <html:code><![CDATA[!tt.ptr<f32>]]></html:code> over block shapes. This is roughly what you wrote.
+
+  <html:strong><html:code>ttg.</html:code></html:strong> is after layout assignment: the same tensors now carry an <html:em>encoding</html:em> attribute saying how their elements are distributed across warps, lanes, and registers (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>), plus ops like <html:code>ttg.convert_layout</html:code> (<fr:link href="/B4XO/" title="A convert_layout round-trips through shared memory" uri="https://kellenkanarios.com/B4XO/" display-uri="B4XO" type="local">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:link>) and shared-memory allocation (<fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">Shared memory (GPU)</fr:link>).
+
+  <html:strong>So the prefix tells you which side of layout assignment you are on</html:strong>, and that is the division that matters when a Triton kernel is slow: a problem at the <html:code>tt.</html:code> level is your algorithm, and a problem that only appears at <html:code>ttg.</html:code> is the compiler's distribution of it. Same use of the dialect prefix as a marker of pipeline stage as <html:code>chlo</html:code> / <html:code>stablehlo</html:code> / <html:code>mhlo</html:code> (<fr:link href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal" uri="https://kellenkanarios.com/FLKN/" display-uri="FLKN" type="local">chlo desugars, <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">stablehlo</fr:link> is stable, mhlo is internal</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false" toc="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>8</fr:month>
+                  <fr:day>22</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/RI0V/</fr:uri>
+                <fr:display-uri>RI0V</fr:display-uri>
+                <fr:route>/RI0V/</fr:route>
+                <fr:title text="An encoding tiles the block across threads and warps">An encoding tiles the block across threads and warps</fr:title>
+                <fr:taxon>Card</fr:taxon>
+                <fr:meta name="anki">1787404869920</fr:meta>
+                <fr:meta name="anki-deck">MLSys</fr:meta>
+              </fr:frontmatter>
+              <fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[tensor<128x64xf16, #blocked>]]></html:code> where <html:code><![CDATA[#blocked = #ttg.blocked<{sizePerThread=[1,4], threadsPerWarp=[8,4], warpsPerCTA=[4,1], order=[1,0]}>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The encoding says how the logical <fr:tex display="inline"><![CDATA[128 \times  64]]></fr:tex> tile is distributed:
+
+  <html:ul><html:li><html:strong><html:code>sizePerThread</html:code></html:strong> — elements each thread holds per dimension; the minor-dimension entry is the vectorisation width.</html:li>
+    <html:li><html:strong><html:code>threadsPerWarp</html:code></html:strong> — how the 32 lanes of a <fr:link href="/OGCS5/" title="Warp (GPU)" uri="https://kellenkanarios.com/OGCS5/" display-uri="OGCS5" type="local">Warp (GPU)</fr:link> are arranged in two dimensions.</html:li>
+    <html:li><html:strong><html:code>warpsPerCTA</html:code></html:strong> — how warps tile the block.</html:li>
+    <html:li><html:strong><html:code>order</html:code></html:strong> — minor-to-major, so which dimension is contiguous per thread (<fr:link href="/RR6G/" title="The layout is minor-to-major" uri="https://kellenkanarios.com/RR6G/" display-uri="RR6G" type="local">The layout is minor-to-major</fr:link>).</html:li></html:ul>
+
+  <html:strong>Multiply the three lists out and you get the tile one CTA covers in one pass</html:strong>: <fr:tex display="inline"><![CDATA[1 \times  8 \times  4 = 32]]></fr:tex> rows and <fr:tex display="inline"><![CDATA[4 \times  4 \times  1 = 16]]></fr:tex> columns here, so the <fr:tex display="inline"><![CDATA[128 \times  64]]></fr:tex> shape takes <fr:tex display="inline"><![CDATA[4 \times  4]]></fr:tex> repeats. That arithmetic is the whole content of the attribute, and it is how you check by hand whether loads coalesce.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false" toc="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>8</fr:month>
+                  <fr:day>22</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/B4XO/</fr:uri>
+                <fr:display-uri>B4XO</fr:display-uri>
+                <fr:route>/B4XO/</fr:route>
+                <fr:title text="A convert_layout round-trips through shared memory">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:title>
+                <fr:taxon>Card</fr:taxon>
+                <fr:meta name="anki">1787404867395</fr:meta>
+                <fr:meta name="anki-deck">MLSys</fr:meta>
+              </fr:frontmatter>
+              <fr:mainmatter>
+  <html:p>Why is <html:code>ttg.convert_layout</html:code> the op to look for in a slow <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> kernel?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  It re-distributes a tensor from one encoding to another (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>) — typically <html:code><![CDATA[#blocked]]></html:code> to a <html:code><![CDATA[#ttg.dot_op]]></html:code> or <html:code><![CDATA[#mma]]></html:code> operand layout, because the tensor core wants its operands arranged differently from the way the loads produced them.
+
+  <html:strong>Unless the conversion happens to be a pure register permutation, it round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link> and inserts barriers.</html:strong> That is a store, a sync across the block, and a load — for data that never changed value.
+
+  One unnecessary <html:code>convert_layout</html:code> inside a loop body is a classic Triton performance bug, and it is visible in the IR long before it is visible in a profile. The layout-propagation passes exist to hoist these out of loops or eliminate them, so one that survives in the body is worth understanding rather than accepting.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+            </fr:tree>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/B4XO/</fr:uri>
+            <fr:display-uri>B4XO</fr:display-uri>
+            <fr:route>/B4XO/</fr:route>
+            <fr:title text="A convert_layout round-trips through shared memory">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404867395</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>Why is <html:code>ttg.convert_layout</html:code> the op to look for in a slow <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> kernel?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  It re-distributes a tensor from one encoding to another (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>) — typically <html:code><![CDATA[#blocked]]></html:code> to a <html:code><![CDATA[#ttg.dot_op]]></html:code> or <html:code><![CDATA[#mma]]></html:code> operand layout, because the tensor core wants its operands arranged differently from the way the loads produced them.
+
+  <html:strong>Unless the conversion happens to be a pure register permutation, it round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link> and inserts barriers.</html:strong> That is a store, a sync across the block, and a load — for data that never changed value.
+
+  One unnecessary <html:code>convert_layout</html:code> inside a loop body is a classic Triton performance bug, and it is visible in the IR long before it is visible in a profile. The layout-propagation passes exist to hoist these out of loops or eliminate them, so one that survives in the body is worth understanding rather than accepting.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/9N7G/</fr:uri>
+            <fr:display-uri>9N7G</fr:display-uri>
+            <fr:route>/9N7G/</fr:route>
+            <fr:title text="The prefix says which side of layout assignment">The prefix says which side of layout assignment</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404867320</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>What do the <html:code>tt.</html:code> and <html:code>ttg.</html:code> (<html:code>triton_gpu</html:code>) prefixes separate in <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> IR?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong><html:code>tt.</html:code></html:strong> is the target-independent tensor level: <html:code>tt.load</html:code>, <html:code>tt.store</html:code>, <html:code>tt.dot</html:code>, <html:code>tt.make_range</html:code>, and pointer arithmetic on <html:code><![CDATA[!tt.ptr<f32>]]></html:code> over block shapes. This is roughly what you wrote.
+
+  <html:strong><html:code>ttg.</html:code></html:strong> is after layout assignment: the same tensors now carry an <html:em>encoding</html:em> attribute saying how their elements are distributed across warps, lanes, and registers (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>), plus ops like <html:code>ttg.convert_layout</html:code> (<fr:link href="/B4XO/" title="A convert_layout round-trips through shared memory" uri="https://kellenkanarios.com/B4XO/" display-uri="B4XO" type="local">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:link>) and shared-memory allocation (<fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">Shared memory (GPU)</fr:link>).
+
+  <html:strong>So the prefix tells you which side of layout assignment you are on</html:strong>, and that is the division that matters when a Triton kernel is slow: a problem at the <html:code>tt.</html:code> level is your algorithm, and a problem that only appears at <html:code>ttg.</html:code> is the compiler's distribution of it. Same use of the dialect prefix as a marker of pipeline stage as <html:code>chlo</html:code> / <html:code>stablehlo</html:code> / <html:code>mhlo</html:code> (<fr:link href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal" uri="https://kellenkanarios.com/FLKN/" display-uri="FLKN" type="local">chlo desugars, <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">stablehlo</fr:link> is stable, mhlo is internal</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
             <fr:authors>
@@ -499,13 +741,55 @@
 
 </html:table>
   </html:div>
-<html:p>Read down the third column and the datacenter line tells one story: each generation moves the matrix multiply further away from the individual thread. <html:code>mma.sync</html:code> is issued by a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link> and the operands live in its registers; <html:code>wgmma</html:code> is issued by a warpgroup of four and can read the <fr:tex display="inline"><![CDATA[A]]></fr:tex> operand straight out of <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link>; <html:code>tcgen05.mma</html:code> is issued by a single thread on behalf of a <fr:link href="/W2D5/" title="Cooperative Thread Array (CTA)" uri="https://kellenkanarios.com/W2D5/" display-uri="W2D5" type="local">CTA</fr:link> pair and keeps its accumulator in <fr:link href="/YCAO/" title="Tensor Memory (TMEM)" uri="https://kellenkanarios.com/YCAO/" display-uri="YCAO" type="local">Tensor Memory (TMEM)</fr:link>, a memory the register file does not see. The data movement follows the same arc — <html:code>cp.async</html:code> is a per-thread copy, <fr:link href="/JHA9/" title="Tensor Memory Accelerator (TMA)" uri="https://kellenkanarios.com/JHA9/" display-uri="JHA9" type="local">Tensor Memory Accelerator (TMA)</fr:link> is a descriptor a single thread hands to a hardware engine.</html:p><html:p>The trap in the table is <html:code>sm_120a</html:code>. Consumer Blackwell shares the marketing generation with B200 but not the tensor-core path: it has Hopper-era conveniences (TMA, clusters, <fr:link href="/OGCS8/" title="Distributed Shared Memory (GPU)" uri="https://kellenkanarios.com/OGCS8/" display-uri="OGCS8" type="local">Distributed Shared Memory (GPU)</fr:link>) and Ampere-era MMA, with no <html:code>tcgen05</html:code> and no TMEM at all. A kernel written against <html:code>sm_100a</html:code> does not merely run slower on a 5090 — it does not compile. Treat <html:code>sm_120a</html:code> as the branch point in a kernel's dispatch, not as a small delta from <html:code>sm_100a</html:code>.</html:p>
+<html:p>Read down the third column and the datacenter line tells one story: each generation moves the matrix multiply further away from the individual thread. <html:code>mma.sync</html:code> is issued by a <fr:link href="/X9VZ/" title="Warp" uri="https://kellenkanarios.com/X9VZ/" display-uri="X9VZ" type="local">warp</fr:link> and the operands live in its registers; <html:code>wgmma</html:code> is issued by a warpgroup of four and can read the <fr:tex display="inline"><![CDATA[A]]></fr:tex> operand straight out of <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link>; <html:code>tcgen05.mma</html:code> is issued by a single thread on behalf of a <fr:link href="/W2D5/" title="Cooperative Thread Array (CTA)" uri="https://kellenkanarios.com/W2D5/" display-uri="W2D5" type="local">CTA</fr:link> pair and keeps its accumulator in <fr:link href="/YCAO/" title="Tensor Memory (TMEM)" uri="https://kellenkanarios.com/YCAO/" display-uri="YCAO" type="local">Tensor Memory (TMEM)</fr:link>, a memory the register file does not see. The data movement follows the same arc — <html:code>cp.async</html:code> is a per-thread copy, <fr:link href="/JHA9/" title="Tensor Memory Accelerator (TMA)" uri="https://kellenkanarios.com/JHA9/" display-uri="JHA9" type="local">Tensor Memory Accelerator (TMA)</fr:link> is a descriptor a single thread hands to a hardware engine.</html:p><html:p>The trap in the table is <html:code>sm_120a</html:code>. Consumer Blackwell shares the marketing generation with B200 but not the tensor-core path: it has Hopper-era conveniences (TMA, clusters, <fr:link href="/OGCS8/" title="Distributed Shared Memory (GPU)" uri="https://kellenkanarios.com/OGCS8/" display-uri="OGCS8" type="local">Distributed <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">Shared Memory (GPU)</fr:link></fr:link>) and Ampere-era MMA, with no <html:code>tcgen05</html:code> and no TMEM at all. A kernel written against <html:code>sm_100a</html:code> does not merely run slower on a 5090 — it does not compile. Treat <html:code>sm_120a</html:code> as the branch point in a kernel's dispatch, not as a small delta from <html:code>sm_100a</html:code>.</html:p>
  <html:div class="jms-callout" style="
   margin: 1.1rem 0;
   padding: 0.1rem 0 0.1rem 0.9rem;
   border-left: 2px solid rgb(219, 216, 215);
   "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> The trailing <html:code>a</html:code> means <html:em>architecture-specific</html:em>: the target enables instructions exclusive to that exact chip and gives up forward compatibility, so the resulting cubin will not PTX-JIT onto a later architecture the way a plain <html:code>sm_90</html:code> binary would. Every generation from Hopper on ships its tensor-core ISA only behind an <html:code>a</html:code> target, which is why a real build matrix has one entry per row above rather than one per generation. <html:code>sm_121a</html:code> is the extreme case — the same instruction surface as <html:code>sm_120a</html:code> and still its own cubin.</html:div>
 </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>6</fr:month>
+              <fr:day>1</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/OGCS8/</fr:uri>
+            <fr:display-uri>OGCS8</fr:display-uri>
+            <fr:route>/OGCS8/</fr:route>
+            <fr:title text="Distributed Shared Memory (GPU)">Distributed <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">Shared Memory (GPU)</fr:link></fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>Because the <fr:link href="/W2D5/" title="Cooperative Thread Array (CTA)" uri="https://kellenkanarios.com/W2D5/" display-uri="W2D5" type="local">CTAs</fr:link> in a <fr:link href="/695N/" title="Thread block cluster" uri="https://kellenkanarios.com/695N/" display-uri="695N" type="local">cluster</fr:link> live on neighboring <fr:link href="/OGCS6/" title="Streaming Multiprocessor (SM)" uri="https://kellenkanarios.com/OGCS6/" display-uri="OGCS6" type="local">SMs</fr:link> connected by a dedicated SM-to-SM network, the shared memory of all CTAs in the cluster is exposed as a single logical address space. A thread in one CTA can read/write/atomic into another CTA's shared memory directly, without round-tripping through global memory (L2/DRAM).</html:p>
+            <html:div class="code-figure">
+              <html:div class="code-filename">cooperative_group.cu</html:div>
+              <html:pre>
+                <html:code class="language-cpp"><![CDATA[#include <cooperative_groups.h>
+namespace cg = cooperative_groups;
+
+__global__ void __cluster_dims__(2,1,1) kernel(...) {
+    cg::cluster_group cluster = cg::this_cluster();
+    extern __shared__ int smem[];
+
+    // Get a pointer to another CTA's shared memory
+    unsigned int rank = cluster.block_rank();      // my CTA's id in cluster
+    int *remote = cluster.map_shared_rank(smem, /*target rank=*/ rank ^ 1);
+
+    // Now read/write the neighbor's shared memory
+    remote[threadIdx.x] = threadIdx.x;
+
+    cluster.sync();   // cluster-wide barrier
+}]]></html:code>
+              </html:pre>
+            </html:div>
+          </fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
@@ -722,8 +1006,8 @@ Unfortunately, we cannot get around the second pass to compute the normalized ou
             <html:p>Two organizational families:</html:p>
             <html:ul><html:li><fr:link href="/8C2H/" title="Snoop-based coherence keeps caches consistent by watching a shared bus" uri="https://kellenkanarios.com/8C2H/" display-uri="8C2H" type="local">snoop-based coherence</fr:link> — every cache watches a shared bus and reacts to other cores' traffic. Scales to ~8 cores.</html:li>
   <html:li><fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory-based coherence</fr:link> — a structure tracks who has a copy of each line; coherence messages are point-to-point. Scales to hundreds of cores at the cost of an extra hop.</html:li></html:ul>
-            <html:p>The concrete state machines are protocols like <fr:link href="/EYXU/" title="MSI protocol" uri="https://kellenkanarios.com/EYXU/" display-uri="EYXU" type="local">MSI protocol</fr:link>, <fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link>, <fr:link href="/AI2B/" title="MOESI protocol" uri="https://kellenkanarios.com/AI2B/" display-uri="AI2B" type="local">MOESI protocol</fr:link>, and DEC Firefly, each adding states to handle more cases or to optimize specific sharing patterns. A worked implementation of directory-based MESI in Murphi lives in <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link>.</html:p>
-            <html:p>Worked instance: <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in Murphi</fr:link> implements directory-based MESI in Murphi.</html:p>
+            <html:p>The concrete state machines are protocols like <fr:link href="/EYXU/" title="MSI protocol" uri="https://kellenkanarios.com/EYXU/" display-uri="EYXU" type="local">MSI protocol</fr:link>, <fr:link href="/30XT/" title="MESI protocol" uri="https://kellenkanarios.com/30XT/" display-uri="30XT" type="local">MESI protocol</fr:link>, <fr:link href="/AI2B/" title="MOESI protocol" uri="https://kellenkanarios.com/AI2B/" display-uri="AI2B" type="local">MOESI protocol</fr:link>, and DEC Firefly, each adding states to handle more cases or to optimize specific sharing patterns. A worked implementation of directory-based MESI in Murphi lives in <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in <fr:link href="/CMAL/" title="Murphi" uri="https://kellenkanarios.com/CMAL/" display-uri="CMAL" type="local">Murphi</fr:link></fr:link>.</html:p>
+            <html:p>Worked instance: <fr:link href="/HHZO/" title="Implementing Directory-based MESI in Murphi" uri="https://kellenkanarios.com/HHZO/" display-uri="HHZO" type="local">Implementing Directory-based MESI in <fr:link href="/CMAL/" title="Murphi" uri="https://kellenkanarios.com/CMAL/" display-uri="CMAL" type="local">Murphi</fr:link></fr:link> implements directory-based MESI in Murphi.</html:p>
           </fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>

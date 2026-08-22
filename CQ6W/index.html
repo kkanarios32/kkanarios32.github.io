@@ -1,0 +1,289 @@
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script>
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+  });
+});
+
+          </script><script>
+window.addEventListener('load', function () { setTimeout(function () {
+  // Openers get the same treatment from the other side: left alone, the
+  // paren in "(\(x\) or \(y\))" can hang at the end of a line.
+  var CLOSE = /^[.,;:!?)\]}%'"’”…]+/;
+  var OPEN = /[(\[{‘“]+$/;
+
+  document.querySelectorAll('.katex').forEach(function (math) {
+    // Display math is a block of its own; nothing can be orphaned beside it.
+    if (math.closest('.katex-display')) return;
+
+    // KaTeX's auto-render gives every formula a bare <span> of its own and
+    // renders into that, so the text around a formula is a sibling of the
+    // wrapper and not of .katex itself. Climb to the outermost span that
+    // holds nothing but this formula, and treat that as the atom.
+    var node = math;
+    while (node.parentNode &&
+           node.parentNode.childNodes.length === 1 &&
+           node.parentNode.nodeName.toLowerCase() === 'span') {
+      node = node.parentNode;
+    }
+
+    var before = node.previousSibling, after = node.nextSibling;
+    var lead = '', trail = '';
+    if (after && after.nodeType === 3 && CLOSE.test(after.data)) {
+      trail = after.data.match(CLOSE)[0];
+    }
+    if (before && before.nodeType === 3 && OPEN.test(before.data)) {
+      lead = before.data.match(OPEN)[0];
+    }
+    if (!lead && !trail) return;
+
+    // createElementNS, not createElement: the page is an XML document that
+    // the browser transforms with this stylesheet, and in an XML document
+    // createElement yields an element in the null namespace — a <span> that
+    // is not an HTML span, and that nothing styles.
+    var glue = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
+    glue.setAttribute('style', 'white-space: nowrap');
+    node.parentNode.insertBefore(glue, node);
+    if (lead) {
+      before.data = before.data.slice(0, before.data.length - lead.length);
+      glue.appendChild(document.createTextNode(lead));
+    }
+    glue.appendChild(node);
+    if (trail) {
+      after.data = after.data.slice(trail.length);
+      glue.appendChild(document.createTextNode(trail));
+    }
+  });
+}, 0); });
+          </script><script>
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+      if (found) reveal(found);
+    }
+
+    // Keep the marked row inside the rail. The rail is capped at the viewport
+    // and scrolls internally, so on a long contents the row being read drifts
+    // out of sight and the highlight becomes useless — you can see that you
+    // are somewhere, but not where.
+    //
+    // nav.scrollTop is set directly rather than calling scrollIntoView, which
+    // walks up the ancestor chain and will scroll the window as readily as the
+    // rail: the page would yank itself around while the reader is scrolling
+    // it. Assigning scrollTop can move nothing but the rail. Nudged only when
+    // the row is actually out of the band, so an entry already comfortably in
+    // view does not cause the rail to twitch on every section boundary.
+    function reveal(link) {
+      var pad = 32;
+      var railTop = nav.getBoundingClientRect().top;
+      var railBottom = nav.getBoundingClientRect().bottom;
+      var row = link.getBoundingClientRect();
+      if (row.top < railTop + pad) {
+        nav.scrollTop -= (railTop + pad) - row.top;
+      } else if (row.bottom > railBottom - pad) {
+        nav.scrollTop += row.bottom - (railBottom - pad);
+      }
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
+          </script><title>Triton</title><meta property="og:title" content="Triton"></meta></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>Triton <a class="slug" href="/CQ6W/">[CQ6W]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+    <p xmlns="http://www.w3.org/1999/xhtml">A Python-embedded <span xmlns="" class="link local"><a href="/5PSC/" title="Kernel DSLs [5PSC]">DSL</a></span> for GPU kernels in which you write <em>block</em>-level code — load a tile, do arithmetic on it, store it — and the compiler decides how the tile maps onto threads <span class="link-reference"><span xmlns="" class="link local"><a href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations [tilletTritonIntermediateLanguage2019]">[tilletTritonIntermediateLanguage2019]</a></span></span>. That is the trade against CUDA: you give up control of the thread indexing that <span xmlns="" class="link local"><a href="/U1FO/" title="Memory coalescing merges a warp's accesses into one transaction per cache line [U1FO]">memory coalescing</a></span> depends on, and in exchange you stop writing it.</p>
+    <p xmlns="http://www.w3.org/1999/xhtml">The compiler is built on <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span>, with two custom dialects, and the boundary between them is the single most useful thing to know when a kernel is slow (<span xmlns="" class="link local"><a href="/9N7G/" title="The prefix says which side of layout assignment [9N7G]">The prefix says which side of layout assignment</a></span>). <code>ttir</code> (<code>tt.</code> ops) is the target-independent tensor level — roughly what you wrote. <code>ttgir</code> (<code>ttg.</code> ops) is after layout assignment, where every tensor carries an <em>encoding</em> saying which lane holds which element (<span xmlns="" class="link local"><a href="/RI0V/" title="An encoding tiles the block across threads and warps [RI0V]">An encoding tiles the block across threads and warps</a></span>).</p>
+    <p xmlns="http://www.w3.org/1999/xhtml"><strong>So a Triton performance problem is one of two things, and the dialect prefix tells you which.</strong> At the <code>tt.</code> level it is your algorithm — the tiling, the loop structure, the arithmetic. At the <code>ttg.</code> level it is the compiler's distribution of it, and the usual culprit is a <code>ttg.convert_layout</code> that round-trips a tensor through <span xmlns="" class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">shared memory</a></span> inside a loop (<span xmlns="" class="link local"><a href="/B4XO/" title="A convert_layout round-trips through shared memory [B4XO]">A convert_layout round-trips through </a><span class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">shared memory</a></span></span>). The second kind is invisible in your source and obvious in the IR, which is the argument for reading the IR.</p>
+    <p xmlns="http://www.w3.org/1999/xhtml">From XLA's side a Triton kernel is an opaque <code>@triton_kernel_call</code> custom call (<span xmlns="" class="link local"><a href="/M18X/" title="XLA custom call [M18X]">XLA custom call</a></span>, <span xmlns="" class="link local"><a href="/2MM7/" title="A custom call is a black box XLA cannot fuse across [2MM7]">A </a><span class="link local"><a href="/M18X/" title="XLA custom call [M18X]">custom call</a></span><a href="/2MM7/" title="A custom call is a black box XLA cannot fuse across [2MM7]"> is a black box </a><span class="link local"><a href="/M74N/" title="XLA Compilation [M74N]">XLA</a></span><a href="/2MM7/" title="A custom call is a black box XLA cannot fuse across [2MM7]"> cannot fuse across</a></span>), so nothing fuses across it — the same bargain <span xmlns="" class="link local"><a href="/060Z/" title="Pallas [060Z]">Pallas</a></span> makes on TPU.</p>
+    <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>The prefix says which side of layout assignment <a class="slug" href="/9N7G/">[9N7G]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What do the <code>tt.</code> and <code>ttg.</code> (<code>triton_gpu</code>) prefixes separate in <span xmlns="" class="link local"><a href="/CQ6W/" title="Triton [CQ6W]">Triton</a></span> IR?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <strong><code>tt.</code></strong> is the target-independent tensor level: <code>tt.load</code>, <code>tt.store</code>, <code>tt.dot</code>, <code>tt.make_range</code>, and pointer arithmetic on <code>!tt.ptr&lt;f32&gt;</code> over block shapes. This is roughly what you wrote.
+
+  <strong><code>ttg.</code></strong> is after layout assignment: the same tensors now carry an <em>encoding</em> attribute saying how their elements are distributed across warps, lanes, and registers (<span xmlns="" class="link local"><a href="/RI0V/" title="An encoding tiles the block across threads and warps [RI0V]">An encoding tiles the block across threads and warps</a></span>), plus ops like <code>ttg.convert_layout</code> (<span xmlns="" class="link local"><a href="/B4XO/" title="A convert_layout round-trips through shared memory [B4XO]">A convert_layout round-trips through </a><span class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">shared memory</a></span></span>) and shared-memory allocation (<span xmlns="" class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">Shared memory (GPU)</a></span>).
+
+  <strong>So the prefix tells you which side of layout assignment you are on</strong>, and that is the division that matters when a Triton kernel is slow: a problem at the <code>tt.</code> level is your algorithm, and a problem that only appears at <code>ttg.</code> is the compiler's distribution of it. Same use of the dialect prefix as a marker of pipeline stage as <code>chlo</code> / <code>stablehlo</code> / <code>mhlo</code> (<span xmlns="" class="link local"><a href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal [FLKN]">chlo desugars, </a><span class="link local"><a href="/84N5/" title="StableHLO [84N5]">stablehlo</a></span><a href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal [FLKN]"> is stable, mhlo is internal</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+    <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>An encoding tiles the block across threads and warps <a class="slug" href="/RI0V/">[RI0V]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read <code>tensor&lt;128x64xf16, #blocked&gt;</code> where <code>#blocked = #ttg.blocked&lt;{sizePerThread=[1,4], threadsPerWarp=[8,4], warpsPerCTA=[4,1], order=[1,0]}&gt;</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  The encoding says how the logical \(128 \times  64\) tile is distributed:
+
+  <ul><li><strong><code>sizePerThread</code></strong> — elements each thread holds per dimension; the minor-dimension entry is the vectorisation width.</li>
+    <li><strong><code>threadsPerWarp</code></strong> — how the 32 lanes of a <span xmlns="" class="link local"><a href="/OGCS5/" title="Warp (GPU) [OGCS5]">Warp (GPU)</a></span> are arranged in two dimensions.</li>
+    <li><strong><code>warpsPerCTA</code></strong> — how warps tile the block.</li>
+    <li><strong><code>order</code></strong> — minor-to-major, so which dimension is contiguous per thread (<span xmlns="" class="link local"><a href="/RR6G/" title="The layout is minor-to-major [RR6G]">The layout is minor-to-major</a></span>).</li></ul>
+
+  <strong>Multiply the three lists out and you get the tile one CTA covers in one pass</strong>: \(1 \times  8 \times  4 = 32\) rows and \(4 \times  4 \times  1 = 16\) columns here, so the \(128 \times  64\) shape takes \(4 \times  4\) repeats. That arithmetic is the whole content of the attribute, and it is how you check by hand whether loads coalesce.
+</details>
+</div>
+
+
+
+</details></section>
+    <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>A convert_layout round-trips through <span class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">shared memory</a></span> <a class="slug" href="/B4XO/">[B4XO]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Why is <code>ttg.convert_layout</code> the op to look for in a slow <span xmlns="" class="link local"><a href="/CQ6W/" title="Triton [CQ6W]">Triton</a></span> kernel?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  It re-distributes a tensor from one encoding to another (<span xmlns="" class="link local"><a href="/RI0V/" title="An encoding tiles the block across threads and warps [RI0V]">An encoding tiles the block across threads and warps</a></span>) — typically <code>#blocked</code> to a <code>#ttg.dot_op</code> or <code>#mma</code> operand layout, because the tensor core wants its operands arranged differently from the way the loads produced them.
+
+  <strong>Unless the conversion happens to be a pure register permutation, it round-trips through <span xmlns="" class="link local"><a href="/8GZN/" title="Shared memory (GPU) [8GZN]">shared memory</a></span> and inserts barriers.</strong> That is a store, a sync across the block, and a load — for data that never changed value.
+
+  One unnecessary <code>convert_layout</code> inside a loop body is a classic Triton performance bug, and it is visible in the IR long before it is visible in a profile. The layout-propagation passes exist to hoist these out of loops or eliminate them, so one that survives in the body is worth understanding rather than accepting.
+</details>
+</div>
+
+
+
+</details></section>
+  </details></section><footer xmlns="">
+    <section lang="en" class="block hide-metadata"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon"></span>References  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry" data-taxon="Reference"><header><h1>
+<span class="taxon">Reference. </span><a class="index-entry-link" href="/tilletTritonIntermediateLanguage2019/">Triton: An intermediate language and compiler for tiled neural network computations</a> <a class="slug" href="/tilletTritonIntermediateLanguage2019/">[tilletTritonIntermediateLanguage2019]</a> </h1>
+<div class="metadata">
+<ul><li class="meta-item">June, 2019</li></ul>
+<br><ul><li class="meta-item"><address class="author">Philippe Tillet,  H. T. Kung,  David Cox</address></li></ul>
+<br><ul><li class="meta-item"><a class="doi link" href="https://www.doi.org/10.1145/3315508.3329973">10.1145/3315508.3329973</a></li></ul>
+</div></header></section>
+      </details></section>
+    
+    <section lang="en" class="block hide-metadata"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/M3MH/">Mosaic</a> <a class="slug" href="/M3MH/">[M3MH]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/84N5/">StableHLO</a> <a class="slug" href="/84N5/">[84N5]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        
+        
+        
+        
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        
+        
+        
+        
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/M18X/">XLA custom call</a> <a class="slug" href="/M18X/">[M18X]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/IR7B/">MLIR</a> <a class="slug" href="/IR7B/">[IR7B]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/5PSC/">Kernel DSLs</a> <a class="slug" href="/5PSC/">[5PSC]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 13, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/8GZN/">Shared memory (GPU)</a> <a class="slug" href="/8GZN/">[8GZN]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/U1FO/">Memory coalescing merges a <span class="link local"><a href="/X9VZ/" title="Warp [X9VZ]">warp</a></span>'s accesses into one transaction per cache line</a> <a class="slug" href="/U1FO/">[U1FO]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 12, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/060Z/">Pallas</a> <a class="slug" href="/060Z/">[060Z]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 23, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
+    
+  </footer></article></div></body></html>

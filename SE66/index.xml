@@ -773,7 +773,7 @@ struct proc {
                     <html:p>The mechanism rests on three concepts:</html:p>
                     <html:ol><html:li>The <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link> — per-process map from virtual page number to physical page number.</html:li>
   <html:li>The <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link> — small hardware cache that absorbs the cost of consulting the page table on every access.</html:li>
-  <html:li>The <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link> — the page table is itself paged, so processes only pay for the parts of the address space they use.</html:li></html:ol>
+  <html:li>The <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">page table</fr:link></fr:link> — the page table is itself paged, so processes only pay for the parts of the address space they use.</html:li></html:ol>
                     <html:p>When a process touches a virtual address whose page isn't in physical memory, the page table's <html:em>present bit</html:em> is unset; the hardware traps to the OS as a <html:em>page fault</html:em>, and the OS retrieves the page from swap. The eviction policies that decide what to swap out are covered by <fr:link href="/HK73/" title="Page replacement" uri="https://kellenkanarios.com/HK73/" display-uri="HK73" type="local">Page replacement</fr:link>.</html:p>
                     <html:p>The two-level decomposition did not arrive fully formed. The <fr:link href="/HBFS/" title="Segmented page tables" uri="https://kellenkanarios.com/HBFS/" display-uri="HBFS" type="local">Segmented page tables</fr:link> design tried to give each named segment of the address space its own variable-sized page table; the fragmentation that produced is what motivated the move to fixed-size paged page tables.</html:p>
                     <fr:tree show-metadata="false">
@@ -813,7 +813,7 @@ struct proc {
   border-left: 2px solid rgb(121, 65, 66);
   "><html:span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</html:span> Translation requires accessing the table in memory, which is slow on every memory reference. Mitigated by the <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link>.</html:div>
 
-<html:p>The size problem is mitigated by <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link>, which only allocates the parts of the table that are actually used.</html:p></fr:mainmatter>
+<html:p>The size problem is mitigated by <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">page table</fr:link></fr:link>, which only allocates the parts of the table that are actually used.</html:p></fr:mainmatter>
                     </fr:tree>
                     <fr:tree show-metadata="false">
                       <fr:frontmatter>
@@ -893,7 +893,7 @@ struct proc {
                         <html:p>The mechanism has appealing side benefits. Each segment carries its own protection bits, so the architecture can enforce no-execute on the stack or read-only on the code segment at the segment-table level without per-page complexity. Translation overhead is bounded by the segment count, which is typically very small.</html:p>
                         <html:p>The problems are what killed it. Page tables are now variable-sized objects that still have to live in contiguous physical memory. The stack segment's page table might be small; the heap's might be large and grow over time. Allocating, growing, and freeing variably-sized tables in kernel memory produces external fragmentation — exactly the headache pure segmentation has at the user level, now pushed down a layer. If the heap outgrows its current page table, the kernel has to allocate a larger contiguous chunk and copy.</html:p>
                         <html:p>Secondary issues compound. Translation costs two memory references (segment table, then page table) before reaching data, which hurts without a <fr:link href="/FGOK/" title="Translation lookaside buffer" uri="https://kellenkanarios.com/FGOK/" display-uri="FGOK" type="local">Translation lookaside buffer</fr:link>. The segment count is fixed by the architecture, which is awkward for programs whose layout does not fit "code/data/stack/heap" — a sprawling memory-mapped region or a JIT wanting many small protection domains has nowhere to go. And segmentation tends to leak into the programming model: x86 carried segment registers around for decades after they had stopped being useful.</html:p>
-                        <html:p>The fix that won is the <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level page table</fr:link> — page the page table itself, in fixed-size chunks, and recover the "only pay for what you use" property without variable-sized contiguous allocations. Every modern architecture descends from that decision.</html:p>
+                        <html:p>The fix that won is the <fr:link href="/VX1M/" title="Multi-level page table" uri="https://kellenkanarios.com/VX1M/" display-uri="VX1M" type="local">Multi-level <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">page table</fr:link></fr:link> — page the page table itself, in fixed-size chunks, and recover the "only pay for what you use" property without variable-sized contiguous allocations. Every modern architecture descends from that decision.</html:p>
                       </fr:mainmatter>
                     </fr:tree>
                     <fr:tree show-metadata="false">
@@ -911,7 +911,7 @@ struct proc {
                         <fr:uri>https://kellenkanarios.com/VX1M/</fr:uri>
                         <fr:display-uri>VX1M</fr:display-uri>
                         <fr:route>/VX1M/</fr:route>
-                        <fr:title text="Multi-level page table">Multi-level page table</fr:title>
+                        <fr:title text="Multi-level page table">Multi-level <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">page table</fr:link></fr:title>
                       </fr:frontmatter>
                       <fr:mainmatter><html:p>A page table that is itself paged: instead of one linear array of PTEs, the table is split into page-sized chunks indexed by a top-level <html:em>page directory</html:em>. Subtrees of the address space that are entirely unused get a single null entry at the top level — no second-level page is allocated for them. This is the design that displaced <fr:link href="/HBFS/" title="Segmented page tables" uri="https://kellenkanarios.com/HBFS/" display-uri="HBFS" type="local">Segmented page tables</fr:link> — it preserves the "don't pay for empty regions" property while keeping every piece of the structure page-sized, eliminating the variable-allocation fragmentation that doomed the segmented version.</html:p><html:figure><html:img width="80%" src="/bafkrmihf7gcws2u2ay4ecuwqwpgnziozltgjbsn7zo6x5bs6ismwq76jby.png" /></html:figure><html:p>Advantages over a linear <fr:link href="/WALE/" title="Page table" uri="https://kellenkanarios.com/WALE/" display-uri="WALE" type="local">Page table</fr:link>:</html:p><html:ol><html:li>Fits easily in memory — only allocate a second-level page when an entry in it is used.</html:li>
   <html:li>Memory cost is proportional to the amount of address space actually in use.</html:li></html:ol>
@@ -1314,7 +1314,143 @@ procedure central_barrier
         <fr:authors />
         <fr:title text="Backlinks">Backlinks</fr:title>
       </fr:frontmatter>
-      <fr:mainmatter />
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2025</fr:year>
+              <fr:month>6</fr:month>
+              <fr:day>23</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/007V/</fr:uri>
+            <fr:display-uri>007V</fr:display-uri>
+            <fr:route>/007V/</fr:route>
+            <fr:title text="TPE Processes Intro">TPE <fr:link href="/SE66/" title="Processes" uri="https://kellenkanarios.com/SE66/" display-uri="SE66" type="local">Processes</fr:link> Intro</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>The process abstraction, what the OS has to support to maintain it, and the data structure that holds it together.</html:p>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/FCHM/</fr:uri>
+                <fr:display-uri>FCHM</fr:display-uri>
+                <fr:route>/FCHM/</fr:route>
+                <fr:title text="Process">Process</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>A running program, plus all the state the OS needs to pause it and resume it later. A process consists of:</html:p><html:ol><html:li><html:strong>Memory</html:strong>: an <fr:link href="/7MH4/" title="Address space" uri="https://kellenkanarios.com/7MH4/" display-uri="7MH4" type="local">Address space</fr:link> holding the program's code, stack, and heap.</html:li>
+  <html:li><html:strong>Registers</html:strong>: general-purpose registers carrying current computation, plus special-purpose registers:</html:li>
+  <html:ul><html:li><html:strong>Program counter (PC)</html:strong>: the next instruction to run.</html:li>
+    <html:li><html:strong>Stack pointer and frame pointer</html:strong>: where the process sits on its stack.</html:li></html:ul></html:ol><html:p>A process moves between three <html:strong>states</html:strong>:</html:p><html:ul><html:li><html:em>running</html:em>: currently on a CPU.</html:li>
+  <html:li><html:em>ready</html:em>: runnable, waiting for the <fr:link href="/B8GC/" title="Scheduling" uri="https://kellenkanarios.com/B8GC/" display-uri="B8GC" type="local">Scheduling</fr:link> to give it a CPU.</html:li>
+  <html:li><html:em>blocked</html:em>: waiting on I/O or another event, not runnable.</html:li></html:ul>
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> Threads (see <fr:link href="/16TG/" title="Concurrency Intro" uri="https://kellenkanarios.com/16TG/" display-uri="16TG" type="local">Concurrency Intro</fr:link>) share an address space within a process but each have their own PC, register set, and stack.</html:div>
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/JJ45/</fr:uri>
+                <fr:display-uri>JJ45</fr:display-uri>
+                <fr:route>/JJ45/</fr:route>
+                <fr:title text="Process API">Process API</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>The minimum operations any OS must expose for working with <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>es:</html:p><html:ol><html:li><html:strong>Create</html:strong>: load a program from disk, set up its address space (stack, heap, code), and jump to <html:code>main</html:code>. The OS also initializes <html:code>argc</html:code>/<html:code>argv</html:code>.</html:li>
+  <html:li><html:strong>Destroy</html:strong>: kill a misbehaving or unwanted process.</html:li>
+  <html:li><html:strong>Wait</html:strong>: block until another process completes — useful for ordering dependent work.</html:li>
+  <html:li><html:strong>Miscellaneous control</html:strong>: e.g. suspend / resume.</html:li>
+  <html:li><html:strong>Status</html:strong>: report on running processes.</html:li></html:ol>
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> The stack is allocated up front. The heap starts small and grows via <html:code>malloc</html:code>, which calls into the OS (<html:code>brk</html:code>/<html:code>sbrk</html:code>) when it runs out of headroom.</html:div>
+<html:p>On Unix, the concrete realization of this API uses <html:code>fork()</html:code>, <html:code>wait()</html:code>, and <html:code>exec()</html:code> — covered separately.</html:p></fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>5</fr:month>
+                  <fr:day>12</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/JE53/</fr:uri>
+                <fr:display-uri>JE53</fr:display-uri>
+                <fr:route>/JE53/</fr:route>
+                <fr:title text="Process control block">Process control block</fr:title>
+              </fr:frontmatter>
+              <fr:mainmatter><html:p>The kernel-side data structure holding all per-process state. There is one PCB per <fr:link href="/FCHM/" title="Process" uri="https://kellenkanarios.com/FCHM/" display-uri="FCHM" type="local">Process</fr:link>, threaded together into the <html:em>process list</html:em>. The PCB is what the OS reads and writes during a <fr:link href="/OKCI/" title="Context switch" uri="https://kellenkanarios.com/OKCI/" display-uri="OKCI" type="local">Context switch</fr:link>: the saved register set lives here, as does the process state, the open files, the parent pointer, and so on.</html:p><html:p>An example from <html:code>xv6</html:code>:</html:p><html:pre><html:code class="language-c"><![CDATA[// the registers xv6 will save and restore
+// to stop and subsequently restart a process
+struct context {
+  int eip;
+  int esp;
+  int ebx;
+  int ecx;
+  int edx;
+  int esi;
+  int edi;
+  int ebp;
+};
+// the different states a process can be in
+enum proc_state { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+// the information xv6 tracks about each process
+// including its register context and state
+struct proc {
+  char *mem;                 // Start of process memory
+  uint sz;                   // Size of process memory
+  char *kstack;              // Bottom of kernel stack for this process
+  enum proc_state state;     // Process state
+  int pid;                   // Process ID
+  struct proc *parent;       // Parent process
+  void *chan;                // If non-zero, sleeping on chan
+  int killed;                // If non-zero, have been killed
+  struct file *ofile[NOFILE]; // Open files
+  struct inode *cwd;         // Current directory
+  struct context context;    // Switch here to run process
+  struct trapframe *tf;      // Trap frame for the current interrupt
+};]]></html:code></html:pre>
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> <fr:link href="/63U3/" title="Thread" uri="https://kellenkanarios.com/63U3/" display-uri="63U3" type="local">Thread</fr:link>s need an analogous <html:em>thread control block</html:em>; see <fr:link href="/16TG/" title="Concurrency Intro" uri="https://kellenkanarios.com/16TG/" display-uri="16TG" type="local">Concurrency Intro</fr:link>.</html:div>
+</fr:mainmatter>
+            </fr:tree>
+            <html:p>Worked exercises for this chapter are parked separately in <fr:link href="/W4DQ/" title="Operating Systems: Three Easy Pieces: Exercises" uri="https://kellenkanarios.com/W4DQ/" display-uri="W4DQ" type="local"><fr:link href="/arpaci2018operating/" title="Operating Systems: Three Easy Pieces" uri="https://kellenkanarios.com/arpaci2018operating/" display-uri="arpaci2018operating" type="local">Operating Systems: Three Easy Pieces</fr:link>: Exercises</fr:link> under the <html:em>Processes Intro</html:em> section.</html:p>
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
     </fr:tree>
     <fr:tree show-metadata="false" hidden-when-empty="true">
       <fr:frontmatter>

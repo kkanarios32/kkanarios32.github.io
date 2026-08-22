@@ -131,7 +131,7 @@ window.addEventListener('load', function () { setTimeout(function () {
 <div class="metadata"><ul>
 <li class="meta-item">July 15, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">Collection of resources</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>https://llvm.org/devmtg/2020-09/slides/MLIR_Tutorial.pdf</li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">An extensible compiler infrastructure: rather than one instruction set, a framework in which each domain defines its own <em>dialect</em> of operations, types, and attributes, all sharing one syntax and one pass infrastructure. That shared syntax is why an unfamiliar dialect is still readable on sight: the op grammar is fixed even when the ops are not, and <span xmlns="" class="link local"><a href="/KWH2/" title="Five sigils make any dialect readable [KWH2]">Five sigils make any dialect readable</a></span> is most of what reading one takes.</p><p xmlns="http://www.w3.org/1999/xhtml">Collection of resources</p><ul xmlns="http://www.w3.org/1999/xhtml"><li>https://llvm.org/devmtg/2020-09/slides/MLIR_Tutorial.pdf</li>
   <li>https://www.lei.chat/posts/mlir-linalg-dialect-and-patterns/</li>
   <li>https://www.lei.chat/posts/mlir-vector-dialect-and-patterns/</li></ul><p xmlns="http://www.w3.org/1999/xhtml"><strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">Dialects.</strong> This is effectively a syntax. For your given DSL, you must write each of the operations in this <em>MLIR dialect</em> in order to inherit the benefits of the MLIR ecosystem.</p>
  <blockquote xmlns="http://www.w3.org/1999/xhtml" class="jms-quote" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(219, 216, 215);   font-style: italic;   color: rgba(0, 0, 0, 0.85);   ">The whole structured CodeGen paradigm in MLIR prefers co-designing op semantics and transformations and let ops structurally encode and guarantee certain properties to simplify analyses and transformations.<div style="    margin-top: -0.5em;    font-style: normal;    font-size: 0.9em;    text-align: right;    color: rgb(109, 103, 101);   ">— <span xmlns="" class="link external"><a href="https://www.lei.chat/posts/mlir-linalg-dialect-and-patterns/" title="">Lei Zhang</a></span></div></blockquote>
@@ -143,11 +143,683 @@ window.addEventListener('load', function () { setTimeout(function () {
       <li>The <code>ttgir</code> dialect is the <span xmlns="" class="link local"><a href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations [tilletTritonIntermediateLanguage2019]">Triton</a></span> GPU IR.</li></ul></ul>
   <li>Write a lowering pass from your MLIR dialect to the MLIR dialect of an MLIR with codegen backing i.e.</li>
   <ul><li>MLIR has an LLVM dialect</li>
-    <li>Alternatively, <span xmlns="" class="link local"><a href="/xla2017/" title="XLA - TensorFlow, compiled [xla2017]">XLA</a></span> ingests StableHLO which is an MLIR dialect. In theory, this means that if your DSL is similar to that of a JAX / LinAlg dialect, then you can get a lot of the optimizations Google has come up with for free.</li>
-    <ul><li>However, XLA works by translating StableHLO to HLO, which is then optimized by XLA. HLO is NOT an MLIR dialect and therefore in order to use XLA your backend needs to have an appropriate conversion from HLO to an executable on their backend.</li>
+    <li>Alternatively, <span xmlns="" class="link local"><a href="/xla2017/" title="XLA - TensorFlow, compiled [xla2017]">XLA</a></span> ingests <span xmlns="" class="link local"><a href="/84N5/" title="StableHLO [84N5]">StableHLO</a></span>, which is an MLIR dialect. In theory, this means that if your DSL is similar to that of a JAX / LinAlg dialect, then you can get a lot of the optimizations Google has come up with for free.</li>
+    <ul><li>However, XLA works by translating StableHLO to <span xmlns="" class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span> (via the internal <code>mhlo</code> dialect, <span xmlns="" class="link local"><a href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal [FLKN]">chlo desugars, </a><span class="link local"><a href="/84N5/" title="StableHLO [84N5]">stablehlo</a></span><a href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal [FLKN]"> is stable, mhlo is internal</a></span>), which is then optimized by XLA. HLO is NOT an MLIR dialect and therefore in order to use XLA your backend needs to have an appropriate conversion from HLO to an executable on their backend.</li>
       <li>This is what is done for trainium. Namely, the <span xmlns="" class="link external"><a href="https://awsdocs-neuron.readthedocs-hosted.com/en/latest/compiler/index.html" title="">neuronx-cc</a></span> compiler performs the translation from optimized HLO to optimized executable code on their ASIC.</li></ul>
-    <li><span xmlns="" class="link local"><a href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations [tilletTritonIntermediateLanguage2019]">Triton</a></span> and the GPU backend for XLA are the LLVM + NVVM MLIR, which is the MLIR dialect for LLVM with added GPU instructions.</li></ul></ol></details></section><footer xmlns="">
-    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+    <li><span xmlns="" class="link local"><a href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations [tilletTritonIntermediateLanguage2019]">Triton</a></span> and the GPU backend for XLA are the LLVM + NVVM MLIR, which is the MLIR dialect for LLVM with added GPU instructions.</li></ul></ol>
+  <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon">1. </span>Reading a dump  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Because the dialect is open-ended, what you can rely on is the <em>structure</em>: one op syntax (<span xmlns="" class="link local"><a href="/JE7W/" title="One shape for every op [JE7W]">One shape for every op</a></span>), five sigils (<span xmlns="" class="link local"><a href="/KWH2/" title="Five sigils make any dialect readable [KWH2]">Five sigils make any dialect readable</a></span>), regions for nesting, attributes for compile-time data, and a location on every op. That fixed part is enough to read a dialect whose documentation you have never opened.</p>
+  
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>One shape for every op <a class="slug" href="/JE7W/">[JE7W]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">In <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span>'s generic form, what does each part of <code>%0 = "foo.add"(%a, %b) : (i32, i32) -&gt; i32</code> mean?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Every op, in every dialect, prints to one shape:
+
+  <pre><code class="language-llvm">results = "dialect.opname"(operands) ({regions}) {attributes} : (operand types) -&gt; result types</code></pre>
+
+  <ul><li>The quoted name is always <code>dialect.op</code>. The prefix is what makes an unfamiliar op findable — it names the dialect whose docs define it.</li>
+    <li>The type after the colon is a <em>function type</em>: operand types before the arrow, result types after. So the signature is always readable off the one line.</li>
+    <li>Only operands sit in the parens. Attributes are the brace dictionary and are compile-time constants, not <span xmlns="" class="link local"><a href="/4SV9/" title="Static single assignment [4SV9]">Static single assignment</a></span> values — that split is exactly what is known at compile time versus what flows at runtime.</li></ul>
+
+  Learn this shape once and any dialect is parseable; the pretty forms are sugar over it (<span xmlns="" class="link local"><a href="/T1YS/" title="The pretty form is optional, the generic form always works [T1YS]">The pretty form is optional, the generic form always works</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>The pretty form is optional, the generic form always works <a class="slug" href="/T1YS/">[T1YS]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Why does the same op print two different ways — <code>arith.addi %a, %b : i32</code> versus <code>"arith.addi"(%a, %b) : (i32, i32) -&gt; i32</code>?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  An op may define a custom <em>pretty</em> printer and parser; the generic form (<span xmlns="" class="link local"><a href="/JE7W/" title="One shape for every op [JE7W]">One shape for every op</a></span>) is the fallback that always works. Most dialects define one, so most dumps are pretty.
+
+  <strong>The consequence when reading a dump.</strong> The type after the colon in pretty form is whatever the op's printer chose to show — usually just the element or result type, not the full signature. Operands, regions, and attributes may all be elided or rearranged.
+
+  When a pretty form is ambiguous, re-dump with <code>--mlir-print-op-generic</code> (<span xmlns="" class="link local"><a href="/7R2Y/" title="Print generic, print locations, disable threading [7R2Y]">Print generic, print locations, disable threading</a></span>) and read the unambiguous version.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Five sigils make any dialect readable <a class="slug" href="/KWH2/">[KWH2]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What do the five <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> sigils <code>%</code>, <code>^</code>, <code>@</code>, <code>#</code>, <code>!</code> mark?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <ul><li><code>%</code> — an <span xmlns="" class="link local"><a href="/4SV9/" title="Static single assignment [4SV9]">Static single assignment</a></span> value (<span xmlns="" class="link local"><span class="link local"><a href="/4SV9/" title="Static single assignment [4SV9]">SSA</a></span><a href="/MOVC/" title="SSA names are printing hints [MOVC]"> names are printing hints</a></span>).</li>
+    <li><code>^</code> — a block label (<span xmlns="" class="link local"><a href="/QZFU/" title="Block arguments replace phi nodes [QZFU]">Block arguments replace phi nodes</a></span>).</li>
+    <li><code>@</code> — a symbol: function, global (<span xmlns="" class="link local"><a href="/45LB/" title="Symbols are looked up, values are defined [45LB]">Symbols are looked up, values are defined</a></span>).</li>
+    <li><code>#</code> — an attribute or attribute alias: <code>#map0</code>, <code>#stablehlo.dot&lt;...&gt;</code>, <code>#tpu.memory_space&lt;vmem&gt;</code>.</li>
+    <li><code>!</code> — a type or type alias: <code>!llvm.ptr</code>, <code>!tt.ptr&lt;f32&gt;</code>.</li></ul>
+
+  <strong>This is the whole trick to reading an unfamiliar dialect.</strong> <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> is extensible in ops, types, and attributes, so you will constantly meet names you do not know — but the sigil tells you <em>which kind of thing</em> it is, and therefore where it may legally appear. <code>#</code> and <code>!</code> in particular are the escape hatches every dialect uses for its own metadata (<span xmlns="" class="link local"><a href="/9N7G/" title="The prefix says which side of layout assignment [9N7G]">The prefix says which side of layout assignment</a></span>, <span xmlns="" class="link local"><span class="link local"><a href="/M3MH/" title="Mosaic [M3MH]">Mosaic</a></span><a href="/64A0/" title="Mosaic is explicit memory spaces and explicit copies [64A0]"> is explicit memory spaces and explicit copies</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>A multi-result op binds one name and indexes into it <a class="slug" href="/OBP3/">[OBP3]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">In an <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> dump, what is <code>%2#1</code>?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  The second result — index 1 — of the op that defined the value group <code>%2</code>. A multi-result op binds <em>one</em> name and you index into it:
+
+  <pre><code class="language-llvm">%2:3 = "foo.split"(%x) : (tensor&lt;6xf32&gt;) -&gt; (tensor&lt;2xf32&gt;, tensor&lt;2xf32&gt;, tensor&lt;2xf32&gt;)</code></pre>
+
+  then <code>%2#0</code>, <code>%2#1</code>, <code>%2#2</code>. The declaration syntax <code>%2:3</code> means "three results named <code>%2</code>", not a type annotation.
+
+  This is <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span>'s alternative to HLO's tuple-plus-<code>get-tuple-element</code> idiom (<span xmlns="" class="link local"><a href="/W0FU/" title="get-tuple-element is free aliasing [W0FU]">get-tuple-element is free aliasing</a></span>): multiple results are native, so no packing op is needed.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon">Card. </span><span class="link local"><a href="/4SV9/" title="Static single assignment [4SV9]">SSA</a></span> names are printing hints <a class="slug" href="/MOVC/">[MOVC]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Are <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> value names like <code>%arg0</code>, <code>%c0_i32</code>, <code>%lhs</code> semantically meaningful?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <strong>No.</strong> They are printing hints only. Internally <span xmlns="" class="link local"><a href="/4SV9/" title="Static single assignment [4SV9]">Static single assignment</a></span> values are positional and unnamed; the asm printer reconstructs a name from a name-hint interface, which is why constants come out as <code>%c0_i32</code> or <code>%cst</code> and block arguments as <code>%arg0</code>.
+
+  Two things follow, and both bite when reading dumps:
+
+  <ul><li><code>%arg0</code> in two different functions or regions are unrelated. The name is scoped to its region and carries no identity across one.</li>
+    <li>The numbering is not stable across passes. Diffing two per-pass dumps (<span xmlns="" class="link local"><a href="/8U47/" title="Per-pass dumps find the pass that broke it [8U47]">Per-pass dumps find the pass that broke it</a></span>) on value names produces noise; diff on structure instead.</li></ul>
+
+  The <span xmlns="" class="link local"><a href="/NRD2/" title="Locations are the provenance of an op [NRD2]">Locations are the provenance of an op</a></span> is the stable thing to key on — it survives the passes that renumber values.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id8" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Block arguments replace phi nodes <a class="slug" href="/QZFU/">[QZFU]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read this line: <code>^bb1(%arg0: i32, %arg1: f32):</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  A block label with <em>block arguments</em>. <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> has no phi nodes — instead each predecessor passes the merged values as branch operands:
+
+  <pre><code class="language-llvm">cf.br ^bb1(%x, %y : i32, f32)</code></pre>
+
+  Block arguments <em>are</em> the <span xmlns="" class="link local"><a href="/4SV9/" title="Static single assignment [4SV9]">Static single assignment</a></span> merge mechanism. The trade is that a value's incoming edges are recorded at the branches rather than collected at the merge, which makes CFG edits local: rewriting one predecessor touches one op.
+
+  The entry block of a function-like op takes the function's parameters this same way, which is why <code>%arg0</code> is the conventional name for a function argument.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>A region is nesting, not a flat CFG <a class="slug" href="/MKYF/">[MKYF]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What is a <em>region</em> in <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span>, and which ops have them?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  A region is an ordered list of blocks nested inside an op, written in braces. It is how <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> encodes structured control flow and nesting instead of flattening everything into one CFG.
+
+  <ul><li><code>func.func</code> — one region, the body.</li>
+    <li><code>scf.for</code> — one region (<span xmlns="" class="link local"><a href="/ON39/" title="iter_args and yield are the mutable accumulator [ON39]">iter_args and yield are the mutable accumulator</a></span>); <code>scf.if</code> — two, then and else (<span xmlns="" class="link local"><a href="/1U5S/" title="Both scf.if regions must yield the same types [1U5S]">Both scf.if regions must yield the same types</a></span>).</li>
+    <li><code>stablehlo.reduce</code> — one region holding the reducer (<span xmlns="" class="link local"><a href="/KLBR/" title="reduce takes a computation, not an enum [KLBR]">reduce takes a computation, not an enum</a></span>).</li></ul>
+
+  Every block in a region ends in a terminator: <code>scf.yield</code>, <code>func.return</code>, <code>cf.br</code>.
+
+  Regions are the structural reason <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> can host both high-level tensor dialects and low-level CFGs in one module — a pass lowering <code>scf.for</code> to blocks is just replacing a region with a CFG.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id10" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Position separates attributes from regions <a class="slug" href="/CZBE/">[CZBE]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">In an <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> dump, how do you tell an attribute dictionary from a region?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  By what is inside, and in generic form by position.
+
+  <strong>Content.</strong> An attribute dict is <code>{name = value, name2 = value2}</code> — every entry is <code>key = constant</code>. A region contains operations, and possibly block labels (<span xmlns="" class="link local"><a href="/QZFU/" title="Block arguments replace phi nodes [QZFU]">Block arguments replace phi nodes</a></span>).
+
+  <strong>Position.</strong> In generic form (<span xmlns="" class="link local"><a href="/JE7W/" title="One shape for every op [JE7W]">One shape for every op</a></span>) the slots are fixed:
+
+  <pre><code class="language-llvm">"scf.if"(%cond) ({ ...then... }, { ...else... }) {some_attr = 1} : (i1) -&gt; ()</code></pre>
+
+  Regions come in parens straight after the operands; attributes come after the regions, before the colon type.
+
+  The distinction matters because it is the compile-time / runtime line: an attribute is known to the compiler now, a region is code that runs.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Symbols are looked up, values are defined <a class="slug" href="/45LB/">[45LB]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">In <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span>, what is <code>@foo</code> versus <code>%foo</code>?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <code>@foo</code> is a <em>symbol</em> reference — a name resolved by lookup in a SymbolTable (a <code>func.func</code>, a global). <code>%foo</code> is an <span xmlns="" class="link local"><a href="/4SV9/" title="Static single assignment [4SV9]">Static single assignment</a></span> value defined earlier in the same region.
+
+  Nested symbols use <code>@parent::@child</code>.
+
+  The distinction shows up in the type list, which is the tell when reading a call:
+
+  <pre><code class="language-llvm">func.call @foo(%a) : (i32) -&gt; i32</code></pre>
+
+  The callee is a symbol, not an operand, so it does <em>not</em> appear in the operand types — only <code>%a</code> does. A symbol is resolved at compile time; a value flows at runtime.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id12" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Every dump is wrapped in a module <a class="slug" href="/R2O9/">[R2O9]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What wraps every <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> dump, and what does a named one look like?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  A <code>builtin.module</code>. Printed bare as <code>module { ... }</code>, or with a name and attributes:
+
+  <pre><code class="language-llvm">module @jit_f attributes {mhlo.num_partitions = 1 : i32} { ... }</code></pre>
+
+  The outer braces are a region (<span xmlns="" class="link local"><a href="/MKYF/" title="A region is nesting, not a flat CFG [MKYF]">A region is nesting, not a flat CFG</a></span>), so the module is an ordinary op — there is nothing special about the top level.
+
+  <strong>Read the module attributes first.</strong> In a JAX or XLA dump they carry the information the body assumes: partition and replica counts, <span xmlns="" class="link local"><a href="/XGI0/" title="Sharding [XGI0]">Sharding</a></span> configuration, target features. A body that looks like it does too little often makes sense once you see <code>num_partitions</code> up here.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id13" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Three attribute positions on a function <a class="slug" href="/ZZHW/">[ZZHW]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Decode the three annotation positions in <code>func.func @main(%arg0: tensor&lt;8xf32&gt; {jax.arg_info = "x"}) -&gt; (tensor&lt;8xf32&gt; {jax.result_info = ""}) attributes {llvm.emit_c_interface}</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Three different kinds of attribute, distinguished only by where they sit:
+
+  <ol><li><strong>Argument attributes</strong> — braces after an argument's type. Per-argument metadata.</li>
+    <li><strong>Result attributes</strong> — braces after a result's type, inside the result parens. Per-result metadata.</li>
+    <li><strong>Op attributes</strong> — after the keyword <code>attributes</code>. These belong to the function op itself.</li></ol>
+
+  JAX uses the first two to record what tracing threw away: the original Python argument names, donation, and per-argument <span xmlns="" class="link local"><a href="/XGI0/" title="Sharding [XGI0]">Sharding</a></span>. When you need to know which HLO parameter (<span xmlns="" class="link local"><a href="/W9HX/" title="parameter(i) is positional [W9HX]">parameter(i) is positional</a></span>) was which Python argument, <code>jax.arg_info</code> is the record.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id14" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>An affine map separates dimensions from symbols <a class="slug" href="/51XY/">[51XY]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read <code>#map = affine_map&lt;(d0, d1)[s0] -&gt; (d0 * s0 + d1)&gt;</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  An <em>affine map</em>: a multi-dimensional affine function used for indexing and loop bounds.
+
+  <ul><li><code>(d0, d1)</code> — dimension operands: loop induction variables, indices. These vary within the iteration space.</li>
+    <li><code>[s0]</code> — symbol operands: quantities loop-invariant over the map's use, such as sizes and strides.</li>
+    <li>The results are affine expressions over both — addition, subtraction, multiplication by a constant, <code>floordiv</code>, <code>ceildiv</code>, <code>mod</code>.</li></ul>
+
+  <strong>The dimension/symbol split is the point.</strong> Restricting to affine expressions of dims and symbols is what makes dependence analysis decidable, which is what lets the affine dialect tile, fuse, and interchange loops automatically. You will meet these on <code>affine.load</code>, <code>affine.for</code> bounds, and <code>linalg</code> <code>indexing_maps</code>, where the map says how the iteration space lands in memory.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id15" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>An unrealized cast that survives is a missing pattern <a class="slug" href="/Y070/">[Y070]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What does <code>builtin.unrealized_conversion_cast</code> mean when you see it in an <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> dump?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  A placeholder bridging two type systems mid-conversion — <code>tensor</code> to <code>memref</code> (<span xmlns="" class="link local"><a href="/B1A1/" title="A memref names storage, a tensor is a value [B1A1]">A memref names storage, a tensor is a value</a></span>), a dialect type to <code>!llvm.ptr</code>. The dialect conversion framework inserts them so that a <em>partial</em> conversion still verifies while some ops are converted and others are not.
+
+  <strong>If one survives to the end of the pipeline, that is the bug.</strong> It means no pattern claimed the op on one side of the cast, so the conversion never closed. Chase the missing pattern rather than the cast.
+
+  Mid-pipeline, in a <code>--mlir-print-ir-after-all</code> dump (<span xmlns="" class="link local"><a href="/8U47/" title="Per-pass dumps find the pass that broke it [8U47]">Per-pass dumps find the pass that broke it</a></span>), they are expected noise; at the boundary where the IR is supposed to be one dialect, they are a failure.
+</details>
+</div>
+
+
+
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id16" open="open"><summary><header><h1>
+<span class="taxon">2. </span>Locations  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Value names are printing hints and instruction order changes every pass, so provenance has to be carried explicitly. The location is the only thing in the IR that survives rewriting well enough to answer "which line of Python produced this op".</p>
+  
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id17" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Locations are the provenance of an op <a class="slug" href="/NRD2/">[NRD2]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What does <code>loc("model.py":42:8)</code> on an <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> op tell you, and how do you get locations printed?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  It is the op's <em>Location</em> — the provenance the compiler carries for diagnostics and for mapping generated code back to source. An op that was never given one prints <code>loc(unknown)</code>.
+
+  Print them with <code>--mlir-print-debuginfo</code>, or <code>--mlir-print-debuginfo --mlir-pretty-debuginfo</code> for a compact form (<span xmlns="" class="link local"><a href="/7R2Y/" title="Print generic, print locations, disable threading [7R2Y]">Print generic, print locations, disable threading</a></span>).
+
+  <strong>Why it is the tool that matters.</strong> Value names are unstable (<span xmlns="" class="link local"><span class="link local"><a href="/4SV9/" title="Static single assignment [4SV9]">SSA</a></span><a href="/MOVC/" title="SSA names are printing hints [MOVC]"> names are printing hints</a></span>) and op ordering changes every pass, but a location survives rewrites — passes are expected to propagate it, fusing into <code>fused</code> and inlining into <code>callsite</code> (<span xmlns="" class="link local"><a href="/SE0U/" title="Fused means merged, callsite means inlined [SE0U]">Fused means merged, callsite means inlined</a></span>). So "which line of Python produced this op" is a location question, and only a location question. It is the <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> analogue of HLO's <code>metadata</code> field (<span xmlns="" class="link local"><a href="/FG58/" title="op_name is the trace path back to Python [FG58]">op_name is the trace path back to Python</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id18" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Fused means merged, callsite means inlined <a class="slug" href="/SE0U/">[SE0U]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What do these two location forms mean? <code>loc(fused["a.py":1:1, "b.py":2:2])</code> and <code>loc(callsite("inner" at "outer"))</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <strong>fused</strong> — the op came from several source ops that a pass merged: <span xmlns="" class="link local"><a href="/38CM/" title="Operator fusion [38CM]">Operator fusion</a></span>, canonicalization, a rewrite that collapsed a chain. A fused location may carry a tag naming the culprit, <code>loc(fused&lt;"fusion"&gt;[...])</code>.
+
+  <strong>callsite</strong> — an inlining chain. Read it inner-to-outer: the callee's location first, then the site it was called from. Chains nest one level per inlining.
+
+  Both are how a <span xmlns="" class="link local"><a href="/NRD2/" title="Locations are the provenance of an op [NRD2]">Locations are the provenance of an op</a></span> stays honest under transformation: rather than picking one survivor and losing the rest, the location grows to record what happened. So a long fused location is itself the evidence that this op is several of your source ops.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id19" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Aliases are deduplicated printing <a class="slug" href="/7Z9D/">[7Z9D]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What are the <code>#loc3 = loc(...)</code> lines at the bottom of an <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> dump?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Location aliases. The printer hoists a repeated <span xmlns="" class="link local"><a href="/NRD2/" title="Locations are the provenance of an op [NRD2]">Locations are the provenance of an op</a></span> into a named definition, and ops then reference it as <code>... loc(#loc3)</code>.
+
+  It is the same mechanism as attribute aliases (<code>#map0</code>, <span xmlns="" class="link local"><a href="/51XY/" title="An affine map separates dimensions from symbols [51XY]">An affine map separates dimensions from symbols</a></span>) and type aliases (<code>!my_type</code>): purely printing deduplication, with no semantic content. Two ops sharing <code>#loc3</code> have equal locations, nothing more.
+
+  Practically: when you jump to an op and find <code>loc(#loc3)</code>, the answer is at the bottom of the file, not missing.
+</details>
+</div>
+
+
+
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id20" open="open"><summary><header><h1>
+<span class="taxon">3. </span>The type system  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">The type grammar is where a dump's abstraction level is written down. Tensors mean you are above bufferization, memrefs mean storage and therefore aliasing, vectors mean register width and proximity to the hardware.</p>
+  
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id21" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Question mark is a dynamic dimension, star is unknown rank <a class="slug" href="/L3F6/">[L3F6]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What do <code>tensor&lt;4x?xf32&gt;</code>, <code>tensor&lt;*xf32&gt;</code>, and <code>tensor&lt;f32&gt;</code> mean?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <ul><li><code>4x?xf32</code> — ranked, with the second dimension <em>dynamic</em>: <code>?</code> means unknown at compile time.</li>
+    <li><code>*xf32</code> — unranked; even the rank is unknown.</li>
+    <li><code>tensor&lt;f32&gt;</code> — a rank-0 tensor, which is <em>not</em> the same type as a bare <code>f32</code>.</li></ul>
+
+  <strong>The rank-0 distinction is the one that catches people.</strong> A scalar tensor is still a tensor and takes tensor ops; <code>f32</code> is a scalar and takes <code>arith</code> ops. Conversions between them are explicit.
+
+  A tensor is a value with no memory location — it cannot alias, so a pass may duplicate or reorder it freely. That freedom is exactly what a <code>memref</code> gives up (<span xmlns="" class="link local"><a href="/B1A1/" title="A memref names storage, a tensor is a value [B1A1]">A memref names storage, a tensor is a value</a></span>). By contrast HLO has no dynamic shapes at all: every dimension is known at compile time (<span xmlns="" class="link local"><a href="/5QXE/" title="An HLO line is self-contained [5QXE]">An </a><span class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span><a href="/5QXE/" title="An HLO line is self-contained [5QXE]"> line is self-contained</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id22" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>A memref names storage, a tensor is a value <a class="slug" href="/B1A1/">[B1A1]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read <code>memref&lt;8x128xf32, strided&lt;[128, 1], offset: ?&gt;, #tpu.memory_space&lt;vmem&gt;&gt;</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  A buffer reference: shape and element type, then two optional slots.
+
+  <ul><li><code>strided&lt;[128, 1], offset: ?&gt;</code> — the layout. Strides are in <em>elements</em>, not bytes; the offset is dynamic. Strides of <code>[128, 1]</code> on an <code>8x128</code> shape is the contiguous row-major case, the <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> spelling of HLO's <code>{1,0}</code> (<span xmlns="" class="link local"><a href="/RR6G/" title="The layout is minor-to-major [RR6G]">The layout is minor-to-major</a></span>).</li>
+    <li><code>#tpu.memory_space&lt;vmem&gt;</code> — which memory this lives in (<span xmlns="" class="link local"><a href="/GFK2/" title="VMEM [GFK2]">VMEM</a></span> / smem / hbm on TPU; <code>1</code> and <code>3</code> for shared and global on GPU).</li></ul>
+
+  <strong>The difference from a tensor is aliasing.</strong> A <code>memref</code> names storage, so two of them may refer to the same bytes and a pass must prove otherwise before reordering. A <code>tensor</code> is a value and cannot alias (<span xmlns="" class="link local"><a href="/L3F6/" title="Question mark is a dynamic dimension, star is unknown rank [L3F6]">Question mark is a dynamic dimension, star is unknown rank</a></span>). Bufferization is the pass that trades the second for the first, and it is where most "why did a copy appear" questions live.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id23" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Vectors are register-level, tensors are abstract <a class="slug" href="/1XJ4/">[1XJ4]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Distinguish <code>vector&lt;4x8xf32&gt;</code>, <code>vector&lt;[4]xf32&gt;</code>, and <code>tensor&lt;4x8xf32&gt;</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  A <code>vector</code> is a fixed-size, register-level SIMD value — always ranked, always static. A <code>tensor</code> is an abstract n-dimensional value that still needs bufferization and lowering (<span xmlns="" class="link local"><a href="/L3F6/" title="Question mark is a dynamic dimension, star is unknown rank [L3F6]">Question mark is a dynamic dimension, star is unknown rank</a></span>).
+
+  Brackets around a dimension, <code>[4]</code>, mark it <em>scalable</em>: the length is <code>4 * vscale</code>, fixed by the hardware at run time rather than compile time. That is the SVE / RVV style of vector target, where the register width is not known when you compile.
+
+  <strong>What seeing vector types tells you about the dump.</strong> You are past the tensor level and close to hardware — the shapes are now register tiles, not logical arrays. On TPU that is the <code>8x128</code> native tile you see all through a Mosaic dump (<span xmlns="" class="link local"><span class="link local"><a href="/M3MH/" title="Mosaic [M3MH]">Mosaic</a></span><a href="/64A0/" title="Mosaic is explicit memory spaces and explicit copies [64A0]"> is explicit memory spaces and explicit copies</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id24" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Signedness lives in the op, not the type <a class="slug" href="/I4UP/">[I4UP]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Why is it <code>arith.divsi</code> and <code>arith.divui</code> rather than one divide over a signed type?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Because integer types in <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> are <em>signless</em>: <code>i32</code> is thirty-two raw bits and nothing more. Signedness lives in the operation, not the type.
+
+  So the op suffix is the interpretation — <code>si</code> signed, <code>ui</code> unsigned — and it appears exactly on the ops where it changes the answer: divide, remainder, comparison, widening extension, shift right. Addition and multiplication need no suffix, because two's complement makes them agree.
+
+  <strong>Why design it this way.</strong> One type means one canonical form, so a pattern that matches <code>i32</code> matches everything, and frontends with different signedness rules can share the dialect. Some dialects do carry <code>si32</code> and <code>ui32</code> for frontend fidelity, but core <code>arith</code> is signless plus typed ops.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id25" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>index is the type of sizes and offsets <a class="slug" href="/2QC3/">[2QC3]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What is the <code>index</code> type in <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> and where does it show up?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  A target-dependent-width integer for sizes, offsets, and loop induction variables. It lowers to <code>i32</code> or <code>i64</code> depending on the target, so the IR does not have to commit to a pointer width.
+
+  You will see it constantly in the shape of
+
+  <pre><code class="language-llvm">%c0 = arith.constant 0 : index</code></pre>
+
+  feeding <code>memref.dim</code>, <code>scf.for</code> bounds (<span xmlns="" class="link local"><a href="/ON39/" title="iter_args and yield are the mutable accumulator [ON39]">iter_args and yield are the mutable accumulator</a></span>), <code>tensor.extract</code> indices, and <code>memref.subview</code> offsets.
+
+  <strong>Read it as a type-level statement of intent</strong>: this value addresses the iteration space, it is not data. That is why <code>index</code> and <code>i32</code> do not implicitly convert — <code>arith.index_cast</code> is required, and its appearance in a dump marks the boundary where an index became a number or the reverse.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id26" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>A scalar inside dense is a splat <a class="slug" href="/5B7I/">[5B7I]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read these three <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> constants: <code>dense&lt;[1, 2, 3, 4]&gt; : tensor&lt;4xi32&gt;</code>, <code>dense&lt;0.000000e+00&gt; : tensor&lt;8x128xf32&gt;</code>, <code>dense_resource&lt;__elided__&gt; : tensor&lt;1024x1024xf32&gt;</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <ul><li><strong>Bracketed list</strong> — a full elementwise literal, one entry per element, with one level of bracket nesting per dimension: a rank-2 constant is a list of rows.</li>
+    <li><strong>A single scalar inside <code>dense&lt;&gt;</code></strong> — a <em>splat</em>: every element takes that value. This is the common case and is stored as one number, not as the expanded array.</li>
+    <li><strong><code>dense_resource&lt;__elided__&gt;</code></strong> — the printer dropped the payload because it was large. The data still exists in the real module; only the text you are reading lost it.</li></ul>
+
+  Elision is controlled by <code>--mlir-elide-elementsattrs-if-larger=N</code>. Raise it when you actually need to see the weights, and leave it alone otherwise — a dump of a real model is otherwise mostly constants. HLO does the same thing, printing a big <code>constant</code> as <code>{...}</code> (<span xmlns="" class="link local"><a href="/58OB/" title="iota builds indices without a constant [58OB]">iota builds indices without a constant</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id27" open="open"><summary><header><h1>
+<span class="taxon">4. </span>Structured control flow  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">The <code>scf</code> dialect keeps a loop as one op with a region rather than as a CFG, which is what lets a pass reason about it as a loop. The carry is explicit and typed — the same design the jaxpr <code>scan</code> (<span xmlns="" class="link local"><a href="/W8NM/" title="consts, then carry, then xs [W8NM]">consts, then carry, then xs</a></span>) and the HLO <code>while</code> (<span xmlns="" class="link local"><a href="/YXTI/" title="A while loop's whole state is one tuple [YXTI]">A while loop's whole state is one tuple</a></span>) arrive at independently.</p>
+  
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id28" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>iter_args and yield are the mutable accumulator <a class="slug" href="/ON39/">[ON39]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read this loop: <code>%r = scf.for %i = %c0 to %c8 step %c1 iter_args(%acc = %init) -&gt; (f32) { %n = arith.addf %acc, %x : f32; scf.yield %n : f32 }</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  A structured loop that carries state.
+
+  <ul><li><code>%i</code> is a block argument of the loop body (<span xmlns="" class="link local"><a href="/QZFU/" title="Block arguments replace phi nodes [QZFU]">Block arguments replace phi nodes</a></span>), not a value from the enclosing scope.</li>
+    <li><code>iter_args(%acc = %init)</code> declares the loop-carried values and initialises them once, before the first iteration.</li>
+    <li><code>scf.yield</code> supplies the next iteration's <code>iter_args</code> and, on the final iteration, the loop's results <code>%r</code>.</li></ul>
+
+  <strong>So <code>iter_args</code> plus <code>scf.yield</code> is the functional spelling of a mutable accumulator.</strong> Nothing is stored; each iteration produces a new value. That is what keeps the loop in <span xmlns="" class="link local"><a href="/4SV9/" title="Static single assignment [4SV9]">Static single assignment</a></span> form and lets it be analysed and rewritten as a pure region (<span xmlns="" class="link local"><a href="/MKYF/" title="A region is nesting, not a flat CFG [MKYF]">A region is nesting, not a flat CFG</a></span>).
+
+  Both the jaxpr <code>scan</code> (<span xmlns="" class="link local"><a href="/W8NM/" title="consts, then carry, then xs [W8NM]">consts, then carry, then xs</a></span>) and the HLO <code>while</code> (<span xmlns="" class="link local"><a href="/YXTI/" title="A while loop's whole state is one tuple [YXTI]">A while loop's whole state is one tuple</a></span>) use the same idea — the carry is explicit and typed — differing only in how the carried values are packed.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id29" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Both scf.if regions must yield the same types <a class="slug" href="/1U5S/">[1U5S]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">How does an <code>scf.if</code> produce a value?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  By declaring result types on the op and having <em>both</em> regions (<span xmlns="" class="link local"><a href="/MKYF/" title="A region is nesting, not a flat CFG [MKYF]">A region is nesting, not a flat CFG</a></span>) terminate in <code>scf.yield</code> with matching types:
+
+  <pre><code class="language-llvm">%v = scf.if %pred -&gt; (f32) { scf.yield %a : f32 } else { scf.yield %b : f32 }</code></pre>
+
+  If the op has no results, the else region may be omitted entirely and the yields are empty.
+
+  <strong>The type match is the invariant worth remembering.</strong> It is what makes the construct an expression rather than control flow — the op has one well-defined type regardless of which branch runs, so it composes like any other value-producing op (<span xmlns="" class="link local"><a href="/ON39/" title="iter_args and yield are the mutable accumulator [ON39]">iter_args and yield are the mutable accumulator</a></span>). A verifier error on <code>scf.if</code> is almost always the two branches disagreeing.
+</details>
+</div>
+
+
+
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id30" open="open"><summary><header><h1>
+<span class="taxon">5. </span>Debugging a lowering  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id31" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Print generic, print locations, disable threading <a class="slug" href="/7R2Y/">[7R2Y]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Which <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> debugging flags do you reach for when a lowering looks wrong?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <ul><li><code>--mlir-print-ir-after-all</code> (or <code>--mlir-print-ir-after-change</code>, or <code>-before=&lt;pass&gt;</code>) — IR snapshots per pass. The <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> counterpart to <code>--xla_dump_hlo_pass_re</code> (<span xmlns="" class="link local"><a href="/8U47/" title="Per-pass dumps find the pass that broke it [8U47]">Per-pass dumps find the pass that broke it</a></span>).</li>
+    <li><code>--mlir-print-op-generic</code> — removes pretty-printer ambiguity (<span xmlns="" class="link local"><a href="/T1YS/" title="The pretty form is optional, the generic form always works [T1YS]">The pretty form is optional, the generic form always works</a></span>).</li>
+    <li><code>--mlir-print-debuginfo</code> — locations, so ops trace back to source (<span xmlns="" class="link local"><a href="/NRD2/" title="Locations are the provenance of an op [NRD2]">Locations are the provenance of an op</a></span>).</li>
+    <li><code>--mlir-disable-threading</code> — serialises the pass manager so per-pass output is ordered and readable.</li>
+    <li><code>--debug-only=&lt;pass-name&gt;</code> — pattern-level tracing, in a debug build only.</li></ul>
+
+  <strong>Turn off threading first.</strong> Without it, per-pass dumps from parallel op processing interleave, and you spend the session reading a file whose disorder is the tooling's, not the compiler's.
+</details>
+</div>
+
+
+
+</details></section>
+</details></section>
+</details></section><footer xmlns="">
+    <section lang="en" class="block hide-metadata"><details id="id32" open="open"><summary><header><h1>
 <span class="taxon"></span>References  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry" data-taxon="Reference"><header><h1>
@@ -166,9 +838,54 @@ window.addEventListener('load', function () { setTimeout(function () {
 </div></header></section>
       </details></section>
     
-    <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id33" open="open"><summary><header><h1>
 <span class="taxon"></span>Backlinks  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/M3MH/">Mosaic</a> <a class="slug" href="/M3MH/">[M3MH]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/84N5/">StableHLO</a> <a class="slug" href="/84N5/">[84N5]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/CQ6W/">Triton</a> <a class="slug" href="/CQ6W/">[CQ6W]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/QH5J/"><span class="link local"><a href="/005G/" title="Papers of a week [005G]">POTW</a></span>: 🎂 <span class="link local"><a href="/yeCAKECompilerAgentCoDesign2026/" title="CAKE: Compiler-Agent Co-Design for Frontier Kernel Evolution [yeCAKECompilerAgentCoDesign2026]">CAKE: Compiler-Agent Co-Design for Frontier Kernel Evolution</a></span></a> <a class="slug" href="/QH5J/">[QH5J]</a> </h1>
 <div class="metadata"><ul>
@@ -182,11 +899,29 @@ window.addEventListener('load', function () { setTimeout(function () {
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
         <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/NR79/">Lifecycle of a <span class="link local"><a href="/OGCRY/" title="JAX [OGCRY]">JAX</a></span> program</a> <a class="slug" href="/NR79/">[NR79]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/G981/">jaxpr</a> <a class="slug" href="/G981/">[G981]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/NO8J/">HLO</a> <a class="slug" href="/NO8J/">[NO8J]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/PGP6/">Cosplaying TPU Kernel Engineer</a> <a class="slug" href="/PGP6/">[PGP6]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">August 7, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
-<li class="meta-item">4 min read</li>
+<li class="meta-item">8 min read</li>
 </ul></div></header></section>
         <section class="block index-entry"><header><h1>
 <span class="taxon"></span><a class="index-entry-link" href="/NQFF/"><span class="link local"><a href="/G944/" title="The Quantified Me [G944]">The Quantified Me</a></span>: 2026-W29</a> <a class="slug" href="/NQFF/">[NQFF]</a> </h1>
@@ -205,6 +940,42 @@ window.addEventListener('load', function () { setTimeout(function () {
 <span class="taxon"></span><a class="index-entry-link" href="/index/">Kellen Kanarios</a> <a class="slug" href="/index/">[index]</a> </h1>
 <div class="metadata"><ul></ul></div></header></section>
       </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id34" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/84N5/">StableHLO</a> <a class="slug" href="/84N5/">[84N5]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        
+        
+        
+        
+        
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/NO8J/">HLO</a> <a class="slug" href="/NO8J/">[NO8J]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
     
-    
-  </footer></article></div></body></html>
+  </footer></article><nav id="toc"><div class="block"><h1>Table of Contents</h1><ul xmlns="" class="block">
+<li>
+<a class="bullet" href="#id2" title="Reading a dump">■</a><span class="link local" data-target="#id2"><span class="taxon">1. </span>Reading a dump</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id16" title="Locations">■</a><span class="link local" data-target="#id16"><span class="taxon">2. </span>Locations</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id20" title="The type system">■</a><span class="link local" data-target="#id20"><span class="taxon">3. </span>The type system</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id27" title="Structured control flow">■</a><span class="link local" data-target="#id27"><span class="taxon">4. </span>Structured control flow</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id30" title="Debugging a lowering">■</a><span class="link local" data-target="#id30"><span class="taxon">5. </span>Debugging a lowering</span><ul class="block"></ul>
+</li>
+</ul></div></nav></div></body></html>

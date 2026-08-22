@@ -57,6 +57,323 @@
             <fr:date>
               <fr:year>2026</fr:year>
               <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/KWVD/</fr:uri>
+            <fr:display-uri>KWVD</fr:display-uri>
+            <fr:route>/KWVD/</fr:route>
+            <fr:title text="Collectives are primitives parameterised by axis name">Collectives are primitives parameterised by axis name</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404869045</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>What do <html:code><![CDATA[psum[axes=('x',) axis_index_groups=None]]]></html:code> and <fr:link href="/IMBB/" title="shard_map" uri="https://kellenkanarios.com/IMBB/" display-uri="IMBB" type="local">shard_map</fr:link> look like in a <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Collectives are ordinary primitives parameterised by an <html:em>axis name</html:em>; they only mean anything inside a mapped context that binds that name. <fr:link href="/IMBB/" title="shard_map" uri="https://kellenkanarios.com/IMBB/" display-uri="IMBB" type="local">shard_map</fr:link> appears as
+
+  <html:pre><html:code class="language-haskell"><![CDATA[shard_map[jaxpr={...} mesh=Mesh('x': 8, axis_types=(Auto,))
+          in_specs=(P('x',),) out_specs=(P(),) check_vma=True]]]></html:code></html:pre>
+
+  with the per-device program nested inside (<fr:link href="/ROHH/" title="vmap leaves no primitive behind" uri="https://kellenkanarios.com/ROHH/" display-uri="ROHH" type="local">vmap leaves no primitive behind</fr:link>). Inside that body a collective whose result is already replicated may print as <html:code>psum_invariant</html:code> rather than <html:code>psum</html:code> — same reduction, tagged as producing an axis-invariant value.
+
+  <html:strong>So the jaxpr level is logical and the physical level is elsewhere.</html:strong> Here you see a named axis and per-device shapes; the device assignment appears only later, as HLO <html:code>sharding</html:code> attributes (<fr:link href="/3IWB/" title="A sharding annotation is a tiling plus a device order" uri="https://kellenkanarios.com/3IWB/" display-uri="3IWB" type="local">A <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">sharding</fr:link> annotation is a tiling plus a device order</fr:link>) and concrete <html:code>all-reduce</html:code> instructions (<fr:link href="/6SKD/" title="replica_groups says who reduces with whom" uri="https://kellenkanarios.com/6SKD/" display-uri="6SKD" type="local">replica_groups says who reduces with whom</fr:link>).
+
+  That separation is why the axis name is the right thing to reason about: it is stable, whereas which devices land in which <html:code>replica_groups</html:code> depends on the mesh and the compiler (<fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharding</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/WNHA/</fr:uri>
+            <fr:display-uri>WNHA</fr:display-uri>
+            <fr:route>/WNHA/</fr:route>
+            <fr:title text="jit is the pjit primitive">jit is the pjit primitive</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404870520</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>Why does almost every <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> from a jitted function contain a single <html:code><![CDATA[jit[name=f jaxpr={...}]]]></html:code> equation?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Because <html:code>jax.jit</html:code> is implemented as a primitive — <html:code>pjit_p</html:code>, printed as <html:code>jit</html:code> — rather than being inlined. The callee's jaxpr is nested inside as a static parameter, so each <html:code>jit</html:code> boundary in your code becomes another level of nesting.
+
+  <html:strong>That nesting is preserved all the way down.</html:strong> It reappears in HLO as the slash-separated <html:code>op_name</html:code> path, <html:code><![CDATA[jit(f)/jit(g)/...]]></html:code> (<fr:link href="/FG58/" title="op_name is the trace path back to Python" uri="https://kellenkanarios.com/FG58/" display-uri="FG58" type="local">op_name is the trace path back to Python</fr:link>), which is what lets you attribute an optimized HLO instruction to a particular function in a program full of them.
+
+  It also means the boundaries are real to the compiler, not just to you: each is a place where donation, <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharding</fr:link>, and compilation caching are decided (<fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA Compilation</fr:link>). Nesting <html:code>jit</html:code> inside <html:code>jit</html:code> is free at run time but is not invisible in the IR.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/9M15/</fr:uri>
+            <fr:display-uri>9M15</fr:display-uri>
+            <fr:route>/9M15/</fr:route>
+            <fr:title text="An aval is shape and dtype, no value">An aval is shape and dtype, no value</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404867295</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>Read the <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> shorthand <html:code><![CDATA[f32[8,128]]]></html:code>, <html:code><![CDATA[i32[]]]></html:code>, <html:code><![CDATA[bool[3]]]></html:code>, <html:code><![CDATA[key<fry>[2]]]></html:code>, <html:code><![CDATA[bf16[8]]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Compact <html:em>aval</html:em> — abstract value — printing: dtype then shape, with empty brackets for a scalar.
+
+  <html:code><![CDATA[key<fry>[2]]]></html:code> is a typed PRNG key array using the threefry implementation: the new-style key dtype rather than a raw <html:code>uint32[2]</html:code>. Seeing the typed form tells you the key is opaque to shape-manipulating code, which is the point of it.
+
+  <html:strong>The aval is what tracing actually propagates</html:strong>: shape, dtype, and <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharding</fr:link> — no values. Everything a jaxpr knows, it knows from these, which is why a Python <html:code>if</html:code> on a traced value fails and why the shapes in a jaxpr are always fully static.
+
+  HLO's shapes are the same information in a different notation (<fr:link href="/31V3/" title="Tuples are first-class in HLO" uri="https://kellenkanarios.com/31V3/" display-uri="31V3" type="local">Tuples are first-class in <fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link></fr:link>), and <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> adds dynamic dimensions that JAX never produces (<fr:link href="/L3F6/" title="Question mark is a dynamic dimension, star is unknown rank" uri="https://kellenkanarios.com/L3F6/" display-uri="L3F6" type="local">Question mark is a dynamic dimension, star is unknown rank</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/3IWB/</fr:uri>
+            <fr:display-uri>3IWB</fr:display-uri>
+            <fr:route>/3IWB/</fr:route>
+            <fr:title text="A sharding annotation is a tiling plus a device order">A <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">sharding</fr:link> annotation is a tiling plus a device order</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404866495</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>Decode <html:code><![CDATA[sharding={replicated}]]></html:code>, <html:code><![CDATA[sharding={devices=[2,4]<=[8]}]]></html:code>, <html:code><![CDATA[sharding={devices=[2,4]<=[4,2]T(1,0)}]]></html:code>, <html:code><![CDATA[sharding={maximal device=0}]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:ul><html:li><html:strong><html:code>replicated</html:code></html:strong> — a full copy on every device.</html:li>
+    <html:li><html:strong><html:code><![CDATA[devices=[2,4]]]></html:code></html:strong> — the tensor is tiled two ways on dim 0 and four ways on dim 1. The <html:code><![CDATA[<=[8]]]></html:code> is shorthand for the device list being iota over eight devices.</html:li>
+    <html:li><html:strong><html:code><![CDATA[<=[4,2]T(1,0)]]></html:code></html:strong> — that iota device list is reshaped to <html:code><![CDATA[[4,2]]]></html:code> and transposed before being laid over the tiles. Same tiling, different device-to-tile assignment.</html:li>
+    <html:li><html:strong><html:code>maximal device=0</html:code></html:strong> — computed on exactly one device.</html:li></html:ul>
+
+  <html:strong>The device order is not cosmetic.</html:strong> It decides which mesh axis is "fast" — whether neighbouring tiles sit on neighbouring chips over <fr:link href="/O14H/" title="Inter-chip interconnect" uri="https://kellenkanarios.com/O14H/" display-uri="O14H" type="local">ICI</fr:link> or across a slower hop — so two <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharding</fr:link> annotations with identical tilings can differ by a large factor in collective cost (<fr:link href="/6SKD/" title="replica_groups says who reduces with whom" uri="https://kellenkanarios.com/6SKD/" display-uri="6SKD" type="local">replica_groups says who reduces with whom</fr:link>).
+
+  A trailing <html:code>last_tile_dim_replicate</html:code> means the final tile dimension is replication rather than data.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/6SKD/</fr:uri>
+            <fr:display-uri>6SKD</fr:display-uri>
+            <fr:route>/6SKD/</fr:route>
+            <fr:title text="replica_groups says who reduces with whom">replica_groups says who reduces with whom</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404866920</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[all-reduce(%a), replica_groups={{0,1},{2,3}}, to_apply=%add, channel_id=1, use_global_device_ids=true]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:ul><html:li><html:strong><html:code>replica_groups</html:code></html:strong> — which devices reduce together. Each inner list is an independent group, so this is two separate <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link>s of two devices, not one of four.</html:li>
+    <html:li><html:strong><html:code>to_apply</html:code></html:strong> — the combiner computation (<fr:link href="/EE3R/" title="reduce removes the dims it lists" uri="https://kellenkanarios.com/EE3R/" display-uri="EE3R" type="local">reduce removes the dims it lists</fr:link>): sum, max, and so on.</html:li>
+    <html:li><html:strong><html:code>channel_id</html:code></html:strong> present means cross-<html:em>partition</html:em> (SPMD, <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharding</fr:link>) rather than pure cross-replica; with <html:code>use_global_device_ids</html:code> the numbers in <html:code>replica_groups</html:code> are global device ids rather than per-replica ones.</html:li></html:ul>
+
+  Read the group structure before the opcode: it tells you which mesh axis this collective runs on, and therefore whether it crosses <fr:link href="/O14H/" title="Inter-chip interconnect" uri="https://kellenkanarios.com/O14H/" display-uri="O14H" type="local">ICI</fr:link> or the slower host network.
+
+  The family is <fr:link href="/41OF/" title="Collectives summary" uri="https://kellenkanarios.com/41OF/" display-uri="41OF" type="local">Collectives summary</fr:link>: <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> (with <html:code>dimensions=</html:code> naming the concatenation axis), <fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link>, <html:code>all-to-all</html:code>, and <html:code>collective-permute</html:code> with <html:code><![CDATA[source_target_pairs={{0,1},{1,0}}]]></html:code>.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/ZZHW/</fr:uri>
+            <fr:display-uri>ZZHW</fr:display-uri>
+            <fr:route>/ZZHW/</fr:route>
+            <fr:title text="Three attribute positions on a function">Three attribute positions on a function</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404870870</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>Decode the three annotation positions in <html:code><![CDATA[func.func @main(%arg0: tensor<8xf32> {jax.arg_info = "x"}) -> (tensor<8xf32> {jax.result_info = ""}) attributes {llvm.emit_c_interface}]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Three different kinds of attribute, distinguished only by where they sit:
+
+  <html:ol><html:li><html:strong>Argument attributes</html:strong> — braces after an argument's type. Per-argument metadata.</html:li>
+    <html:li><html:strong>Result attributes</html:strong> — braces after a result's type, inside the result parens. Per-result metadata.</html:li>
+    <html:li><html:strong>Op attributes</html:strong> — after the keyword <html:code>attributes</html:code>. These belong to the function op itself.</html:li></html:ol>
+
+  JAX uses the first two to record what tracing threw away: the original Python argument names, donation, and per-argument <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharding</fr:link>. When you need to know which HLO parameter (<fr:link href="/W9HX/" title="parameter(i) is positional" uri="https://kellenkanarios.com/W9HX/" display-uri="W9HX" type="local">parameter(i) is positional</fr:link>) was which Python argument, <html:code>jax.arg_info</html:code> is the record.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/R2O9/</fr:uri>
+            <fr:display-uri>R2O9</fr:display-uri>
+            <fr:route>/R2O9/</fr:route>
+            <fr:title text="Every dump is wrapped in a module">Every dump is wrapped in a module</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404869746</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>What wraps every <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> dump, and what does a named one look like?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  A <html:code>builtin.module</html:code>. Printed bare as <html:code><![CDATA[module { ... }]]></html:code>, or with a name and attributes:
+
+  <html:pre><html:code class="language-llvm"><![CDATA[module @jit_f attributes {mhlo.num_partitions = 1 : i32} { ... }]]></html:code></html:pre>
+
+  The outer braces are a region (<fr:link href="/MKYF/" title="A region is nesting, not a flat CFG" uri="https://kellenkanarios.com/MKYF/" display-uri="MKYF" type="local">A region is nesting, not a flat CFG</fr:link>), so the module is an ordinary op — there is nothing special about the top level.
+
+  <html:strong>Read the module attributes first.</html:strong> In a JAX or XLA dump they carry the information the body assumes: partition and replica counts, <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharding</fr:link> configuration, target features. A body that looks like it does too little often makes sense once you see <html:code>num_partitions</html:code> up here.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
               <fr:day>14</fr:day>
             </fr:date>
             <fr:uri>https://kellenkanarios.com/41OF/</fr:uri>
@@ -389,7 +706,7 @@
 </html:div>
 
 
-<html:div class="rs-fig" /><html:script src="/bafkrmieffkkwl2ffgpoti6fn2i4ylgxly4fjdmavrrhc3x7ixkwdag6dfa.js" defer="" /><html:p>Note that the steps are not <fr:tex display="inline"><![CDATA[N-1]]></fr:tex> rounds of moving a whole buffer: every link carries <html:strong>one chunk</html:strong> in the same direction at the same time, so the cost is <fr:tex display="inline"><![CDATA[N-1]]></fr:tex> chunk-times, and the <fr:tex display="inline"><![CDATA[N]]></fr:tex> in the chunk size cancels the <fr:tex display="inline"><![CDATA[N-1]]></fr:tex> in the step count. Nothing is ever broadcast, which is the sense in which the ring is optimal and the reason a ReduceScatter is not merely an <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> with a slice at the end.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/HIDN/</fr:uri><fr:display-uri>HIDN</fr:display-uri><fr:route>/HIDN/</fr:route><fr:title text="ReduceScatter is AllGather transposed">ReduceScatter is AllGather transposed</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1786546735759</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+<html:div class="rs-fig" /><html:script src="/bafkrmieffkkwl2ffgpoti6fn2i4ylgxly4fjdmavrrhc3x7ixkwdag6dfa.js" defer="" /><html:p>Note that the steps are not <fr:tex display="inline"><![CDATA[N-1]]></fr:tex> rounds of moving a whole buffer: every link carries <html:strong>one chunk</html:strong> in the same direction at the same time, so the cost is <fr:tex display="inline"><![CDATA[N-1]]></fr:tex> chunk-times, and the <fr:tex display="inline"><![CDATA[N]]></fr:tex> in the chunk size cancels the <fr:tex display="inline"><![CDATA[N-1]]></fr:tex> in the step count. Nothing is ever broadcast, which is the sense in which the ring is optimal and the reason a ReduceScatter is not merely an <fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> with a slice at the end.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/HIDN/</fr:uri><fr:display-uri>HIDN</fr:display-uri><fr:route>/HIDN/</fr:route><fr:title text="ReduceScatter is AllGather transposed"><fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link> is <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link> transposed</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1786546735759</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
   <html:p><fr:link href="/CAGW/" title="ReduceScatter" uri="https://kellenkanarios.com/CAGW/" display-uri="CAGW" type="local">ReduceScatter</fr:link>: signature, relationship to <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>, and cost?</html:p>
   
   
@@ -410,7 +727,7 @@
 
 
 
-</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/MJ7A/</fr:uri><fr:display-uri>MJ7A</fr:display-uri><fr:route>/MJ7A/</fr:route><fr:title text="AllReduce is two collectives, not one">AllReduce is two collectives, not one</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1786546736236</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>12</fr:day></fr:date><fr:uri>https://kellenkanarios.com/MJ7A/</fr:uri><fr:display-uri>MJ7A</fr:display-uri><fr:route>/MJ7A/</fr:route><fr:title text="AllReduce is two collectives, not one"><fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link> is two collectives, not one</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1786546736236</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
   <html:p><fr:link href="/U351/" title="AllReduce" uri="https://kellenkanarios.com/U351/" display-uri="U351" type="local">AllReduce</fr:link>: signature, decomposition, and cost relative to an <fr:link href="/VSDZ/" title="AllGather" uri="https://kellenkanarios.com/VSDZ/" display-uri="VSDZ" type="local">AllGather</fr:link>?</html:p>
   
   

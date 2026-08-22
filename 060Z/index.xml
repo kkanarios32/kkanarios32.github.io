@@ -140,6 +140,536 @@
             <fr:date>
               <fr:year>2026</fr:year>
               <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/M3MH/</fr:uri>
+            <fr:display-uri>M3MH</fr:display-uri>
+            <fr:route>/M3MH/</fr:route>
+            <fr:title text="Mosaic">Mosaic</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>The TPU kernel compiler <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> lowers to — an <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> pipeline over a <html:code>tpu</html:code> dialect, sitting where <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> sits on GPU. A Pallas TPU kernel becomes a serialised Mosaic module inside a <html:code>@tpu_custom_call</html:code> attribute (<fr:link href="/QRDW/" title="A Pallas kernel is an opaque custom call" uri="https://kellenkanarios.com/QRDW/" display-uri="QRDW" type="local">A <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> kernel is an opaque <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link></fr:link>), which XLA then treats as a black box (<fr:link href="/2MM7/" title="A custom call is a black box XLA cannot fuse across" uri="https://kellenkanarios.com/2MM7/" display-uri="2MM7" type="local">A <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link> is a black box <fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA</fr:link> cannot fuse across</fr:link>).</html:p>
+            <html:p><html:strong>What makes a Mosaic dump feel unlike a GPU one is that there are no threads in it</html:strong> (<fr:link href="/64A0/" title="Mosaic is explicit memory spaces and explicit copies" uri="https://kellenkanarios.com/64A0/" display-uri="64A0" type="local"><fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> is explicit memory spaces and explicit copies</fr:link>). A GPU IR is a thread and warp hierarchy in which data movement is implicit in which thread touches what. Mosaic is the opposite: explicit memory spaces on every <html:code>memref</html:code> (<fr:link href="/B1A1/" title="A memref names storage, a tensor is a value" uri="https://kellenkanarios.com/B1A1/" display-uri="B1A1" type="local">A memref names storage, a tensor is a value</fr:link>) — hbm, <fr:link href="/GFK2/" title="VMEM" uri="https://kellenkanarios.com/GFK2/" display-uri="GFK2" type="local">VMEM</fr:link>, smem — explicit DMA-style copies between them, semaphores for synchronisation, and vector ops on hardware tile shapes, typically <fr:tex display="inline"><![CDATA[8 \times  128]]></fr:tex> for f32 (<fr:link href="/1XJ4/" title="Vectors are register-level, tensors are abstract" uri="https://kellenkanarios.com/1XJ4/" display-uri="1XJ4" type="local">Vectors are register-level, tensors are abstract</fr:link>).</html:p>
+            <html:p>That is the same shift <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> asks of you at the source level, and the reason a TPU kernel is written as a pipeline of asynchronous copies rather than as an indexing scheme: the machine has no thread-level parallelism to hide a bad access pattern behind, so the copies have to be scheduled rather than merely correct.</html:p>
+            <fr:tree show-metadata="false" toc="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>8</fr:month>
+                  <fr:day>22</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/64A0/</fr:uri>
+                <fr:display-uri>64A0</fr:display-uri>
+                <fr:route>/64A0/</fr:route>
+                <fr:title text="Mosaic is explicit memory spaces and explicit copies"><fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> is explicit memory spaces and explicit copies</fr:title>
+                <fr:taxon>Card</fr:taxon>
+                <fr:meta name="anki">1787404866820</fr:meta>
+                <fr:meta name="anki-deck">MLSys</fr:meta>
+              </fr:frontmatter>
+              <fr:mainmatter>
+  <html:p>What distinguishes a <fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> (TPU) <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> dump from a GPU-side one?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:code>tpu.</html:code> dialect ops over <html:code><![CDATA[memref<..., #tpu.memory_space<vmem>>]]></html:code> (<fr:link href="/B1A1/" title="A memref names storage, a tensor is a value" uri="https://kellenkanarios.com/B1A1/" display-uri="B1A1" type="local">A memref names storage, a tensor is a value</fr:link>), vector-dialect ops on native tile shapes — typically <fr:tex display="inline"><![CDATA[8 \times  128]]></fr:tex> for f32 (<fr:link href="/1XJ4/" title="Vectors are register-level, tensors are abstract" uri="https://kellenkanarios.com/1XJ4/" display-uri="1XJ4" type="local">Vectors are register-level, tensors are abstract</fr:link>) — explicit DMA-style copies between hbm, <fr:link href="/GFK2/" title="VMEM" uri="https://kellenkanarios.com/GFK2/" display-uri="GFK2" type="local">VMEM</fr:link>, and smem, and semaphores for synchronisation.
+
+  <html:strong>So the mental model is different in kind, not in detail.</html:strong> A GPU dump is a thread and warp hierarchy where the memory movement is implicit in which thread touches what (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>). A Mosaic dump is explicit memory spaces, explicit asynchronous copies, and vector operations on hardware-tile-shaped values — no threads anywhere.
+
+  That is the same shift <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> asks of you at the source level, and it is why a TPU kernel is written as a pipeline of DMAs rather than as an indexing scheme.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+            </fr:tree>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/84N5/</fr:uri>
+            <fr:display-uri>84N5</fr:display-uri>
+            <fr:route>/84N5/</fr:route>
+            <fr:title text="StableHLO">StableHLO</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> dialect JAX lowers to and XLA ingests — the versioned, portable contract between frameworks and compilers (<fr:link href="/NR79/" title="Lifecycle of a JAX program" uri="https://kellenkanarios.com/NR79/" display-uri="NR79" type="local">Lifecycle of a <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link> program</fr:link>). Print it with <html:code>jax.jit(f).lower(x).as_text()</html:code> (<fr:link href="/AGEG/" title="Three calls, three IR levels" uri="https://kellenkanarios.com/AGEG/" display-uri="AGEG" type="local">Three calls, three IR levels</fr:link>).</html:p><html:p>The word doing the work in the name is <html:em>stable</html:em>. It is one of three HLO-family dialects and the only one with compatibility guarantees: <html:code>chlo</html:code> above it is sugar that gets decomposed, <html:code>mhlo</html:code> below it is XLA's unstable internal dialect (<fr:link href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal" uri="https://kellenkanarios.com/FLKN/" display-uri="FLKN" type="local">chlo desugars, <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">stablehlo</fr:link> is stable, mhlo is internal</fr:link>). A serialised StableHLO program is expected to keep deserialising across compiler versions, which is what makes it a sensible artifact to ship, cache, or hand to a different backend.</html:p><html:p>Read it to answer one specific question: what did JAX actually ask for? It sits at the boundary where a JAX bug becomes an XLA bug. Above it the shapes are still recognisably yours; below it, in optimized <fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link>, fusion and layout assignment have rewritten the program past easy comparison (<fr:link href="/BQUG/" title="Only after_optimizations matches the profile" uri="https://kellenkanarios.com/BQUG/" display-uri="BQUG" type="local">Only after_optimizations matches the profile</fr:link>).</html:p><html:p>A hand-written kernel — <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> or <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> — appears here as an opaque <html:code>custom_call</html:code> whose body is serialised into an attribute (<fr:link href="/QRDW/" title="A Pallas kernel is an opaque custom call" uri="https://kellenkanarios.com/QRDW/" display-uri="QRDW" type="local">A <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> kernel is an opaque <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link></fr:link>), which is the first place you can see that XLA has been handed something it cannot look inside.</html:p>
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong>The same function one level down.</html:strong> <html:code>tanh(x @ w + b)</html:code>, lowered with <html:code>jax.jit(f).lower(x, w, b).as_text()</html:code>. Compare it against the <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> of the same function:</html:p>
+
+  <html:pre><html:code class="language-llvm"><![CDATA[module @jit_f attributes {mhlo.num_partitions = 1 : i32, mhlo.num_replicas = 1 : i32} {
+  func.func public @main(%arg0: tensor<8x16xf32>, %arg1: tensor<16x4xf32>,
+                         %arg2: tensor<4xf32>)
+      -> (tensor<8x4xf32> {jax.result_info = "result"}) {
+    %0 = stablehlo.dot_general %arg0, %arg1, contracting_dims = [1] x [0],
+         precision = [DEFAULT, DEFAULT] : (tensor<8x16xf32>, tensor<16x4xf32>) -> tensor<8x4xf32>
+    %1 = stablehlo.broadcast_in_dim %arg2, dims = [1] : (tensor<4xf32>) -> tensor<1x4xf32>
+    %2 = stablehlo.broadcast_in_dim %1, dims = [0, 1] : (tensor<1x4xf32>) -> tensor<8x4xf32>
+    %3 = stablehlo.add %0, %2 : tensor<8x4xf32>
+    %4 = stablehlo.tanh %3 : tensor<8x4xf32>
+    return %4 : tensor<8x4xf32>
+  }
+}]]></html:code></html:pre>
+
+  <html:p>Four things are worth noticing, and each is a card.</html:p>
+
+  <html:ul><html:li>It is ordinary <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link>: a <html:code>builtin.module</html:code> with attributes (<fr:link href="/R2O9/" title="Every dump is wrapped in a module" uri="https://kellenkanarios.com/R2O9/" display-uri="R2O9" type="local">Every dump is wrapped in a module</fr:link>), a <html:code>func.func</html:code> whose result carries an attribute JAX put there (<fr:link href="/ZZHW/" title="Three attribute positions on a function" uri="https://kellenkanarios.com/ZZHW/" display-uri="ZZHW" type="local">Three attribute positions on a function</fr:link>), and pretty-printed ops (<fr:link href="/T1YS/" title="The pretty form is optional, the generic form always works" uri="https://kellenkanarios.com/T1YS/" display-uri="T1YS" type="local">The pretty form is optional, the generic form always works</fr:link>).</html:li>
+    <html:li>The <html:code>dot_general</html:code> uses the sugar form <html:code><![CDATA[contracting_dims = [1] x [0]]]></html:code> rather than the <html:code><![CDATA[#stablehlo.dot<>]]></html:code> attribute (<fr:link href="/BVPY/" title="Batch, contract, free, and the output order is fixed" uri="https://kellenkanarios.com/BVPY/" display-uri="BVPY" type="local">Batch, contract, free, and the output order is fixed</fr:link>) — same information, shorter.</html:li>
+    <html:li><html:strong>The bias broadcast became <html:em>two</html:em> ops.</html:strong> <html:code>dims = [1]</html:code> maps the operand's single dimension to output dim 1, giving <html:code><![CDATA[1x4]]></html:code>; a second <html:code>broadcast_in_dim</html:code> then stretches the size-1 dimension to 8 (<fr:link href="/5LSA/" title="broadcast_in_dim maps operand dims onto output dims" uri="https://kellenkanarios.com/5LSA/" display-uri="5LSA" type="local">broadcast_in_dim maps operand dims onto output dims</fr:link>). One jaxpr equation, two StableHLO ops.</html:li>
+    <html:li>No layouts anywhere. Those are assigned later, inside XLA (<fr:link href="/RR6G/" title="The layout is minor-to-major" uri="https://kellenkanarios.com/RR6G/" display-uri="RR6G" type="local">The layout is minor-to-major</fr:link>).</html:li></html:ul>
+</html:div>
+
+<fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/FLKN/</fr:uri><fr:display-uri>FLKN</fr:display-uri><fr:route>/FLKN/</fr:route><fr:title text="chlo desugars, stablehlo is stable, mhlo is internal">chlo desugars, <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">stablehlo</fr:link> is stable, mhlo is internal</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404868120</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>In a JAX/XLA dump, what are the <html:code>chlo</html:code>, <html:code>stablehlo</html:code>, and <html:code>mhlo</html:code> dialects, and how do they relate?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:ul><html:li><html:strong><html:code>chlo</html:code></html:strong> — "client" HLO: higher-level sugar that gets decomposed. Implicitly broadcasting binary ops, <html:code>erf</html:code>, top-k style helpers.</html:li>
+    <html:li><html:strong><html:code>stablehlo</html:code></html:strong> — the stable, versioned, portable IR (<fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link>). This is what JAX emits and serialises today, and the compatibility boundary between frameworks and compilers.</html:li>
+    <html:li><html:strong><html:code>mhlo</html:code></html:strong> — "meta" HLO: XLA's internal, unstable dialect, what <html:code>stablehlo</html:code> is converted into before XLA's own HLO proto (<fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link>).</html:li></html:ul>
+
+  The pipeline, in full (<fr:link href="/NR79/" title="Lifecycle of a JAX program" uri="https://kellenkanarios.com/NR79/" display-uri="NR79" type="local">Lifecycle of a <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link> program</fr:link>):
+
+  <html:pre><html:code class="language-plaintext"><![CDATA[Python -> jaxpr -> chlo/stablehlo -> mhlo -> HLO -> optimized HLO -> backend (LLVM/PTX, Mosaic/LLO)]]></html:code></html:pre>
+
+  <html:strong>Only one of the three is a contract.</html:strong> <html:code>stablehlo</html:code> has version guarantees so a serialised program keeps deserialising; <html:code>chlo</html:code> and <html:code>mhlo</html:code> are implementation details you may read but must not depend on.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/5LSA/</fr:uri><fr:display-uri>5LSA</fr:display-uri><fr:route>/5LSA/</fr:route><fr:title text="broadcast_in_dim maps operand dims onto output dims">broadcast_in_dim maps operand dims onto output dims</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404866770</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[%0 = stablehlo.broadcast_in_dim %a, dims = [1] : (tensor<3xf32>) -> tensor<2x3xf32>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:code>dims</html:code> maps each <html:em>operand</html:em> dimension to the output dimension it lands in. Here operand dim 0 (size 3) becomes output dim 1. Every output dimension not listed is a new broadcast dimension, and a listed dimension of size 1 may be stretched.
+
+  Two invariants make the attribute self-checking: the list length always equals the operand rank, and the values must be strictly increasing — so a broadcast can add and stretch dimensions but never permute them. A permutation needs a separate <html:code>transpose</html:code> (<fr:link href="/8721/" title="transpose dimensions read output from operand" uri="https://kellenkanarios.com/8721/" display-uri="8721" type="local">transpose dimensions read output from operand</fr:link>).
+
+  <html:strong>This is one of two dimension-list conventions and they read in opposite directions.</html:strong> Broadcast lists a target per operand dim; transpose lists a source per output dim. HLO's <html:code>broadcast</html:code> uses this same convention (<fr:link href="/XML3/" title="broadcast dimensions read operand to output" uri="https://kellenkanarios.com/XML3/" display-uri="XML3" type="local">broadcast dimensions read operand to output</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/BVPY/</fr:uri><fr:display-uri>BVPY</fr:display-uri><fr:route>/BVPY/</fr:route><fr:title text="Batch, contract, free, and the output order is fixed">Batch, contract, free, and the output order is fixed</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867595</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>How do you read a <html:code>dot_general</html:code>'s dimension numbers? <html:code><![CDATA[#stablehlo.dot<lhs_batching_dimensions = [0], rhs_batching_dimensions = [0], lhs_contracting_dimensions = [2], rhs_contracting_dimensions = [1]>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Every dimension is one of three kinds:
+
+  <html:ol><html:li><html:strong>Batching</html:strong> — matched pairwise between lhs and rhs, and <html:em>kept</html:em>. These are independent problems solved side by side.</html:li>
+    <html:li><html:strong>Contracting</html:strong> — matched pairwise and <html:em>summed away</html:em>. This is the reduction.</html:li>
+    <html:li><html:strong>Free</html:strong> — everything else, and it survives into the output.</html:li></html:ol>
+
+  <html:strong>The output order is fixed, not chosen</html:strong>: batch dimensions, then lhs free dimensions in order, then rhs free dimensions in order. So the result shape is fully determined by the attribute and you never have to guess. Newer printers use the sugar <html:code><![CDATA[contracting_dims = [2] x [1]]]></html:code>.
+
+  The same three-way split appears at every level — as <html:code>dimension_numbers</html:code> in a jaxpr (<fr:link href="/CCL2/" title="dimension_numbers is contracting then batch" uri="https://kellenkanarios.com/CCL2/" display-uri="CCL2" type="local">dimension_numbers is contracting then batch</fr:link>) and as <html:code>lhs_batch_dims</html:code> and friends in HLO (<fr:link href="/7EEZ/" title="A dot's output order is batch, lhs free, rhs free" uri="https://kellenkanarios.com/7EEZ/" display-uri="7EEZ" type="local">A dot's output order is batch, lhs free, rhs free</fr:link>) — which is what makes a matmul traceable straight down the stack.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/KLBR/</fr:uri><fr:display-uri>KLBR</fr:display-uri><fr:route>/KLBR/</fr:route><fr:title text="reduce takes a computation, not an enum">reduce takes a computation, not an enum</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404868920</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Why does a <html:code>stablehlo.reduce</html:code> body look like a region? <html:code><![CDATA[%r = stablehlo.reduce(%a init: %zero) applies stablehlo.add across dimensions = [1]]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Because <html:code>reduce</html:code> takes a reducer <html:em>computation</html:em> — a region (<fr:link href="/MKYF/" title="A region is nesting, not a flat CFG" uri="https://kellenkanarios.com/MKYF/" display-uri="MKYF" type="local">A region is nesting, not a flat CFG</fr:link>) taking two scalars and yielding one — rather than an enum of built-in reductions. Any associative operation can therefore be expressed, including ones the dialect never enumerated.
+
+  The form above is sugar for the common case; the general form spells the region out with a <html:code>stablehlo.return</html:code>. <html:code>dimensions</html:code> lists the dims removed from the operand shape.
+
+  <html:strong>The init value is not decoration — it is the identity of the reducer</html:strong>, and it is also what a zero-sized reduction returns. Getting it wrong (0 for a max, say) produces a reduction that is right on non-empty input and silently wrong at the edge.
+
+  HLO's <html:code>reduce</html:code> is the same design with <html:code>to_apply</html:code> naming the computation (<fr:link href="/EE3R/" title="reduce removes the dims it lists" uri="https://kellenkanarios.com/EE3R/" display-uri="EE3R" type="local">reduce removes the dims it lists</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/QRDW/</fr:uri><fr:display-uri>QRDW</fr:display-uri><fr:route>/QRDW/</fr:route><fr:title text="A Pallas kernel is an opaque custom call">A <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> kernel is an opaque <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link></fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869695</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>How does a <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> or <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> kernel appear in a <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link> dump?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  As an opaque custom call (<fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">XLA custom call</fr:link>):
+
+  <html:pre><html:code class="language-llvm"><![CDATA[stablehlo.custom_call @tpu_custom_call(%a, %b) {backend_config = "...", api_version = 2 : i32}
+  : (tensor<8x128xf32>, ...) -> tensor<8x128xf32>]]></html:code></html:pre>
+
+  On GPU the target is <html:code>@triton_kernel_call</html:code> instead.
+
+  <html:strong>The kernel body is not in this IR.</html:strong> It is serialised inside <html:code>backend_config</html:code> — a <fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> module, or Triton IR (<fr:link href="/9N7G/" title="The prefix says which side of layout assignment" uri="https://kellenkanarios.com/9N7G/" display-uri="9N7G" type="local">The prefix says which side of layout assignment</fr:link>) — and XLA treats the whole thing as a black box with declared operands, results, and effects.
+
+  That is the trade you accept when you write a kernel by hand: you get control of the inner loop, and you give up every cross-op optimisation at the boundary, because the compiler cannot fuse across something it cannot see (<fr:link href="/2MM7/" title="A custom call is a black box XLA cannot fuse across" uri="https://kellenkanarios.com/2MM7/" display-uri="2MM7" type="local">A <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link> is a black box <fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA</fr:link> cannot fuse across</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree></fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/CQ6W/</fr:uri>
+            <fr:display-uri>CQ6W</fr:display-uri>
+            <fr:route>/CQ6W/</fr:route>
+            <fr:title text="Triton">Triton</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>A Python-embedded <fr:link href="/5PSC/" title="Kernel DSLs" uri="https://kellenkanarios.com/5PSC/" display-uri="5PSC" type="local">DSL</fr:link> for GPU kernels in which you write <html:em>block</html:em>-level code — load a tile, do arithmetic on it, store it — and the compiler decides how the tile maps onto threads <html:span class="link-reference"><fr:link href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations" uri="https://kellenkanarios.com/tilletTritonIntermediateLanguage2019/" display-uri="tilletTritonIntermediateLanguage2019" type="local">[tilletTritonIntermediateLanguage2019]</fr:link></html:span>. That is the trade against CUDA: you give up control of the thread indexing that <fr:link href="/U1FO/" title="Memory coalescing merges a warp's accesses into one transaction per cache line" uri="https://kellenkanarios.com/U1FO/" display-uri="U1FO" type="local">memory coalescing</fr:link> depends on, and in exchange you stop writing it.</html:p>
+            <html:p>The compiler is built on <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link>, with two custom dialects, and the boundary between them is the single most useful thing to know when a kernel is slow (<fr:link href="/9N7G/" title="The prefix says which side of layout assignment" uri="https://kellenkanarios.com/9N7G/" display-uri="9N7G" type="local">The prefix says which side of layout assignment</fr:link>). <html:code>ttir</html:code> (<html:code>tt.</html:code> ops) is the target-independent tensor level — roughly what you wrote. <html:code>ttgir</html:code> (<html:code>ttg.</html:code> ops) is after layout assignment, where every tensor carries an <html:em>encoding</html:em> saying which lane holds which element (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>).</html:p>
+            <html:p><html:strong>So a Triton performance problem is one of two things, and the dialect prefix tells you which.</html:strong> At the <html:code>tt.</html:code> level it is your algorithm — the tiling, the loop structure, the arithmetic. At the <html:code>ttg.</html:code> level it is the compiler's distribution of it, and the usual culprit is a <html:code>ttg.convert_layout</html:code> that round-trips a tensor through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link> inside a loop (<fr:link href="/B4XO/" title="A convert_layout round-trips through shared memory" uri="https://kellenkanarios.com/B4XO/" display-uri="B4XO" type="local">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:link>). The second kind is invisible in your source and obvious in the IR, which is the argument for reading the IR.</html:p>
+            <html:p>From XLA's side a Triton kernel is an opaque <html:code>@triton_kernel_call</html:code> custom call (<fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">XLA custom call</fr:link>, <fr:link href="/2MM7/" title="A custom call is a black box XLA cannot fuse across" uri="https://kellenkanarios.com/2MM7/" display-uri="2MM7" type="local">A <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link> is a black box <fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA</fr:link> cannot fuse across</fr:link>), so nothing fuses across it — the same bargain <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> makes on TPU.</html:p>
+            <fr:tree show-metadata="false" toc="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>8</fr:month>
+                  <fr:day>22</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/9N7G/</fr:uri>
+                <fr:display-uri>9N7G</fr:display-uri>
+                <fr:route>/9N7G/</fr:route>
+                <fr:title text="The prefix says which side of layout assignment">The prefix says which side of layout assignment</fr:title>
+                <fr:taxon>Card</fr:taxon>
+                <fr:meta name="anki">1787404867320</fr:meta>
+                <fr:meta name="anki-deck">MLSys</fr:meta>
+              </fr:frontmatter>
+              <fr:mainmatter>
+  <html:p>What do the <html:code>tt.</html:code> and <html:code>ttg.</html:code> (<html:code>triton_gpu</html:code>) prefixes separate in <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> IR?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong><html:code>tt.</html:code></html:strong> is the target-independent tensor level: <html:code>tt.load</html:code>, <html:code>tt.store</html:code>, <html:code>tt.dot</html:code>, <html:code>tt.make_range</html:code>, and pointer arithmetic on <html:code><![CDATA[!tt.ptr<f32>]]></html:code> over block shapes. This is roughly what you wrote.
+
+  <html:strong><html:code>ttg.</html:code></html:strong> is after layout assignment: the same tensors now carry an <html:em>encoding</html:em> attribute saying how their elements are distributed across warps, lanes, and registers (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>), plus ops like <html:code>ttg.convert_layout</html:code> (<fr:link href="/B4XO/" title="A convert_layout round-trips through shared memory" uri="https://kellenkanarios.com/B4XO/" display-uri="B4XO" type="local">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:link>) and shared-memory allocation (<fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">Shared memory (GPU)</fr:link>).
+
+  <html:strong>So the prefix tells you which side of layout assignment you are on</html:strong>, and that is the division that matters when a Triton kernel is slow: a problem at the <html:code>tt.</html:code> level is your algorithm, and a problem that only appears at <html:code>ttg.</html:code> is the compiler's distribution of it. Same use of the dialect prefix as a marker of pipeline stage as <html:code>chlo</html:code> / <html:code>stablehlo</html:code> / <html:code>mhlo</html:code> (<fr:link href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal" uri="https://kellenkanarios.com/FLKN/" display-uri="FLKN" type="local">chlo desugars, <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">stablehlo</fr:link> is stable, mhlo is internal</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false" toc="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>8</fr:month>
+                  <fr:day>22</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/RI0V/</fr:uri>
+                <fr:display-uri>RI0V</fr:display-uri>
+                <fr:route>/RI0V/</fr:route>
+                <fr:title text="An encoding tiles the block across threads and warps">An encoding tiles the block across threads and warps</fr:title>
+                <fr:taxon>Card</fr:taxon>
+                <fr:meta name="anki">1787404869920</fr:meta>
+                <fr:meta name="anki-deck">MLSys</fr:meta>
+              </fr:frontmatter>
+              <fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[tensor<128x64xf16, #blocked>]]></html:code> where <html:code><![CDATA[#blocked = #ttg.blocked<{sizePerThread=[1,4], threadsPerWarp=[8,4], warpsPerCTA=[4,1], order=[1,0]}>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The encoding says how the logical <fr:tex display="inline"><![CDATA[128 \times  64]]></fr:tex> tile is distributed:
+
+  <html:ul><html:li><html:strong><html:code>sizePerThread</html:code></html:strong> — elements each thread holds per dimension; the minor-dimension entry is the vectorisation width.</html:li>
+    <html:li><html:strong><html:code>threadsPerWarp</html:code></html:strong> — how the 32 lanes of a <fr:link href="/OGCS5/" title="Warp (GPU)" uri="https://kellenkanarios.com/OGCS5/" display-uri="OGCS5" type="local">Warp (GPU)</fr:link> are arranged in two dimensions.</html:li>
+    <html:li><html:strong><html:code>warpsPerCTA</html:code></html:strong> — how warps tile the block.</html:li>
+    <html:li><html:strong><html:code>order</html:code></html:strong> — minor-to-major, so which dimension is contiguous per thread (<fr:link href="/RR6G/" title="The layout is minor-to-major" uri="https://kellenkanarios.com/RR6G/" display-uri="RR6G" type="local">The layout is minor-to-major</fr:link>).</html:li></html:ul>
+
+  <html:strong>Multiply the three lists out and you get the tile one CTA covers in one pass</html:strong>: <fr:tex display="inline"><![CDATA[1 \times  8 \times  4 = 32]]></fr:tex> rows and <fr:tex display="inline"><![CDATA[4 \times  4 \times  1 = 16]]></fr:tex> columns here, so the <fr:tex display="inline"><![CDATA[128 \times  64]]></fr:tex> shape takes <fr:tex display="inline"><![CDATA[4 \times  4]]></fr:tex> repeats. That arithmetic is the whole content of the attribute, and it is how you check by hand whether loads coalesce.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false" toc="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>8</fr:month>
+                  <fr:day>22</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/B4XO/</fr:uri>
+                <fr:display-uri>B4XO</fr:display-uri>
+                <fr:route>/B4XO/</fr:route>
+                <fr:title text="A convert_layout round-trips through shared memory">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:title>
+                <fr:taxon>Card</fr:taxon>
+                <fr:meta name="anki">1787404867395</fr:meta>
+                <fr:meta name="anki-deck">MLSys</fr:meta>
+              </fr:frontmatter>
+              <fr:mainmatter>
+  <html:p>Why is <html:code>ttg.convert_layout</html:code> the op to look for in a slow <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> kernel?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  It re-distributes a tensor from one encoding to another (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>) — typically <html:code><![CDATA[#blocked]]></html:code> to a <html:code><![CDATA[#ttg.dot_op]]></html:code> or <html:code><![CDATA[#mma]]></html:code> operand layout, because the tensor core wants its operands arranged differently from the way the loads produced them.
+
+  <html:strong>Unless the conversion happens to be a pure register permutation, it round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link> and inserts barriers.</html:strong> That is a store, a sync across the block, and a load — for data that never changed value.
+
+  One unnecessary <html:code>convert_layout</html:code> inside a loop body is a classic Triton performance bug, and it is visible in the IR long before it is visible in a profile. The layout-propagation passes exist to hoist these out of loops or eliminate them, so one that survives in the body is worth understanding rather than accepting.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+            </fr:tree>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/64A0/</fr:uri>
+            <fr:display-uri>64A0</fr:display-uri>
+            <fr:route>/64A0/</fr:route>
+            <fr:title text="Mosaic is explicit memory spaces and explicit copies"><fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> is explicit memory spaces and explicit copies</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404866820</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>What distinguishes a <fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> (TPU) <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> dump from a GPU-side one?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:code>tpu.</html:code> dialect ops over <html:code><![CDATA[memref<..., #tpu.memory_space<vmem>>]]></html:code> (<fr:link href="/B1A1/" title="A memref names storage, a tensor is a value" uri="https://kellenkanarios.com/B1A1/" display-uri="B1A1" type="local">A memref names storage, a tensor is a value</fr:link>), vector-dialect ops on native tile shapes — typically <fr:tex display="inline"><![CDATA[8 \times  128]]></fr:tex> for f32 (<fr:link href="/1XJ4/" title="Vectors are register-level, tensors are abstract" uri="https://kellenkanarios.com/1XJ4/" display-uri="1XJ4" type="local">Vectors are register-level, tensors are abstract</fr:link>) — explicit DMA-style copies between hbm, <fr:link href="/GFK2/" title="VMEM" uri="https://kellenkanarios.com/GFK2/" display-uri="GFK2" type="local">VMEM</fr:link>, and smem, and semaphores for synchronisation.
+
+  <html:strong>So the mental model is different in kind, not in detail.</html:strong> A GPU dump is a thread and warp hierarchy where the memory movement is implicit in which thread touches what (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>). A Mosaic dump is explicit memory spaces, explicit asynchronous copies, and vector operations on hardware-tile-shaped values — no threads anywhere.
+
+  That is the same shift <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> asks of you at the source level, and it is why a TPU kernel is written as a pipeline of DMAs rather than as an indexing scheme.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/2MM7/</fr:uri>
+            <fr:display-uri>2MM7</fr:display-uri>
+            <fr:route>/2MM7/</fr:route>
+            <fr:title text="A custom call is a black box XLA cannot fuse across">A <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link> is a black box <fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA</fr:link> cannot fuse across</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404866279</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[custom-call(%a, %b), custom_call_target="tpu_custom_call", operand_layout_constraints={...}, backend_config="...", api_version=API_VERSION_STATUS_RETURNING]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The escape hatch to code XLA does not generate: library kernels (cuBLAS, cuDNN), <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> and <fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> or <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> kernels (<fr:link href="/QRDW/" title="A Pallas kernel is an opaque custom call" uri="https://kellenkanarios.com/QRDW/" display-uri="QRDW" type="local">A <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> kernel is an opaque <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link></fr:link>), host callbacks.
+
+  <html:ul><html:li><html:code>custom_call_target</html:code> selects the registered handler by name.</html:li>
+    <html:li><html:code>backend_config</html:code> carries the opaque payload — a serialised Mosaic module, a tuning configuration, an algorithm choice.</html:li>
+    <html:li><html:code>operand_layout_constraints</html:code> pins the layouts the handler requires (<fr:link href="/RR6G/" title="The layout is minor-to-major" uri="https://kellenkanarios.com/RR6G/" display-uri="RR6G" type="local">The layout is minor-to-major</fr:link>).</html:li></html:ul>
+
+  <html:strong>Everything expensive about a custom call follows from XLA not being able to see inside it.</html:strong> It cannot fuse across the boundary, so the operands are materialised to <fr:link href="/AI2G/" title="High bandwidth memory" uri="https://kellenkanarios.com/AI2G/" display-uri="AI2G" type="local">High bandwidth memory</fr:link> and the results read back; it must assume the declared effects, so it cannot reorder freely; and the pinned layouts can force <html:code>copy</html:code> ops on both sides (<fr:link href="/KG5S/" title="bitcast is free, copy is not" uri="https://kellenkanarios.com/KG5S/" display-uri="KG5S" type="local">bitcast is free, copy is not</fr:link>).
+
+  A hand-written kernel has to beat all of that, not just the kernel XLA would have emitted.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/QRDW/</fr:uri>
+            <fr:display-uri>QRDW</fr:display-uri>
+            <fr:route>/QRDW/</fr:route>
+            <fr:title text="A Pallas kernel is an opaque custom call">A <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> kernel is an opaque <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link></fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404869695</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>How does a <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> or <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> kernel appear in a <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link> dump?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  As an opaque custom call (<fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">XLA custom call</fr:link>):
+
+  <html:pre><html:code class="language-llvm"><![CDATA[stablehlo.custom_call @tpu_custom_call(%a, %b) {backend_config = "...", api_version = 2 : i32}
+  : (tensor<8x128xf32>, ...) -> tensor<8x128xf32>]]></html:code></html:pre>
+
+  On GPU the target is <html:code>@triton_kernel_call</html:code> instead.
+
+  <html:strong>The kernel body is not in this IR.</html:strong> It is serialised inside <html:code>backend_config</html:code> — a <fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> module, or Triton IR (<fr:link href="/9N7G/" title="The prefix says which side of layout assignment" uri="https://kellenkanarios.com/9N7G/" display-uri="9N7G" type="local">The prefix says which side of layout assignment</fr:link>) — and XLA treats the whole thing as a black box with declared operands, results, and effects.
+
+  That is the trade you accept when you write a kernel by hand: you get control of the inner loop, and you give up every cross-op optimisation at the boundary, because the compiler cannot fuse across something it cannot see (<fr:link href="/2MM7/" title="A custom call is a black box XLA cannot fuse across" uri="https://kellenkanarios.com/2MM7/" display-uri="2MM7" type="local">A <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link> is a black box <fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA</fr:link> cannot fuse across</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
               <fr:day>11</fr:day>
             </fr:date>
             <fr:uri>https://kellenkanarios.com/IO2I/</fr:uri>
@@ -149,7 +679,7 @@
             <fr:taxon>Definition</fr:taxon>
           </fr:frontmatter>
           <fr:mainmatter>
-            <html:p>The TPU memory hierarchy is entirely software managed with no cache. Memory movement is controlled by the compiler and <fr:link href="/PMIC/" title="Operator fusion is like ASIC caching" uri="https://kellenkanarios.com/PMIC/" display-uri="PMIC" type="local">Operator fusion is like ASIC caching</fr:link>.</html:p>
+            <html:p>The TPU memory hierarchy is entirely software managed with no cache. Memory movement is controlled by the compiler and <fr:link href="/PMIC/" title="Operator fusion is like ASIC caching" uri="https://kellenkanarios.com/PMIC/" display-uri="PMIC" type="local"><fr:link href="/38CM/" title="Operator fusion" uri="https://kellenkanarios.com/38CM/" display-uri="38CM" type="local">Operator fusion</fr:link> is like ASIC caching</fr:link>.</html:p>
             <html:figure><html:img width="60%" src="/bafkrmihebk5hzb7q5baotsb2or45d4r7s3qqhnirgttiegd4xj5fbgxkbq.png" />
 <html:figcaption>Datapath through a TPU onto the execution unit <fr:link href="/OGCRP/" title="Matrix Multiply Unit (MXU)" uri="https://kellenkanarios.com/OGCRP/" display-uri="OGCRP" type="local">Matrix Multiply Unit (MXU)</fr:link> or <fr:link href="/OGCRN/" title="Vector Processing Unit" uri="https://kellenkanarios.com/OGCRN/" display-uri="OGCRN" type="local">Vector Processing Unit</fr:link>.</html:figcaption></html:figure>
             <html:p>Notably, in <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link>, you tile the memory transfer and define the pipeline from HBM to VMEM.</html:p>
@@ -263,16 +793,17 @@ os.environ["LIBTPU_INIT_ARGS"] = (
     f"--xla_mosaic_enable_llo_source_annotations=true"
 )
 </html:code></html:pre><html:p>To understand these flags, one first needs to understand the Pallas lowering pipeline.</html:p><fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/M74N/</fr:uri><fr:display-uri>M74N</fr:display-uri><fr:route>/M74N/</fr:route><fr:title text="XLA Compilation">XLA Compilation</fr:title></fr:frontmatter><fr:mainmatter><html:p><html:strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">Overview.</html:strong></html:p><html:ul><html:li>Dispatch / Cache: caches compilation based on input argument signatures i.e. shapes, dtypes, sharding. If shapes change will need to <html:strong>recompile</html:strong>.</html:li>
-  <html:li>XLA transformation: Python -&gt; JaxPR -&gt; StableHLO, performing fusion and other simplifications to reduce memory overhead (?).</html:li>
-  <html:li>TPU specific: Further reduced to LLO IR, then <html:em>very large instruction word</html:em> (VLIW) scheduling to map dot products to MXU.</html:li></html:ul>
+  <html:li>Lowering: Python -&gt; <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> -&gt; <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link>. This stage is a translation, not an optimization — no <fr:link href="/38CM/" title="Operator fusion" uri="https://kellenkanarios.com/38CM/" display-uri="38CM" type="local">Operator fusion</fr:link> happens here. See <fr:link href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal" uri="https://kellenkanarios.com/FLKN/" display-uri="FLKN" type="local">chlo desugars, <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">stablehlo</fr:link> is stable, mhlo is internal</fr:link> for the dialects involved and <fr:link href="/AGEG/" title="Three calls, three IR levels" uri="https://kellenkanarios.com/AGEG/" display-uri="AGEG" type="local">Three calls, three IR levels</fr:link> for how to print each level.</html:li>
+  <html:li>XLA: StableHLO is converted to <fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link>, and the optimizing passes — simplification, layout assignment, fusion, collective scheduling, memory assignment — run there. Read <html:code>after_optimizations</html:code>, not <html:code>before_optimizations</html:code>, for anything performance-related (<fr:link href="/BQUG/" title="Only after_optimizations matches the profile" uri="https://kellenkanarios.com/BQUG/" display-uri="BQUG" type="local">Only after_optimizations matches the profile</fr:link>).</html:li>
+  <html:li>TPU specific: Further reduced to LLO IR, then <html:em>very large instruction word</html:em> (VLIW) scheduling to map dot products to <fr:link href="/OGCRP/" title="Matrix Multiply Unit (MXU)" uri="https://kellenkanarios.com/OGCRP/" display-uri="OGCRP" type="local">Matrix Multiply Unit (MXU)</fr:link>.</html:li></html:ul>
  <html:div class="jms-callout" style="
   margin: 1.1rem 0;
   padding: 0.1rem 0 0.1rem 0.9rem;
   border-left: 2px solid rgb(219, 216, 215);
   "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> 
-As soon as python code is traced into jaxpr it is thrown away. Only HLO is input to XLA compiler.
+The Python source is thrown away as soon as it is traced into a <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link>, and the jaxpr in turn is thrown away once it is lowered. What XLA ingests is StableHLO, which it converts to HLO before optimizing; HLO is XLA's internal representation, not its input format. The only thread back to the Python you wrote is the <html:code>metadata</html:code> carried on each instruction (<fr:link href="/FG58/" title="op_name is the trace path back to Python" uri="https://kellenkanarios.com/FG58/" display-uri="FG58" type="local">op_name is the trace path back to Python</fr:link>).
 </html:div>
-<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>7</fr:day></fr:date><fr:uri>https://kellenkanarios.com/NR79/</fr:uri><fr:display-uri>NR79</fr:display-uri><fr:route>/NR79/</fr:route><fr:title text="Lifecycle of a JAX program">Lifecycle of a JAX program</fr:title></fr:frontmatter><fr:mainmatter><html:p>We have the following compilation pipeline</html:p><html:ol><html:li>Tracing: Python / JAX -&gt; <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link></html:li>
+<fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>7</fr:day></fr:date><fr:uri>https://kellenkanarios.com/NR79/</fr:uri><fr:display-uri>NR79</fr:display-uri><fr:route>/NR79/</fr:route><fr:title text="Lifecycle of a JAX program">Lifecycle of a <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link> program</fr:title></fr:frontmatter><fr:mainmatter><html:p>We have the following compilation pipeline</html:p><html:ol><html:li>Tracing: Python / JAX -&gt; <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link></html:li>
   <html:ul><html:li><html:code>jax.make_jaxpr(fun)(*args)</html:code></html:li>
     <html:li>Abstract execution. JAX executes python code using abstract tracer objects instead of real arrays.</html:li>
     <html:li>Every operation and its intermediate result is recorded into <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link>.</html:li>
@@ -281,10 +812,10 @@ As soon as python code is traced into jaxpr it is thrown away. Only HLO is input
     <html:li>Each JAX primitive registers functions for</html:li>
     <html:ul><html:li>Lowering to StableHLO</html:li>  
         <html:li>How it is transformed under <html:code>grad</html:code> and <html:code>vmap</html:code>.</html:li></html:ul></html:ul>
-  <html:li>Lowering: Jaxpr -&gt; HLO</html:li>
+  <html:li>Lowering: Jaxpr -&gt; <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link></html:li>
   <html:ul><html:li><html:code>fn_lowered = jax.jit(fun).lower(*args)</html:code></html:li>
     <html:li><html:code>stable_hlo = fn_lowered.as_text()</html:code></html:li>
-    <html:li><html:code>hlo = fn_lowered.compiler_ir('hlo')</html:code></html:li>
+    <html:li><html:code>fn_lowered.compiler_ir(dialect='stablehlo')</html:code> for the <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> module rather than its text. There is no <html:code>'hlo'</html:code> dialect to ask for here — HLO is produced inside XLA, one step later (<fr:link href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal" uri="https://kellenkanarios.com/FLKN/" display-uri="FLKN" type="local">chlo desugars, <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">stablehlo</fr:link> is stable, mhlo is internal</fr:link>), and you reach it through <html:code>.compile().as_text()</html:code> (<fr:link href="/AGEG/" title="Three calls, three IR levels" uri="https://kellenkanarios.com/AGEG/" display-uri="AGEG" type="local">Three calls, three IR levels</fr:link>).</html:li>
     <html:li>Multiple ML frameworks lower to StableHLO.</html:li>
     <html:ul><html:li>Hardware agnostic.</html:li>
       <html:li>Backwards compatible.</html:li></html:ul></html:ul>
@@ -301,7 +832,108 @@ As soon as python code is traced into jaxpr it is thrown away. Only HLO is input
   <html:li>Tiling: arrays are split into smaller blocks to fit into VREG. Want to arrange data to efficiently fit VREG.</html:li></html:ul><html:figure><html:img width="60%" src="/bafkrmihanbz63fc3hvqd3drtqlm5shhn2624xbut2oobs3zibpwjw2jiju.png" />
 <html:figcaption>How memory is laid out based on XLA.</html:figcaption></html:figure><html:p><html:strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">Execution.</html:strong></html:p><html:ul><html:li>Move tensors from CPU to HBM. Sharding is taken care of by PJIT if on TPU pod.</html:li>
   <html:li>Async: Immediately returns a <html:code>Future</html:code> JAX array while the hardware executes VLIW microcode asynchronously.</html:li>
-  <html:li>Buffer management: Returns pointer to TPU memory. All handled lazily. Not copied back to CPU until <html:code>jax.block_until_ready()</html:code>.</html:li></html:ul></fr:mainmatter></fr:tree>
+  <html:li>Buffer management: Returns pointer to TPU memory. All handled lazily. Not copied back to CPU until <html:code>jax.block_until_ready()</html:code>.</html:li></html:ul>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>5</fr:month><fr:day>22</fr:day></fr:date><fr:title text="Getting the dumps">Getting the dumps</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p>Half of reading compiler output is arranging to read the right compiler output. The recurring mistake is answering a performance question from <html:code>before_optimizations</html:code>, which describes a program that never ran.</html:p>
+  
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/AGEG/</fr:uri><fr:display-uri>AGEG</fr:display-uri><fr:route>/AGEG/</fr:route><fr:title text="Three calls, three IR levels">Three calls, three IR levels</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867346</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>How do you print each IR level for a JAX function <html:code>f</html:code>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:ol><html:li><html:strong><fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link></html:strong> — <html:code>jax.make_jaxpr(f)(x)</html:code>.</html:li>
+    <html:li><html:strong><fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link></html:strong>, pre-XLA — <html:code>jax.jit(f).lower(x).as_text()</html:code>, or <html:code>.compiler_ir(dialect='stablehlo')</html:code>.</html:li>
+    <html:li><html:strong>Optimized <fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link></html:strong>, post-XLA passes and matching the profile — <html:code>jax.jit(f).lower(x).compile().as_text()</html:code>.</html:li></html:ol>
+
+  <html:strong>The three answer genuinely different questions</html:strong>, and reaching for the wrong one wastes an afternoon (<fr:link href="/NR79/" title="Lifecycle of a JAX program" uri="https://kellenkanarios.com/NR79/" display-uri="NR79" type="local">Lifecycle of a <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link> program</fr:link>):
+
+  <html:ul><html:li>The jaxpr says what <html:em>tracing</html:em> captured — so it answers "why is this constant baked in", "why is there a <html:code>convert_element_type</html:code> here" (<fr:link href="/WMKA/" title="A weak type adopts the other operand's dtype" uri="https://kellenkanarios.com/WMKA/" display-uri="WMKA" type="local">A weak type adopts the other operand's dtype</fr:link>), "did my Python branch get traced at all".</html:li>
+    <html:li>The StableHLO says what JAX handed to XLA — the boundary where a JAX bug becomes an XLA bug.</html:li>
+    <html:li>The optimized HLO says what XLA built — fusions, layouts, collectives (<fr:link href="/BQUG/" title="Only after_optimizations matches the profile" uri="https://kellenkanarios.com/BQUG/" display-uri="BQUG" type="local">Only after_optimizations matches the profile</fr:link>).</html:li></html:ul>
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/BQUG/</fr:uri><fr:display-uri>BQUG</fr:display-uri><fr:route>/BQUG/</fr:route><fr:title text="Only after_optimizations matches the profile">Only after_optimizations matches the profile</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867570</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What is the difference between the <html:code>before_optimizations</html:code> and <html:code>after_optimizations</html:code> HLO files in an XLA dump?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong><html:code>before_optimizations</html:code></html:strong> — the HLO as imported from <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link>. Shapes carry no meaningful layouts yet (<fr:link href="/RR6G/" title="The layout is minor-to-major" uri="https://kellenkanarios.com/RR6G/" display-uri="RR6G" type="local">The layout is minor-to-major</fr:link>), nothing is fused, and there is roughly one instruction per source operation. Read it when you want to know what JAX asked for.
+
+  <html:strong><html:code>after_optimizations</html:code></html:strong> — past simplification, layout assignment, <fr:link href="/38CM/" title="Operator fusion" uri="https://kellenkanarios.com/38CM/" display-uri="38CM" type="local">Operator fusion</fr:link>, collective scheduling, and memory assignment. Read it when you want to know what runs.
+
+  <html:strong>Only the second one corresponds to the kernels in a profile</html:strong>, because the fusion names in the profile <html:em>are</html:em> the fusion instruction names here (<fr:link href="/ZUYH/" title="A fusion op is a kernel launch boundary" uri="https://kellenkanarios.com/ZUYH/" display-uri="ZUYH" type="local">A <fr:link href="/38CM/" title="Operator fusion" uri="https://kellenkanarios.com/38CM/" display-uri="38CM" type="local">fusion</fr:link> op is a kernel launch boundary</fr:link>). A performance question answered from <html:code>before_optimizations</html:code> is answered about a program that never executed — the op you are worried about may have been fused away, folded, or duplicated (<fr:link href="/JFMQ/" title="The dump filename encodes the stage" uri="https://kellenkanarios.com/JFMQ/" display-uri="JFMQ" type="local">The dump filename encodes the stage</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/8U47/</fr:uri><fr:display-uri>8U47</fr:display-uri><fr:route>/8U47/</fr:route><fr:title text="Per-pass dumps find the pass that broke it">Per-pass dumps find the pass that broke it</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867195</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What does <html:code><![CDATA[XLA_FLAGS=--xla_dump_to=/tmp/dump]]></html:code> give you, and how do you get per-pass IR?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  A directory of per-module files: pre- and post-optimization HLO text (<fr:link href="/BQUG/" title="Only after_optimizations matches the profile" uri="https://kellenkanarios.com/BQUG/" display-uri="BQUG" type="local">Only after_optimizations matches the profile</fr:link>), the buffer assignment, and on GPU the generated PTX and LLVM IR (<fr:link href="/JFMQ/" title="The dump filename encodes the stage" uri="https://kellenkanarios.com/JFMQ/" display-uri="JFMQ" type="local">The dump filename encodes the stage</fr:link>).
+
+  <html:strong>Add <html:code>--xla_dump_hlo_pass_re=.*</html:code> to dump the HLO before and after every pass matching the regex.</html:strong> That is how you find <html:em>which</html:em> pass introduced a copy or broke a fusion — bisect the pass list rather than staring at the endpoints. Narrow the regex once you have a suspect, since <html:code>.*</html:code> on a real model produces a great many files.
+
+  <html:code>--xla_dump_hlo_as_html</html:code> and <html:code>--xla_dump_hlo_as_dot</html:code> give graph views, which are far easier than text for fusion structure (<fr:link href="/ZUYH/" title="A fusion op is a kernel launch boundary" uri="https://kellenkanarios.com/ZUYH/" display-uri="ZUYH" type="local">A <fr:link href="/38CM/" title="Operator fusion" uri="https://kellenkanarios.com/38CM/" display-uri="38CM" type="local">fusion</fr:link> op is a kernel launch boundary</fr:link>) — a flat instruction list hides exactly the thing you are looking at.
+
+  The <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> side has the same facility in <html:code>--mlir-print-ir-after-all</html:code> (<fr:link href="/7R2Y/" title="Print generic, print locations, disable threading" uri="https://kellenkanarios.com/7R2Y/" display-uri="7R2Y" type="local">Print generic, print locations, disable threading</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/JFMQ/</fr:uri><fr:display-uri>JFMQ</fr:display-uri><fr:route>/JFMQ/</fr:route><fr:title text="The dump filename encodes the stage">The dump filename encodes the stage</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404868570</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Reading an XLA dump directory: what is in <html:code>module_0001.jit_f.before_optimizations.txt</html:code> versus the <html:code>after_optimizations</html:code> and <html:code>sm_XX</html:code> files?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The filename encodes module index, entry name, and pipeline stage. Read them in this order:
+
+  <html:ol><html:li><html:strong><html:code>before_optimizations</html:code></html:strong> — one-to-one with your <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link>. Use it to confirm JAX emitted what you meant.</html:li>
+    <html:li><html:strong><html:code>after_optimizations</html:code></html:strong> — fused, laid out, scheduled. Map profile kernels to the fusion names here (<fr:link href="/BQUG/" title="Only after_optimizations matches the profile" uri="https://kellenkanarios.com/BQUG/" display-uri="BQUG" type="local">Only after_optimizations matches the profile</fr:link>).</html:li>
+    <html:li><html:strong>Backend artifacts</html:strong> — PTX and LLVM IR on GPU, <fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> or LLO on TPU. What actually ran.</html:li></html:ol>
+
+  <html:strong>Each module index is a separate compilation</html:strong>, so a program with several <html:code>jit</html:code> boundaries, or one that retraced on a new input shape, produces several sets. When a dump directory has more modules than you expected, that count <html:em>is</html:em> the finding — it means recompilation you did not intend (<fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA Compilation</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
   <html:div class="comments">
     
   <html:hr style="

@@ -1,0 +1,607 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors>
+      <fr:author>
+        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+      </fr:author>
+    </fr:authors>
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>8</fr:month>
+      <fr:day>22</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/BVPY/</fr:uri>
+    <fr:display-uri>BVPY</fr:display-uri>
+    <fr:route>/BVPY/</fr:route>
+    <fr:title text="Batch, contract, free, and the output order is fixed">Batch, contract, free, and the output order is fixed</fr:title>
+    <fr:taxon>Card</fr:taxon>
+    <fr:meta name="anki">1787404867595</fr:meta>
+    <fr:meta name="anki-deck">MLSys</fr:meta>
+  </fr:frontmatter>
+  <fr:mainmatter>
+  <html:p>How do you read a <html:code>dot_general</html:code>'s dimension numbers? <html:code><![CDATA[#stablehlo.dot<lhs_batching_dimensions = [0], rhs_batching_dimensions = [0], lhs_contracting_dimensions = [2], rhs_contracting_dimensions = [1]>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Every dimension is one of three kinds:
+
+  <html:ol><html:li><html:strong>Batching</html:strong> — matched pairwise between lhs and rhs, and <html:em>kept</html:em>. These are independent problems solved side by side.</html:li>
+    <html:li><html:strong>Contracting</html:strong> — matched pairwise and <html:em>summed away</html:em>. This is the reduction.</html:li>
+    <html:li><html:strong>Free</html:strong> — everything else, and it survives into the output.</html:li></html:ol>
+
+  <html:strong>The output order is fixed, not chosen</html:strong>: batch dimensions, then lhs free dimensions in order, then rhs free dimensions in order. So the result shape is fully determined by the attribute and you never have to guess. Newer printers use the sugar <html:code><![CDATA[contracting_dims = [2] x [1]]]></html:code>.
+
+  The same three-way split appears at every level — as <html:code>dimension_numbers</html:code> in a jaxpr (<fr:link href="/CCL2/" title="dimension_numbers is contracting then batch" uri="https://kellenkanarios.com/CCL2/" display-uri="CCL2" type="local">dimension_numbers is contracting then batch</fr:link>) and as <html:code>lhs_batch_dims</html:code> and friends in HLO (<fr:link href="/7EEZ/" title="A dot's output order is batch, lhs free, rhs free" uri="https://kellenkanarios.com/7EEZ/" display-uri="7EEZ" type="local">A dot's output order is batch, lhs free, rhs free</fr:link>) — which is what makes a matmul traceable straight down the stack.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/84N5/</fr:uri>
+            <fr:display-uri>84N5</fr:display-uri>
+            <fr:route>/84N5/</fr:route>
+            <fr:title text="StableHLO">StableHLO</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> dialect JAX lowers to and XLA ingests — the versioned, portable contract between frameworks and compilers (<fr:link href="/NR79/" title="Lifecycle of a JAX program" uri="https://kellenkanarios.com/NR79/" display-uri="NR79" type="local">Lifecycle of a <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link> program</fr:link>). Print it with <html:code>jax.jit(f).lower(x).as_text()</html:code> (<fr:link href="/AGEG/" title="Three calls, three IR levels" uri="https://kellenkanarios.com/AGEG/" display-uri="AGEG" type="local">Three calls, three IR levels</fr:link>).</html:p><html:p>The word doing the work in the name is <html:em>stable</html:em>. It is one of three HLO-family dialects and the only one with compatibility guarantees: <html:code>chlo</html:code> above it is sugar that gets decomposed, <html:code>mhlo</html:code> below it is XLA's unstable internal dialect (<fr:link href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal" uri="https://kellenkanarios.com/FLKN/" display-uri="FLKN" type="local">chlo desugars, <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">stablehlo</fr:link> is stable, mhlo is internal</fr:link>). A serialised StableHLO program is expected to keep deserialising across compiler versions, which is what makes it a sensible artifact to ship, cache, or hand to a different backend.</html:p><html:p>Read it to answer one specific question: what did JAX actually ask for? It sits at the boundary where a JAX bug becomes an XLA bug. Above it the shapes are still recognisably yours; below it, in optimized <fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link>, fusion and layout assignment have rewritten the program past easy comparison (<fr:link href="/BQUG/" title="Only after_optimizations matches the profile" uri="https://kellenkanarios.com/BQUG/" display-uri="BQUG" type="local">Only after_optimizations matches the profile</fr:link>).</html:p><html:p>A hand-written kernel — <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> or <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> — appears here as an opaque <html:code>custom_call</html:code> whose body is serialised into an attribute (<fr:link href="/QRDW/" title="A Pallas kernel is an opaque custom call" uri="https://kellenkanarios.com/QRDW/" display-uri="QRDW" type="local">A <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> kernel is an opaque <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link></fr:link>), which is the first place you can see that XLA has been handed something it cannot look inside.</html:p>
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong>The same function one level down.</html:strong> <html:code>tanh(x @ w + b)</html:code>, lowered with <html:code>jax.jit(f).lower(x, w, b).as_text()</html:code>. Compare it against the <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> of the same function:</html:p>
+
+  <html:pre><html:code class="language-llvm"><![CDATA[module @jit_f attributes {mhlo.num_partitions = 1 : i32, mhlo.num_replicas = 1 : i32} {
+  func.func public @main(%arg0: tensor<8x16xf32>, %arg1: tensor<16x4xf32>,
+                         %arg2: tensor<4xf32>)
+      -> (tensor<8x4xf32> {jax.result_info = "result"}) {
+    %0 = stablehlo.dot_general %arg0, %arg1, contracting_dims = [1] x [0],
+         precision = [DEFAULT, DEFAULT] : (tensor<8x16xf32>, tensor<16x4xf32>) -> tensor<8x4xf32>
+    %1 = stablehlo.broadcast_in_dim %arg2, dims = [1] : (tensor<4xf32>) -> tensor<1x4xf32>
+    %2 = stablehlo.broadcast_in_dim %1, dims = [0, 1] : (tensor<1x4xf32>) -> tensor<8x4xf32>
+    %3 = stablehlo.add %0, %2 : tensor<8x4xf32>
+    %4 = stablehlo.tanh %3 : tensor<8x4xf32>
+    return %4 : tensor<8x4xf32>
+  }
+}]]></html:code></html:pre>
+
+  <html:p>Four things are worth noticing, and each is a card.</html:p>
+
+  <html:ul><html:li>It is ordinary <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link>: a <html:code>builtin.module</html:code> with attributes (<fr:link href="/R2O9/" title="Every dump is wrapped in a module" uri="https://kellenkanarios.com/R2O9/" display-uri="R2O9" type="local">Every dump is wrapped in a module</fr:link>), a <html:code>func.func</html:code> whose result carries an attribute JAX put there (<fr:link href="/ZZHW/" title="Three attribute positions on a function" uri="https://kellenkanarios.com/ZZHW/" display-uri="ZZHW" type="local">Three attribute positions on a function</fr:link>), and pretty-printed ops (<fr:link href="/T1YS/" title="The pretty form is optional, the generic form always works" uri="https://kellenkanarios.com/T1YS/" display-uri="T1YS" type="local">The pretty form is optional, the generic form always works</fr:link>).</html:li>
+    <html:li>The <html:code>dot_general</html:code> uses the sugar form <html:code><![CDATA[contracting_dims = [1] x [0]]]></html:code> rather than the <html:code><![CDATA[#stablehlo.dot<>]]></html:code> attribute (<fr:link href="/BVPY/" title="Batch, contract, free, and the output order is fixed" uri="https://kellenkanarios.com/BVPY/" display-uri="BVPY" type="local">Batch, contract, free, and the output order is fixed</fr:link>) — same information, shorter.</html:li>
+    <html:li><html:strong>The bias broadcast became <html:em>two</html:em> ops.</html:strong> <html:code>dims = [1]</html:code> maps the operand's single dimension to output dim 1, giving <html:code><![CDATA[1x4]]></html:code>; a second <html:code>broadcast_in_dim</html:code> then stretches the size-1 dimension to 8 (<fr:link href="/5LSA/" title="broadcast_in_dim maps operand dims onto output dims" uri="https://kellenkanarios.com/5LSA/" display-uri="5LSA" type="local">broadcast_in_dim maps operand dims onto output dims</fr:link>). One jaxpr equation, two StableHLO ops.</html:li>
+    <html:li>No layouts anywhere. Those are assigned later, inside XLA (<fr:link href="/RR6G/" title="The layout is minor-to-major" uri="https://kellenkanarios.com/RR6G/" display-uri="RR6G" type="local">The layout is minor-to-major</fr:link>).</html:li></html:ul>
+</html:div>
+
+<fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/FLKN/</fr:uri><fr:display-uri>FLKN</fr:display-uri><fr:route>/FLKN/</fr:route><fr:title text="chlo desugars, stablehlo is stable, mhlo is internal">chlo desugars, <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">stablehlo</fr:link> is stable, mhlo is internal</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404868120</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>In a JAX/XLA dump, what are the <html:code>chlo</html:code>, <html:code>stablehlo</html:code>, and <html:code>mhlo</html:code> dialects, and how do they relate?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:ul><html:li><html:strong><html:code>chlo</html:code></html:strong> — "client" HLO: higher-level sugar that gets decomposed. Implicitly broadcasting binary ops, <html:code>erf</html:code>, top-k style helpers.</html:li>
+    <html:li><html:strong><html:code>stablehlo</html:code></html:strong> — the stable, versioned, portable IR (<fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link>). This is what JAX emits and serialises today, and the compatibility boundary between frameworks and compilers.</html:li>
+    <html:li><html:strong><html:code>mhlo</html:code></html:strong> — "meta" HLO: XLA's internal, unstable dialect, what <html:code>stablehlo</html:code> is converted into before XLA's own HLO proto (<fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link>).</html:li></html:ul>
+
+  The pipeline, in full (<fr:link href="/NR79/" title="Lifecycle of a JAX program" uri="https://kellenkanarios.com/NR79/" display-uri="NR79" type="local">Lifecycle of a <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link> program</fr:link>):
+
+  <html:pre><html:code class="language-plaintext"><![CDATA[Python -> jaxpr -> chlo/stablehlo -> mhlo -> HLO -> optimized HLO -> backend (LLVM/PTX, Mosaic/LLO)]]></html:code></html:pre>
+
+  <html:strong>Only one of the three is a contract.</html:strong> <html:code>stablehlo</html:code> has version guarantees so a serialised program keeps deserialising; <html:code>chlo</html:code> and <html:code>mhlo</html:code> are implementation details you may read but must not depend on.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/5LSA/</fr:uri><fr:display-uri>5LSA</fr:display-uri><fr:route>/5LSA/</fr:route><fr:title text="broadcast_in_dim maps operand dims onto output dims">broadcast_in_dim maps operand dims onto output dims</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404866770</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[%0 = stablehlo.broadcast_in_dim %a, dims = [1] : (tensor<3xf32>) -> tensor<2x3xf32>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:code>dims</html:code> maps each <html:em>operand</html:em> dimension to the output dimension it lands in. Here operand dim 0 (size 3) becomes output dim 1. Every output dimension not listed is a new broadcast dimension, and a listed dimension of size 1 may be stretched.
+
+  Two invariants make the attribute self-checking: the list length always equals the operand rank, and the values must be strictly increasing — so a broadcast can add and stretch dimensions but never permute them. A permutation needs a separate <html:code>transpose</html:code> (<fr:link href="/8721/" title="transpose dimensions read output from operand" uri="https://kellenkanarios.com/8721/" display-uri="8721" type="local">transpose dimensions read output from operand</fr:link>).
+
+  <html:strong>This is one of two dimension-list conventions and they read in opposite directions.</html:strong> Broadcast lists a target per operand dim; transpose lists a source per output dim. HLO's <html:code>broadcast</html:code> uses this same convention (<fr:link href="/XML3/" title="broadcast dimensions read operand to output" uri="https://kellenkanarios.com/XML3/" display-uri="XML3" type="local">broadcast dimensions read operand to output</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/BVPY/</fr:uri><fr:display-uri>BVPY</fr:display-uri><fr:route>/BVPY/</fr:route><fr:title text="Batch, contract, free, and the output order is fixed">Batch, contract, free, and the output order is fixed</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867595</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>How do you read a <html:code>dot_general</html:code>'s dimension numbers? <html:code><![CDATA[#stablehlo.dot<lhs_batching_dimensions = [0], rhs_batching_dimensions = [0], lhs_contracting_dimensions = [2], rhs_contracting_dimensions = [1]>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Every dimension is one of three kinds:
+
+  <html:ol><html:li><html:strong>Batching</html:strong> — matched pairwise between lhs and rhs, and <html:em>kept</html:em>. These are independent problems solved side by side.</html:li>
+    <html:li><html:strong>Contracting</html:strong> — matched pairwise and <html:em>summed away</html:em>. This is the reduction.</html:li>
+    <html:li><html:strong>Free</html:strong> — everything else, and it survives into the output.</html:li></html:ol>
+
+  <html:strong>The output order is fixed, not chosen</html:strong>: batch dimensions, then lhs free dimensions in order, then rhs free dimensions in order. So the result shape is fully determined by the attribute and you never have to guess. Newer printers use the sugar <html:code><![CDATA[contracting_dims = [2] x [1]]]></html:code>.
+
+  The same three-way split appears at every level — as <html:code>dimension_numbers</html:code> in a jaxpr (<fr:link href="/CCL2/" title="dimension_numbers is contracting then batch" uri="https://kellenkanarios.com/CCL2/" display-uri="CCL2" type="local">dimension_numbers is contracting then batch</fr:link>) and as <html:code>lhs_batch_dims</html:code> and friends in HLO (<fr:link href="/7EEZ/" title="A dot's output order is batch, lhs free, rhs free" uri="https://kellenkanarios.com/7EEZ/" display-uri="7EEZ" type="local">A dot's output order is batch, lhs free, rhs free</fr:link>) — which is what makes a matmul traceable straight down the stack.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/KLBR/</fr:uri><fr:display-uri>KLBR</fr:display-uri><fr:route>/KLBR/</fr:route><fr:title text="reduce takes a computation, not an enum">reduce takes a computation, not an enum</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404868920</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Why does a <html:code>stablehlo.reduce</html:code> body look like a region? <html:code><![CDATA[%r = stablehlo.reduce(%a init: %zero) applies stablehlo.add across dimensions = [1]]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Because <html:code>reduce</html:code> takes a reducer <html:em>computation</html:em> — a region (<fr:link href="/MKYF/" title="A region is nesting, not a flat CFG" uri="https://kellenkanarios.com/MKYF/" display-uri="MKYF" type="local">A region is nesting, not a flat CFG</fr:link>) taking two scalars and yielding one — rather than an enum of built-in reductions. Any associative operation can therefore be expressed, including ones the dialect never enumerated.
+
+  The form above is sugar for the common case; the general form spells the region out with a <html:code>stablehlo.return</html:code>. <html:code>dimensions</html:code> lists the dims removed from the operand shape.
+
+  <html:strong>The init value is not decoration — it is the identity of the reducer</html:strong>, and it is also what a zero-sized reduction returns. Getting it wrong (0 for a max, say) produces a reduction that is right on non-empty input and silently wrong at the edge.
+
+  HLO's <html:code>reduce</html:code> is the same design with <html:code>to_apply</html:code> naming the computation (<fr:link href="/EE3R/" title="reduce removes the dims it lists" uri="https://kellenkanarios.com/EE3R/" display-uri="EE3R" type="local">reduce removes the dims it lists</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/QRDW/</fr:uri><fr:display-uri>QRDW</fr:display-uri><fr:route>/QRDW/</fr:route><fr:title text="A Pallas kernel is an opaque custom call">A <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> kernel is an opaque <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link></fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869695</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>How does a <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> or <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> kernel appear in a <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link> dump?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  As an opaque custom call (<fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">XLA custom call</fr:link>):
+
+  <html:pre><html:code class="language-llvm"><![CDATA[stablehlo.custom_call @tpu_custom_call(%a, %b) {backend_config = "...", api_version = 2 : i32}
+  : (tensor<8x128xf32>, ...) -> tensor<8x128xf32>]]></html:code></html:pre>
+
+  On GPU the target is <html:code>@triton_kernel_call</html:code> instead.
+
+  <html:strong>The kernel body is not in this IR.</html:strong> It is serialised inside <html:code>backend_config</html:code> — a <fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> module, or Triton IR (<fr:link href="/9N7G/" title="The prefix says which side of layout assignment" uri="https://kellenkanarios.com/9N7G/" display-uri="9N7G" type="local">The prefix says which side of layout assignment</fr:link>) — and XLA treats the whole thing as a black box with declared operands, results, and effects.
+
+  That is the trade you accept when you write a kernel by hand: you get control of the inner loop, and you give up every cross-op optimisation at the boundary, because the compiler cannot fuse across something it cannot see (<fr:link href="/2MM7/" title="A custom call is a black box XLA cannot fuse across" uri="https://kellenkanarios.com/2MM7/" display-uri="2MM7" type="local">A <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link> is a black box <fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA</fr:link> cannot fuse across</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree></fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/84N5/</fr:uri>
+            <fr:display-uri>84N5</fr:display-uri>
+            <fr:route>/84N5/</fr:route>
+            <fr:title text="StableHLO">StableHLO</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>The <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> dialect JAX lowers to and XLA ingests — the versioned, portable contract between frameworks and compilers (<fr:link href="/NR79/" title="Lifecycle of a JAX program" uri="https://kellenkanarios.com/NR79/" display-uri="NR79" type="local">Lifecycle of a <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link> program</fr:link>). Print it with <html:code>jax.jit(f).lower(x).as_text()</html:code> (<fr:link href="/AGEG/" title="Three calls, three IR levels" uri="https://kellenkanarios.com/AGEG/" display-uri="AGEG" type="local">Three calls, three IR levels</fr:link>).</html:p><html:p>The word doing the work in the name is <html:em>stable</html:em>. It is one of three HLO-family dialects and the only one with compatibility guarantees: <html:code>chlo</html:code> above it is sugar that gets decomposed, <html:code>mhlo</html:code> below it is XLA's unstable internal dialect (<fr:link href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal" uri="https://kellenkanarios.com/FLKN/" display-uri="FLKN" type="local">chlo desugars, <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">stablehlo</fr:link> is stable, mhlo is internal</fr:link>). A serialised StableHLO program is expected to keep deserialising across compiler versions, which is what makes it a sensible artifact to ship, cache, or hand to a different backend.</html:p><html:p>Read it to answer one specific question: what did JAX actually ask for? It sits at the boundary where a JAX bug becomes an XLA bug. Above it the shapes are still recognisably yours; below it, in optimized <fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link>, fusion and layout assignment have rewritten the program past easy comparison (<fr:link href="/BQUG/" title="Only after_optimizations matches the profile" uri="https://kellenkanarios.com/BQUG/" display-uri="BQUG" type="local">Only after_optimizations matches the profile</fr:link>).</html:p><html:p>A hand-written kernel — <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> or <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> — appears here as an opaque <html:code>custom_call</html:code> whose body is serialised into an attribute (<fr:link href="/QRDW/" title="A Pallas kernel is an opaque custom call" uri="https://kellenkanarios.com/QRDW/" display-uri="QRDW" type="local">A <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> kernel is an opaque <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link></fr:link>), which is the first place you can see that XLA has been handed something it cannot look inside.</html:p>
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong>The same function one level down.</html:strong> <html:code>tanh(x @ w + b)</html:code>, lowered with <html:code>jax.jit(f).lower(x, w, b).as_text()</html:code>. Compare it against the <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> of the same function:</html:p>
+
+  <html:pre><html:code class="language-llvm"><![CDATA[module @jit_f attributes {mhlo.num_partitions = 1 : i32, mhlo.num_replicas = 1 : i32} {
+  func.func public @main(%arg0: tensor<8x16xf32>, %arg1: tensor<16x4xf32>,
+                         %arg2: tensor<4xf32>)
+      -> (tensor<8x4xf32> {jax.result_info = "result"}) {
+    %0 = stablehlo.dot_general %arg0, %arg1, contracting_dims = [1] x [0],
+         precision = [DEFAULT, DEFAULT] : (tensor<8x16xf32>, tensor<16x4xf32>) -> tensor<8x4xf32>
+    %1 = stablehlo.broadcast_in_dim %arg2, dims = [1] : (tensor<4xf32>) -> tensor<1x4xf32>
+    %2 = stablehlo.broadcast_in_dim %1, dims = [0, 1] : (tensor<1x4xf32>) -> tensor<8x4xf32>
+    %3 = stablehlo.add %0, %2 : tensor<8x4xf32>
+    %4 = stablehlo.tanh %3 : tensor<8x4xf32>
+    return %4 : tensor<8x4xf32>
+  }
+}]]></html:code></html:pre>
+
+  <html:p>Four things are worth noticing, and each is a card.</html:p>
+
+  <html:ul><html:li>It is ordinary <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link>: a <html:code>builtin.module</html:code> with attributes (<fr:link href="/R2O9/" title="Every dump is wrapped in a module" uri="https://kellenkanarios.com/R2O9/" display-uri="R2O9" type="local">Every dump is wrapped in a module</fr:link>), a <html:code>func.func</html:code> whose result carries an attribute JAX put there (<fr:link href="/ZZHW/" title="Three attribute positions on a function" uri="https://kellenkanarios.com/ZZHW/" display-uri="ZZHW" type="local">Three attribute positions on a function</fr:link>), and pretty-printed ops (<fr:link href="/T1YS/" title="The pretty form is optional, the generic form always works" uri="https://kellenkanarios.com/T1YS/" display-uri="T1YS" type="local">The pretty form is optional, the generic form always works</fr:link>).</html:li>
+    <html:li>The <html:code>dot_general</html:code> uses the sugar form <html:code><![CDATA[contracting_dims = [1] x [0]]]></html:code> rather than the <html:code><![CDATA[#stablehlo.dot<>]]></html:code> attribute (<fr:link href="/BVPY/" title="Batch, contract, free, and the output order is fixed" uri="https://kellenkanarios.com/BVPY/" display-uri="BVPY" type="local">Batch, contract, free, and the output order is fixed</fr:link>) — same information, shorter.</html:li>
+    <html:li><html:strong>The bias broadcast became <html:em>two</html:em> ops.</html:strong> <html:code>dims = [1]</html:code> maps the operand's single dimension to output dim 1, giving <html:code><![CDATA[1x4]]></html:code>; a second <html:code>broadcast_in_dim</html:code> then stretches the size-1 dimension to 8 (<fr:link href="/5LSA/" title="broadcast_in_dim maps operand dims onto output dims" uri="https://kellenkanarios.com/5LSA/" display-uri="5LSA" type="local">broadcast_in_dim maps operand dims onto output dims</fr:link>). One jaxpr equation, two StableHLO ops.</html:li>
+    <html:li>No layouts anywhere. Those are assigned later, inside XLA (<fr:link href="/RR6G/" title="The layout is minor-to-major" uri="https://kellenkanarios.com/RR6G/" display-uri="RR6G" type="local">The layout is minor-to-major</fr:link>).</html:li></html:ul>
+</html:div>
+
+<fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/FLKN/</fr:uri><fr:display-uri>FLKN</fr:display-uri><fr:route>/FLKN/</fr:route><fr:title text="chlo desugars, stablehlo is stable, mhlo is internal">chlo desugars, <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">stablehlo</fr:link> is stable, mhlo is internal</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404868120</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>In a JAX/XLA dump, what are the <html:code>chlo</html:code>, <html:code>stablehlo</html:code>, and <html:code>mhlo</html:code> dialects, and how do they relate?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:ul><html:li><html:strong><html:code>chlo</html:code></html:strong> — "client" HLO: higher-level sugar that gets decomposed. Implicitly broadcasting binary ops, <html:code>erf</html:code>, top-k style helpers.</html:li>
+    <html:li><html:strong><html:code>stablehlo</html:code></html:strong> — the stable, versioned, portable IR (<fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link>). This is what JAX emits and serialises today, and the compatibility boundary between frameworks and compilers.</html:li>
+    <html:li><html:strong><html:code>mhlo</html:code></html:strong> — "meta" HLO: XLA's internal, unstable dialect, what <html:code>stablehlo</html:code> is converted into before XLA's own HLO proto (<fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link>).</html:li></html:ul>
+
+  The pipeline, in full (<fr:link href="/NR79/" title="Lifecycle of a JAX program" uri="https://kellenkanarios.com/NR79/" display-uri="NR79" type="local">Lifecycle of a <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link> program</fr:link>):
+
+  <html:pre><html:code class="language-plaintext"><![CDATA[Python -> jaxpr -> chlo/stablehlo -> mhlo -> HLO -> optimized HLO -> backend (LLVM/PTX, Mosaic/LLO)]]></html:code></html:pre>
+
+  <html:strong>Only one of the three is a contract.</html:strong> <html:code>stablehlo</html:code> has version guarantees so a serialised program keeps deserialising; <html:code>chlo</html:code> and <html:code>mhlo</html:code> are implementation details you may read but must not depend on.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/5LSA/</fr:uri><fr:display-uri>5LSA</fr:display-uri><fr:route>/5LSA/</fr:route><fr:title text="broadcast_in_dim maps operand dims onto output dims">broadcast_in_dim maps operand dims onto output dims</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404866770</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[%0 = stablehlo.broadcast_in_dim %a, dims = [1] : (tensor<3xf32>) -> tensor<2x3xf32>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:code>dims</html:code> maps each <html:em>operand</html:em> dimension to the output dimension it lands in. Here operand dim 0 (size 3) becomes output dim 1. Every output dimension not listed is a new broadcast dimension, and a listed dimension of size 1 may be stretched.
+
+  Two invariants make the attribute self-checking: the list length always equals the operand rank, and the values must be strictly increasing — so a broadcast can add and stretch dimensions but never permute them. A permutation needs a separate <html:code>transpose</html:code> (<fr:link href="/8721/" title="transpose dimensions read output from operand" uri="https://kellenkanarios.com/8721/" display-uri="8721" type="local">transpose dimensions read output from operand</fr:link>).
+
+  <html:strong>This is one of two dimension-list conventions and they read in opposite directions.</html:strong> Broadcast lists a target per operand dim; transpose lists a source per output dim. HLO's <html:code>broadcast</html:code> uses this same convention (<fr:link href="/XML3/" title="broadcast dimensions read operand to output" uri="https://kellenkanarios.com/XML3/" display-uri="XML3" type="local">broadcast dimensions read operand to output</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/BVPY/</fr:uri><fr:display-uri>BVPY</fr:display-uri><fr:route>/BVPY/</fr:route><fr:title text="Batch, contract, free, and the output order is fixed">Batch, contract, free, and the output order is fixed</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867595</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>How do you read a <html:code>dot_general</html:code>'s dimension numbers? <html:code><![CDATA[#stablehlo.dot<lhs_batching_dimensions = [0], rhs_batching_dimensions = [0], lhs_contracting_dimensions = [2], rhs_contracting_dimensions = [1]>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Every dimension is one of three kinds:
+
+  <html:ol><html:li><html:strong>Batching</html:strong> — matched pairwise between lhs and rhs, and <html:em>kept</html:em>. These are independent problems solved side by side.</html:li>
+    <html:li><html:strong>Contracting</html:strong> — matched pairwise and <html:em>summed away</html:em>. This is the reduction.</html:li>
+    <html:li><html:strong>Free</html:strong> — everything else, and it survives into the output.</html:li></html:ol>
+
+  <html:strong>The output order is fixed, not chosen</html:strong>: batch dimensions, then lhs free dimensions in order, then rhs free dimensions in order. So the result shape is fully determined by the attribute and you never have to guess. Newer printers use the sugar <html:code><![CDATA[contracting_dims = [2] x [1]]]></html:code>.
+
+  The same three-way split appears at every level — as <html:code>dimension_numbers</html:code> in a jaxpr (<fr:link href="/CCL2/" title="dimension_numbers is contracting then batch" uri="https://kellenkanarios.com/CCL2/" display-uri="CCL2" type="local">dimension_numbers is contracting then batch</fr:link>) and as <html:code>lhs_batch_dims</html:code> and friends in HLO (<fr:link href="/7EEZ/" title="A dot's output order is batch, lhs free, rhs free" uri="https://kellenkanarios.com/7EEZ/" display-uri="7EEZ" type="local">A dot's output order is batch, lhs free, rhs free</fr:link>) — which is what makes a matmul traceable straight down the stack.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/KLBR/</fr:uri><fr:display-uri>KLBR</fr:display-uri><fr:route>/KLBR/</fr:route><fr:title text="reduce takes a computation, not an enum">reduce takes a computation, not an enum</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404868920</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Why does a <html:code>stablehlo.reduce</html:code> body look like a region? <html:code><![CDATA[%r = stablehlo.reduce(%a init: %zero) applies stablehlo.add across dimensions = [1]]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Because <html:code>reduce</html:code> takes a reducer <html:em>computation</html:em> — a region (<fr:link href="/MKYF/" title="A region is nesting, not a flat CFG" uri="https://kellenkanarios.com/MKYF/" display-uri="MKYF" type="local">A region is nesting, not a flat CFG</fr:link>) taking two scalars and yielding one — rather than an enum of built-in reductions. Any associative operation can therefore be expressed, including ones the dialect never enumerated.
+
+  The form above is sugar for the common case; the general form spells the region out with a <html:code>stablehlo.return</html:code>. <html:code>dimensions</html:code> lists the dims removed from the operand shape.
+
+  <html:strong>The init value is not decoration — it is the identity of the reducer</html:strong>, and it is also what a zero-sized reduction returns. Getting it wrong (0 for a max, say) produces a reduction that is right on non-empty input and silently wrong at the edge.
+
+  HLO's <html:code>reduce</html:code> is the same design with <html:code>to_apply</html:code> naming the computation (<fr:link href="/EE3R/" title="reduce removes the dims it lists" uri="https://kellenkanarios.com/EE3R/" display-uri="EE3R" type="local">reduce removes the dims it lists</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree><fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/QRDW/</fr:uri><fr:display-uri>QRDW</fr:display-uri><fr:route>/QRDW/</fr:route><fr:title text="A Pallas kernel is an opaque custom call">A <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> kernel is an opaque <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link></fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869695</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>How does a <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> or <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> kernel appear in a <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link> dump?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  As an opaque custom call (<fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">XLA custom call</fr:link>):
+
+  <html:pre><html:code class="language-llvm"><![CDATA[stablehlo.custom_call @tpu_custom_call(%a, %b) {backend_config = "...", api_version = 2 : i32}
+  : (tensor<8x128xf32>, ...) -> tensor<8x128xf32>]]></html:code></html:pre>
+
+  On GPU the target is <html:code>@triton_kernel_call</html:code> instead.
+
+  <html:strong>The kernel body is not in this IR.</html:strong> It is serialised inside <html:code>backend_config</html:code> — a <fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> module, or Triton IR (<fr:link href="/9N7G/" title="The prefix says which side of layout assignment" uri="https://kellenkanarios.com/9N7G/" display-uri="9N7G" type="local">The prefix says which side of layout assignment</fr:link>) — and XLA treats the whole thing as a black box with declared operands, results, and effects.
+
+  That is the trade you accept when you write a kernel by hand: you get control of the inner loop, and you give up every cross-op optimisation at the boundary, because the compiler cannot fuse across something it cannot see (<fr:link href="/2MM7/" title="A custom call is a black box XLA cannot fuse across" uri="https://kellenkanarios.com/2MM7/" display-uri="2MM7" type="local">A <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link> is a black box <fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA</fr:link> cannot fuse across</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree></fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/CCL2/</fr:uri>
+            <fr:display-uri>CCL2</fr:display-uri>
+            <fr:route>/CCL2/</fr:route>
+            <fr:title text="dimension_numbers is contracting then batch">dimension_numbers is contracting then batch</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404867620</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[dot_general[dimension_numbers=(((1,), (0,)), ((), ())) precision=None preferred_element_type=float32]]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:code>dimension_numbers</html:code> is <html:code><![CDATA[((lhs_contracting, rhs_contracting), (lhs_batch, rhs_batch))]]></html:code> — contracting pair first, batch pair second. Here lhs dim 1 contracts with rhs dim 0 and there are no batch dims: a plain matmul (<fr:link href="/BVPY/" title="Batch, contract, free, and the output order is fixed" uri="https://kellenkanarios.com/BVPY/" display-uri="BVPY" type="local">Batch, contract, free, and the output order is fixed</fr:link>, <fr:link href="/7EEZ/" title="A dot's output order is batch, lhs free, rhs free" uri="https://kellenkanarios.com/7EEZ/" display-uri="7EEZ" type="local">A dot's output order is batch, lhs free, rhs free</fr:link>).
+
+  <html:strong>The two other parameters are where numerics live, and they are easy to skim past.</html:strong>
+
+  <html:ul><html:li><html:code>preferred_element_type</html:code> is the <html:em>accumulation</html:em> type. bf16 inputs accumulating into f32 is the standard configuration, and it is what makes low-precision training work at all — the inputs are cheap, the running sum is not.</html:li>
+    <html:li><html:code>precision</html:code> controls the backend tradeoff: TF32, bf16x3 passes, or full f32.</html:li></html:ul>
+
+  So a jaxpr answers "at what precision is this matmul actually done" directly, which the HLO line does not.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/7EEZ/</fr:uri>
+            <fr:display-uri>7EEZ</fr:display-uri>
+            <fr:route>/7EEZ/</fr:route>
+            <fr:title text="A dot's output order is batch, lhs free, rhs free">A dot's output order is batch, lhs free, rhs free</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404867020</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>Read this matmul. <html:code><![CDATA[%dot.5 = f32[4,8,32]{2,1,0} dot(f32[4,8,16]{2,1,0} %a, f32[4,16,32]{2,1,0} %b), lhs_batch_dims={0}, lhs_contracting_dims={2}, rhs_batch_dims={0}, rhs_contracting_dims={1}]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Batch dimensions pair up and are preserved, contracting dimensions pair up and are summed away, and everything left over is free — the same three-way split as <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link> (<fr:link href="/BVPY/" title="Batch, contract, free, and the output order is fixed" uri="https://kellenkanarios.com/BVPY/" display-uri="BVPY" type="local">Batch, contract, free, and the output order is fixed</fr:link>) and jaxpr (<fr:link href="/CCL2/" title="dimension_numbers is contracting then batch" uri="https://kellenkanarios.com/CCL2/" display-uri="CCL2" type="local">dimension_numbers is contracting then batch</fr:link>).
+
+  The output order is always batch, then lhs free in order, then rhs free in order, giving <html:code><![CDATA[[4, 8, 32]]]></html:code> here. You never choose it.
+
+  <html:strong>Then read the layouts, because that is where the performance question lives.</html:strong> If a contracting dimension is not minor-most for its operand's layout (<fr:link href="/RR6G/" title="The layout is minor-to-major" uri="https://kellenkanarios.com/RR6G/" display-uri="RR6G" type="local">The layout is minor-to-major</fr:link>), the data has to be moved before the <fr:link href="/OGCRP/" title="Matrix Multiply Unit (MXU)" uri="https://kellenkanarios.com/OGCRP/" display-uri="OGCRP" type="local">Matrix Multiply Unit (MXU)</fr:link> or tensor core can consume it — so expect a <html:code>transpose</html:code> or <html:code>copy</html:code> next to the dot (<fr:link href="/KG5S/" title="bitcast is free, copy is not" uri="https://kellenkanarios.com/KG5S/" display-uri="KG5S" type="local">bitcast is free, copy is not</fr:link>), and expect it to cost real bandwidth.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/CCL2/</fr:uri>
+            <fr:display-uri>CCL2</fr:display-uri>
+            <fr:route>/CCL2/</fr:route>
+            <fr:title text="dimension_numbers is contracting then batch">dimension_numbers is contracting then batch</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404867620</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[dot_general[dimension_numbers=(((1,), (0,)), ((), ())) precision=None preferred_element_type=float32]]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:code>dimension_numbers</html:code> is <html:code><![CDATA[((lhs_contracting, rhs_contracting), (lhs_batch, rhs_batch))]]></html:code> — contracting pair first, batch pair second. Here lhs dim 1 contracts with rhs dim 0 and there are no batch dims: a plain matmul (<fr:link href="/BVPY/" title="Batch, contract, free, and the output order is fixed" uri="https://kellenkanarios.com/BVPY/" display-uri="BVPY" type="local">Batch, contract, free, and the output order is fixed</fr:link>, <fr:link href="/7EEZ/" title="A dot's output order is batch, lhs free, rhs free" uri="https://kellenkanarios.com/7EEZ/" display-uri="7EEZ" type="local">A dot's output order is batch, lhs free, rhs free</fr:link>).
+
+  <html:strong>The two other parameters are where numerics live, and they are easy to skim past.</html:strong>
+
+  <html:ul><html:li><html:code>preferred_element_type</html:code> is the <html:em>accumulation</html:em> type. bf16 inputs accumulating into f32 is the standard configuration, and it is what makes low-precision training work at all — the inputs are cheap, the running sum is not.</html:li>
+    <html:li><html:code>precision</html:code> controls the backend tradeoff: TF32, bf16x3 passes, or full f32.</html:li></html:ul>
+
+  So a jaxpr answers "at what precision is this matmul actually done" directly, which the HLO line does not.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/7EEZ/</fr:uri>
+            <fr:display-uri>7EEZ</fr:display-uri>
+            <fr:route>/7EEZ/</fr:route>
+            <fr:title text="A dot's output order is batch, lhs free, rhs free">A dot's output order is batch, lhs free, rhs free</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404867020</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>Read this matmul. <html:code><![CDATA[%dot.5 = f32[4,8,32]{2,1,0} dot(f32[4,8,16]{2,1,0} %a, f32[4,16,32]{2,1,0} %b), lhs_batch_dims={0}, lhs_contracting_dims={2}, rhs_batch_dims={0}, rhs_contracting_dims={1}]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Batch dimensions pair up and are preserved, contracting dimensions pair up and are summed away, and everything left over is free — the same three-way split as <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link> (<fr:link href="/BVPY/" title="Batch, contract, free, and the output order is fixed" uri="https://kellenkanarios.com/BVPY/" display-uri="BVPY" type="local">Batch, contract, free, and the output order is fixed</fr:link>) and jaxpr (<fr:link href="/CCL2/" title="dimension_numbers is contracting then batch" uri="https://kellenkanarios.com/CCL2/" display-uri="CCL2" type="local">dimension_numbers is contracting then batch</fr:link>).
+
+  The output order is always batch, then lhs free in order, then rhs free in order, giving <html:code><![CDATA[[4, 8, 32]]]></html:code> here. You never choose it.
+
+  <html:strong>Then read the layouts, because that is where the performance question lives.</html:strong> If a contracting dimension is not minor-most for its operand's layout (<fr:link href="/RR6G/" title="The layout is minor-to-major" uri="https://kellenkanarios.com/RR6G/" display-uri="RR6G" type="local">The layout is minor-to-major</fr:link>), the data has to be moved before the <fr:link href="/OGCRP/" title="Matrix Multiply Unit (MXU)" uri="https://kellenkanarios.com/OGCRP/" display-uri="OGCRP" type="local">Matrix Multiply Unit (MXU)</fr:link> or tensor core can consume it — so expect a <html:code>transpose</html:code> or <html:code>copy</html:code> next to the dot (<fr:link href="/KG5S/" title="bitcast is free, copy is not" uri="https://kellenkanarios.com/KG5S/" display-uri="KG5S" type="local">bitcast is free, copy is not</fr:link>), and expect it to cost real bandwidth.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

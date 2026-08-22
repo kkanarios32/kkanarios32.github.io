@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script>
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+  });
+});
+
+          </script><script>
+window.addEventListener('load', function () { setTimeout(function () {
+  // Openers get the same treatment from the other side: left alone, the
+  // paren in "(\(x\) or \(y\))" can hang at the end of a line.
+  var CLOSE = /^[.,;:!?)\]}%'"’”…]+/;
+  var OPEN = /[(\[{‘“]+$/;
+
+  document.querySelectorAll('.katex').forEach(function (math) {
+    // Display math is a block of its own; nothing can be orphaned beside it.
+    if (math.closest('.katex-display')) return;
+
+    // KaTeX's auto-render gives every formula a bare <span> of its own and
+    // renders into that, so the text around a formula is a sibling of the
+    // wrapper and not of .katex itself. Climb to the outermost span that
+    // holds nothing but this formula, and treat that as the atom.
+    var node = math;
+    while (node.parentNode &&
+           node.parentNode.childNodes.length === 1 &&
+           node.parentNode.nodeName.toLowerCase() === 'span') {
+      node = node.parentNode;
+    }
+
+    var before = node.previousSibling, after = node.nextSibling;
+    var lead = '', trail = '';
+    if (after && after.nodeType === 3 && CLOSE.test(after.data)) {
+      trail = after.data.match(CLOSE)[0];
+    }
+    if (before && before.nodeType === 3 && OPEN.test(before.data)) {
+      lead = before.data.match(OPEN)[0];
+    }
+    if (!lead && !trail) return;
+
+    // createElementNS, not createElement: the page is an XML document that
+    // the browser transforms with this stylesheet, and in an XML document
+    // createElement yields an element in the null namespace — a <span> that
+    // is not an HTML span, and that nothing styles.
+    var glue = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
+    glue.setAttribute('style', 'white-space: nowrap');
+    node.parentNode.insertBefore(glue, node);
+    if (lead) {
+      before.data = before.data.slice(0, before.data.length - lead.length);
+      glue.appendChild(document.createTextNode(lead));
+    }
+    glue.appendChild(node);
+    if (trail) {
+      after.data = after.data.slice(trail.length);
+      glue.appendChild(document.createTextNode(trail));
+    }
+  });
+}, 0); });
+          </script><script>
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+      if (found) reveal(found);
+    }
+
+    // Keep the marked row inside the rail. The rail is capped at the viewport
+    // and scrolls internally, so on a long contents the row being read drifts
+    // out of sight and the highlight becomes useless — you can see that you
+    // are somewhere, but not where.
+    //
+    // nav.scrollTop is set directly rather than calling scrollIntoView, which
+    // walks up the ancestor chain and will scroll the window as readily as the
+    // rail: the page would yank itself around while the reader is scrolling
+    // it. Assigning scrollTop can move nothing but the rail. Nudged only when
+    // the row is actually out of the band, so an entry already comfortably in
+    // view does not cause the rail to twitch on every section boundary.
+    function reveal(link) {
+      var pad = 32;
+      var railTop = nav.getBoundingClientRect().top;
+      var railBottom = nav.getBoundingClientRect().bottom;
+      var row = link.getBoundingClientRect();
+      if (row.top < railTop + pad) {
+        nav.scrollTop -= (railTop + pad) - row.top;
+      } else if (row.bottom > railBottom - pad) {
+        nav.scrollTop += row.bottom - (railBottom - pad);
+      }
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
+          </script><title>A memref names storage, a tensor is a value</title><meta property="og:title" content="A memref names storage, a tensor is a value"></meta></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block" data-taxon="Card"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>A memref names storage, a tensor is a value <a class="slug" href="/B1A1/">[B1A1]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read <code>memref&lt;8x128xf32, strided&lt;[128, 1], offset: ?&gt;, #tpu.memory_space&lt;vmem&gt;&gt;</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  A buffer reference: shape and element type, then two optional slots.
+
+  <ul><li><code>strided&lt;[128, 1], offset: ?&gt;</code> — the layout. Strides are in <em>elements</em>, not bytes; the offset is dynamic. Strides of <code>[128, 1]</code> on an <code>8x128</code> shape is the contiguous row-major case, the <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> spelling of HLO's <code>{1,0}</code> (<span xmlns="" class="link local"><a href="/RR6G/" title="The layout is minor-to-major [RR6G]">The layout is minor-to-major</a></span>).</li>
+    <li><code>#tpu.memory_space&lt;vmem&gt;</code> — which memory this lives in (<span xmlns="" class="link local"><a href="/GFK2/" title="VMEM [GFK2]">VMEM</a></span> / smem / hbm on TPU; <code>1</code> and <code>3</code> for shared and global on GPU).</li></ul>
+
+  <strong>The difference from a tensor is aliasing.</strong> A <code>memref</code> names storage, so two of them may refer to the same bytes and a pass must prove otherwise before reordering. A <code>tensor</code> is a value and cannot alias (<span xmlns="" class="link local"><a href="/L3F6/" title="Question mark is a dynamic dimension, star is unknown rank [L3F6]">Question mark is a dynamic dimension, star is unknown rank</a></span>). Bufferization is the pass that trades the second for the first, and it is where most "why did a copy appear" questions live.
+</details>
+</div>
+
+
+
+</details></section><footer xmlns="">
+    
+    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon"></span>Context  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/IR7B/">MLIR</a> <a class="slug" href="/IR7B/">[IR7B]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/M3MH/">Mosaic</a> <a class="slug" href="/M3MH/">[M3MH]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        
+        
+        
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        
+        
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/GFK2/">VMEM</a> <a class="slug" href="/GFK2/">[GFK2]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 10, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/IR7B/">MLIR</a> <a class="slug" href="/IR7B/">[IR7B]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
+    
+  </footer></article></div></body></html>

@@ -746,7 +746,7 @@ The second <html:code>add</html:code> only depends on <html:code>r2</html:code> 
             <fr:uri>https://kellenkanarios.com/PMIC/</fr:uri>
             <fr:display-uri>PMIC</fr:display-uri>
             <fr:route>/PMIC/</fr:route>
-            <fr:title text="Operator fusion is like ASIC caching">Operator fusion is like ASIC caching</fr:title>
+            <fr:title text="Operator fusion is like ASIC caching"><fr:link href="/38CM/" title="Operator fusion" uri="https://kellenkanarios.com/38CM/" display-uri="38CM" type="local">Operator fusion</fr:link> is like ASIC caching</fr:title>
           </fr:frontmatter>
           <fr:mainmatter>
             <html:p>On a traditional CPU, the hardware manages <fr:link href="/M91V/" title="Caches" uri="https://kellenkanarios.com/M91V/" display-uri="M91V" type="local">caching</fr:link> to ensure that data that is reused does not roundtrip through <fr:link href="/GWD5/" title="DRAM" uri="https://kellenkanarios.com/GWD5/" display-uri="GWD5" type="local">DRAM</fr:link>. On an <fr:link href="/OGCRS/" title="ASIC accelerators" uri="https://kellenkanarios.com/OGCRS/" display-uri="OGCRS" type="local">ASIC accelerators</fr:link>, we forego the complexity of caching to allow for more execution units. However, now if we have two operations i.e. elementwise add <fr:tex display="inline"><![CDATA[\to ]]></fr:tex> <fr:link href="/C00V/" title="Softmax" uri="https://kellenkanarios.com/C00V/" display-uri="C00V" type="local">softmax</fr:link> this would</html:p>
@@ -758,6 +758,33 @@ The second <html:code>add</html:code> only depends on <html:code>r2</html:code> 
   <html:li>Store the output tensor to memory.</html:li></html:ol>
             <html:p>On a CPU, the input tensors would remain in the cache. However, this must be done explicitly on ASIC (or by the compiler in the case of Google / <fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA</fr:link>).</html:p>
           </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>5</fr:month>
+              <fr:day>12</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/8C2H/</fr:uri>
+            <fr:display-uri>8C2H</fr:display-uri>
+            <fr:route>/8C2H/</fr:route>
+            <fr:title text="Snoop-based coherence keeps caches consistent by watching a shared bus">Snoop-based coherence keeps <fr:link href="/M91V/" title="Caches" uri="https://kellenkanarios.com/M91V/" display-uri="M91V" type="local">caches</fr:link> consistent by watching a shared bus</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>A <fr:link href="/GA7N/" title="Cache coherence" uri="https://kellenkanarios.com/GA7N/" display-uri="GA7N" type="local">Cache coherence</fr:link> family where every cache watches (<html:em>snoops</html:em>) a shared bus. When one cache issues a coherence transaction (e.g. requests permission to read or write a line), every other cache sees it and updates its local state accordingly. No central directory needed; the bus itself is the coordination mechanism.</html:p><html:p>The simplest snoop-based protocol is <html:em>valid-invalid</html:em>:</html:p><html:ul><html:li>Invalid + load → BusRd to gain read permission; transition to valid.</html:li>
+  <html:li>Invalid + store → no transition (write-through assumed; the bus carries the write).</html:li>
+  <html:li>Valid + store → BusWr to notify other caches; they invalidate.</html:li></html:ul><html:p><html:strong>Write-update coherence</html:strong>, the variant where stores update other caches' copies instead of invalidating them, works for very small bus-based systems but does not scale: every write reaches everyone, and copies of data the snooper isn't using pollute its <fr:link href="/UG51/" title="Cache replacement policy" uri="https://kellenkanarios.com/UG51/" display-uri="UG51" type="local">Cache replacement policy</fr:link>.</html:p><html:p>Snoop-based coherence relies on a shared physical bus, which limits it to roughly 8 cores. Beyond that, switch to <fr:link href="/KIT8/" title="Directory-based coherence scales by replacing broadcasts with point-to-point messages" uri="https://kellenkanarios.com/KIT8/" display-uri="KIT8" type="local">directory-based coherence</fr:link>.</html:p>
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(219, 216, 215);
+  "><html:span style="font-weight: 500; color: rgb(109, 103, 101);">Remark.</html:span> Snoop-based SMPs use the <html:em><fr:link href="/4W5G/" title="Inclusion property" uri="https://kellenkanarios.com/4W5G/" display-uri="4W5G" type="local">Inclusion property</fr:link></html:em> so that snooping at L2 suffices — every L1 line is also tracked at L2.</html:div>
+</fr:mainmatter>
         </fr:tree>
       </fr:mainmatter>
     </fr:tree>

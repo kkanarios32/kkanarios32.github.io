@@ -56,6 +56,52 @@
             </fr:authors>
             <fr:date>
               <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/RI0V/</fr:uri>
+            <fr:display-uri>RI0V</fr:display-uri>
+            <fr:route>/RI0V/</fr:route>
+            <fr:title text="An encoding tiles the block across threads and warps">An encoding tiles the block across threads and warps</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404869920</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[tensor<128x64xf16, #blocked>]]></html:code> where <html:code><![CDATA[#blocked = #ttg.blocked<{sizePerThread=[1,4], threadsPerWarp=[8,4], warpsPerCTA=[4,1], order=[1,0]}>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The encoding says how the logical <fr:tex display="inline"><![CDATA[128 \times  64]]></fr:tex> tile is distributed:
+
+  <html:ul><html:li><html:strong><html:code>sizePerThread</html:code></html:strong> — elements each thread holds per dimension; the minor-dimension entry is the vectorisation width.</html:li>
+    <html:li><html:strong><html:code>threadsPerWarp</html:code></html:strong> — how the 32 lanes of a <fr:link href="/OGCS5/" title="Warp (GPU)" uri="https://kellenkanarios.com/OGCS5/" display-uri="OGCS5" type="local">Warp (GPU)</fr:link> are arranged in two dimensions.</html:li>
+    <html:li><html:strong><html:code>warpsPerCTA</html:code></html:strong> — how warps tile the block.</html:li>
+    <html:li><html:strong><html:code>order</html:code></html:strong> — minor-to-major, so which dimension is contiguous per thread (<fr:link href="/RR6G/" title="The layout is minor-to-major" uri="https://kellenkanarios.com/RR6G/" display-uri="RR6G" type="local">The layout is minor-to-major</fr:link>).</html:li></html:ul>
+
+  <html:strong>Multiply the three lists out and you get the tile one CTA covers in one pass</html:strong>: <fr:tex display="inline"><![CDATA[1 \times  8 \times  4 = 32]]></fr:tex> rows and <fr:tex display="inline"><![CDATA[4 \times  4 \times  1 = 16]]></fr:tex> columns here, so the <fr:tex display="inline"><![CDATA[128 \times  64]]></fr:tex> shape takes <fr:tex display="inline"><![CDATA[4 \times  4]]></fr:tex> repeats. That arithmetic is the whole content of the attribute, and it is how you check by hand whether loads coalesce.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
               <fr:month>6</fr:month>
               <fr:day>1</fr:day>
             </fr:date>

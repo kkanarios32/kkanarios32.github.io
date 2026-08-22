@@ -57,6 +57,159 @@
             <fr:date>
               <fr:year>2026</fr:year>
               <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/M3MH/</fr:uri>
+            <fr:display-uri>M3MH</fr:display-uri>
+            <fr:route>/M3MH/</fr:route>
+            <fr:title text="Mosaic">Mosaic</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>The TPU kernel compiler <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> lowers to — an <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> pipeline over a <html:code>tpu</html:code> dialect, sitting where <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> sits on GPU. A Pallas TPU kernel becomes a serialised Mosaic module inside a <html:code>@tpu_custom_call</html:code> attribute (<fr:link href="/QRDW/" title="A Pallas kernel is an opaque custom call" uri="https://kellenkanarios.com/QRDW/" display-uri="QRDW" type="local">A <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> kernel is an opaque <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link></fr:link>), which XLA then treats as a black box (<fr:link href="/2MM7/" title="A custom call is a black box XLA cannot fuse across" uri="https://kellenkanarios.com/2MM7/" display-uri="2MM7" type="local">A <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link> is a black box <fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA</fr:link> cannot fuse across</fr:link>).</html:p>
+            <html:p><html:strong>What makes a Mosaic dump feel unlike a GPU one is that there are no threads in it</html:strong> (<fr:link href="/64A0/" title="Mosaic is explicit memory spaces and explicit copies" uri="https://kellenkanarios.com/64A0/" display-uri="64A0" type="local"><fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> is explicit memory spaces and explicit copies</fr:link>). A GPU IR is a thread and warp hierarchy in which data movement is implicit in which thread touches what. Mosaic is the opposite: explicit memory spaces on every <html:code>memref</html:code> (<fr:link href="/B1A1/" title="A memref names storage, a tensor is a value" uri="https://kellenkanarios.com/B1A1/" display-uri="B1A1" type="local">A memref names storage, a tensor is a value</fr:link>) — hbm, <fr:link href="/GFK2/" title="VMEM" uri="https://kellenkanarios.com/GFK2/" display-uri="GFK2" type="local">VMEM</fr:link>, smem — explicit DMA-style copies between them, semaphores for synchronisation, and vector ops on hardware tile shapes, typically <fr:tex display="inline"><![CDATA[8 \times  128]]></fr:tex> for f32 (<fr:link href="/1XJ4/" title="Vectors are register-level, tensors are abstract" uri="https://kellenkanarios.com/1XJ4/" display-uri="1XJ4" type="local">Vectors are register-level, tensors are abstract</fr:link>).</html:p>
+            <html:p>That is the same shift <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> asks of you at the source level, and the reason a TPU kernel is written as a pipeline of asynchronous copies rather than as an indexing scheme: the machine has no thread-level parallelism to hide a bad access pattern behind, so the copies have to be scheduled rather than merely correct.</html:p>
+            <fr:tree show-metadata="false" toc="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>8</fr:month>
+                  <fr:day>22</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/64A0/</fr:uri>
+                <fr:display-uri>64A0</fr:display-uri>
+                <fr:route>/64A0/</fr:route>
+                <fr:title text="Mosaic is explicit memory spaces and explicit copies"><fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> is explicit memory spaces and explicit copies</fr:title>
+                <fr:taxon>Card</fr:taxon>
+                <fr:meta name="anki">1787404866820</fr:meta>
+                <fr:meta name="anki-deck">MLSys</fr:meta>
+              </fr:frontmatter>
+              <fr:mainmatter>
+  <html:p>What distinguishes a <fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> (TPU) <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> dump from a GPU-side one?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:code>tpu.</html:code> dialect ops over <html:code><![CDATA[memref<..., #tpu.memory_space<vmem>>]]></html:code> (<fr:link href="/B1A1/" title="A memref names storage, a tensor is a value" uri="https://kellenkanarios.com/B1A1/" display-uri="B1A1" type="local">A memref names storage, a tensor is a value</fr:link>), vector-dialect ops on native tile shapes — typically <fr:tex display="inline"><![CDATA[8 \times  128]]></fr:tex> for f32 (<fr:link href="/1XJ4/" title="Vectors are register-level, tensors are abstract" uri="https://kellenkanarios.com/1XJ4/" display-uri="1XJ4" type="local">Vectors are register-level, tensors are abstract</fr:link>) — explicit DMA-style copies between hbm, <fr:link href="/GFK2/" title="VMEM" uri="https://kellenkanarios.com/GFK2/" display-uri="GFK2" type="local">VMEM</fr:link>, and smem, and semaphores for synchronisation.
+
+  <html:strong>So the mental model is different in kind, not in detail.</html:strong> A GPU dump is a thread and warp hierarchy where the memory movement is implicit in which thread touches what (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>). A Mosaic dump is explicit memory spaces, explicit asynchronous copies, and vector operations on hardware-tile-shaped values — no threads anywhere.
+
+  That is the same shift <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> asks of you at the source level, and it is why a TPU kernel is written as a pipeline of DMAs rather than as an indexing scheme.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+            </fr:tree>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/64A0/</fr:uri>
+            <fr:display-uri>64A0</fr:display-uri>
+            <fr:route>/64A0/</fr:route>
+            <fr:title text="Mosaic is explicit memory spaces and explicit copies"><fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> is explicit memory spaces and explicit copies</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404866820</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>What distinguishes a <fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> (TPU) <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> dump from a GPU-side one?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:code>tpu.</html:code> dialect ops over <html:code><![CDATA[memref<..., #tpu.memory_space<vmem>>]]></html:code> (<fr:link href="/B1A1/" title="A memref names storage, a tensor is a value" uri="https://kellenkanarios.com/B1A1/" display-uri="B1A1" type="local">A memref names storage, a tensor is a value</fr:link>), vector-dialect ops on native tile shapes — typically <fr:tex display="inline"><![CDATA[8 \times  128]]></fr:tex> for f32 (<fr:link href="/1XJ4/" title="Vectors are register-level, tensors are abstract" uri="https://kellenkanarios.com/1XJ4/" display-uri="1XJ4" type="local">Vectors are register-level, tensors are abstract</fr:link>) — explicit DMA-style copies between hbm, <fr:link href="/GFK2/" title="VMEM" uri="https://kellenkanarios.com/GFK2/" display-uri="GFK2" type="local">VMEM</fr:link>, and smem, and semaphores for synchronisation.
+
+  <html:strong>So the mental model is different in kind, not in detail.</html:strong> A GPU dump is a thread and warp hierarchy where the memory movement is implicit in which thread touches what (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>). A Mosaic dump is explicit memory spaces, explicit asynchronous copies, and vector operations on hardware-tile-shaped values — no threads anywhere.
+
+  That is the same shift <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> asks of you at the source level, and it is why a TPU kernel is written as a pipeline of DMAs rather than as an indexing scheme.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/B1A1/</fr:uri>
+            <fr:display-uri>B1A1</fr:display-uri>
+            <fr:route>/B1A1/</fr:route>
+            <fr:title text="A memref names storage, a tensor is a value">A memref names storage, a tensor is a value</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404867370</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[memref<8x128xf32, strided<[128, 1], offset: ?>, #tpu.memory_space<vmem>>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  A buffer reference: shape and element type, then two optional slots.
+
+  <html:ul><html:li><html:code><![CDATA[strided<[128, 1], offset: ?>]]></html:code> — the layout. Strides are in <html:em>elements</html:em>, not bytes; the offset is dynamic. Strides of <html:code><![CDATA[[128, 1]]]></html:code> on an <html:code><![CDATA[8x128]]></html:code> shape is the contiguous row-major case, the <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> spelling of HLO's <html:code><![CDATA[{1,0}]]></html:code> (<fr:link href="/RR6G/" title="The layout is minor-to-major" uri="https://kellenkanarios.com/RR6G/" display-uri="RR6G" type="local">The layout is minor-to-major</fr:link>).</html:li>
+    <html:li><html:code><![CDATA[#tpu.memory_space<vmem>]]></html:code> — which memory this lives in (<fr:link href="/GFK2/" title="VMEM" uri="https://kellenkanarios.com/GFK2/" display-uri="GFK2" type="local">VMEM</fr:link> / smem / hbm on TPU; <html:code>1</html:code> and <html:code>3</html:code> for shared and global on GPU).</html:li></html:ul>
+
+  <html:strong>The difference from a tensor is aliasing.</html:strong> A <html:code>memref</html:code> names storage, so two of them may refer to the same bytes and a pass must prove otherwise before reordering. A <html:code>tensor</html:code> is a value and cannot alias (<fr:link href="/L3F6/" title="Question mark is a dynamic dimension, star is unknown rank" uri="https://kellenkanarios.com/L3F6/" display-uri="L3F6" type="local">Question mark is a dynamic dimension, star is unknown rank</fr:link>). Bufferization is the pass that trades the second for the first, and it is where most "why did a copy appear" questions live.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
               <fr:day>18</fr:day>
             </fr:date>
             <fr:uri>https://kellenkanarios.com/6UFW/</fr:uri>
@@ -109,7 +262,7 @@
             <fr:uri>https://kellenkanarios.com/D1X1/</fr:uri>
             <fr:display-uri>D1X1</fr:display-uri>
             <fr:route>/D1X1/</fr:route>
-            <fr:title text="VMEM moves the ridge point">VMEM moves the ridge point</fr:title>
+            <fr:title text="VMEM moves the ridge point"><fr:link href="/GFK2/" title="VMEM" uri="https://kellenkanarios.com/GFK2/" display-uri="GFK2" type="local">VMEM</fr:link> moves the ridge point</fr:title>
             <fr:taxon>Card</fr:taxon>
             <fr:meta name="anki">1786395976215</fr:meta>
             <fr:meta name="anki-deck">MLSys</fr:meta>

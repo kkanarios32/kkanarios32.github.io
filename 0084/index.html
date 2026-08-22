@@ -485,7 +485,7 @@ struct proc {
             <p xmlns="http://www.w3.org/1999/xhtml">The mechanism rests on three concepts:</p>
             <ol xmlns="http://www.w3.org/1999/xhtml"><li>The <span xmlns="" class="link local"><a href="/WALE/" title="Page table [WALE]">Page table</a></span> — per-process map from virtual page number to physical page number.</li>
   <li>The <span xmlns="" class="link local"><a href="/FGOK/" title="Translation lookaside buffer [FGOK]">Translation lookaside buffer</a></span> — small hardware cache that absorbs the cost of consulting the page table on every access.</li>
-  <li>The <span xmlns="" class="link local"><a href="/VX1M/" title="Multi-level page table [VX1M]">Multi-level page table</a></span> — the page table is itself paged, so processes only pay for the parts of the address space they use.</li></ol>
+  <li>The <span xmlns="" class="link local"><a href="/VX1M/" title="Multi-level page table [VX1M]">Multi-level </a><span class="link local"><a href="/WALE/" title="Page table [WALE]">page table</a></span></span> — the page table is itself paged, so processes only pay for the parts of the address space they use.</li></ol>
             <p xmlns="http://www.w3.org/1999/xhtml">When a process touches a virtual address whose page isn't in physical memory, the page table's <em>present bit</em> is unset; the hardware traps to the OS as a <em>page fault</em>, and the OS retrieves the page from swap. The eviction policies that decide what to swap out are covered by <span xmlns="" class="link local"><a href="/HK73/" title="Page replacement [HK73]">Page replacement</a></span>.</p>
             <p xmlns="http://www.w3.org/1999/xhtml">The two-level decomposition did not arrive fully formed. The <span xmlns="" class="link local"><a href="/HBFS/" title="Segmented page tables [HBFS]">Segmented page tables</a></span> design tried to give each named segment of the address space its own variable-sized page table; the fragmentation that produced is what motivated the move to fixed-size paged page tables.</p>
             <section lang="en" class="block hide-metadata"><details id="id31" open="open"><summary><header><h1>
@@ -505,7 +505,7 @@ struct proc {
   
  <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(121, 65, 66);   "><span style="font-weight: 500; color: rgb(121, 65, 66);">Problem.</span> Translation requires accessing the table in memory, which is slow on every memory reference. Mitigated by the <span xmlns="" class="link local"><a href="/FGOK/" title="Translation lookaside buffer [FGOK]">Translation lookaside buffer</a></span>.</div>
 
-<p xmlns="http://www.w3.org/1999/xhtml">The size problem is mitigated by <span xmlns="" class="link local"><a href="/VX1M/" title="Multi-level page table [VX1M]">Multi-level page table</a></span>, which only allocates the parts of the table that are actually used.</p></details></section>
+<p xmlns="http://www.w3.org/1999/xhtml">The size problem is mitigated by <span xmlns="" class="link local"><a href="/VX1M/" title="Multi-level page table [VX1M]">Multi-level </a><span class="link local"><a href="/WALE/" title="Page table [WALE]">page table</a></span></span>, which only allocates the parts of the table that are actually used.</p></details></section>
             <section lang="en" class="block hide-metadata"><details id="id32" open="open"><summary><header><h1>
 <span class="taxon">2.4.2. </span>Translation lookaside buffer <a class="slug" href="/FGOK/">[FGOK]</a> </h1>
 <div class="metadata"><ul>
@@ -547,10 +547,10 @@ struct proc {
                 <p xmlns="http://www.w3.org/1999/xhtml">The mechanism has appealing side benefits. Each segment carries its own protection bits, so the architecture can enforce no-execute on the stack or read-only on the code segment at the segment-table level without per-page complexity. Translation overhead is bounded by the segment count, which is typically very small.</p>
                 <p xmlns="http://www.w3.org/1999/xhtml">The problems are what killed it. Page tables are now variable-sized objects that still have to live in contiguous physical memory. The stack segment's page table might be small; the heap's might be large and grow over time. Allocating, growing, and freeing variably-sized tables in kernel memory produces external fragmentation — exactly the headache pure segmentation has at the user level, now pushed down a layer. If the heap outgrows its current page table, the kernel has to allocate a larger contiguous chunk and copy.</p>
                 <p xmlns="http://www.w3.org/1999/xhtml">Secondary issues compound. Translation costs two memory references (segment table, then page table) before reaching data, which hurts without a <span xmlns="" class="link local"><a href="/FGOK/" title="Translation lookaside buffer [FGOK]">Translation lookaside buffer</a></span>. The segment count is fixed by the architecture, which is awkward for programs whose layout does not fit "code/data/stack/heap" — a sprawling memory-mapped region or a JIT wanting many small protection domains has nowhere to go. And segmentation tends to leak into the programming model: x86 carried segment registers around for decades after they had stopped being useful.</p>
-                <p xmlns="http://www.w3.org/1999/xhtml">The fix that won is the <span xmlns="" class="link local"><a href="/VX1M/" title="Multi-level page table [VX1M]">Multi-level page table</a></span> — page the page table itself, in fixed-size chunks, and recover the "only pay for what you use" property without variable-sized contiguous allocations. Every modern architecture descends from that decision.</p>
+                <p xmlns="http://www.w3.org/1999/xhtml">The fix that won is the <span xmlns="" class="link local"><a href="/VX1M/" title="Multi-level page table [VX1M]">Multi-level </a><span class="link local"><a href="/WALE/" title="Page table [WALE]">page table</a></span></span> — page the page table itself, in fixed-size chunks, and recover the "only pay for what you use" property without variable-sized contiguous allocations. Every modern architecture descends from that decision.</p>
               </details></section>
             <section lang="en" class="block hide-metadata"><details id="id35" open="open"><summary><header><h1>
-<span class="taxon">2.4.4. </span>Multi-level page table <a class="slug" href="/VX1M/">[VX1M]</a> </h1>
+<span class="taxon">2.4.4. </span>Multi-level <span class="link local"><a href="/WALE/" title="Page table [WALE]">page table</a></span> <a class="slug" href="/VX1M/">[VX1M]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">May 12, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
@@ -1027,7 +1027,7 @@ procedure central_barrier
 <a class="bullet" href="/HBFS/" title="Segmented page tables [HBFS]">■</a><span class="link local" data-target="#id34"><span class="taxon">Definition 2.4.3. </span>Segmented page tables</span><ul class="block"></ul>
 </li>
 <li>
-<a class="bullet" href="/VX1M/" title="Multi-level page table [VX1M]">■</a><span class="link local" data-target="#id35"><span class="taxon">2.4.4. </span>Multi-level page table</span><ul class="block"></ul>
+<a class="bullet" href="/VX1M/" title="Multi-level page table [VX1M]">■</a><span class="link local" data-target="#id35"><span class="taxon">2.4.4. </span>Multi-level <span class="link local"><a href="/WALE/" title="Page table [WALE]">page table</a></span></span><ul class="block"></ul>
 </li>
 </ul>
 </li>

@@ -1,0 +1,1174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors>
+      <fr:author>
+        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+      </fr:author>
+    </fr:authors>
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>8</fr:month>
+      <fr:day>22</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/WMKA/</fr:uri>
+    <fr:display-uri>WMKA</fr:display-uri>
+    <fr:route>/WMKA/</fr:route>
+    <fr:title text="A weak type adopts the other operand's dtype">A weak type adopts the other operand's dtype</fr:title>
+    <fr:taxon>Card</fr:taxon>
+    <fr:meta name="anki">1787404870495</fr:meta>
+    <fr:meta name="anki-deck">MLSys</fr:meta>
+  </fr:frontmatter>
+  <fr:mainmatter>
+  <html:p>What does <html:code><![CDATA[convert_element_type[new_dtype=float32 weak_type=False]]]></html:code> mean, and what is a weak type?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  An explicit cast that tracing inserted.
+
+  <html:strong><html:code>weak_type</html:code> marks a value whose dtype came from a Python scalar</html:strong> — <html:code>3.0</html:code>, <html:code>2</html:code> — rather than from an explicitly typed array. A weakly typed value adopts the other operand's dtype in promotion instead of forcing a widening, so <html:code>x * 2.0</html:code> on a bf16 array stays bf16 rather than becoming f32.
+
+  That rule exists precisely so writing a literal in your model does not silently change its precision.
+
+  <html:strong>An unexpected <html:code>convert_element_type</html:code> in a jaxpr is therefore worth reading as a diagnosis</html:strong>, not as noise: it is the trace of a promotion you did not intend, usually a NumPy scalar or an f32 constant meeting a lower-precision array. It costs a full pass over the data, and it can defeat the accumulation choice you made on the neighbouring <html:code>dot_general</html:code> (<fr:link href="/CCL2/" title="dimension_numbers is contracting then batch" uri="https://kellenkanarios.com/CCL2/" display-uri="CCL2" type="local">dimension_numbers is contracting then batch</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>7</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/G981/</fr:uri>
+            <fr:display-uri>G981</fr:display-uri>
+            <fr:route>/G981/</fr:route>
+            <fr:title text="jaxpr">jaxpr</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>JAX's trace-level representation: the record of what abstract execution captured when your Python ran once on tracers instead of arrays (<fr:link href="/NR79/" title="Lifecycle of a JAX program" uri="https://kellenkanarios.com/NR79/" display-uri="NR79" type="local">Lifecycle of a <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link> program</fr:link>). Print one with <html:code>jax.make_jaxpr(f)(x)</html:code> (<fr:link href="/AGEG/" title="Three calls, three IR levels" uri="https://kellenkanarios.com/AGEG/" display-uri="AGEG" type="local">Three calls, three IR levels</fr:link>).</html:p><html:p>Its defining feature is the square bracket. An equation reads <html:code>outvars = primitive[static_params] invars</html:code>, and that bracket is exactly the compile-time / runtime line (<fr:link href="/VTPS/" title="Brackets are compile-time, operands are runtime" uri="https://kellenkanarios.com/VTPS/" display-uri="VTPS" type="local">Brackets are compile-time, operands are runtime</fr:link>) — everything inside it is baked into this compilation, everything outside flows at run time. The same split appears in <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> as attributes versus operands (<fr:link href="/CZBE/" title="Position separates attributes from regions" uri="https://kellenkanarios.com/CZBE/" display-uri="CZBE" type="local">Position separates attributes from regions</fr:link>).</html:p><html:p>So a jaxpr answers a different class of question from the IR below it. Why is a constant baked in, why did a cast appear (<fr:link href="/WMKA/" title="A weak type adopts the other operand's dtype" uri="https://kellenkanarios.com/WMKA/" display-uri="WMKA" type="local">A weak type adopts the other operand's dtype</fr:link>), at what precision is this matmul accumulated (<fr:link href="/CCL2/" title="dimension_numbers is contracting then batch" uri="https://kellenkanarios.com/CCL2/" display-uri="CCL2" type="local">dimension_numbers is contracting then batch</fr:link>), what did my custom gradient rule actually do (<fr:link href="/MO87/" title="A grad jaxpr is the forward program plus its transpose" uri="https://kellenkanarios.com/MO87/" display-uri="MO87" type="local">A grad <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> is the forward program plus its transpose</fr:link>) — none of these survive into optimized <fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link>, where fusion and layout have already scrambled the correspondence. Read the jaxpr for meaning and the HLO for cost.</html:p><html:p>Not every JAX transformation appears here. <html:code>jit</html:code>, <html:code>scan</html:code>, <html:code>cond</html:code>, <html:code>while</html:code>, and <fr:link href="/IMBB/" title="shard_map" uri="https://kellenkanarios.com/IMBB/" display-uri="IMBB" type="local">shard_map</fr:link> are primitives with nested jaxprs; <html:code>vmap</html:code> is a trace-time rewrite that leaves no trace but the shapes (<fr:link href="/ROHH/" title="vmap leaves no primitive behind" uri="https://kellenkanarios.com/ROHH/" display-uri="ROHH" type="local">vmap leaves no primitive behind</fr:link>).</html:p><html:p>The traces below were produced with JAX 0.11 on CPU. <html:strong>The printed form drifts between releases</html:strong> — <html:code>scan</html:code> dropped <html:code>num_consts</html:code> for <html:code>ft_in</html:code>, and <html:code>pjit</html:code> now prints as <html:code>jit</html:code> — so read a trace from your own installation before trusting the punctuation in anyone's notes, including these.</html:p>
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong>A whole function.</html:strong> One dense layer, <html:code>tanh(x @ w + b)</html:code>, traced with <html:code>jax.make_jaxpr(f)(x, w, b)</html:code>. Four equations, in dependency order, each one a primitive (<fr:link href="/VTPS/" title="Brackets are compile-time, operands are runtime" uri="https://kellenkanarios.com/VTPS/" display-uri="VTPS" type="local">Brackets are compile-time, operands are runtime</fr:link>):</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:f32[8,16] b:f32[16,4] c:f32[4]. let
+    d:f32[8,4] = dot_general[
+      dimension_numbers=(([1], [0]), ([], []))
+      preferred_element_type=float32
+    ] a b
+    e:f32[1,4] = broadcast_in_dim[broadcast_dimensions=(1,)] c
+    f:f32[8,4] = add d e
+    g:f32[8,4] = tanh f
+  in (g,) }]]></html:code></html:pre>
+
+  <html:p>Nothing before the semicolon, so nothing was captured (<fr:link href="/2KEW/" title="constvars before the semicolon, invars after" uri="https://kellenkanarios.com/2KEW/" display-uri="2KEW" type="local">constvars before the semicolon, invars after</fr:link>). Note what the source did <html:em>not</html:em> say: the broadcast of the bias is explicit, and so is the accumulation type on the matmul (<fr:link href="/CCL2/" title="dimension_numbers is contracting then batch" uri="https://kellenkanarios.com/CCL2/" display-uri="CCL2" type="local">dimension_numbers is contracting then batch</fr:link>). Following this same function down to <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link> and <fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link> is worth doing once.</html:p>
+</html:div>
+
+
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong>A closure.</html:strong> The same trace with <html:code>w</html:code> captured from the enclosing scope instead of passed in:</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda a:f32[8,4]; b:f32[8]. let
+    c:f32[] = reduce_sum[axes=(0, 1) out_sharding=None] a
+    d:f32[8] = mul b c
+  in (d,) }]]></html:code></html:pre>
+
+  <html:p><html:code>a</html:code> is now a <html:em>constvar</html:em>, left of the semicolon — baked into this compilation rather than supplied by the caller. A large array on that side of the semicolon is a closure you probably did not mean to make (<fr:link href="/2KEW/" title="constvars before the semicolon, invars after" uri="https://kellenkanarios.com/2KEW/" display-uri="2KEW" type="local">constvars before the semicolon, invars after</fr:link>).</html:p>
+</html:div>
+
+
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong><html:code>grad</html:code>.</html:strong> <html:code>jax.make_jaxpr(jax.grad(f))(x, w)</html:code> for <html:code>f = tanh(x @ w).sum()</html:code> — the forward pass, then its transpose in reverse order (<fr:link href="/MO87/" title="A grad jaxpr is the forward program plus its transpose" uri="https://kellenkanarios.com/MO87/" display-uri="MO87" type="local">A grad <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> is the forward program plus its transpose</fr:link>):</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:f32[8] b:f32[8,4]. let
+    c:f32[4] = dot_general[dimension_numbers=(([0], [0]), ([], []))
+                           preferred_element_type=float32] a b
+    d:f32[4] = tanh c
+    e:f32[4] = sub 1.0:f32[] d
+    _:f32[] = reduce_sum[axes=(0,) out_sharding=None] d
+    f:f32[4] = broadcast_in_dim 1.0:f32[]
+    g:f32[4] = mul f e
+    h:f32[4] = mul g d
+    i:f32[4] = add_any g h
+    j:f32[8] = dot_general[dimension_numbers=(([0], [1]), ([], []))
+                           preferred_element_type=float32] i b
+  in (j,) }]]></html:code></html:pre>
+
+  <html:p>Three things to read off it. The final <html:code>dot_general</html:code> contracts <html:code>[0]</html:code> against <html:code>[1]</html:code> where the forward one contracted <html:code>[0]</html:code> against <html:code>[0]</html:code> — that swap <html:em>is</html:em> the transpose rule for a matmul. The <html:code>sub 1.0 d</html:code> is <fr:tex display="inline"><![CDATA[1 - \tanh ^2]]></fr:tex> being built from the saved output rather than recomputed. And the <html:code>reduce_sum</html:code> is a dropvar (<fr:link href="/E9J1/" title="An underscore is an output nobody consumes" uri="https://kellenkanarios.com/E9J1/" display-uri="E9J1" type="local">An underscore is an output nobody consumes</fr:link>): the primal value the sum would have produced is not needed, only its gradient, and the cotangent <html:code>broadcast_in_dim 1.0</html:code> is what replaces it.</html:p>
+</html:div>
+
+
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong><html:code>vmap</html:code> leaves nothing behind</html:strong> (<fr:link href="/ROHH/" title="vmap leaves no primitive behind" uri="https://kellenkanarios.com/ROHH/" display-uri="ROHH" type="local">vmap leaves no primitive behind</fr:link>). Mapping <html:code>lambda a, b: a * b</html:code> over the leading axis of <html:code>a</html:code> only:</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:f32[3,4] b:f32[4]. let
+    c:f32[1,4] = broadcast_in_dim[broadcast_dimensions=(1,)] b
+    d:f32[3,4] = mul a c
+  in (d,) }]]></html:code></html:pre>
+
+  <html:p>There is no <html:code>vmap</html:code> equation — only a <html:code>mul</html:code> whose avals grew a dimension, plus the <html:code>broadcast_in_dim</html:code> that lifted the unmapped argument to match. When <html:code>vmap</html:code> can push the batch dimension into an existing primitive it emits nothing at all: <html:code>jax.vmap(jnp.dot, in_axes=(0, None))</html:code> over <html:code><![CDATA[f32[3,4]]]></html:code> and <html:code><![CDATA[f32[4,2]]]></html:code> is a single <html:code>dot_general</html:code>, because a batched matvec <html:em>is</html:em> a matmul.</html:p>
+</html:div>
+
+
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong><html:code>scan</html:code></html:strong> (<fr:link href="/W8NM/" title="consts, then carry, then xs" uri="https://kellenkanarios.com/W8NM/" display-uri="W8NM" type="local">consts, then carry, then xs</fr:link>). Two carries, one scanned input, one const closed over:</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:f32[] b:f32[] c:f32[4]. let
+    d:f32[] e:f32[] f:f32[4] = scan[
+      ft_in=((), (None, None), (None,))
+      jaxpr={ lambda ; g:f32[] h:f32[] i:f32[]. let
+          j:f32[] = mul g 3.0:f32[]
+          k:f32[] = add j i
+          l:f32[] = add h g
+          m:f32[] = mul g 2.0:f32[]
+        in (k, l, m) }
+      length=4  reverse=False  unroll=1
+    ] a b c
+  in (d, e, f) }]]></html:code></html:pre>
+
+  <html:p>Read <html:code>ft_in</html:code> first: no consts, two carries, one <html:code>xs</html:code>. So invars <html:code>a</html:code> and <html:code>b</html:code> are the carry and <html:code>c</html:code> is scanned, and the body returns two new carries then one <html:code>ys</html:code> element, which stacks to <html:code><![CDATA[f32[4]]]></html:code>. The captured <html:code>3.0</html:code> was constant-folded into the body rather than passed as a const.</html:p>
+</html:div>
+
+
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong><html:code>cond</html:code></html:strong> (<fr:link href="/2LKO/" title="The nconsts numbers locate the carry" uri="https://kellenkanarios.com/2LKO/" display-uri="2LKO" type="local">The nconsts numbers locate the carry</fr:link>). Note that the predicate is converted to an integer index, and that branch 0 is the <html:em>false</html:em> branch:</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:bool[] b:f32[] c:f32[]. let
+    d:i32[] = convert_element_type[new_dtype=int32 weak_type=False] a
+    e:f32[] = cond[
+      branches=(
+        { lambda ; f:f32[] g:f32[]. let h:f32[] = sub f g in (h,) }
+        { lambda ; i:f32[] j:f32[]. let k:f32[] = add i j in (k,) }
+      )
+    ] d b c
+  in (e,) }]]></html:code></html:pre>
+
+  <html:p>Both branches take the same operands and return the same type — <html:code>cond</html:code> is an <fr:tex display="inline"><![CDATA[n]]></fr:tex>-way switch on an index, and the two-branch boolean case is the special case.</html:p>
+</html:div>
+
+
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong>Weak types</html:strong> (<fr:link href="/WMKA/" title="A weak type adopts the other operand's dtype" uri="https://kellenkanarios.com/WMKA/" display-uri="WMKA" type="local">A weak type adopts the other operand's dtype</fr:link>). A Python literal against a bf16 array:</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:bf16[3]. let b:bf16[3] = mul a 2.0:bf16[] in (b,) }]]></html:code></html:pre>
+
+  <html:p>The literal adopted bf16 and nothing was promoted. Replace <html:code>2.0</html:code> with <html:code>np.float32(2.0)</html:code> — an explicitly typed scalar, so no longer weak — and the same line becomes:</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:bf16[3]. let
+    b:f32[3] = convert_element_type[new_dtype=float32 weak_type=False] a
+    c:f32[3] = mul b 2.0:f32[]
+  in (c,) }]]></html:code></html:pre>
+
+  <html:p>The whole array was widened to f32 by one scalar. This is the promotion bug the weak-type rule exists to prevent, and the <html:code>convert_element_type</html:code> equation is how you catch it.</html:p>
+</html:div>
+
+
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong><html:code>shard_map</html:code> and <html:code>pmap</html:code></html:strong> (<fr:link href="/KWVD/" title="Collectives are primitives parameterised by axis name" uri="https://kellenkanarios.com/KWVD/" display-uri="KWVD" type="local">Collectives are primitives parameterised by axis name</fr:link>). A <html:code>psum</html:code> over a mesh axis of 8:</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:f32[8]. let
+    b:f32[1] = shard_map[
+      in_specs=(P('x',),)  out_specs=(P(),)  check_vma=True
+      mesh=Mesh('x': 8, axis_types=(Auto,))
+      jaxpr={ lambda ; c:f32[1]{V:x}. let
+          d:f32[1] = psum_invariant[axes=('x',)] c
+        in (d,) }
+    ] a
+  in (b,) }]]></html:code></html:pre>
+
+  <html:p>The global shape is <html:code><![CDATA[f32[8]]]></html:code> and the body's is <html:code><![CDATA[f32[1]]]></html:code> — inside the region you are writing per-device code, which is the whole point of <fr:link href="/IMBB/" title="shard_map" uri="https://kellenkanarios.com/IMBB/" display-uri="IMBB" type="local">shard_map</fr:link>. <html:code>pmap</html:code> is not a separate mechanism: it traces to a <html:code>jit</html:code> wrapping a <html:code>shard_map</html:code>, with a <html:code>squeeze</html:code> and a <html:code>broadcast_in_dim</html:code> around the body to move between the mapped axis and the per-device rank.</html:p>
+</html:div>
+
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>7</fr:day></fr:date><fr:title text="Reading one">Reading one</fr:title></fr:frontmatter><fr:mainmatter>
+  
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/2KEW/</fr:uri><fr:display-uri>2KEW</fr:display-uri><fr:route>/2KEW/</fr:route><fr:title text="constvars before the semicolon, invars after">constvars before the semicolon, invars after</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404866224</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Name every part of <html:code><![CDATA[{ lambda a:f32[8] ; b:f32[8] c:f32[8]. let d:f32[8] = mul b c; e:f32[8] = add d a in (e,) }]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda <constvars> ; <invars>. let <equations> in (<outvars>) }]]></html:code></html:pre>
+
+  <html:ul><html:li><html:strong>Before the semicolon: constvars.</html:strong> Values closed over — captured arrays — supplied by the <html:code>ClosedJaxpr</html:code>'s consts rather than by the caller.</html:li>
+    <html:li><html:strong>Between semicolon and dot: invars.</html:strong> The traced arguments.</html:li>
+    <html:li><html:strong>The <html:code>let</html:code> block:</html:strong> equations in dependency order (<fr:link href="/VTPS/" title="Brackets are compile-time, operands are runtime" uri="https://kellenkanarios.com/VTPS/" display-uri="VTPS" type="local">Brackets are compile-time, operands are runtime</fr:link>).</html:li>
+    <html:li><html:strong><html:code>in (...)</html:code>:</html:strong> the output tuple, always parenthesised even for a single value.</html:li></html:ul>
+
+  <html:strong>The constvar / invar split is where a performance surprise hides.</html:strong> Anything on the left of the semicolon was captured at trace time and is baked into this compilation, so changing it means retracing (<fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA Compilation</fr:link>). Large constvars in a <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> you expected to be pure are a closure you did not mean to make.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/VTPS/</fr:uri><fr:display-uri>VTPS</fr:display-uri><fr:route>/VTPS/</fr:route><fr:title text="Brackets are compile-time, operands are runtime">Brackets are compile-time, operands are runtime</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404870245</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What is the shape of a single <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> equation?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:pre><html:code class="language-haskell"><![CDATA[outvars = primitive[static_params] invars]]></html:code></html:pre>
+
+  for example
+
+  <html:pre><html:code class="language-haskell"><![CDATA[e:f32[1,4] = broadcast_in_dim[broadcast_dimensions=(1,)] c
+d:f32[8,4] = dot_general[dimension_numbers=(([1], [0]), ([], []))
+                         preferred_element_type=float32] a b]]></html:code></html:pre>
+
+  <html:strong>The square brackets hold <html:em>static</html:em> parameters</html:strong> — known at trace time and baked into the primitive — and everything after them is a traced operand or a literal. The printer shows only the interesting ones; the equation carries more (<html:code>broadcast_in_dim</html:code> also holds <html:code>shape</html:code> and <html:code>sharding</html:code>), reachable from <html:code>eqn.params</html:code>.
+
+  That bracket-versus-operand split is the most useful thing on the page. A quantity inside the brackets is a constant this compilation is specialised to; move it out and you retrace. It is the same distinction <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> draws between attributes and operands (<fr:link href="/CZBE/" title="Position separates attributes from regions" uri="https://kellenkanarios.com/CZBE/" display-uri="CZBE" type="local">Position separates attributes from regions</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/9M15/</fr:uri><fr:display-uri>9M15</fr:display-uri><fr:route>/9M15/</fr:route><fr:title text="An aval is shape and dtype, no value">An aval is shape and dtype, no value</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867295</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Read the <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> shorthand <html:code><![CDATA[f32[8,128]]]></html:code>, <html:code><![CDATA[i32[]]]></html:code>, <html:code><![CDATA[bool[3]]]></html:code>, <html:code><![CDATA[key<fry>[2]]]></html:code>, <html:code><![CDATA[bf16[8]]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Compact <html:em>aval</html:em> — abstract value — printing: dtype then shape, with empty brackets for a scalar.
+
+  <html:code><![CDATA[key<fry>[2]]]></html:code> is a typed PRNG key array using the threefry implementation: the new-style key dtype rather than a raw <html:code>uint32[2]</html:code>. Seeing the typed form tells you the key is opaque to shape-manipulating code, which is the point of it.
+
+  <html:strong>The aval is what tracing actually propagates</html:strong>: shape, dtype, and <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharding</fr:link> — no values. Everything a jaxpr knows, it knows from these, which is why a Python <html:code>if</html:code> on a traced value fails and why the shapes in a jaxpr are always fully static.
+
+  HLO's shapes are the same information in a different notation (<fr:link href="/31V3/" title="Tuples are first-class in HLO" uri="https://kellenkanarios.com/31V3/" display-uri="31V3" type="local">Tuples are first-class in <fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link></fr:link>), and <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> adds dynamic dimensions that JAX never produces (<fr:link href="/L3F6/" title="Question mark is a dynamic dimension, star is unknown rank" uri="https://kellenkanarios.com/L3F6/" display-uri="L3F6" type="local">Question mark is a dynamic dimension, star is unknown rank</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/E9J1/</fr:uri><fr:display-uri>E9J1</fr:display-uri><fr:route>/E9J1/</fr:route><fr:title text="An underscore is an output nobody consumes">An underscore is an output nobody consumes</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867895</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What is <html:code><![CDATA[_:f32[8]]]></html:code> on the left of a <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> equation?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  A <html:em>dropvar</html:em>: an output that nothing consumes.
+
+  It shows up for multi-output primitives where only some results are used — a <html:code>custom_vjp</html:code>'s residuals when you asked only for the primal, an unused <html:code>scan</html:code> carry (<fr:link href="/W8NM/" title="consts, then carry, then xs" uri="https://kellenkanarios.com/W8NM/" display-uri="W8NM" type="local">consts, then carry, then xs</fr:link>), the second output of a primitive whose first is all you wanted.
+
+  <html:strong>It does not mean the work happens.</html:strong> Dead code elimination may or may not have run when you print a jaxpr, so dropvars are entirely normal in a freshly traced one, and their presence says nothing about the compiled program. XLA will drop the computation if it is genuinely unused.
+
+  What they do tell you is which primitive produced more than you asked for — useful when you are trying to work out where a residual came from (<fr:link href="/MO87/" title="A grad jaxpr is the forward program plus its transpose" uri="https://kellenkanarios.com/MO87/" display-uri="MO87" type="local">A grad <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> is the forward program plus its transpose</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/WNHA/</fr:uri><fr:display-uri>WNHA</fr:display-uri><fr:route>/WNHA/</fr:route><fr:title text="jit is the pjit primitive">jit is the pjit primitive</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404870520</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Why does almost every <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> from a jitted function contain a single <html:code><![CDATA[jit[name=f jaxpr={...}]]]></html:code> equation?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Because <html:code>jax.jit</html:code> is implemented as a primitive — <html:code>pjit_p</html:code>, printed as <html:code>jit</html:code> — rather than being inlined. The callee's jaxpr is nested inside as a static parameter, so each <html:code>jit</html:code> boundary in your code becomes another level of nesting.
+
+  <html:strong>That nesting is preserved all the way down.</html:strong> It reappears in HLO as the slash-separated <html:code>op_name</html:code> path, <html:code><![CDATA[jit(f)/jit(g)/...]]></html:code> (<fr:link href="/FG58/" title="op_name is the trace path back to Python" uri="https://kellenkanarios.com/FG58/" display-uri="FG58" type="local">op_name is the trace path back to Python</fr:link>), which is what lets you attribute an optimized HLO instruction to a particular function in a program full of them.
+
+  It also means the boundaries are real to the compiler, not just to you: each is a place where donation, <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharding</fr:link>, and compilation caching are decided (<fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA Compilation</fr:link>). Nesting <html:code>jit</html:code> inside <html:code>jit</html:code> is free at run time but is not invisible in the IR.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>7</fr:day></fr:date><fr:title text="Control flow and collectives">Control flow and collectives</fr:title></fr:frontmatter><fr:mainmatter>
+  
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/W8NM/</fr:uri><fr:display-uri>W8NM</fr:display-uri><fr:route>/W8NM/</fr:route><fr:title text="consts, then carry, then xs">consts, then carry, then xs</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404870370</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[scan[ft_in=((), (None, None), (None,)) length=4 reverse=False unroll=1]]]></html:code>. How are the invars laid out?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  In one fixed order: first the loop-invariant <html:em>consts</html:em>, then the <html:em>carry</html:em>, then the <html:em>xs</html:em>, each scanned along a leading axis of size <html:code>length</html:code>. The inner jaxpr's invars follow the same convention, and it returns <html:code><![CDATA[(new_carry..., ys...)]]></html:code>.
+
+  <html:strong><html:code>ft_in</html:code> is where the split is written down.</html:strong> It is a three-tuple — one group per role — so the group <html:em>lengths</html:em> give the counts: none here, then two carries, then one scanned input. Older JAX printed the same information as <html:code>num_consts</html:code> and <html:code>num_carry</html:code>, and you will still see that form in written material.
+
+  <html:strong>Counting is the only way to read a scan body.</html:strong> The names carry nothing; the group sizes do. Given <html:code><![CDATA[((), (None, None), (None,))]]></html:code>, invars 0 and 1 are the carry and invar 2 is scanned.
+
+  The same explicit carry appears as <html:code>iter_args</html:code> in <html:code>scf.for</html:code> (<fr:link href="/ON39/" title="iter_args and yield are the mutable accumulator" uri="https://kellenkanarios.com/ON39/" display-uri="ON39" type="local">iter_args and yield are the mutable accumulator</fr:link>) and as a state tuple in HLO's <html:code>while</html:code> (<fr:link href="/YXTI/" title="A while loop's whole state is one tuple" uri="https://kellenkanarios.com/YXTI/" display-uri="YXTI" type="local">A while loop's whole state is one tuple</fr:link>), where the three-way split is flattened into tuple indices you have to recover by counting.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/2LKO/</fr:uri><fr:display-uri>2LKO</fr:display-uri><fr:route>/2LKO/</fr:route><fr:title text="The nconsts numbers locate the carry">The nconsts numbers locate the carry</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404866253</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>How do <html:code>cond</html:code> and <html:code>while</html:code> print in a <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:pre><html:code class="language-haskell"><![CDATA[cond[branches=(...)] index a b
+while[cond_jaxpr={...} cond_nconsts=1 body_jaxpr={...} body_nconsts=2] ...]]></html:code></html:pre>
+
+  For <html:code>cond</html:code>, the first invar is the branch <html:em>index</html:em> and the rest are the operands passed to every branch. <html:code>branches</html:code> is a tuple of jaxprs, all with the same signature — which is why both sides of a JAX conditional must agree on shapes and dtypes.
+
+  For <html:code>while</html:code>, the invars run: cond consts, then body consts, then the carry.
+
+  <html:strong>The <html:code>nconsts</html:code> numbers are the only thing telling you where the carry starts.</html:strong> There is no punctuation in the operand list and the names are meaningless, so you count: skip <html:code>cond_nconsts</html:code>, skip <html:code>body_nconsts</html:code>, and everything left is the loop state. Same discipline as <html:code>scan</html:code> (<fr:link href="/W8NM/" title="consts, then carry, then xs" uri="https://kellenkanarios.com/W8NM/" display-uri="W8NM" type="local">consts, then carry, then xs</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/KWVD/</fr:uri><fr:display-uri>KWVD</fr:display-uri><fr:route>/KWVD/</fr:route><fr:title text="Collectives are primitives parameterised by axis name">Collectives are primitives parameterised by axis name</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869045</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What do <html:code><![CDATA[psum[axes=('x',) axis_index_groups=None]]]></html:code> and <fr:link href="/IMBB/" title="shard_map" uri="https://kellenkanarios.com/IMBB/" display-uri="IMBB" type="local">shard_map</fr:link> look like in a <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Collectives are ordinary primitives parameterised by an <html:em>axis name</html:em>; they only mean anything inside a mapped context that binds that name. <fr:link href="/IMBB/" title="shard_map" uri="https://kellenkanarios.com/IMBB/" display-uri="IMBB" type="local">shard_map</fr:link> appears as
+
+  <html:pre><html:code class="language-haskell"><![CDATA[shard_map[jaxpr={...} mesh=Mesh('x': 8, axis_types=(Auto,))
+          in_specs=(P('x',),) out_specs=(P(),) check_vma=True]]]></html:code></html:pre>
+
+  with the per-device program nested inside (<fr:link href="/ROHH/" title="vmap leaves no primitive behind" uri="https://kellenkanarios.com/ROHH/" display-uri="ROHH" type="local">vmap leaves no primitive behind</fr:link>). Inside that body a collective whose result is already replicated may print as <html:code>psum_invariant</html:code> rather than <html:code>psum</html:code> — same reduction, tagged as producing an axis-invariant value.
+
+  <html:strong>So the jaxpr level is logical and the physical level is elsewhere.</html:strong> Here you see a named axis and per-device shapes; the device assignment appears only later, as HLO <html:code>sharding</html:code> attributes (<fr:link href="/3IWB/" title="A sharding annotation is a tiling plus a device order" uri="https://kellenkanarios.com/3IWB/" display-uri="3IWB" type="local">A <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">sharding</fr:link> annotation is a tiling plus a device order</fr:link>) and concrete <html:code>all-reduce</html:code> instructions (<fr:link href="/6SKD/" title="replica_groups says who reduces with whom" uri="https://kellenkanarios.com/6SKD/" display-uri="6SKD" type="local">replica_groups says who reduces with whom</fr:link>).
+
+  That separation is why the axis name is the right thing to reason about: it is stable, whereas which devices land in which <html:code>replica_groups</html:code> depends on the mesh and the compiler (<fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharding</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>7</fr:day></fr:date><fr:title text="Numerics and transformations">Numerics and transformations</fr:title></fr:frontmatter><fr:mainmatter>
+  
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/CCL2/</fr:uri><fr:display-uri>CCL2</fr:display-uri><fr:route>/CCL2/</fr:route><fr:title text="dimension_numbers is contracting then batch">dimension_numbers is contracting then batch</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867620</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[dot_general[dimension_numbers=(((1,), (0,)), ((), ())) precision=None preferred_element_type=float32]]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:code>dimension_numbers</html:code> is <html:code><![CDATA[((lhs_contracting, rhs_contracting), (lhs_batch, rhs_batch))]]></html:code> — contracting pair first, batch pair second. Here lhs dim 1 contracts with rhs dim 0 and there are no batch dims: a plain matmul (<fr:link href="/BVPY/" title="Batch, contract, free, and the output order is fixed" uri="https://kellenkanarios.com/BVPY/" display-uri="BVPY" type="local">Batch, contract, free, and the output order is fixed</fr:link>, <fr:link href="/7EEZ/" title="A dot's output order is batch, lhs free, rhs free" uri="https://kellenkanarios.com/7EEZ/" display-uri="7EEZ" type="local">A dot's output order is batch, lhs free, rhs free</fr:link>).
+
+  <html:strong>The two other parameters are where numerics live, and they are easy to skim past.</html:strong>
+
+  <html:ul><html:li><html:code>preferred_element_type</html:code> is the <html:em>accumulation</html:em> type. bf16 inputs accumulating into f32 is the standard configuration, and it is what makes low-precision training work at all — the inputs are cheap, the running sum is not.</html:li>
+    <html:li><html:code>precision</html:code> controls the backend tradeoff: TF32, bf16x3 passes, or full f32.</html:li></html:ul>
+
+  So a jaxpr answers "at what precision is this matmul actually done" directly, which the HLO line does not.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/WMKA/</fr:uri><fr:display-uri>WMKA</fr:display-uri><fr:route>/WMKA/</fr:route><fr:title text="A weak type adopts the other operand's dtype">A weak type adopts the other operand's dtype</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404870495</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What does <html:code><![CDATA[convert_element_type[new_dtype=float32 weak_type=False]]]></html:code> mean, and what is a weak type?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  An explicit cast that tracing inserted.
+
+  <html:strong><html:code>weak_type</html:code> marks a value whose dtype came from a Python scalar</html:strong> — <html:code>3.0</html:code>, <html:code>2</html:code> — rather than from an explicitly typed array. A weakly typed value adopts the other operand's dtype in promotion instead of forcing a widening, so <html:code>x * 2.0</html:code> on a bf16 array stays bf16 rather than becoming f32.
+
+  That rule exists precisely so writing a literal in your model does not silently change its precision.
+
+  <html:strong>An unexpected <html:code>convert_element_type</html:code> in a jaxpr is therefore worth reading as a diagnosis</html:strong>, not as noise: it is the trace of a promotion you did not intend, usually a NumPy scalar or an f32 constant meeting a lower-precision array. It costs a full pass over the data, and it can defeat the accumulation choice you made on the neighbouring <html:code>dot_general</html:code> (<fr:link href="/CCL2/" title="dimension_numbers is contracting then batch" uri="https://kellenkanarios.com/CCL2/" display-uri="CCL2" type="local">dimension_numbers is contracting then batch</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/ROHH/</fr:uri><fr:display-uri>ROHH</fr:display-uri><fr:route>/ROHH/</fr:route><fr:title text="vmap leaves no primitive behind">vmap leaves no primitive behind</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869945</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Does <html:code>vmap</html:code> appear as a primitive in a <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong>No.</html:strong> Batching is a trace-time rewrite, not a wrapper. The jaxpr you get back has no <html:code>vmap</html:code> equation at all — just the same primitives with a batch dimension added to their avals (<fr:link href="/9M15/" title="An aval is shape and dtype, no value" uri="https://kellenkanarios.com/9M15/" display-uri="9M15" type="local">An aval is shape and dtype, no value</fr:link>), plus extra <html:code>broadcast_in_dim</html:code> and <html:code>transpose</html:code> equations wherever the batch axis had to be moved.
+
+  So to see what <html:code>vmap</html:code> decided, read the <html:em>shapes</html:em>; there is no op to look for. Those stray transposes are the mapping decisions, and they are also where a vmapped function quietly costs more than the loop you replaced.
+
+  <html:strong>Contrast the ones that do appear as primitives with nested jaxprs</html:strong>: <html:code>pjit</html:code> (<fr:link href="/WNHA/" title="jit is the pjit primitive" uri="https://kellenkanarios.com/WNHA/" display-uri="WNHA" type="local">jit is the pjit primitive</fr:link>), <html:code>scan</html:code> (<fr:link href="/W8NM/" title="consts, then carry, then xs" uri="https://kellenkanarios.com/W8NM/" display-uri="W8NM" type="local">consts, then carry, then xs</fr:link>), <html:code>cond</html:code> and <html:code>while</html:code> (<fr:link href="/2LKO/" title="The nconsts numbers locate the carry" uri="https://kellenkanarios.com/2LKO/" display-uri="2LKO" type="local">The nconsts numbers locate the carry</fr:link>), <html:code>custom_jvp_call</html:code>, and <fr:link href="/IMBB/" title="shard_map" uri="https://kellenkanarios.com/IMBB/" display-uri="IMBB" type="local">shard_map</fr:link> (<fr:link href="/KWVD/" title="Collectives are primitives parameterised by axis name" uri="https://kellenkanarios.com/KWVD/" display-uri="KWVD" type="local">Collectives are primitives parameterised by axis name</fr:link>). The distinction is whether the transformation changes the <html:em>program structure</html:em> or only the shapes flowing through it.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/MO87/</fr:uri><fr:display-uri>MO87</fr:display-uri><fr:route>/MO87/</fr:route><fr:title text="A grad jaxpr is the forward program plus its transpose">A grad <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> is the forward program plus its transpose</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869346</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What tells you a <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> came from <html:code>grad</html:code>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The layout: the forward equations appear first, then their transposes in reverse order, with residual values threaded between them.
+
+  Concrete tells — <html:code>mul</html:code> and <html:code>dot_general</html:code> with swapped <html:code>dimension_numbers</html:code> (<fr:link href="/CCL2/" title="dimension_numbers is contracting then batch" uri="https://kellenkanarios.com/CCL2/" display-uri="CCL2" type="local">dimension_numbers is contracting then batch</fr:link>), <html:code>transpose</html:code> equations, and <html:code>custom_vjp_call_jaxpr</html:code> or <html:code>remat</html:code> wrappers. Dropvars (<fr:link href="/E9J1/" title="An underscore is an output nobody consumes" uri="https://kellenkanarios.com/E9J1/" display-uri="E9J1" type="local">An underscore is an output nobody consumes</fr:link>) mark residuals that this particular jaxpr does not consume.
+
+  <html:strong><html:code>jax.make_jaxpr(jax.grad(f))(x)</html:code> gives the whole forward-plus-backward program as one jaxpr</html:strong>, and that is the cheapest way to see what a custom rule actually did — far cheaper than reasoning about what it should have done. It is also where you can see, directly, which intermediates the backward pass keeps alive, which is the memory question <html:code>remat</html:code> exists to answer.
+
+  In HLO the same structure is visible through the <html:code>jvp</html:code> and <html:code>transpose</html:code> scopes in <html:code>op_name</html:code> (<fr:link href="/FG58/" title="op_name is the trace path back to Python" uri="https://kellenkanarios.com/FG58/" display-uri="FG58" type="local">op_name is the trace path back to Python</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/AGEG/</fr:uri>
+            <fr:display-uri>AGEG</fr:display-uri>
+            <fr:route>/AGEG/</fr:route>
+            <fr:title text="Three calls, three IR levels">Three calls, three IR levels</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404867346</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>How do you print each IR level for a JAX function <html:code>f</html:code>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:ol><html:li><html:strong><fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link></html:strong> — <html:code>jax.make_jaxpr(f)(x)</html:code>.</html:li>
+    <html:li><html:strong><fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link></html:strong>, pre-XLA — <html:code>jax.jit(f).lower(x).as_text()</html:code>, or <html:code>.compiler_ir(dialect='stablehlo')</html:code>.</html:li>
+    <html:li><html:strong>Optimized <fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link></html:strong>, post-XLA passes and matching the profile — <html:code>jax.jit(f).lower(x).compile().as_text()</html:code>.</html:li></html:ol>
+
+  <html:strong>The three answer genuinely different questions</html:strong>, and reaching for the wrong one wastes an afternoon (<fr:link href="/NR79/" title="Lifecycle of a JAX program" uri="https://kellenkanarios.com/NR79/" display-uri="NR79" type="local">Lifecycle of a <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link> program</fr:link>):
+
+  <html:ul><html:li>The jaxpr says what <html:em>tracing</html:em> captured — so it answers "why is this constant baked in", "why is there a <html:code>convert_element_type</html:code> here" (<fr:link href="/WMKA/" title="A weak type adopts the other operand's dtype" uri="https://kellenkanarios.com/WMKA/" display-uri="WMKA" type="local">A weak type adopts the other operand's dtype</fr:link>), "did my Python branch get traced at all".</html:li>
+    <html:li>The StableHLO says what JAX handed to XLA — the boundary where a JAX bug becomes an XLA bug.</html:li>
+    <html:li>The optimized HLO says what XLA built — fusions, layouts, collectives (<fr:link href="/BQUG/" title="Only after_optimizations matches the profile" uri="https://kellenkanarios.com/BQUG/" display-uri="BQUG" type="local">Only after_optimizations matches the profile</fr:link>).</html:li></html:ul>
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>7</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/G981/</fr:uri>
+            <fr:display-uri>G981</fr:display-uri>
+            <fr:route>/G981/</fr:route>
+            <fr:title text="jaxpr">jaxpr</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter><html:p>JAX's trace-level representation: the record of what abstract execution captured when your Python ran once on tracers instead of arrays (<fr:link href="/NR79/" title="Lifecycle of a JAX program" uri="https://kellenkanarios.com/NR79/" display-uri="NR79" type="local">Lifecycle of a <fr:link href="/OGCRY/" title="JAX" uri="https://kellenkanarios.com/OGCRY/" display-uri="OGCRY" type="local">JAX</fr:link> program</fr:link>). Print one with <html:code>jax.make_jaxpr(f)(x)</html:code> (<fr:link href="/AGEG/" title="Three calls, three IR levels" uri="https://kellenkanarios.com/AGEG/" display-uri="AGEG" type="local">Three calls, three IR levels</fr:link>).</html:p><html:p>Its defining feature is the square bracket. An equation reads <html:code>outvars = primitive[static_params] invars</html:code>, and that bracket is exactly the compile-time / runtime line (<fr:link href="/VTPS/" title="Brackets are compile-time, operands are runtime" uri="https://kellenkanarios.com/VTPS/" display-uri="VTPS" type="local">Brackets are compile-time, operands are runtime</fr:link>) — everything inside it is baked into this compilation, everything outside flows at run time. The same split appears in <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> as attributes versus operands (<fr:link href="/CZBE/" title="Position separates attributes from regions" uri="https://kellenkanarios.com/CZBE/" display-uri="CZBE" type="local">Position separates attributes from regions</fr:link>).</html:p><html:p>So a jaxpr answers a different class of question from the IR below it. Why is a constant baked in, why did a cast appear (<fr:link href="/WMKA/" title="A weak type adopts the other operand's dtype" uri="https://kellenkanarios.com/WMKA/" display-uri="WMKA" type="local">A weak type adopts the other operand's dtype</fr:link>), at what precision is this matmul accumulated (<fr:link href="/CCL2/" title="dimension_numbers is contracting then batch" uri="https://kellenkanarios.com/CCL2/" display-uri="CCL2" type="local">dimension_numbers is contracting then batch</fr:link>), what did my custom gradient rule actually do (<fr:link href="/MO87/" title="A grad jaxpr is the forward program plus its transpose" uri="https://kellenkanarios.com/MO87/" display-uri="MO87" type="local">A grad <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> is the forward program plus its transpose</fr:link>) — none of these survive into optimized <fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link>, where fusion and layout have already scrambled the correspondence. Read the jaxpr for meaning and the HLO for cost.</html:p><html:p>Not every JAX transformation appears here. <html:code>jit</html:code>, <html:code>scan</html:code>, <html:code>cond</html:code>, <html:code>while</html:code>, and <fr:link href="/IMBB/" title="shard_map" uri="https://kellenkanarios.com/IMBB/" display-uri="IMBB" type="local">shard_map</fr:link> are primitives with nested jaxprs; <html:code>vmap</html:code> is a trace-time rewrite that leaves no trace but the shapes (<fr:link href="/ROHH/" title="vmap leaves no primitive behind" uri="https://kellenkanarios.com/ROHH/" display-uri="ROHH" type="local">vmap leaves no primitive behind</fr:link>).</html:p><html:p>The traces below were produced with JAX 0.11 on CPU. <html:strong>The printed form drifts between releases</html:strong> — <html:code>scan</html:code> dropped <html:code>num_consts</html:code> for <html:code>ft_in</html:code>, and <html:code>pjit</html:code> now prints as <html:code>jit</html:code> — so read a trace from your own installation before trusting the punctuation in anyone's notes, including these.</html:p>
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong>A whole function.</html:strong> One dense layer, <html:code>tanh(x @ w + b)</html:code>, traced with <html:code>jax.make_jaxpr(f)(x, w, b)</html:code>. Four equations, in dependency order, each one a primitive (<fr:link href="/VTPS/" title="Brackets are compile-time, operands are runtime" uri="https://kellenkanarios.com/VTPS/" display-uri="VTPS" type="local">Brackets are compile-time, operands are runtime</fr:link>):</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:f32[8,16] b:f32[16,4] c:f32[4]. let
+    d:f32[8,4] = dot_general[
+      dimension_numbers=(([1], [0]), ([], []))
+      preferred_element_type=float32
+    ] a b
+    e:f32[1,4] = broadcast_in_dim[broadcast_dimensions=(1,)] c
+    f:f32[8,4] = add d e
+    g:f32[8,4] = tanh f
+  in (g,) }]]></html:code></html:pre>
+
+  <html:p>Nothing before the semicolon, so nothing was captured (<fr:link href="/2KEW/" title="constvars before the semicolon, invars after" uri="https://kellenkanarios.com/2KEW/" display-uri="2KEW" type="local">constvars before the semicolon, invars after</fr:link>). Note what the source did <html:em>not</html:em> say: the broadcast of the bias is explicit, and so is the accumulation type on the matmul (<fr:link href="/CCL2/" title="dimension_numbers is contracting then batch" uri="https://kellenkanarios.com/CCL2/" display-uri="CCL2" type="local">dimension_numbers is contracting then batch</fr:link>). Following this same function down to <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link> and <fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link> is worth doing once.</html:p>
+</html:div>
+
+
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong>A closure.</html:strong> The same trace with <html:code>w</html:code> captured from the enclosing scope instead of passed in:</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda a:f32[8,4]; b:f32[8]. let
+    c:f32[] = reduce_sum[axes=(0, 1) out_sharding=None] a
+    d:f32[8] = mul b c
+  in (d,) }]]></html:code></html:pre>
+
+  <html:p><html:code>a</html:code> is now a <html:em>constvar</html:em>, left of the semicolon — baked into this compilation rather than supplied by the caller. A large array on that side of the semicolon is a closure you probably did not mean to make (<fr:link href="/2KEW/" title="constvars before the semicolon, invars after" uri="https://kellenkanarios.com/2KEW/" display-uri="2KEW" type="local">constvars before the semicolon, invars after</fr:link>).</html:p>
+</html:div>
+
+
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong><html:code>grad</html:code>.</html:strong> <html:code>jax.make_jaxpr(jax.grad(f))(x, w)</html:code> for <html:code>f = tanh(x @ w).sum()</html:code> — the forward pass, then its transpose in reverse order (<fr:link href="/MO87/" title="A grad jaxpr is the forward program plus its transpose" uri="https://kellenkanarios.com/MO87/" display-uri="MO87" type="local">A grad <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> is the forward program plus its transpose</fr:link>):</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:f32[8] b:f32[8,4]. let
+    c:f32[4] = dot_general[dimension_numbers=(([0], [0]), ([], []))
+                           preferred_element_type=float32] a b
+    d:f32[4] = tanh c
+    e:f32[4] = sub 1.0:f32[] d
+    _:f32[] = reduce_sum[axes=(0,) out_sharding=None] d
+    f:f32[4] = broadcast_in_dim 1.0:f32[]
+    g:f32[4] = mul f e
+    h:f32[4] = mul g d
+    i:f32[4] = add_any g h
+    j:f32[8] = dot_general[dimension_numbers=(([0], [1]), ([], []))
+                           preferred_element_type=float32] i b
+  in (j,) }]]></html:code></html:pre>
+
+  <html:p>Three things to read off it. The final <html:code>dot_general</html:code> contracts <html:code>[0]</html:code> against <html:code>[1]</html:code> where the forward one contracted <html:code>[0]</html:code> against <html:code>[0]</html:code> — that swap <html:em>is</html:em> the transpose rule for a matmul. The <html:code>sub 1.0 d</html:code> is <fr:tex display="inline"><![CDATA[1 - \tanh ^2]]></fr:tex> being built from the saved output rather than recomputed. And the <html:code>reduce_sum</html:code> is a dropvar (<fr:link href="/E9J1/" title="An underscore is an output nobody consumes" uri="https://kellenkanarios.com/E9J1/" display-uri="E9J1" type="local">An underscore is an output nobody consumes</fr:link>): the primal value the sum would have produced is not needed, only its gradient, and the cotangent <html:code>broadcast_in_dim 1.0</html:code> is what replaces it.</html:p>
+</html:div>
+
+
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong><html:code>vmap</html:code> leaves nothing behind</html:strong> (<fr:link href="/ROHH/" title="vmap leaves no primitive behind" uri="https://kellenkanarios.com/ROHH/" display-uri="ROHH" type="local">vmap leaves no primitive behind</fr:link>). Mapping <html:code>lambda a, b: a * b</html:code> over the leading axis of <html:code>a</html:code> only:</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:f32[3,4] b:f32[4]. let
+    c:f32[1,4] = broadcast_in_dim[broadcast_dimensions=(1,)] b
+    d:f32[3,4] = mul a c
+  in (d,) }]]></html:code></html:pre>
+
+  <html:p>There is no <html:code>vmap</html:code> equation — only a <html:code>mul</html:code> whose avals grew a dimension, plus the <html:code>broadcast_in_dim</html:code> that lifted the unmapped argument to match. When <html:code>vmap</html:code> can push the batch dimension into an existing primitive it emits nothing at all: <html:code>jax.vmap(jnp.dot, in_axes=(0, None))</html:code> over <html:code><![CDATA[f32[3,4]]]></html:code> and <html:code><![CDATA[f32[4,2]]]></html:code> is a single <html:code>dot_general</html:code>, because a batched matvec <html:em>is</html:em> a matmul.</html:p>
+</html:div>
+
+
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong><html:code>scan</html:code></html:strong> (<fr:link href="/W8NM/" title="consts, then carry, then xs" uri="https://kellenkanarios.com/W8NM/" display-uri="W8NM" type="local">consts, then carry, then xs</fr:link>). Two carries, one scanned input, one const closed over:</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:f32[] b:f32[] c:f32[4]. let
+    d:f32[] e:f32[] f:f32[4] = scan[
+      ft_in=((), (None, None), (None,))
+      jaxpr={ lambda ; g:f32[] h:f32[] i:f32[]. let
+          j:f32[] = mul g 3.0:f32[]
+          k:f32[] = add j i
+          l:f32[] = add h g
+          m:f32[] = mul g 2.0:f32[]
+        in (k, l, m) }
+      length=4  reverse=False  unroll=1
+    ] a b c
+  in (d, e, f) }]]></html:code></html:pre>
+
+  <html:p>Read <html:code>ft_in</html:code> first: no consts, two carries, one <html:code>xs</html:code>. So invars <html:code>a</html:code> and <html:code>b</html:code> are the carry and <html:code>c</html:code> is scanned, and the body returns two new carries then one <html:code>ys</html:code> element, which stacks to <html:code><![CDATA[f32[4]]]></html:code>. The captured <html:code>3.0</html:code> was constant-folded into the body rather than passed as a const.</html:p>
+</html:div>
+
+
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong><html:code>cond</html:code></html:strong> (<fr:link href="/2LKO/" title="The nconsts numbers locate the carry" uri="https://kellenkanarios.com/2LKO/" display-uri="2LKO" type="local">The nconsts numbers locate the carry</fr:link>). Note that the predicate is converted to an integer index, and that branch 0 is the <html:em>false</html:em> branch:</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:bool[] b:f32[] c:f32[]. let
+    d:i32[] = convert_element_type[new_dtype=int32 weak_type=False] a
+    e:f32[] = cond[
+      branches=(
+        { lambda ; f:f32[] g:f32[]. let h:f32[] = sub f g in (h,) }
+        { lambda ; i:f32[] j:f32[]. let k:f32[] = add i j in (k,) }
+      )
+    ] d b c
+  in (e,) }]]></html:code></html:pre>
+
+  <html:p>Both branches take the same operands and return the same type — <html:code>cond</html:code> is an <fr:tex display="inline"><![CDATA[n]]></fr:tex>-way switch on an index, and the two-branch boolean case is the special case.</html:p>
+</html:div>
+
+
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong>Weak types</html:strong> (<fr:link href="/WMKA/" title="A weak type adopts the other operand's dtype" uri="https://kellenkanarios.com/WMKA/" display-uri="WMKA" type="local">A weak type adopts the other operand's dtype</fr:link>). A Python literal against a bf16 array:</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:bf16[3]. let b:bf16[3] = mul a 2.0:bf16[] in (b,) }]]></html:code></html:pre>
+
+  <html:p>The literal adopted bf16 and nothing was promoted. Replace <html:code>2.0</html:code> with <html:code>np.float32(2.0)</html:code> — an explicitly typed scalar, so no longer weak — and the same line becomes:</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:bf16[3]. let
+    b:f32[3] = convert_element_type[new_dtype=float32 weak_type=False] a
+    c:f32[3] = mul b 2.0:f32[]
+  in (c,) }]]></html:code></html:pre>
+
+  <html:p>The whole array was widened to f32 by one scalar. This is the promotion bug the weak-type rule exists to prevent, and the <html:code>convert_element_type</html:code> equation is how you catch it.</html:p>
+</html:div>
+
+
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  "><html:span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</html:span> 
+  <html:p><html:strong><html:code>shard_map</html:code> and <html:code>pmap</html:code></html:strong> (<fr:link href="/KWVD/" title="Collectives are primitives parameterised by axis name" uri="https://kellenkanarios.com/KWVD/" display-uri="KWVD" type="local">Collectives are primitives parameterised by axis name</fr:link>). A <html:code>psum</html:code> over a mesh axis of 8:</html:p>
+
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda ; a:f32[8]. let
+    b:f32[1] = shard_map[
+      in_specs=(P('x',),)  out_specs=(P(),)  check_vma=True
+      mesh=Mesh('x': 8, axis_types=(Auto,))
+      jaxpr={ lambda ; c:f32[1]{V:x}. let
+          d:f32[1] = psum_invariant[axes=('x',)] c
+        in (d,) }
+    ] a
+  in (b,) }]]></html:code></html:pre>
+
+  <html:p>The global shape is <html:code><![CDATA[f32[8]]]></html:code> and the body's is <html:code><![CDATA[f32[1]]]></html:code> — inside the region you are writing per-device code, which is the whole point of <fr:link href="/IMBB/" title="shard_map" uri="https://kellenkanarios.com/IMBB/" display-uri="IMBB" type="local">shard_map</fr:link>. <html:code>pmap</html:code> is not a separate mechanism: it traces to a <html:code>jit</html:code> wrapping a <html:code>shard_map</html:code>, with a <html:code>squeeze</html:code> and a <html:code>broadcast_in_dim</html:code> around the body to move between the mapped axis and the per-device rank.</html:p>
+</html:div>
+
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>7</fr:day></fr:date><fr:title text="Reading one">Reading one</fr:title></fr:frontmatter><fr:mainmatter>
+  
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/2KEW/</fr:uri><fr:display-uri>2KEW</fr:display-uri><fr:route>/2KEW/</fr:route><fr:title text="constvars before the semicolon, invars after">constvars before the semicolon, invars after</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404866224</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Name every part of <html:code><![CDATA[{ lambda a:f32[8] ; b:f32[8] c:f32[8]. let d:f32[8] = mul b c; e:f32[8] = add d a in (e,) }]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:pre><html:code class="language-haskell"><![CDATA[{ lambda <constvars> ; <invars>. let <equations> in (<outvars>) }]]></html:code></html:pre>
+
+  <html:ul><html:li><html:strong>Before the semicolon: constvars.</html:strong> Values closed over — captured arrays — supplied by the <html:code>ClosedJaxpr</html:code>'s consts rather than by the caller.</html:li>
+    <html:li><html:strong>Between semicolon and dot: invars.</html:strong> The traced arguments.</html:li>
+    <html:li><html:strong>The <html:code>let</html:code> block:</html:strong> equations in dependency order (<fr:link href="/VTPS/" title="Brackets are compile-time, operands are runtime" uri="https://kellenkanarios.com/VTPS/" display-uri="VTPS" type="local">Brackets are compile-time, operands are runtime</fr:link>).</html:li>
+    <html:li><html:strong><html:code>in (...)</html:code>:</html:strong> the output tuple, always parenthesised even for a single value.</html:li></html:ul>
+
+  <html:strong>The constvar / invar split is where a performance surprise hides.</html:strong> Anything on the left of the semicolon was captured at trace time and is baked into this compilation, so changing it means retracing (<fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA Compilation</fr:link>). Large constvars in a <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> you expected to be pure are a closure you did not mean to make.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/VTPS/</fr:uri><fr:display-uri>VTPS</fr:display-uri><fr:route>/VTPS/</fr:route><fr:title text="Brackets are compile-time, operands are runtime">Brackets are compile-time, operands are runtime</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404870245</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What is the shape of a single <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> equation?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:pre><html:code class="language-haskell"><![CDATA[outvars = primitive[static_params] invars]]></html:code></html:pre>
+
+  for example
+
+  <html:pre><html:code class="language-haskell"><![CDATA[e:f32[1,4] = broadcast_in_dim[broadcast_dimensions=(1,)] c
+d:f32[8,4] = dot_general[dimension_numbers=(([1], [0]), ([], []))
+                         preferred_element_type=float32] a b]]></html:code></html:pre>
+
+  <html:strong>The square brackets hold <html:em>static</html:em> parameters</html:strong> — known at trace time and baked into the primitive — and everything after them is a traced operand or a literal. The printer shows only the interesting ones; the equation carries more (<html:code>broadcast_in_dim</html:code> also holds <html:code>shape</html:code> and <html:code>sharding</html:code>), reachable from <html:code>eqn.params</html:code>.
+
+  That bracket-versus-operand split is the most useful thing on the page. A quantity inside the brackets is a constant this compilation is specialised to; move it out and you retrace. It is the same distinction <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> draws between attributes and operands (<fr:link href="/CZBE/" title="Position separates attributes from regions" uri="https://kellenkanarios.com/CZBE/" display-uri="CZBE" type="local">Position separates attributes from regions</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/9M15/</fr:uri><fr:display-uri>9M15</fr:display-uri><fr:route>/9M15/</fr:route><fr:title text="An aval is shape and dtype, no value">An aval is shape and dtype, no value</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867295</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Read the <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> shorthand <html:code><![CDATA[f32[8,128]]]></html:code>, <html:code><![CDATA[i32[]]]></html:code>, <html:code><![CDATA[bool[3]]]></html:code>, <html:code><![CDATA[key<fry>[2]]]></html:code>, <html:code><![CDATA[bf16[8]]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Compact <html:em>aval</html:em> — abstract value — printing: dtype then shape, with empty brackets for a scalar.
+
+  <html:code><![CDATA[key<fry>[2]]]></html:code> is a typed PRNG key array using the threefry implementation: the new-style key dtype rather than a raw <html:code>uint32[2]</html:code>. Seeing the typed form tells you the key is opaque to shape-manipulating code, which is the point of it.
+
+  <html:strong>The aval is what tracing actually propagates</html:strong>: shape, dtype, and <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharding</fr:link> — no values. Everything a jaxpr knows, it knows from these, which is why a Python <html:code>if</html:code> on a traced value fails and why the shapes in a jaxpr are always fully static.
+
+  HLO's shapes are the same information in a different notation (<fr:link href="/31V3/" title="Tuples are first-class in HLO" uri="https://kellenkanarios.com/31V3/" display-uri="31V3" type="local">Tuples are first-class in <fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link></fr:link>), and <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> adds dynamic dimensions that JAX never produces (<fr:link href="/L3F6/" title="Question mark is a dynamic dimension, star is unknown rank" uri="https://kellenkanarios.com/L3F6/" display-uri="L3F6" type="local">Question mark is a dynamic dimension, star is unknown rank</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/E9J1/</fr:uri><fr:display-uri>E9J1</fr:display-uri><fr:route>/E9J1/</fr:route><fr:title text="An underscore is an output nobody consumes">An underscore is an output nobody consumes</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867895</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What is <html:code><![CDATA[_:f32[8]]]></html:code> on the left of a <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> equation?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  A <html:em>dropvar</html:em>: an output that nothing consumes.
+
+  It shows up for multi-output primitives where only some results are used — a <html:code>custom_vjp</html:code>'s residuals when you asked only for the primal, an unused <html:code>scan</html:code> carry (<fr:link href="/W8NM/" title="consts, then carry, then xs" uri="https://kellenkanarios.com/W8NM/" display-uri="W8NM" type="local">consts, then carry, then xs</fr:link>), the second output of a primitive whose first is all you wanted.
+
+  <html:strong>It does not mean the work happens.</html:strong> Dead code elimination may or may not have run when you print a jaxpr, so dropvars are entirely normal in a freshly traced one, and their presence says nothing about the compiled program. XLA will drop the computation if it is genuinely unused.
+
+  What they do tell you is which primitive produced more than you asked for — useful when you are trying to work out where a residual came from (<fr:link href="/MO87/" title="A grad jaxpr is the forward program plus its transpose" uri="https://kellenkanarios.com/MO87/" display-uri="MO87" type="local">A grad <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> is the forward program plus its transpose</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/WNHA/</fr:uri><fr:display-uri>WNHA</fr:display-uri><fr:route>/WNHA/</fr:route><fr:title text="jit is the pjit primitive">jit is the pjit primitive</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404870520</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Why does almost every <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> from a jitted function contain a single <html:code><![CDATA[jit[name=f jaxpr={...}]]]></html:code> equation?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Because <html:code>jax.jit</html:code> is implemented as a primitive — <html:code>pjit_p</html:code>, printed as <html:code>jit</html:code> — rather than being inlined. The callee's jaxpr is nested inside as a static parameter, so each <html:code>jit</html:code> boundary in your code becomes another level of nesting.
+
+  <html:strong>That nesting is preserved all the way down.</html:strong> It reappears in HLO as the slash-separated <html:code>op_name</html:code> path, <html:code><![CDATA[jit(f)/jit(g)/...]]></html:code> (<fr:link href="/FG58/" title="op_name is the trace path back to Python" uri="https://kellenkanarios.com/FG58/" display-uri="FG58" type="local">op_name is the trace path back to Python</fr:link>), which is what lets you attribute an optimized HLO instruction to a particular function in a program full of them.
+
+  It also means the boundaries are real to the compiler, not just to you: each is a place where donation, <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharding</fr:link>, and compilation caching are decided (<fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA Compilation</fr:link>). Nesting <html:code>jit</html:code> inside <html:code>jit</html:code> is free at run time but is not invisible in the IR.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>7</fr:day></fr:date><fr:title text="Control flow and collectives">Control flow and collectives</fr:title></fr:frontmatter><fr:mainmatter>
+  
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/W8NM/</fr:uri><fr:display-uri>W8NM</fr:display-uri><fr:route>/W8NM/</fr:route><fr:title text="consts, then carry, then xs">consts, then carry, then xs</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404870370</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[scan[ft_in=((), (None, None), (None,)) length=4 reverse=False unroll=1]]]></html:code>. How are the invars laid out?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  In one fixed order: first the loop-invariant <html:em>consts</html:em>, then the <html:em>carry</html:em>, then the <html:em>xs</html:em>, each scanned along a leading axis of size <html:code>length</html:code>. The inner jaxpr's invars follow the same convention, and it returns <html:code><![CDATA[(new_carry..., ys...)]]></html:code>.
+
+  <html:strong><html:code>ft_in</html:code> is where the split is written down.</html:strong> It is a three-tuple — one group per role — so the group <html:em>lengths</html:em> give the counts: none here, then two carries, then one scanned input. Older JAX printed the same information as <html:code>num_consts</html:code> and <html:code>num_carry</html:code>, and you will still see that form in written material.
+
+  <html:strong>Counting is the only way to read a scan body.</html:strong> The names carry nothing; the group sizes do. Given <html:code><![CDATA[((), (None, None), (None,))]]></html:code>, invars 0 and 1 are the carry and invar 2 is scanned.
+
+  The same explicit carry appears as <html:code>iter_args</html:code> in <html:code>scf.for</html:code> (<fr:link href="/ON39/" title="iter_args and yield are the mutable accumulator" uri="https://kellenkanarios.com/ON39/" display-uri="ON39" type="local">iter_args and yield are the mutable accumulator</fr:link>) and as a state tuple in HLO's <html:code>while</html:code> (<fr:link href="/YXTI/" title="A while loop's whole state is one tuple" uri="https://kellenkanarios.com/YXTI/" display-uri="YXTI" type="local">A while loop's whole state is one tuple</fr:link>), where the three-way split is flattened into tuple indices you have to recover by counting.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/2LKO/</fr:uri><fr:display-uri>2LKO</fr:display-uri><fr:route>/2LKO/</fr:route><fr:title text="The nconsts numbers locate the carry">The nconsts numbers locate the carry</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404866253</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>How do <html:code>cond</html:code> and <html:code>while</html:code> print in a <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:pre><html:code class="language-haskell"><![CDATA[cond[branches=(...)] index a b
+while[cond_jaxpr={...} cond_nconsts=1 body_jaxpr={...} body_nconsts=2] ...]]></html:code></html:pre>
+
+  For <html:code>cond</html:code>, the first invar is the branch <html:em>index</html:em> and the rest are the operands passed to every branch. <html:code>branches</html:code> is a tuple of jaxprs, all with the same signature — which is why both sides of a JAX conditional must agree on shapes and dtypes.
+
+  For <html:code>while</html:code>, the invars run: cond consts, then body consts, then the carry.
+
+  <html:strong>The <html:code>nconsts</html:code> numbers are the only thing telling you where the carry starts.</html:strong> There is no punctuation in the operand list and the names are meaningless, so you count: skip <html:code>cond_nconsts</html:code>, skip <html:code>body_nconsts</html:code>, and everything left is the loop state. Same discipline as <html:code>scan</html:code> (<fr:link href="/W8NM/" title="consts, then carry, then xs" uri="https://kellenkanarios.com/W8NM/" display-uri="W8NM" type="local">consts, then carry, then xs</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/KWVD/</fr:uri><fr:display-uri>KWVD</fr:display-uri><fr:route>/KWVD/</fr:route><fr:title text="Collectives are primitives parameterised by axis name">Collectives are primitives parameterised by axis name</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869045</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What do <html:code><![CDATA[psum[axes=('x',) axis_index_groups=None]]]></html:code> and <fr:link href="/IMBB/" title="shard_map" uri="https://kellenkanarios.com/IMBB/" display-uri="IMBB" type="local">shard_map</fr:link> look like in a <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Collectives are ordinary primitives parameterised by an <html:em>axis name</html:em>; they only mean anything inside a mapped context that binds that name. <fr:link href="/IMBB/" title="shard_map" uri="https://kellenkanarios.com/IMBB/" display-uri="IMBB" type="local">shard_map</fr:link> appears as
+
+  <html:pre><html:code class="language-haskell"><![CDATA[shard_map[jaxpr={...} mesh=Mesh('x': 8, axis_types=(Auto,))
+          in_specs=(P('x',),) out_specs=(P(),) check_vma=True]]]></html:code></html:pre>
+
+  with the per-device program nested inside (<fr:link href="/ROHH/" title="vmap leaves no primitive behind" uri="https://kellenkanarios.com/ROHH/" display-uri="ROHH" type="local">vmap leaves no primitive behind</fr:link>). Inside that body a collective whose result is already replicated may print as <html:code>psum_invariant</html:code> rather than <html:code>psum</html:code> — same reduction, tagged as producing an axis-invariant value.
+
+  <html:strong>So the jaxpr level is logical and the physical level is elsewhere.</html:strong> Here you see a named axis and per-device shapes; the device assignment appears only later, as HLO <html:code>sharding</html:code> attributes (<fr:link href="/3IWB/" title="A sharding annotation is a tiling plus a device order" uri="https://kellenkanarios.com/3IWB/" display-uri="3IWB" type="local">A <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">sharding</fr:link> annotation is a tiling plus a device order</fr:link>) and concrete <html:code>all-reduce</html:code> instructions (<fr:link href="/6SKD/" title="replica_groups says who reduces with whom" uri="https://kellenkanarios.com/6SKD/" display-uri="6SKD" type="local">replica_groups says who reduces with whom</fr:link>).
+
+  That separation is why the axis name is the right thing to reason about: it is stable, whereas which devices land in which <html:code>replica_groups</html:code> depends on the mesh and the compiler (<fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharding</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>7</fr:day></fr:date><fr:title text="Numerics and transformations">Numerics and transformations</fr:title></fr:frontmatter><fr:mainmatter>
+  
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/CCL2/</fr:uri><fr:display-uri>CCL2</fr:display-uri><fr:route>/CCL2/</fr:route><fr:title text="dimension_numbers is contracting then batch">dimension_numbers is contracting then batch</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867620</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[dot_general[dimension_numbers=(((1,), (0,)), ((), ())) precision=None preferred_element_type=float32]]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:code>dimension_numbers</html:code> is <html:code><![CDATA[((lhs_contracting, rhs_contracting), (lhs_batch, rhs_batch))]]></html:code> — contracting pair first, batch pair second. Here lhs dim 1 contracts with rhs dim 0 and there are no batch dims: a plain matmul (<fr:link href="/BVPY/" title="Batch, contract, free, and the output order is fixed" uri="https://kellenkanarios.com/BVPY/" display-uri="BVPY" type="local">Batch, contract, free, and the output order is fixed</fr:link>, <fr:link href="/7EEZ/" title="A dot's output order is batch, lhs free, rhs free" uri="https://kellenkanarios.com/7EEZ/" display-uri="7EEZ" type="local">A dot's output order is batch, lhs free, rhs free</fr:link>).
+
+  <html:strong>The two other parameters are where numerics live, and they are easy to skim past.</html:strong>
+
+  <html:ul><html:li><html:code>preferred_element_type</html:code> is the <html:em>accumulation</html:em> type. bf16 inputs accumulating into f32 is the standard configuration, and it is what makes low-precision training work at all — the inputs are cheap, the running sum is not.</html:li>
+    <html:li><html:code>precision</html:code> controls the backend tradeoff: TF32, bf16x3 passes, or full f32.</html:li></html:ul>
+
+  So a jaxpr answers "at what precision is this matmul actually done" directly, which the HLO line does not.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/WMKA/</fr:uri><fr:display-uri>WMKA</fr:display-uri><fr:route>/WMKA/</fr:route><fr:title text="A weak type adopts the other operand's dtype">A weak type adopts the other operand's dtype</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404870495</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What does <html:code><![CDATA[convert_element_type[new_dtype=float32 weak_type=False]]]></html:code> mean, and what is a weak type?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  An explicit cast that tracing inserted.
+
+  <html:strong><html:code>weak_type</html:code> marks a value whose dtype came from a Python scalar</html:strong> — <html:code>3.0</html:code>, <html:code>2</html:code> — rather than from an explicitly typed array. A weakly typed value adopts the other operand's dtype in promotion instead of forcing a widening, so <html:code>x * 2.0</html:code> on a bf16 array stays bf16 rather than becoming f32.
+
+  That rule exists precisely so writing a literal in your model does not silently change its precision.
+
+  <html:strong>An unexpected <html:code>convert_element_type</html:code> in a jaxpr is therefore worth reading as a diagnosis</html:strong>, not as noise: it is the trace of a promotion you did not intend, usually a NumPy scalar or an f32 constant meeting a lower-precision array. It costs a full pass over the data, and it can defeat the accumulation choice you made on the neighbouring <html:code>dot_general</html:code> (<fr:link href="/CCL2/" title="dimension_numbers is contracting then batch" uri="https://kellenkanarios.com/CCL2/" display-uri="CCL2" type="local">dimension_numbers is contracting then batch</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/ROHH/</fr:uri><fr:display-uri>ROHH</fr:display-uri><fr:route>/ROHH/</fr:route><fr:title text="vmap leaves no primitive behind">vmap leaves no primitive behind</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869945</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Does <html:code>vmap</html:code> appear as a primitive in a <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong>No.</html:strong> Batching is a trace-time rewrite, not a wrapper. The jaxpr you get back has no <html:code>vmap</html:code> equation at all — just the same primitives with a batch dimension added to their avals (<fr:link href="/9M15/" title="An aval is shape and dtype, no value" uri="https://kellenkanarios.com/9M15/" display-uri="9M15" type="local">An aval is shape and dtype, no value</fr:link>), plus extra <html:code>broadcast_in_dim</html:code> and <html:code>transpose</html:code> equations wherever the batch axis had to be moved.
+
+  So to see what <html:code>vmap</html:code> decided, read the <html:em>shapes</html:em>; there is no op to look for. Those stray transposes are the mapping decisions, and they are also where a vmapped function quietly costs more than the loop you replaced.
+
+  <html:strong>Contrast the ones that do appear as primitives with nested jaxprs</html:strong>: <html:code>pjit</html:code> (<fr:link href="/WNHA/" title="jit is the pjit primitive" uri="https://kellenkanarios.com/WNHA/" display-uri="WNHA" type="local">jit is the pjit primitive</fr:link>), <html:code>scan</html:code> (<fr:link href="/W8NM/" title="consts, then carry, then xs" uri="https://kellenkanarios.com/W8NM/" display-uri="W8NM" type="local">consts, then carry, then xs</fr:link>), <html:code>cond</html:code> and <html:code>while</html:code> (<fr:link href="/2LKO/" title="The nconsts numbers locate the carry" uri="https://kellenkanarios.com/2LKO/" display-uri="2LKO" type="local">The nconsts numbers locate the carry</fr:link>), <html:code>custom_jvp_call</html:code>, and <fr:link href="/IMBB/" title="shard_map" uri="https://kellenkanarios.com/IMBB/" display-uri="IMBB" type="local">shard_map</fr:link> (<fr:link href="/KWVD/" title="Collectives are primitives parameterised by axis name" uri="https://kellenkanarios.com/KWVD/" display-uri="KWVD" type="local">Collectives are primitives parameterised by axis name</fr:link>). The distinction is whether the transformation changes the <html:em>program structure</html:em> or only the shapes flowing through it.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/MO87/</fr:uri><fr:display-uri>MO87</fr:display-uri><fr:route>/MO87/</fr:route><fr:title text="A grad jaxpr is the forward program plus its transpose">A grad <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> is the forward program plus its transpose</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869346</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What tells you a <fr:link href="/G981/" title="jaxpr" uri="https://kellenkanarios.com/G981/" display-uri="G981" type="local">jaxpr</fr:link> came from <html:code>grad</html:code>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The layout: the forward equations appear first, then their transposes in reverse order, with residual values threaded between them.
+
+  Concrete tells — <html:code>mul</html:code> and <html:code>dot_general</html:code> with swapped <html:code>dimension_numbers</html:code> (<fr:link href="/CCL2/" title="dimension_numbers is contracting then batch" uri="https://kellenkanarios.com/CCL2/" display-uri="CCL2" type="local">dimension_numbers is contracting then batch</fr:link>), <html:code>transpose</html:code> equations, and <html:code>custom_vjp_call_jaxpr</html:code> or <html:code>remat</html:code> wrappers. Dropvars (<fr:link href="/E9J1/" title="An underscore is an output nobody consumes" uri="https://kellenkanarios.com/E9J1/" display-uri="E9J1" type="local">An underscore is an output nobody consumes</fr:link>) mark residuals that this particular jaxpr does not consume.
+
+  <html:strong><html:code>jax.make_jaxpr(jax.grad(f))(x)</html:code> gives the whole forward-plus-backward program as one jaxpr</html:strong>, and that is the cheapest way to see what a custom rule actually did — far cheaper than reasoning about what it should have done. It is also where you can see, directly, which intermediates the backward pass keeps alive, which is the memory question <html:code>remat</html:code> exists to answer.
+
+  In HLO the same structure is visible through the <html:code>jvp</html:code> and <html:code>transpose</html:code> scopes in <html:code>op_name</html:code> (<fr:link href="/FG58/" title="op_name is the trace path back to Python" uri="https://kellenkanarios.com/FG58/" display-uri="FG58" type="local">op_name is the trace path back to Python</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/CCL2/</fr:uri>
+            <fr:display-uri>CCL2</fr:display-uri>
+            <fr:route>/CCL2/</fr:route>
+            <fr:title text="dimension_numbers is contracting then batch">dimension_numbers is contracting then batch</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404867620</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[dot_general[dimension_numbers=(((1,), (0,)), ((), ())) precision=None preferred_element_type=float32]]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:code>dimension_numbers</html:code> is <html:code><![CDATA[((lhs_contracting, rhs_contracting), (lhs_batch, rhs_batch))]]></html:code> — contracting pair first, batch pair second. Here lhs dim 1 contracts with rhs dim 0 and there are no batch dims: a plain matmul (<fr:link href="/BVPY/" title="Batch, contract, free, and the output order is fixed" uri="https://kellenkanarios.com/BVPY/" display-uri="BVPY" type="local">Batch, contract, free, and the output order is fixed</fr:link>, <fr:link href="/7EEZ/" title="A dot's output order is batch, lhs free, rhs free" uri="https://kellenkanarios.com/7EEZ/" display-uri="7EEZ" type="local">A dot's output order is batch, lhs free, rhs free</fr:link>).
+
+  <html:strong>The two other parameters are where numerics live, and they are easy to skim past.</html:strong>
+
+  <html:ul><html:li><html:code>preferred_element_type</html:code> is the <html:em>accumulation</html:em> type. bf16 inputs accumulating into f32 is the standard configuration, and it is what makes low-precision training work at all — the inputs are cheap, the running sum is not.</html:li>
+    <html:li><html:code>precision</html:code> controls the backend tradeoff: TF32, bf16x3 passes, or full f32.</html:li></html:ul>
+
+  So a jaxpr answers "at what precision is this matmul actually done" directly, which the HLO line does not.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

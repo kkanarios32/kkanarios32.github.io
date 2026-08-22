@@ -131,12 +131,768 @@ window.addEventListener('load', function () { setTimeout(function () {
 <div class="metadata"><ul>
 <li class="meta-item">August 7, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">XLA's internal representation: a directed acyclic graph of tensor operations, with every array dimension known at compile time. It is what <span xmlns="" class="link local"><a href="/84N5/" title="StableHLO [84N5]">StableHLO</a></span> is converted into on the way into the compiler (<span xmlns="" class="link local"><a href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal [FLKN]">chlo desugars, </a><span class="link local"><a href="/84N5/" title="StableHLO [84N5]">stablehlo</a></span><a href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal [FLKN]"> is stable, mhlo is internal</a></span>), and it is <em>not</em> an <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> dialect — a backend consuming XLA has to translate from HLO on its own (<span xmlns="" class="link local"><a href="/M74N/" title="XLA Compilation [M74N]">XLA Compilation</a></span>).</p><p xmlns="http://www.w3.org/1999/xhtml">Two design choices shape how an HLO dump reads, and both trade verbosity for locality. Every instruction prints its result shape before the opcode and every operand with its full shape and layout, so a line is self-contained (<span xmlns="" class="link local"><a href="/5QXE/" title="An HLO line is self-contained [5QXE]">An </a><span class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span><a href="/5QXE/" title="An HLO line is self-contained [5QXE]"> line is self-contained</a></span>); and the module is a flat list of computations rather than a nesting, with <code>ENTRY</code> and <code>ROOT</code> the only structural landmarks (<span xmlns="" class="link local"><a href="/TN01/" title="ENTRY names the computation, ROOT names the output [TN01]">ENTRY names the computation, ROOT names the output</a></span>). Static shapes are what make the first affordable.</p><p xmlns="http://www.w3.org/1999/xhtml">The distinction that matters most in practice is <em>which</em> HLO you are reading. <code>before_optimizations</code> is a transliteration of what JAX emitted; <code>after_optimizations</code> is fused, laid out, and scheduled, and is the only one whose instruction names appear in a profile (<span xmlns="" class="link local"><a href="/BQUG/" title="Only after_optimizations matches the profile [BQUG]">Only after_optimizations matches the profile</a></span>). A performance question answered from the wrong file is answered about a program that never ran.</p>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
+  <p><strong>The same function after XLA.</strong> <code>jax.jit(f).lower(x, w, b).compile().as_text()</code> for <code>tanh(x @ w + b)</code>, on CPU. The two fusion bodies are printed first, then the entry computation:</p>
+
+  <pre><code class="language-llvm">HloModule jit_f, is_scheduled=true,
+  entry_computation_layout={(f32[8,16]{1,0}, f32[16,4]{1,0}, f32[4]{0})-&gt;f32[8,4]{1,0}}
+
+%fused_computation (param_0: f32[8,16], param_1: f32[16,4]) -&gt; f32[8,4] {
+  %param_0 = f32[8,16]{1,0} parameter(0)
+  %param_1 = f32[16,4]{1,0} parameter(1)
+  ROOT %dot_general.0 = f32[8,4]{1,0} dot(%param_0, %param_1),
+      lhs_contracting_dims={1}, rhs_contracting_dims={0},
+      metadata={op_name="jit(f)/dot_general" stack_frame_id=2}
+}
+
+%fused_computation.1 (param_0.2: f32[8,4], param_1.2: f32[4]) -&gt; f32[8,4] {
+  %param_0.2 = f32[8,4]{1,0} parameter(0)
+  %param_1.2 = f32[4]{0} parameter(1)
+  %add.1 = f32[8,4]{1,0} broadcast(%param_1.2), dimensions={1}
+  %add.0 = f32[8,4]{1,0} add(%param_0.2, %add.1)
+  ROOT %tanh.0 = f32[8,4]{1,0} tanh(%add.0)
+}
+
+ENTRY %main.1 (x.1: f32[8,16], w.1: f32[16,4], b.1: f32[4]) -&gt; f32[8,4] {
+  %x.1 = f32[8,16]{1,0} parameter(0), metadata={op_name="x"}
+  %w.1 = f32[16,4]{1,0} parameter(1), metadata={op_name="w"}
+  %b.1 = f32[4]{0} parameter(2), metadata={op_name="b"}
+  %ynn_fusion = f32[8,4]{1,0} fusion(%x.1, %w.1), kind=kCustom, calls=%fused_computation
+  ROOT %add_tanh_fusion = f32[8,4]{1,0} fusion(%ynn_fusion, %b.1), kind=kLoop,
+      calls=%fused_computation.1
+}</code></pre>
+
+  <p><strong>Read <code>ENTRY</code> first, then follow <code>calls=</code></strong> (<span xmlns="" class="link local"><a href="/TN01/" title="ENTRY names the computation, ROOT names the output [TN01]">ENTRY names the computation, ROOT names the output</a></span>). The whole program is two kernels. Everything else in the file is their bodies.</p>
+
+  <ul><li>Every shape now carries a layout (<span xmlns="" class="link local"><a href="/RR6G/" title="The layout is minor-to-major [RR6G]">The layout is minor-to-major</a></span>), and <code>entry_computation_layout</code> states the ABI the caller must satisfy (<span xmlns="" class="link local"><a href="/UON0/" title="The entry layout is the ABI [UON0]">The entry layout is the ABI</a></span>). <code>is_scheduled=true</code> means the order shown is execution order (<span xmlns="" class="link local"><a href="/MHQ6/" title="The gap between start and done is the overlap [MHQ6]">The gap between start and done is the overlap</a></span>).</li>
+    <li><strong>The four jaxpr equations became two kernels, split where the hardware splits.</strong> The matmul is <code>kind=kCustom</code> — a library-backed emitter, not generated code — and the bias add and <code>tanh</code> are <code>kind=kLoop</code>, one elementwise pass (<span xmlns="" class="link local"><a href="/L148/" title="The fusion kind names the emitter [L148]">The </a><span class="link local"><a href="/38CM/" title="Operator fusion [38CM]">fusion</a></span><a href="/L148/" title="The fusion kind names the emitter [L148]"> kind names the emitter</a></span>). The broadcast is inside that loop, so the bias is never materialised to <code>8x4</code> in memory (<span xmlns="" class="link local"><a href="/ZUYH/" title="A fusion op is a kernel launch boundary [ZUYH]">A </a><span class="link local"><a href="/38CM/" title="Operator fusion [38CM]">fusion</a></span><a href="/ZUYH/" title="A fusion op is a kernel launch boundary [ZUYH]"> op is a kernel launch boundary</a></span>).</li>
+    <li>A fusion body's <code>parameter(i)</code> lines up with the fusion op's operands (<span xmlns="" class="link local"><a href="/W9HX/" title="parameter(i) is positional [W9HX]">parameter(i) is positional</a></span>) — that positional match is the only link between body and call site.</li>
+    <li>The names <code>%add.0</code> and <code>%add.1</code> are uniquified junk (<span xmlns="" class="link local"><a href="/06HG/" title="The numeric suffix means nothing [06HG]">The numeric suffix means nothing</a></span>): <code>%add.1</code> is a <code>broadcast</code>. Key on <code>metadata</code> instead (<span xmlns="" class="link local"><a href="/FG58/" title="op_name is the trace path back to Python [FG58]">op_name is the trace path back to Python</a></span>).</li></ul>
+</div>
+
+
+  <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon">1. </span>Reading a module  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
- <div xmlns="http://www.w3.org/1999/xhtml" class="stub-notice" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   color: rgb(38, 97, 69);   font-style: italic;   ">🌱 Stub — this concept is referenced but not yet written.</div>
+  
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>An <span class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span> line is self-contained <a class="slug" href="/5QXE/">[5QXE]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Name every part of <code>%add.7 = f32[8,128]{1,0} add(f32[8,128]{1,0} %p0, f32[8,128]{1,0} %bcast.3), metadata={op_name="jit(f)/add"}</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <pre><code class="language-llvm">%name = &lt;shape&gt; &lt;opcode&gt;(&lt;typed operands&gt;), &lt;attributes&gt;, metadata={...}</code></pre>
+
+  Two things differ from <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> and both are deliberate. The result shape comes <em>before</em> the opcode, and every operand is printed with its full shape and layout (<span xmlns="" class="link local"><a href="/RR6G/" title="The layout is minor-to-major [RR6G]">The layout is minor-to-major</a></span>).
+
+  <strong>So an <span xmlns="" class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span> line is self-contained.</strong> You never scroll up to learn a type — which matters, because an optimized HLO module is one enormous flat list of instructions with no nesting to orient you. The cost is verbosity, and the reason it is affordable is that HLO has no dynamic shapes: every dimension is known at compile time, so every shape can be printed (<span xmlns="" class="link local"><a href="/L3F6/" title="Question mark is a dynamic dimension, star is unknown rank [L3F6]">Question mark is a dynamic dimension, star is unknown rank</a></span>).
+
+  The name is meaningless (<span xmlns="" class="link local"><a href="/06HG/" title="The numeric suffix means nothing [06HG]">The numeric suffix means nothing</a></span>); <code>metadata</code> is what maps the line back to Python (<span xmlns="" class="link local"><a href="/FG58/" title="op_name is the trace path back to Python [FG58]">op_name is the trace path back to Python</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>The layout is minor-to-major <a class="slug" href="/RR6G/">[RR6G]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What does the <code>{1,0}</code> in <code>f32[8,128]{1,0}</code> mean?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  The <em>layout</em>: dimension numbers listed <strong>minor-to-major</strong>. <code>{1,0}</code> says dimension 1 (size 128) is minor-most — the contiguous one — so this is standard row-major. <code>{0,1}</code> on the same shape would be column-major (<span xmlns="" class="link local"><a href="/M74N/" title="XLA Compilation [M74N]">XLA Compilation</a></span>).
+
+  Layouts appear after XLA's layout assignment pass, so a <code>before_optimizations</code> dump has them but they are not yet meaningful (<span xmlns="" class="link local"><a href="/BQUG/" title="Only after_optimizations matches the profile [BQUG]">Only after_optimizations matches the profile</a></span>).
+
+  <strong>Layouts are the reason for ops that do nothing mathematically.</strong> A <code>copy</code>, <code>bitcast</code>, or <code>transpose</code> that leaves the values unchanged is there to satisfy a layout requirement (<span xmlns="" class="link local"><a href="/KG5S/" title="bitcast is free, copy is not [KG5S]">bitcast is free, copy is not</a></span>), typically because a <code>dot</code> wants its contracting dimension minor-most (<span xmlns="" class="link local"><a href="/7EEZ/" title="A dot's output order is batch, lhs free, rhs free [7EEZ]">A dot's output order is batch, lhs free, rhs free</a></span>) or a custom call pinned one (<span xmlns="" class="link local"><a href="/2MM7/" title="A custom call is a black box XLA cannot fuse across [2MM7]">A </a><span class="link local"><a href="/M18X/" title="XLA custom call [M18X]">custom call</a></span><a href="/2MM7/" title="A custom call is a black box XLA cannot fuse across [2MM7]"> is a black box </a><span class="link local"><a href="/M74N/" title="XLA Compilation [M74N]">XLA</a></span><a href="/2MM7/" title="A custom call is a black box XLA cannot fuse across [2MM7]"> cannot fuse across</a></span>). Chasing copies in optimized HLO is chasing layout.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Tuples are first-class in <span class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span> <a class="slug" href="/31V3/">[31V3]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What are the <span xmlns="" class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span> shapes <code>s32[]</code>, <code>pred[8]</code>, <code>(f32[8]{0}, s32[])</code>, and <code>token[]</code>?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <ul><li><code>s32[]</code> — a rank-0 signed 32-bit scalar. The letter is the class: <code>s</code> signed, <code>u</code> unsigned, <code>f</code> float, plus <code>bf16</code>, <code>f8e4m3</code> and friends for narrow types. Unlike <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span>, HLO integers are signed or unsigned in the <em>type</em> (<span xmlns="" class="link local"><a href="/I4UP/" title="Signedness lives in the op, not the type [I4UP]">Signedness lives in the op, not the type</a></span>).</li>
+    <li><code>pred[8]</code> — a boolean array; <code>pred</code> is XLA's bool.</li>
+    <li><strong>Parens are a tuple shape.</strong> Tuples are first-class in HLO, and are how every multi-output op and all <code>while</code> state is expressed (<span xmlns="" class="link local"><a href="/YXTI/" title="A while loop's whole state is one tuple [YXTI]">A while loop's whole state is one tuple</a></span>) — which is why <code>get-tuple-element</code> is everywhere (<span xmlns="" class="link local"><a href="/W0FU/" title="get-tuple-element is free aliasing [W0FU]">get-tuple-element is free aliasing</a></span>).</li>
+    <li><code>token[]</code> — an ordering token, carrying no data. Side-effecting ops (infeed, collectives, <code>after-all</code>) thread a token to express an ordering the dataflow graph otherwise could not.</li></ul>
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>ENTRY names the computation, ROOT names the output <a class="slug" href="/TN01/">[TN01]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What do <code>ENTRY</code> and <code>ROOT</code> mark in an <span xmlns="" class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span> module?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <strong><code>ENTRY</code></strong> flags the module's entry computation — the one actually invoked. Every other computation in the file is called by name: fusion bodies (<span xmlns="" class="link local"><a href="/ZUYH/" title="A fusion op is a kernel launch boundary [ZUYH]">A </a><span class="link local"><a href="/38CM/" title="Operator fusion [38CM]">fusion</a></span><a href="/ZUYH/" title="A fusion op is a kernel launch boundary [ZUYH]"> op is a kernel launch boundary</a></span>), reducers (<span xmlns="" class="link local"><a href="/EE3R/" title="reduce removes the dims it lists [EE3R]">reduce removes the dims it lists</a></span>), <code>while</code> conditions and bodies (<span xmlns="" class="link local"><a href="/YXTI/" title="A while loop's whole state is one tuple [YXTI]">A while loop's whole state is one tuple</a></span>), branch computations.
+
+  <strong><code>ROOT</code></strong> flags the single instruction whose value is that computation's output. Every computation has exactly one, and in older dumps it is not necessarily the last line textually.
+
+  <strong>Why this is the first thing to find.</strong> An optimized HLO file is a flat pile of computations in no useful order. <code>ENTRY</code> tells you where the program starts, <code>ROOT</code> tells you where it ends, and following <code>calls=</code> and <code>to_apply=</code> from there is how you read the rest. Its parameter and result shapes must match <code>entry_computation_layout</code> (<span xmlns="" class="link local"><a href="/UON0/" title="The entry layout is the ABI [UON0]">The entry layout is the ABI</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>The entry layout is the ABI <a class="slug" href="/UON0/">[UON0]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read the module header <code>HloModule jit_f, entry_computation_layout={(f32[8,128]{1,0}, f32[128]{0})-&gt;f32[8,128]{1,0}}, is_scheduled=true</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <ul><li>The module name comes from the jitted function, which is how you tell several compilations apart in a dump directory (<span xmlns="" class="link local"><a href="/JFMQ/" title="The dump filename encodes the stage [JFMQ]">The dump filename encodes the stage</a></span>).</li>
+    <li><strong><code>entry_computation_layout</code> is the ABI</strong>: the parameter shapes and layouts (<span xmlns="" class="link local"><a href="/RR6G/" title="The layout is minor-to-major [RR6G]">The layout is minor-to-major</a></span>) and the result shape the caller must supply and expect. A buffer whose layout disagrees with this is the mismatch, and it is checked here rather than anywhere friendlier.</li>
+    <li><code>is_scheduled=true</code> means this is a <em>post-scheduling</em> dump, so instruction order is actual execution order and not merely a topological sort of the dataflow.</li></ul>
+
+  That last flag changes how you read everything below it. Only in a scheduled dump does the distance between an <code>all-reduce-start</code> and its <code>all-reduce-done</code> mean anything (<span xmlns="" class="link local"><a href="/MHQ6/" title="The gap between start and done is the overlap [MHQ6]">The gap between start and done is the overlap</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id8" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>parameter(i) is positional <a class="slug" href="/W9HX/">[W9HX]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What is <code>%p0 = f32[8,128]{1,0} parameter(0)</code>, and what does the number mean?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  A formal parameter of the enclosing computation. The integer is its <em>position</em> in the parameter list — an index, not a renameable identifier.
+
+  Where it points depends on the computation:
+
+  <ul><li>In the <code>ENTRY</code> computation (<span xmlns="" class="link local"><a href="/TN01/" title="ENTRY names the computation, ROOT names the output [TN01]">ENTRY names the computation, ROOT names the output</a></span>), <code>parameter(i)</code> is the i-th argument in <code>entry_computation_layout</code> (<span xmlns="" class="link local"><a href="/UON0/" title="The entry layout is the ABI [UON0]">The entry layout is the ABI</a></span>), and so the i-th argument you passed to the jitted function.</li>
+    <li>In a fusion computation, the parameters correspond positionally to the fusion op's operands (<span xmlns="" class="link local"><a href="/ZUYH/" title="A fusion op is a kernel launch boundary [ZUYH]">A </a><span class="link local"><a href="/38CM/" title="Operator fusion [38CM]">fusion</a></span><a href="/ZUYH/" title="A fusion op is a kernel launch boundary [ZUYH]"> op is a kernel launch boundary</a></span>).</li></ul>
+
+  <strong>That positional correspondence is the thread you pull to read a fusion body.</strong> The body names nothing that ties it to the caller — you match <code>parameter(0)</code> to the first operand of the <code>fusion</code> instruction and work inward from there.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>The numeric suffix means nothing <a class="slug" href="/06HG/">[06HG]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What does the trailing <code>.7</code> in <code>%add.7</code> tell you?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Nothing semantic. It is uniquification of a name that is otherwise derived from the opcode or the metadata — the compiler needed the names distinct and appended a counter.
+
+  <strong>The numbers change between dumps and between passes</strong>, so never key notes, scripts, or diffs on them. Two dumps of the same program with one extra pass in between will renumber wholesale, and a diff on names shows an enormous change where nothing happened.
+
+  Key on <code>metadata</code> <code>op_name</code> instead (<span xmlns="" class="link local"><a href="/FG58/" title="op_name is the trace path back to Python [FG58]">op_name is the trace path back to Python</a></span>), which is derived from the JAX trace path and is stable, or on the structure of the graph. The same instability holds for <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> value names (<span xmlns="" class="link local"><span class="link local"><a href="/4SV9/" title="Static single assignment [4SV9]">SSA</a></span><a href="/MOVC/" title="SSA names are printing hints [MOVC]"> names are printing hints</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id10" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>op_name is the trace path back to Python <a class="slug" href="/FG58/">[FG58]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">How do you map an <span xmlns="" class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span> instruction back to Python?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  The <code>metadata</code> field:
+
+  <pre><code class="language-llvm">%dot_general.0 = f32[8,4]{1,0} dot(%param_0, %param_1), lhs_contracting_dims={1},
+    rhs_contracting_dims={0}, metadata={op_name="jit(f)/dot_general" stack_frame_id=2}</code></pre>
+
+  <strong><code>op_name</code> is the JAX trace path</strong>, not just a label: nested transformation scopes — <code>jit</code>, <code>jvp</code>, <code>transpose</code>, <code>vmap</code>, <code>remat</code> — separated by slashes, ending in the jaxpr primitive that emitted the op.
+
+  So it says more than a source line. It says <em>which transformation</em> produced this instruction: an op under <code>jvp(...)</code> is forward-mode work, one under <code>transpose(...)</code> is the backward pass (<span xmlns="" class="link local"><a href="/MO87/" title="A grad jaxpr is the forward program plus its transpose [MO87]">A grad </a><span class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span><a href="/MO87/" title="A grad jaxpr is the forward program plus its transpose [MO87]"> is the forward program plus its transpose</a></span>).
+
+  <strong>The source location is indirect.</strong> Current XLA interns it: <code>stack_frame_id</code> indexes a <code>StackFrames</code> table printed at the top of the module, which chains through <code>FileLocations</code> to <code>FileNames</code> and <code>FunctionNames</code>. You resolve the id there rather than reading a filename off the instruction, and the chain gives you the whole call stack, not one frame.
+
+  This is the path that survives the passes that scramble names (<span xmlns="" class="link local"><a href="/06HG/" title="The numeric suffix means nothing [06HG]">The numeric suffix means nothing</a></span>). The <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> equivalent is the location (<span xmlns="" class="link local"><a href="/NRD2/" title="Locations are the provenance of an op [NRD2]">Locations are the provenance of an op</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon">2. </span>Fusion  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml"><span xmlns="" class="link local"><a href="/38CM/" title="Operator fusion [38CM]">Operator fusion</a></span> is where XLA earns its keep, and the fusion instruction is the kernel launch boundary — the unit that shows up in a profile and the unit a performance question is usually about.</p>
+  
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id12" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>A <span class="link local"><a href="/38CM/" title="Operator fusion [38CM]">fusion</a></span> op is a kernel launch boundary <a class="slug" href="/ZUYH/">[ZUYH]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What is a <code>fusion</code> instruction in <span xmlns="" class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span> and where is its body?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <pre><code class="language-llvm">%fusion.2 = f32[8,128]{1,0} fusion(f32[8,128]{1,0} %p0, f32[128]{0} %p1),
+            kind=kLoop, calls=%fused_computation.2</code></pre>
+
+  The body is a separate computation named by <code>calls=</code>, printed elsewhere in the module; its parameters line up positionally with the fusion's operands (<span xmlns="" class="link local"><a href="/W9HX/" title="parameter(i) is positional [W9HX]">parameter(i) is positional</a></span>).
+
+  <strong>The fusion op is the kernel launch boundary.</strong> Everything inside the body runs in one kernel, with intermediates staying in registers instead of round-tripping to <span xmlns="" class="link local"><a href="/AI2G/" title="High bandwidth memory [AI2G]">High bandwidth memory</a></span> — that is the whole point of <span xmlns="" class="link local"><a href="/38CM/" title="Operator fusion [38CM]">Operator fusion</a></span>.
+
+  It is therefore the unit that matters for performance work: a name in a profile is a fusion name, and the question "why is this slow" is usually "what ended up inside this body, and what did not". <code>kind=</code> says which emitter generated it (<span xmlns="" class="link local"><a href="/L148/" title="The fusion kind names the emitter [L148]">The </a><span class="link local"><a href="/38CM/" title="Operator fusion [38CM]">fusion</a></span><a href="/L148/" title="The fusion kind names the emitter [L148]"> kind names the emitter</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id13" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>The <span class="link local"><a href="/38CM/" title="Operator fusion [38CM]">fusion</a></span> kind names the emitter <a class="slug" href="/L148/">[L148]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What do the <span xmlns="" class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span> fusion kinds <code>kLoop</code>, <code>kInput</code>, <code>kOutput</code>, and <code>kCustom</code> mean?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <ul><li><strong><code>kLoop</code></strong> — elementwise-style: one loop nest over the output shape, one element per iteration.</li>
+    <li><strong><code>kInput</code></strong> — driven by the <em>input</em> iteration space. Used for reductions and transposes, where the operand shape rather than the result shape dictates the loop (<span xmlns="" class="link local"><a href="/EE3R/" title="reduce removes the dims it lists [EE3R]">reduce removes the dims it lists</a></span>).</li>
+    <li><strong><code>kOutput</code></strong> — fuses producers into an op whose output shape drives the loop, keeping a shared operand live in registers across them.</li>
+    <li><strong><code>kCustom</code></strong> — a hand-written emitter or library-backed pattern: a cuDNN or cuBLAS convolution, a Triton emitter.</li></ul>
+
+  <strong>The kind names the emitter, which is what you actually want when reading a profile.</strong> A slow <code>kLoop</code> is a bandwidth question; a slow <code>kInput</code> is usually a reduction whose layout fights its access pattern; a <code>kCustom</code> means the answer is in a library's tuning, not in XLA.
+</details>
+</div>
+
+
+
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id14" open="open"><summary><header><h1>
+<span class="taxon">3. </span>The opcodes  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">A small instruction set whose subtlety lives almost entirely in attributes: which dimensions contract, which are removed, which way a permutation reads. The layout-driven ops repay the closest reading, since they are where a layout mistake surfaces as bandwidth.</p>
+  
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id15" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>A dot's output order is batch, lhs free, rhs free <a class="slug" href="/7EEZ/">[7EEZ]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read this matmul. <code>%dot.5 = f32[4,8,32]{2,1,0} dot(f32[4,8,16]{2,1,0} %a, f32[4,16,32]{2,1,0} %b), lhs_batch_dims={0}, lhs_contracting_dims={2}, rhs_batch_dims={0}, rhs_contracting_dims={1}</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Batch dimensions pair up and are preserved, contracting dimensions pair up and are summed away, and everything left over is free — the same three-way split as <span xmlns="" class="link local"><a href="/84N5/" title="StableHLO [84N5]">StableHLO</a></span> (<span xmlns="" class="link local"><a href="/BVPY/" title="Batch, contract, free, and the output order is fixed [BVPY]">Batch, contract, free, and the output order is fixed</a></span>) and jaxpr (<span xmlns="" class="link local"><a href="/CCL2/" title="dimension_numbers is contracting then batch [CCL2]">dimension_numbers is contracting then batch</a></span>).
+
+  The output order is always batch, then lhs free in order, then rhs free in order, giving <code>[4, 8, 32]</code> here. You never choose it.
+
+  <strong>Then read the layouts, because that is where the performance question lives.</strong> If a contracting dimension is not minor-most for its operand's layout (<span xmlns="" class="link local"><a href="/RR6G/" title="The layout is minor-to-major [RR6G]">The layout is minor-to-major</a></span>), the data has to be moved before the <span xmlns="" class="link local"><a href="/OGCRP/" title="Matrix Multiply Unit (MXU) [OGCRP]">Matrix Multiply Unit (MXU)</a></span> or tensor core can consume it — so expect a <code>transpose</code> or <code>copy</code> next to the dot (<span xmlns="" class="link local"><a href="/KG5S/" title="bitcast is free, copy is not [KG5S]">bitcast is free, copy is not</a></span>), and expect it to cost real bandwidth.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id16" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>dim_labels spells out three layouts <a class="slug" href="/M3CE/">[M3CE]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read the convolution annotations <code>window={size=3x3 stride=2x2 pad=1_1x1_1}, dim_labels=b01f_01io-&gt;b01f</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <strong><code>window</code></strong> describes the spatial sweep: the window size, the stride, and per-dimension padding written <code>low_high</code>. So <code>pad=1_1x1_1</code> is one before and one after in each of two spatial dimensions. The field can also carry <code>lhs_dilate</code> and <code>rhs_dilate</code>, which is how transposed and atrous convolutions are expressed rather than as separate opcodes.
+
+  <strong><code>dim_labels</code></strong> gives three layouts at once, as <code>input_kernel-&gt;output</code>, with <code>b</code> batch, <code>f</code> feature, <code>i</code> input feature, <code>o</code> output feature, and digits for spatial dimensions.
+
+  So <code>b01f_01io-&gt;b01f</code> is an NHWC input, an HWIO kernel, and an NHWC output. These are logical dimension roles, distinct from the physical minor-to-major layout (<span xmlns="" class="link local"><a href="/RR6G/" title="The layout is minor-to-major [RR6G]">The layout is minor-to-major</a></span>) — and a mismatch between the two is the usual reason a <code>transpose</code> appears beside a convolution.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id17" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>broadcast dimensions read operand to output <a class="slug" href="/XML3/">[XML3]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">In <code>%b = f32[2,3]{1,0} broadcast(f32[3]{0} %a), dimensions={1}</code>, what does <code>dimensions</code> mean?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  For each <em>operand</em> dimension in order, which output dimension it maps to. Operand dim 0 lands at output dim 1; output dimensions not mentioned are the newly broadcast ones.
+
+  This is the same convention as <code>stablehlo.broadcast_in_dim</code> (<span xmlns="" class="link local"><a href="/5LSA/" title="broadcast_in_dim maps operand dims onto output dims [5LSA]">broadcast_in_dim maps operand dims onto output dims</a></span>), which is what it lowers from.
+
+  <strong>Note that it reads the opposite way from <code>transpose</code></strong> (<span xmlns="" class="link local"><a href="/8721/" title="transpose dimensions read output from operand [8721]">transpose dimensions read output from operand</a></span>), which lists a <em>source</em> dimension per output position. Both attributes are a list of integers on an op that rearranges dimensions, and confusing them is the single easiest mistake to make in an HLO dump. The tell is length: a broadcast's list has the <em>operand's</em> rank, a transpose's has the output's.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id18" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>transpose dimensions read output from operand <a class="slug" href="/8721/">[8721]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">In <code>transpose(%a), dimensions={1,0,2}</code>, which way does the permutation go?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Output dimension <code>i</code> takes operand dimension <code>dimensions[i]</code>. So output dim 0 is operand dim 1 — you read a <em>source</em> per output position, the opposite direction from <code>broadcast</code> (<span xmlns="" class="link local"><a href="/XML3/" title="broadcast dimensions read operand to output [XML3]">broadcast dimensions read operand to output</a></span>).
+
+  <strong>Then check whether it moves any data.</strong> If the permutation is a no-op given the operands' layouts (<span xmlns="" class="link local"><a href="/RR6G/" title="The layout is minor-to-major [RR6G]">The layout is minor-to-major</a></span>) — the bytes are already in the order the result wants — XLA rewrites it to a <code>bitcast</code>, which is free. A permutation that genuinely reorders bytes stays a <code>transpose</code> or becomes a <code>copy</code>, and costs a full read and write of the array (<span xmlns="" class="link local"><a href="/KG5S/" title="bitcast is free, copy is not [KG5S]">bitcast is free, copy is not</a></span>).
+
+  So a transpose in optimized HLO is worth a second look: either it vanished into a bitcast, or someone is paying for it.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id19" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>reduce removes the dims it lists <a class="slug" href="/EE3R/">[EE3R]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read <code>%r = f32[8]{0} reduce(f32[8,128]{1,0} %a, f32[] %zero), dimensions={1}, to_apply=%add_computation</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <code>dimensions</code> lists the dimensions that are <em>removed</em>. The second operand is the init value — the identity of the reducer, and the answer for an empty reduction. <code>to_apply</code> names a computation of two scalars to one scalar, so reductions are user-defined rather than drawn from a fixed list (<span xmlns="" class="link local"><a href="/KLBR/" title="reduce takes a computation, not an enum [KLBR]">reduce takes a computation, not an enum</a></span>).
+
+  <strong>Variadic reduce is the part worth knowing.</strong> It takes several operand and init pairs and returns a tuple (<span xmlns="" class="link local"><a href="/31V3/" title="Tuples are first-class in HLO [31V3]">Tuples are first-class in </a><span class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span></span>), with the reducer taking and yielding one scalar per pair. That is how <code>argmax</code> is expressed — reduce the values and the indices together, with a reducer that compares on the value and carries the index — and likewise a fused mean-and-variance.
+
+  So a reduce with a tuple result is not multiple reductions; it is one pass whose accumulator has several fields.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id20" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>bitcast is free, copy is not <a class="slug" href="/KG5S/">[KG5S]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Distinguish <span xmlns="" class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span>'s <code>reshape</code>, <code>bitcast</code>, and <code>copy</code>.</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <ul><li><strong><code>reshape</code></strong> — a logical shape change. Whether it costs anything depends on the layouts (<span xmlns="" class="link local"><a href="/RR6G/" title="The layout is minor-to-major [RR6G]">The layout is minor-to-major</a></span>) on either side; before layout assignment you cannot yet tell.</li>
+    <li><strong><code>bitcast</code></strong> — free reinterpretation: the same bytes, a different shape or layout. Emitted after layout assignment, once the compiler has <em>proved</em> no movement is needed. Costs nothing at run time.</li>
+    <li><strong><code>copy</code></strong> — real data movement, almost always to satisfy a layout or memory-space requirement.</li></ul>
+
+  <strong>So the three are a progression, not three ways of saying the same thing</strong>: a <code>reshape</code> resolves into a <code>bitcast</code> if the layouts cooperate and a <code>copy</code> if they do not.
+
+  Many copies in optimized HLO is a layout problem worth chasing — usually a <code>dot</code> (<span xmlns="" class="link local"><a href="/7EEZ/" title="A dot's output order is batch, lhs free, rhs free [7EEZ]">A dot's output order is batch, lhs free, rhs free</a></span>) or a custom call (<span xmlns="" class="link local"><a href="/2MM7/" title="A custom call is a black box XLA cannot fuse across [2MM7]">A </a><span class="link local"><a href="/M18X/" title="XLA custom call [M18X]">custom call</a></span><a href="/2MM7/" title="A custom call is a black box XLA cannot fuse across [2MM7]"> is a black box </a><span class="link local"><a href="/M74N/" title="XLA Compilation [M74N]">XLA</a></span><a href="/2MM7/" title="A custom call is a black box XLA cannot fuse across [2MM7]"> cannot fuse across</a></span>) that pinned a layout the rest of the program does not want.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id21" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>get-tuple-element is free aliasing <a class="slug" href="/W0FU/">[W0FU]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What is <code>%gte.1 = f32[8]{0} get-tuple-element(%t), index=0</code>, and why is it everywhere?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  It extracts one element of a tuple value. Tuples are how <span xmlns="" class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span> returns more than one thing (<span xmlns="" class="link local"><a href="/31V3/" title="Tuples are first-class in HLO [31V3]">Tuples are first-class in </a><span class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span></span>), so <em>every</em> multi-output op is followed by a fan of these: <code>while</code> (<span xmlns="" class="link local"><a href="/YXTI/" title="A while loop's whole state is one tuple [YXTI]">A while loop's whole state is one tuple</a></span>), a fusion with several outputs, a custom call, <code>sort</code>, variadic reduce (<span xmlns="" class="link local"><a href="/EE3R/" title="reduce removes the dims it lists [EE3R]">reduce removes the dims it lists</a></span>).
+
+  They are free at run time — pure aliasing into the tuple's buffers, no data moves.
+
+  <strong>So read them as punctuation, not as work.</strong> A <code>while</code> body that is half <code>get-tuple-element</code> at the top and <code>tuple</code> at the bottom is not doing anything; it is unpacking and repacking the carry. <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> avoids the whole idiom by giving ops multiple results natively (<span xmlns="" class="link local"><a href="/OBP3/" title="A multi-result op binds one name and indexes into it [OBP3]">A multi-result op binds one name and indexes into it</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id22" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>A while loop's whole state is one tuple <a class="slug" href="/YXTI/">[YXTI]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read <code>%w = (s32[], f32[8]{0}) while(%init), condition=%cond, body=%body</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  A loop whose <em>entire</em> state is one tuple value. <code>%cond</code> is a computation from that tuple to <code>pred[]</code>; <code>%body</code> is a computation from the tuple to the same tuple.
+
+  Trip counters, carried values, and the arrays being scanned are all packed into that one tuple, which is why loop bodies are full of <code>get-tuple-element</code> and <code>tuple</code> pairs (<span xmlns="" class="link local"><a href="/W0FU/" title="get-tuple-element is free aliasing [W0FU]">get-tuple-element is free aliasing</a></span>) — the body has to unpack the state, work, and repack it.
+
+  <strong>This is what <code>jax.lax.scan</code> and <code>fori_loop</code> lower to</strong> (<span xmlns="" class="link local"><a href="/W8NM/" title="consts, then carry, then xs [W8NM]">consts, then carry, then xs</a></span>), and the packing is where their structure gets lost: the jaxpr's clean split into consts, carry, and xs becomes tuple indices you have to recover by counting. Read the jaxpr first when you want to know what the loop means, and the HLO when you want to know what it costs.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id23" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>dynamic-slice clamps instead of failing <a class="slug" href="/0WMU/">[0WMU]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What is the clamping rule for <code>dynamic-slice(%operand, %i0, %i1), dynamic_slice_sizes={1,128}</code>?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  The start indices are scalar <em>operands</em>, one per dimension, and they are <strong>clamped</strong> so the whole slice stays in bounds:
+
+  \[\text {start} = \mathrm {clamp}(\text {index},\; 0,\; \text {dim size} - \text {slice size})\]
+
+  <strong>There is no out-of-bounds error — you silently get a shifted slice.</strong> That is a deliberate choice: on an accelerator there is nowhere to raise from, so the semantics are total. It is also why an off-by-one in indexing code produces plausible wrong numbers rather than a crash.
+
+  The sizes must be compile-time constants, since the result shape is part of the type (<span xmlns="" class="link local"><a href="/5QXE/" title="An HLO line is self-contained [5QXE]">An </a><span class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span><a href="/5QXE/" title="An HLO line is self-contained [5QXE]"> line is self-contained</a></span>) — which is why genuinely dynamic shapes need a different construct entirely.
+
+  Its dual is <code>dynamic-update-slice</code>, the basis of every in-place buffer update and what <code>x.at[i].set(v)</code> becomes.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id24" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>iota builds indices without a constant <a class="slug" href="/58OB/">[58OB]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What do <code>iota(), iota_dimension=1</code> and <code>constant({...})</code> do in <span xmlns="" class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span>?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <code>iota</code> generates \(0, 1, 2, \ldots \) along the given dimension and is constant across the others. It is how <code>arange</code>, index comparisons, and position-dependent masks appear — a causal attention mask is an <code>iota</code> on rows compared against an <code>iota</code> on columns.
+
+  <strong>The point is that it materialises nothing.</strong> A mask built from <code>iota</code> is computed inside the consuming kernel, so it fuses (<span xmlns="" class="link local"><a href="/ZUYH/" title="A fusion op is a kernel launch boundary [ZUYH]">A </a><span class="link local"><a href="/38CM/" title="Operator fusion [38CM]">fusion</a></span><a href="/ZUYH/" title="A fusion op is a kernel launch boundary [ZUYH]"> op is a kernel launch boundary</a></span>) and never occupies <span xmlns="" class="link local"><a href="/AI2G/" title="High bandwidth memory [AI2G]">High bandwidth memory</a></span>. The same mask written as a literal would be a constant the size of the attention matrix, read from memory every step.
+
+  <code>constant</code> embeds a literal, and a large one is elided in the text dump as <code>{...}</code> — present in the module, dropped from the printout, the same courtesy <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> extends with <code>dense_resource</code> (<span xmlns="" class="link local"><a href="/5B7I/" title="A scalar inside dense is a splat [5B7I]">A scalar inside dense is a splat</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id25" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>A <span class="link local"><a href="/M18X/" title="XLA custom call [M18X]">custom call</a></span> is a black box <span class="link local"><a href="/M74N/" title="XLA Compilation [M74N]">XLA</a></span> cannot fuse across <a class="slug" href="/2MM7/">[2MM7]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read <code>custom-call(%a, %b), custom_call_target="tpu_custom_call", operand_layout_constraints={...}, backend_config="...", api_version=API_VERSION_STATUS_RETURNING</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  The escape hatch to code XLA does not generate: library kernels (cuBLAS, cuDNN), <span xmlns="" class="link local"><a href="/060Z/" title="Pallas [060Z]">Pallas</a></span> and <span xmlns="" class="link local"><a href="/M3MH/" title="Mosaic [M3MH]">Mosaic</a></span> or <span xmlns="" class="link local"><a href="/CQ6W/" title="Triton [CQ6W]">Triton</a></span> kernels (<span xmlns="" class="link local"><a href="/QRDW/" title="A Pallas kernel is an opaque custom call [QRDW]">A </a><span class="link local"><a href="/060Z/" title="Pallas [060Z]">Pallas</a></span><a href="/QRDW/" title="A Pallas kernel is an opaque custom call [QRDW]"> kernel is an opaque </a><span class="link local"><a href="/M18X/" title="XLA custom call [M18X]">custom call</a></span></span>), host callbacks.
+
+  <ul><li><code>custom_call_target</code> selects the registered handler by name.</li>
+    <li><code>backend_config</code> carries the opaque payload — a serialised Mosaic module, a tuning configuration, an algorithm choice.</li>
+    <li><code>operand_layout_constraints</code> pins the layouts the handler requires (<span xmlns="" class="link local"><a href="/RR6G/" title="The layout is minor-to-major [RR6G]">The layout is minor-to-major</a></span>).</li></ul>
+
+  <strong>Everything expensive about a custom call follows from XLA not being able to see inside it.</strong> It cannot fuse across the boundary, so the operands are materialised to <span xmlns="" class="link local"><a href="/AI2G/" title="High bandwidth memory [AI2G]">High bandwidth memory</a></span> and the results read back; it must assume the declared effects, so it cannot reorder freely; and the pinned layouts can force <code>copy</code> ops on both sides (<span xmlns="" class="link local"><a href="/KG5S/" title="bitcast is free, copy is not [KG5S]">bitcast is free, copy is not</a></span>).
+
+  A hand-written kernel has to beat all of that, not just the kernel XLA would have emitted.
+</details>
+</div>
+
+
+
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id26" open="open"><summary><header><h1>
+<span class="taxon">4. </span>Collectives and sharding  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">On a sharded program the instructions worth reading are the ones that move bytes between chips. <span xmlns="" class="link local"><a href="/41OF/" title="Collectives summary [41OF]">Collectives summary</a></span> covers what they compute; these cover how to read them out of a dump, and how to tell whether the scheduler overlapped them with anything.</p>
+  
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id27" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>replica_groups says who reduces with whom <a class="slug" href="/6SKD/">[6SKD]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read <code>all-reduce(%a), replica_groups={{0,1},{2,3}}, to_apply=%add, channel_id=1, use_global_device_ids=true</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <ul><li><strong><code>replica_groups</code></strong> — which devices reduce together. Each inner list is an independent group, so this is two separate <span xmlns="" class="link local"><a href="/U351/" title="AllReduce [U351]">AllReduce</a></span>s of two devices, not one of four.</li>
+    <li><strong><code>to_apply</code></strong> — the combiner computation (<span xmlns="" class="link local"><a href="/EE3R/" title="reduce removes the dims it lists [EE3R]">reduce removes the dims it lists</a></span>): sum, max, and so on.</li>
+    <li><strong><code>channel_id</code></strong> present means cross-<em>partition</em> (SPMD, <span xmlns="" class="link local"><a href="/XGI0/" title="Sharding [XGI0]">Sharding</a></span>) rather than pure cross-replica; with <code>use_global_device_ids</code> the numbers in <code>replica_groups</code> are global device ids rather than per-replica ones.</li></ul>
+
+  Read the group structure before the opcode: it tells you which mesh axis this collective runs on, and therefore whether it crosses <span xmlns="" class="link local"><a href="/O14H/" title="Inter-chip interconnect [O14H]">ICI</a></span> or the slower host network.
+
+  The family is <span xmlns="" class="link local"><a href="/41OF/" title="Collectives summary [41OF]">Collectives summary</a></span>: <span xmlns="" class="link local"><a href="/VSDZ/" title="AllGather [VSDZ]">AllGather</a></span> (with <code>dimensions=</code> naming the concatenation axis), <span xmlns="" class="link local"><a href="/CAGW/" title="ReduceScatter [CAGW]">ReduceScatter</a></span>, <code>all-to-all</code>, and <code>collective-permute</code> with <code>source_target_pairs={{0,1},{1,0}}</code>.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id28" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>The gap between start and done is the overlap <a class="slug" href="/MHQ6/">[MHQ6]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Why do you see <code>all-reduce-start</code> / <code>all-reduce-done</code> pairs (and <code>copy-start</code> / <code>copy-done</code>, <code>async-start</code> / <code>async-done</code>)?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Asynchronous decomposition, so the operation can overlap with compute. <code>start</code> issues it and returns a handle — a tuple of buffers and context (<span xmlns="" class="link local"><a href="/31V3/" title="Tuples are first-class in HLO [31V3]">Tuples are first-class in </a><span class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span></span>) — and <code>done</code> waits and yields the result. The scheduler is then free to place independent work between them.
+
+  <strong>The distance between the pair is the measurement.</strong> In a scheduled dump (<code>is_scheduled=true</code>, <span xmlns="" class="link local"><a href="/UON0/" title="The entry layout is the ABI [UON0]">The entry layout is the ABI</a></span>) instruction order is execution order, so an adjacent <code>start</code> and <code>done</code> means the compiler found nothing to overlap and you are paying the full collective latency in serial.
+
+  That is the cheapest read on whether a sharded model is communication-bound: not the presence of <span xmlns="" class="link local"><a href="/U351/" title="AllReduce [U351]">AllReduce</a></span> (<span xmlns="" class="link local"><a href="/6SKD/" title="replica_groups says who reduces with whom [6SKD]">replica_groups says who reduces with whom</a></span>), which is expected, but how much compute the scheduler managed to slide underneath it.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id29" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>A <span class="link local"><a href="/XGI0/" title="Sharding [XGI0]">sharding</a></span> annotation is a tiling plus a device order <a class="slug" href="/3IWB/">[3IWB]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Decode <code>sharding={replicated}</code>, <code>sharding={devices=[2,4]&lt;=[8]}</code>, <code>sharding={devices=[2,4]&lt;=[4,2]T(1,0)}</code>, <code>sharding={maximal device=0}</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <ul><li><strong><code>replicated</code></strong> — a full copy on every device.</li>
+    <li><strong><code>devices=[2,4]</code></strong> — the tensor is tiled two ways on dim 0 and four ways on dim 1. The <code>&lt;=[8]</code> is shorthand for the device list being iota over eight devices.</li>
+    <li><strong><code>&lt;=[4,2]T(1,0)</code></strong> — that iota device list is reshaped to <code>[4,2]</code> and transposed before being laid over the tiles. Same tiling, different device-to-tile assignment.</li>
+    <li><strong><code>maximal device=0</code></strong> — computed on exactly one device.</li></ul>
+
+  <strong>The device order is not cosmetic.</strong> It decides which mesh axis is "fast" — whether neighbouring tiles sit on neighbouring chips over <span xmlns="" class="link local"><a href="/O14H/" title="Inter-chip interconnect [O14H]">ICI</a></span> or across a slower hop — so two <span xmlns="" class="link local"><a href="/XGI0/" title="Sharding [XGI0]">Sharding</a></span> annotations with identical tilings can differ by a large factor in collective cost (<span xmlns="" class="link local"><a href="/6SKD/" title="replica_groups says who reduces with whom [6SKD]">replica_groups says who reduces with whom</a></span>).
+
+  A trailing <code>last_tile_dim_replicate</code> means the final tile dimension is replication rather than data.
+</details>
+</div>
+
+
+
+</details></section>
+</details></section>
 </details></section><footer xmlns="">
     
     
+    <section lang="en" class="block hide-metadata"><details id="id30" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/84N5/">StableHLO</a> <a class="slug" href="/84N5/">[84N5]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/G981/">jaxpr</a> <a class="slug" href="/G981/">[G981]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/IR7B/">MLIR</a> <a class="slug" href="/IR7B/">[IR7B]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/M74N/">XLA Compilation</a> <a class="slug" href="/M74N/">[M74N]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id31" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/84N5/">StableHLO</a> <a class="slug" href="/84N5/">[84N5]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/38CM/">Operator fusion</a> <a class="slug" href="/38CM/">[38CM]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/41OF/">Collectives summary</a> <a class="slug" href="/41OF/">[41OF]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 14, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/IR7B/">MLIR</a> <a class="slug" href="/IR7B/">[IR7B]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/M74N/">XLA Compilation</a> <a class="slug" href="/M74N/">[M74N]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
     
-    
-    
-  </footer></article></div></body></html>
+  </footer></article><nav id="toc"><div class="block"><h1>Table of Contents</h1><ul xmlns="" class="block">
+<li>
+<a class="bullet" href="#id2" title="Reading a module">■</a><span class="link local" data-target="#id2"><span class="taxon">1. </span>Reading a module</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id11" title="Fusion">■</a><span class="link local" data-target="#id11"><span class="taxon">2. </span>Fusion</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id14" title="The opcodes">■</a><span class="link local" data-target="#id14"><span class="taxon">3. </span>The opcodes</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id26" title="Collectives and sharding">■</a><span class="link local" data-target="#id26"><span class="taxon">4. </span>Collectives and sharding</span><ul class="block"></ul>
+</li>
+</ul></div></nav></div></body></html>

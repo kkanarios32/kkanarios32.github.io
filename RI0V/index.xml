@@ -1,0 +1,599 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default.xsl"?>
+<fr:tree xmlns:fr="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" root="false" base-url="/">
+  <fr:frontmatter>
+    <fr:authors>
+      <fr:author>
+        <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+      </fr:author>
+    </fr:authors>
+    <fr:date>
+      <fr:year>2026</fr:year>
+      <fr:month>8</fr:month>
+      <fr:day>22</fr:day>
+    </fr:date>
+    <fr:uri>https://kellenkanarios.com/RI0V/</fr:uri>
+    <fr:display-uri>RI0V</fr:display-uri>
+    <fr:route>/RI0V/</fr:route>
+    <fr:title text="An encoding tiles the block across threads and warps">An encoding tiles the block across threads and warps</fr:title>
+    <fr:taxon>Card</fr:taxon>
+    <fr:meta name="anki">1787404869920</fr:meta>
+    <fr:meta name="anki-deck">MLSys</fr:meta>
+  </fr:frontmatter>
+  <fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[tensor<128x64xf16, #blocked>]]></html:code> where <html:code><![CDATA[#blocked = #ttg.blocked<{sizePerThread=[1,4], threadsPerWarp=[8,4], warpsPerCTA=[4,1], order=[1,0]}>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The encoding says how the logical <fr:tex display="inline"><![CDATA[128 \times  64]]></fr:tex> tile is distributed:
+
+  <html:ul><html:li><html:strong><html:code>sizePerThread</html:code></html:strong> — elements each thread holds per dimension; the minor-dimension entry is the vectorisation width.</html:li>
+    <html:li><html:strong><html:code>threadsPerWarp</html:code></html:strong> — how the 32 lanes of a <fr:link href="/OGCS5/" title="Warp (GPU)" uri="https://kellenkanarios.com/OGCS5/" display-uri="OGCS5" type="local">Warp (GPU)</fr:link> are arranged in two dimensions.</html:li>
+    <html:li><html:strong><html:code>warpsPerCTA</html:code></html:strong> — how warps tile the block.</html:li>
+    <html:li><html:strong><html:code>order</html:code></html:strong> — minor-to-major, so which dimension is contiguous per thread (<fr:link href="/RR6G/" title="The layout is minor-to-major" uri="https://kellenkanarios.com/RR6G/" display-uri="RR6G" type="local">The layout is minor-to-major</fr:link>).</html:li></html:ul>
+
+  <html:strong>Multiply the three lists out and you get the tile one CTA covers in one pass</html:strong>: <fr:tex display="inline"><![CDATA[1 \times  8 \times  4 = 32]]></fr:tex> rows and <fr:tex display="inline"><![CDATA[4 \times  4 \times  1 = 16]]></fr:tex> columns here, so the <fr:tex display="inline"><![CDATA[128 \times  64]]></fr:tex> shape takes <fr:tex display="inline"><![CDATA[4 \times  4]]></fr:tex> repeats. That arithmetic is the whole content of the attribute, and it is how you check by hand whether loads coalesce.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+  <fr:backmatter>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="References">References</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Context">Context</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/CQ6W/</fr:uri>
+            <fr:display-uri>CQ6W</fr:display-uri>
+            <fr:route>/CQ6W/</fr:route>
+            <fr:title text="Triton">Triton</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>A Python-embedded <fr:link href="/5PSC/" title="Kernel DSLs" uri="https://kellenkanarios.com/5PSC/" display-uri="5PSC" type="local">DSL</fr:link> for GPU kernels in which you write <html:em>block</html:em>-level code — load a tile, do arithmetic on it, store it — and the compiler decides how the tile maps onto threads <html:span class="link-reference"><fr:link href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations" uri="https://kellenkanarios.com/tilletTritonIntermediateLanguage2019/" display-uri="tilletTritonIntermediateLanguage2019" type="local">[tilletTritonIntermediateLanguage2019]</fr:link></html:span>. That is the trade against CUDA: you give up control of the thread indexing that <fr:link href="/U1FO/" title="Memory coalescing merges a warp's accesses into one transaction per cache line" uri="https://kellenkanarios.com/U1FO/" display-uri="U1FO" type="local">memory coalescing</fr:link> depends on, and in exchange you stop writing it.</html:p>
+            <html:p>The compiler is built on <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link>, with two custom dialects, and the boundary between them is the single most useful thing to know when a kernel is slow (<fr:link href="/9N7G/" title="The prefix says which side of layout assignment" uri="https://kellenkanarios.com/9N7G/" display-uri="9N7G" type="local">The prefix says which side of layout assignment</fr:link>). <html:code>ttir</html:code> (<html:code>tt.</html:code> ops) is the target-independent tensor level — roughly what you wrote. <html:code>ttgir</html:code> (<html:code>ttg.</html:code> ops) is after layout assignment, where every tensor carries an <html:em>encoding</html:em> saying which lane holds which element (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>).</html:p>
+            <html:p><html:strong>So a Triton performance problem is one of two things, and the dialect prefix tells you which.</html:strong> At the <html:code>tt.</html:code> level it is your algorithm — the tiling, the loop structure, the arithmetic. At the <html:code>ttg.</html:code> level it is the compiler's distribution of it, and the usual culprit is a <html:code>ttg.convert_layout</html:code> that round-trips a tensor through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link> inside a loop (<fr:link href="/B4XO/" title="A convert_layout round-trips through shared memory" uri="https://kellenkanarios.com/B4XO/" display-uri="B4XO" type="local">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:link>). The second kind is invisible in your source and obvious in the IR, which is the argument for reading the IR.</html:p>
+            <html:p>From XLA's side a Triton kernel is an opaque <html:code>@triton_kernel_call</html:code> custom call (<fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">XLA custom call</fr:link>, <fr:link href="/2MM7/" title="A custom call is a black box XLA cannot fuse across" uri="https://kellenkanarios.com/2MM7/" display-uri="2MM7" type="local">A <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link> is a black box <fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA</fr:link> cannot fuse across</fr:link>), so nothing fuses across it — the same bargain <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> makes on TPU.</html:p>
+            <fr:tree show-metadata="false" toc="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>8</fr:month>
+                  <fr:day>22</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/9N7G/</fr:uri>
+                <fr:display-uri>9N7G</fr:display-uri>
+                <fr:route>/9N7G/</fr:route>
+                <fr:title text="The prefix says which side of layout assignment">The prefix says which side of layout assignment</fr:title>
+                <fr:taxon>Card</fr:taxon>
+                <fr:meta name="anki">1787404867320</fr:meta>
+                <fr:meta name="anki-deck">MLSys</fr:meta>
+              </fr:frontmatter>
+              <fr:mainmatter>
+  <html:p>What do the <html:code>tt.</html:code> and <html:code>ttg.</html:code> (<html:code>triton_gpu</html:code>) prefixes separate in <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> IR?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong><html:code>tt.</html:code></html:strong> is the target-independent tensor level: <html:code>tt.load</html:code>, <html:code>tt.store</html:code>, <html:code>tt.dot</html:code>, <html:code>tt.make_range</html:code>, and pointer arithmetic on <html:code><![CDATA[!tt.ptr<f32>]]></html:code> over block shapes. This is roughly what you wrote.
+
+  <html:strong><html:code>ttg.</html:code></html:strong> is after layout assignment: the same tensors now carry an <html:em>encoding</html:em> attribute saying how their elements are distributed across warps, lanes, and registers (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>), plus ops like <html:code>ttg.convert_layout</html:code> (<fr:link href="/B4XO/" title="A convert_layout round-trips through shared memory" uri="https://kellenkanarios.com/B4XO/" display-uri="B4XO" type="local">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:link>) and shared-memory allocation (<fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">Shared memory (GPU)</fr:link>).
+
+  <html:strong>So the prefix tells you which side of layout assignment you are on</html:strong>, and that is the division that matters when a Triton kernel is slow: a problem at the <html:code>tt.</html:code> level is your algorithm, and a problem that only appears at <html:code>ttg.</html:code> is the compiler's distribution of it. Same use of the dialect prefix as a marker of pipeline stage as <html:code>chlo</html:code> / <html:code>stablehlo</html:code> / <html:code>mhlo</html:code> (<fr:link href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal" uri="https://kellenkanarios.com/FLKN/" display-uri="FLKN" type="local">chlo desugars, <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">stablehlo</fr:link> is stable, mhlo is internal</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false" toc="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>8</fr:month>
+                  <fr:day>22</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/RI0V/</fr:uri>
+                <fr:display-uri>RI0V</fr:display-uri>
+                <fr:route>/RI0V/</fr:route>
+                <fr:title text="An encoding tiles the block across threads and warps">An encoding tiles the block across threads and warps</fr:title>
+                <fr:taxon>Card</fr:taxon>
+                <fr:meta name="anki">1787404869920</fr:meta>
+                <fr:meta name="anki-deck">MLSys</fr:meta>
+              </fr:frontmatter>
+              <fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[tensor<128x64xf16, #blocked>]]></html:code> where <html:code><![CDATA[#blocked = #ttg.blocked<{sizePerThread=[1,4], threadsPerWarp=[8,4], warpsPerCTA=[4,1], order=[1,0]}>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The encoding says how the logical <fr:tex display="inline"><![CDATA[128 \times  64]]></fr:tex> tile is distributed:
+
+  <html:ul><html:li><html:strong><html:code>sizePerThread</html:code></html:strong> — elements each thread holds per dimension; the minor-dimension entry is the vectorisation width.</html:li>
+    <html:li><html:strong><html:code>threadsPerWarp</html:code></html:strong> — how the 32 lanes of a <fr:link href="/OGCS5/" title="Warp (GPU)" uri="https://kellenkanarios.com/OGCS5/" display-uri="OGCS5" type="local">Warp (GPU)</fr:link> are arranged in two dimensions.</html:li>
+    <html:li><html:strong><html:code>warpsPerCTA</html:code></html:strong> — how warps tile the block.</html:li>
+    <html:li><html:strong><html:code>order</html:code></html:strong> — minor-to-major, so which dimension is contiguous per thread (<fr:link href="/RR6G/" title="The layout is minor-to-major" uri="https://kellenkanarios.com/RR6G/" display-uri="RR6G" type="local">The layout is minor-to-major</fr:link>).</html:li></html:ul>
+
+  <html:strong>Multiply the three lists out and you get the tile one CTA covers in one pass</html:strong>: <fr:tex display="inline"><![CDATA[1 \times  8 \times  4 = 32]]></fr:tex> rows and <fr:tex display="inline"><![CDATA[4 \times  4 \times  1 = 16]]></fr:tex> columns here, so the <fr:tex display="inline"><![CDATA[128 \times  64]]></fr:tex> shape takes <fr:tex display="inline"><![CDATA[4 \times  4]]></fr:tex> repeats. That arithmetic is the whole content of the attribute, and it is how you check by hand whether loads coalesce.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false" toc="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>8</fr:month>
+                  <fr:day>22</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/B4XO/</fr:uri>
+                <fr:display-uri>B4XO</fr:display-uri>
+                <fr:route>/B4XO/</fr:route>
+                <fr:title text="A convert_layout round-trips through shared memory">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:title>
+                <fr:taxon>Card</fr:taxon>
+                <fr:meta name="anki">1787404867395</fr:meta>
+                <fr:meta name="anki-deck">MLSys</fr:meta>
+              </fr:frontmatter>
+              <fr:mainmatter>
+  <html:p>Why is <html:code>ttg.convert_layout</html:code> the op to look for in a slow <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> kernel?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  It re-distributes a tensor from one encoding to another (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>) — typically <html:code><![CDATA[#blocked]]></html:code> to a <html:code><![CDATA[#ttg.dot_op]]></html:code> or <html:code><![CDATA[#mma]]></html:code> operand layout, because the tensor core wants its operands arranged differently from the way the loads produced them.
+
+  <html:strong>Unless the conversion happens to be a pure register permutation, it round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link> and inserts barriers.</html:strong> That is a store, a sync across the block, and a load — for data that never changed value.
+
+  One unnecessary <html:code>convert_layout</html:code> inside a loop body is a classic Triton performance bug, and it is visible in the IR long before it is visible in a profile. The layout-propagation passes exist to hoist these out of loops or eliminate them, so one that survives in the body is worth understanding rather than accepting.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+            </fr:tree>
+          </fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Backlinks">Backlinks</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/CQ6W/</fr:uri>
+            <fr:display-uri>CQ6W</fr:display-uri>
+            <fr:route>/CQ6W/</fr:route>
+            <fr:title text="Triton">Triton</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+            <html:p>A Python-embedded <fr:link href="/5PSC/" title="Kernel DSLs" uri="https://kellenkanarios.com/5PSC/" display-uri="5PSC" type="local">DSL</fr:link> for GPU kernels in which you write <html:em>block</html:em>-level code — load a tile, do arithmetic on it, store it — and the compiler decides how the tile maps onto threads <html:span class="link-reference"><fr:link href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations" uri="https://kellenkanarios.com/tilletTritonIntermediateLanguage2019/" display-uri="tilletTritonIntermediateLanguage2019" type="local">[tilletTritonIntermediateLanguage2019]</fr:link></html:span>. That is the trade against CUDA: you give up control of the thread indexing that <fr:link href="/U1FO/" title="Memory coalescing merges a warp's accesses into one transaction per cache line" uri="https://kellenkanarios.com/U1FO/" display-uri="U1FO" type="local">memory coalescing</fr:link> depends on, and in exchange you stop writing it.</html:p>
+            <html:p>The compiler is built on <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link>, with two custom dialects, and the boundary between them is the single most useful thing to know when a kernel is slow (<fr:link href="/9N7G/" title="The prefix says which side of layout assignment" uri="https://kellenkanarios.com/9N7G/" display-uri="9N7G" type="local">The prefix says which side of layout assignment</fr:link>). <html:code>ttir</html:code> (<html:code>tt.</html:code> ops) is the target-independent tensor level — roughly what you wrote. <html:code>ttgir</html:code> (<html:code>ttg.</html:code> ops) is after layout assignment, where every tensor carries an <html:em>encoding</html:em> saying which lane holds which element (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>).</html:p>
+            <html:p><html:strong>So a Triton performance problem is one of two things, and the dialect prefix tells you which.</html:strong> At the <html:code>tt.</html:code> level it is your algorithm — the tiling, the loop structure, the arithmetic. At the <html:code>ttg.</html:code> level it is the compiler's distribution of it, and the usual culprit is a <html:code>ttg.convert_layout</html:code> that round-trips a tensor through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link> inside a loop (<fr:link href="/B4XO/" title="A convert_layout round-trips through shared memory" uri="https://kellenkanarios.com/B4XO/" display-uri="B4XO" type="local">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:link>). The second kind is invisible in your source and obvious in the IR, which is the argument for reading the IR.</html:p>
+            <html:p>From XLA's side a Triton kernel is an opaque <html:code>@triton_kernel_call</html:code> custom call (<fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">XLA custom call</fr:link>, <fr:link href="/2MM7/" title="A custom call is a black box XLA cannot fuse across" uri="https://kellenkanarios.com/2MM7/" display-uri="2MM7" type="local">A <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link> is a black box <fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA</fr:link> cannot fuse across</fr:link>), so nothing fuses across it — the same bargain <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> makes on TPU.</html:p>
+            <fr:tree show-metadata="false" toc="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>8</fr:month>
+                  <fr:day>22</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/9N7G/</fr:uri>
+                <fr:display-uri>9N7G</fr:display-uri>
+                <fr:route>/9N7G/</fr:route>
+                <fr:title text="The prefix says which side of layout assignment">The prefix says which side of layout assignment</fr:title>
+                <fr:taxon>Card</fr:taxon>
+                <fr:meta name="anki">1787404867320</fr:meta>
+                <fr:meta name="anki-deck">MLSys</fr:meta>
+              </fr:frontmatter>
+              <fr:mainmatter>
+  <html:p>What do the <html:code>tt.</html:code> and <html:code>ttg.</html:code> (<html:code>triton_gpu</html:code>) prefixes separate in <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> IR?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong><html:code>tt.</html:code></html:strong> is the target-independent tensor level: <html:code>tt.load</html:code>, <html:code>tt.store</html:code>, <html:code>tt.dot</html:code>, <html:code>tt.make_range</html:code>, and pointer arithmetic on <html:code><![CDATA[!tt.ptr<f32>]]></html:code> over block shapes. This is roughly what you wrote.
+
+  <html:strong><html:code>ttg.</html:code></html:strong> is after layout assignment: the same tensors now carry an <html:em>encoding</html:em> attribute saying how their elements are distributed across warps, lanes, and registers (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>), plus ops like <html:code>ttg.convert_layout</html:code> (<fr:link href="/B4XO/" title="A convert_layout round-trips through shared memory" uri="https://kellenkanarios.com/B4XO/" display-uri="B4XO" type="local">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:link>) and shared-memory allocation (<fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">Shared memory (GPU)</fr:link>).
+
+  <html:strong>So the prefix tells you which side of layout assignment you are on</html:strong>, and that is the division that matters when a Triton kernel is slow: a problem at the <html:code>tt.</html:code> level is your algorithm, and a problem that only appears at <html:code>ttg.</html:code> is the compiler's distribution of it. Same use of the dialect prefix as a marker of pipeline stage as <html:code>chlo</html:code> / <html:code>stablehlo</html:code> / <html:code>mhlo</html:code> (<fr:link href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal" uri="https://kellenkanarios.com/FLKN/" display-uri="FLKN" type="local">chlo desugars, <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">stablehlo</fr:link> is stable, mhlo is internal</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false" toc="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>8</fr:month>
+                  <fr:day>22</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/RI0V/</fr:uri>
+                <fr:display-uri>RI0V</fr:display-uri>
+                <fr:route>/RI0V/</fr:route>
+                <fr:title text="An encoding tiles the block across threads and warps">An encoding tiles the block across threads and warps</fr:title>
+                <fr:taxon>Card</fr:taxon>
+                <fr:meta name="anki">1787404869920</fr:meta>
+                <fr:meta name="anki-deck">MLSys</fr:meta>
+              </fr:frontmatter>
+              <fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[tensor<128x64xf16, #blocked>]]></html:code> where <html:code><![CDATA[#blocked = #ttg.blocked<{sizePerThread=[1,4], threadsPerWarp=[8,4], warpsPerCTA=[4,1], order=[1,0]}>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The encoding says how the logical <fr:tex display="inline"><![CDATA[128 \times  64]]></fr:tex> tile is distributed:
+
+  <html:ul><html:li><html:strong><html:code>sizePerThread</html:code></html:strong> — elements each thread holds per dimension; the minor-dimension entry is the vectorisation width.</html:li>
+    <html:li><html:strong><html:code>threadsPerWarp</html:code></html:strong> — how the 32 lanes of a <fr:link href="/OGCS5/" title="Warp (GPU)" uri="https://kellenkanarios.com/OGCS5/" display-uri="OGCS5" type="local">Warp (GPU)</fr:link> are arranged in two dimensions.</html:li>
+    <html:li><html:strong><html:code>warpsPerCTA</html:code></html:strong> — how warps tile the block.</html:li>
+    <html:li><html:strong><html:code>order</html:code></html:strong> — minor-to-major, so which dimension is contiguous per thread (<fr:link href="/RR6G/" title="The layout is minor-to-major" uri="https://kellenkanarios.com/RR6G/" display-uri="RR6G" type="local">The layout is minor-to-major</fr:link>).</html:li></html:ul>
+
+  <html:strong>Multiply the three lists out and you get the tile one CTA covers in one pass</html:strong>: <fr:tex display="inline"><![CDATA[1 \times  8 \times  4 = 32]]></fr:tex> rows and <fr:tex display="inline"><![CDATA[4 \times  4 \times  1 = 16]]></fr:tex> columns here, so the <fr:tex display="inline"><![CDATA[128 \times  64]]></fr:tex> shape takes <fr:tex display="inline"><![CDATA[4 \times  4]]></fr:tex> repeats. That arithmetic is the whole content of the attribute, and it is how you check by hand whether loads coalesce.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+            </fr:tree>
+            <fr:tree show-metadata="false" toc="false">
+              <fr:frontmatter>
+                <fr:authors>
+                  <fr:author>
+                    <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+                  </fr:author>
+                </fr:authors>
+                <fr:date>
+                  <fr:year>2026</fr:year>
+                  <fr:month>8</fr:month>
+                  <fr:day>22</fr:day>
+                </fr:date>
+                <fr:uri>https://kellenkanarios.com/B4XO/</fr:uri>
+                <fr:display-uri>B4XO</fr:display-uri>
+                <fr:route>/B4XO/</fr:route>
+                <fr:title text="A convert_layout round-trips through shared memory">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:title>
+                <fr:taxon>Card</fr:taxon>
+                <fr:meta name="anki">1787404867395</fr:meta>
+                <fr:meta name="anki-deck">MLSys</fr:meta>
+              </fr:frontmatter>
+              <fr:mainmatter>
+  <html:p>Why is <html:code>ttg.convert_layout</html:code> the op to look for in a slow <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> kernel?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  It re-distributes a tensor from one encoding to another (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>) — typically <html:code><![CDATA[#blocked]]></html:code> to a <html:code><![CDATA[#ttg.dot_op]]></html:code> or <html:code><![CDATA[#mma]]></html:code> operand layout, because the tensor core wants its operands arranged differently from the way the loads produced them.
+
+  <html:strong>Unless the conversion happens to be a pure register permutation, it round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link> and inserts barriers.</html:strong> That is a store, a sync across the block, and a load — for data that never changed value.
+
+  One unnecessary <html:code>convert_layout</html:code> inside a loop body is a classic Triton performance bug, and it is visible in the IR long before it is visible in a profile. The layout-propagation passes exist to hoist these out of loops or eliminate them, so one that survives in the body is worth understanding rather than accepting.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+            </fr:tree>
+          </fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/B4XO/</fr:uri>
+            <fr:display-uri>B4XO</fr:display-uri>
+            <fr:route>/B4XO/</fr:route>
+            <fr:title text="A convert_layout round-trips through shared memory">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404867395</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>Why is <html:code>ttg.convert_layout</html:code> the op to look for in a slow <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> kernel?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  It re-distributes a tensor from one encoding to another (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>) — typically <html:code><![CDATA[#blocked]]></html:code> to a <html:code><![CDATA[#ttg.dot_op]]></html:code> or <html:code><![CDATA[#mma]]></html:code> operand layout, because the tensor core wants its operands arranged differently from the way the loads produced them.
+
+  <html:strong>Unless the conversion happens to be a pure register permutation, it round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link> and inserts barriers.</html:strong> That is a store, a sync across the block, and a load — for data that never changed value.
+
+  One unnecessary <html:code>convert_layout</html:code> inside a loop body is a classic Triton performance bug, and it is visible in the IR long before it is visible in a profile. The layout-propagation passes exist to hoist these out of loops or eliminate them, so one that survives in the body is worth understanding rather than accepting.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/64A0/</fr:uri>
+            <fr:display-uri>64A0</fr:display-uri>
+            <fr:route>/64A0/</fr:route>
+            <fr:title text="Mosaic is explicit memory spaces and explicit copies"><fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> is explicit memory spaces and explicit copies</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404866820</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>What distinguishes a <fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> (TPU) <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> dump from a GPU-side one?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:code>tpu.</html:code> dialect ops over <html:code><![CDATA[memref<..., #tpu.memory_space<vmem>>]]></html:code> (<fr:link href="/B1A1/" title="A memref names storage, a tensor is a value" uri="https://kellenkanarios.com/B1A1/" display-uri="B1A1" type="local">A memref names storage, a tensor is a value</fr:link>), vector-dialect ops on native tile shapes — typically <fr:tex display="inline"><![CDATA[8 \times  128]]></fr:tex> for f32 (<fr:link href="/1XJ4/" title="Vectors are register-level, tensors are abstract" uri="https://kellenkanarios.com/1XJ4/" display-uri="1XJ4" type="local">Vectors are register-level, tensors are abstract</fr:link>) — explicit DMA-style copies between hbm, <fr:link href="/GFK2/" title="VMEM" uri="https://kellenkanarios.com/GFK2/" display-uri="GFK2" type="local">VMEM</fr:link>, and smem, and semaphores for synchronisation.
+
+  <html:strong>So the mental model is different in kind, not in detail.</html:strong> A GPU dump is a thread and warp hierarchy where the memory movement is implicit in which thread touches what (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>). A Mosaic dump is explicit memory spaces, explicit asynchronous copies, and vector operations on hardware-tile-shaped values — no threads anywhere.
+
+  That is the same shift <fr:link href="/060Z/" title="Pallas" uri="https://kellenkanarios.com/060Z/" display-uri="060Z" type="local">Pallas</fr:link> asks of you at the source level, and it is why a TPU kernel is written as a pipeline of DMAs rather than as an indexing scheme.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/9N7G/</fr:uri>
+            <fr:display-uri>9N7G</fr:display-uri>
+            <fr:route>/9N7G/</fr:route>
+            <fr:title text="The prefix says which side of layout assignment">The prefix says which side of layout assignment</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404867320</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>What do the <html:code>tt.</html:code> and <html:code>ttg.</html:code> (<html:code>triton_gpu</html:code>) prefixes separate in <fr:link href="/CQ6W/" title="Triton" uri="https://kellenkanarios.com/CQ6W/" display-uri="CQ6W" type="local">Triton</fr:link> IR?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong><html:code>tt.</html:code></html:strong> is the target-independent tensor level: <html:code>tt.load</html:code>, <html:code>tt.store</html:code>, <html:code>tt.dot</html:code>, <html:code>tt.make_range</html:code>, and pointer arithmetic on <html:code><![CDATA[!tt.ptr<f32>]]></html:code> over block shapes. This is roughly what you wrote.
+
+  <html:strong><html:code>ttg.</html:code></html:strong> is after layout assignment: the same tensors now carry an <html:em>encoding</html:em> attribute saying how their elements are distributed across warps, lanes, and registers (<fr:link href="/RI0V/" title="An encoding tiles the block across threads and warps" uri="https://kellenkanarios.com/RI0V/" display-uri="RI0V" type="local">An encoding tiles the block across threads and warps</fr:link>), plus ops like <html:code>ttg.convert_layout</html:code> (<fr:link href="/B4XO/" title="A convert_layout round-trips through shared memory" uri="https://kellenkanarios.com/B4XO/" display-uri="B4XO" type="local">A convert_layout round-trips through <fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">shared memory</fr:link></fr:link>) and shared-memory allocation (<fr:link href="/8GZN/" title="Shared memory (GPU)" uri="https://kellenkanarios.com/8GZN/" display-uri="8GZN" type="local">Shared memory (GPU)</fr:link>).
+
+  <html:strong>So the prefix tells you which side of layout assignment you are on</html:strong>, and that is the division that matters when a Triton kernel is slow: a problem at the <html:code>tt.</html:code> level is your algorithm, and a problem that only appears at <html:code>ttg.</html:code> is the compiler's distribution of it. Same use of the dialect prefix as a marker of pipeline stage as <html:code>chlo</html:code> / <html:code>stablehlo</html:code> / <html:code>mhlo</html:code> (<fr:link href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal" uri="https://kellenkanarios.com/FLKN/" display-uri="FLKN" type="local">chlo desugars, <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">stablehlo</fr:link> is stable, mhlo is internal</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Related">Related</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>8</fr:month>
+              <fr:day>22</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/RR6G/</fr:uri>
+            <fr:display-uri>RR6G</fr:display-uri>
+            <fr:route>/RR6G/</fr:route>
+            <fr:title text="The layout is minor-to-major">The layout is minor-to-major</fr:title>
+            <fr:taxon>Card</fr:taxon>
+            <fr:meta name="anki">1787404869971</fr:meta>
+            <fr:meta name="anki-deck">MLSys</fr:meta>
+          </fr:frontmatter>
+          <fr:mainmatter>
+  <html:p>What does the <html:code><![CDATA[{1,0}]]></html:code> in <html:code><![CDATA[f32[8,128]{1,0}]]></html:code> mean?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The <html:em>layout</html:em>: dimension numbers listed <html:strong>minor-to-major</html:strong>. <html:code><![CDATA[{1,0}]]></html:code> says dimension 1 (size 128) is minor-most — the contiguous one — so this is standard row-major. <html:code><![CDATA[{0,1}]]></html:code> on the same shape would be column-major (<fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA Compilation</fr:link>).
+
+  Layouts appear after XLA's layout assignment pass, so a <html:code>before_optimizations</html:code> dump has them but they are not yet meaningful (<fr:link href="/BQUG/" title="Only after_optimizations matches the profile" uri="https://kellenkanarios.com/BQUG/" display-uri="BQUG" type="local">Only after_optimizations matches the profile</fr:link>).
+
+  <html:strong>Layouts are the reason for ops that do nothing mathematically.</html:strong> A <html:code>copy</html:code>, <html:code>bitcast</html:code>, or <html:code>transpose</html:code> that leaves the values unchanged is there to satisfy a layout requirement (<fr:link href="/KG5S/" title="bitcast is free, copy is not" uri="https://kellenkanarios.com/KG5S/" display-uri="KG5S" type="local">bitcast is free, copy is not</fr:link>), typically because a <html:code>dot</html:code> wants its contracting dimension minor-most (<fr:link href="/7EEZ/" title="A dot's output order is batch, lhs free, rhs free" uri="https://kellenkanarios.com/7EEZ/" display-uri="7EEZ" type="local">A dot's output order is batch, lhs free, rhs free</fr:link>) or a custom call pinned one (<fr:link href="/2MM7/" title="A custom call is a black box XLA cannot fuse across" uri="https://kellenkanarios.com/2MM7/" display-uri="2MM7" type="local">A <fr:link href="/M18X/" title="XLA custom call" uri="https://kellenkanarios.com/M18X/" display-uri="M18X" type="local">custom call</fr:link> is a black box <fr:link href="/M74N/" title="XLA Compilation" uri="https://kellenkanarios.com/M74N/" display-uri="M74N" type="local">XLA</fr:link> cannot fuse across</fr:link>). Chasing copies in optimized HLO is chasing layout.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter>
+        </fr:tree>
+        <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
+          <fr:frontmatter>
+            <fr:authors>
+              <fr:author>
+                <fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link>
+              </fr:author>
+            </fr:authors>
+            <fr:date>
+              <fr:year>2026</fr:year>
+              <fr:month>6</fr:month>
+              <fr:day>1</fr:day>
+            </fr:date>
+            <fr:uri>https://kellenkanarios.com/OGCS5/</fr:uri>
+            <fr:display-uri>OGCS5</fr:display-uri>
+            <fr:route>/OGCS5/</fr:route>
+            <fr:title text="Warp (GPU)">Warp (GPU)</fr:title>
+          </fr:frontmatter>
+          <fr:mainmatter>
+ <html:div class="stub-notice" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(38, 97, 69);
+  color: rgb(38, 97, 69);
+  font-style: italic;
+  ">🌱 Stub — this concept is referenced but not yet written.</html:div>
+</fr:mainmatter>
+        </fr:tree>
+      </fr:mainmatter>
+    </fr:tree>
+    <fr:tree show-metadata="false" hidden-when-empty="true">
+      <fr:frontmatter>
+        <fr:authors />
+        <fr:title text="Contributions">Contributions</fr:title>
+      </fr:frontmatter>
+      <fr:mainmatter />
+    </fr:tree>
+  </fr:backmatter>
+</fr:tree>

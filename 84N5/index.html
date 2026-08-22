@@ -1,0 +1,380 @@
+<!DOCTYPE html PUBLIC "" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://www.forester-notes.org" xmlns:html="http://www.w3.org/1999/xhtml" data-base-url="/"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="icon" href="/favicon.ico" sizes="any"></link><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"></link><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"></link><link rel="apple-touch-icon" href="/apple-touch-icon.png"></link><link rel="alternate" type="application/atom+xml" title="Blog" href="/0002/atom.xml"></link><link rel="stylesheet" href="/style.css"></link><link rel="stylesheet" href="/katex.min.css"></link><script type="text/javascript"></script><script type="module" src="/forester.js"></script><script src="/highlight.min.js"></script><script>
+window.addEventListener('load', function () {
+  if (!window.hljs) return;
+  document.querySelectorAll('pre code').forEach(function (el) {
+    hljs.highlightElement(el);
+  });
+});
+
+          </script><script>
+window.addEventListener('load', function () { setTimeout(function () {
+  // Openers get the same treatment from the other side: left alone, the
+  // paren in "(\(x\) or \(y\))" can hang at the end of a line.
+  var CLOSE = /^[.,;:!?)\]}%'"’”…]+/;
+  var OPEN = /[(\[{‘“]+$/;
+
+  document.querySelectorAll('.katex').forEach(function (math) {
+    // Display math is a block of its own; nothing can be orphaned beside it.
+    if (math.closest('.katex-display')) return;
+
+    // KaTeX's auto-render gives every formula a bare <span> of its own and
+    // renders into that, so the text around a formula is a sibling of the
+    // wrapper and not of .katex itself. Climb to the outermost span that
+    // holds nothing but this formula, and treat that as the atom.
+    var node = math;
+    while (node.parentNode &&
+           node.parentNode.childNodes.length === 1 &&
+           node.parentNode.nodeName.toLowerCase() === 'span') {
+      node = node.parentNode;
+    }
+
+    var before = node.previousSibling, after = node.nextSibling;
+    var lead = '', trail = '';
+    if (after && after.nodeType === 3 && CLOSE.test(after.data)) {
+      trail = after.data.match(CLOSE)[0];
+    }
+    if (before && before.nodeType === 3 && OPEN.test(before.data)) {
+      lead = before.data.match(OPEN)[0];
+    }
+    if (!lead && !trail) return;
+
+    // createElementNS, not createElement: the page is an XML document that
+    // the browser transforms with this stylesheet, and in an XML document
+    // createElement yields an element in the null namespace — a <span> that
+    // is not an HTML span, and that nothing styles.
+    var glue = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
+    glue.setAttribute('style', 'white-space: nowrap');
+    node.parentNode.insertBefore(glue, node);
+    if (lead) {
+      before.data = before.data.slice(0, before.data.length - lead.length);
+      glue.appendChild(document.createTextNode(lead));
+    }
+    glue.appendChild(node);
+    if (trail) {
+      after.data = after.data.slice(trail.length);
+      glue.appendChild(document.createTextNode(trail));
+    }
+  });
+}, 0); });
+          </script><script>
+(function () {
+  var LINE = 140;
+
+  function init() {
+    var nav = document.querySelector('nav#toc');
+    if (!nav) return;
+
+    var rows = [];
+    Array.prototype.forEach.call(nav.querySelectorAll('[data-target^="#"]'), function (link) {
+      var el = document.querySelector(link.getAttribute('data-target'));
+      if (el) rows.push({ link: link, el: el });
+    });
+    if (!rows.length) return;
+
+    var current = null, ticking = false;
+
+    function update() {
+      ticking = false;
+      var found = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].el.getBoundingClientRect().top > LINE) break;
+        found = rows[i].link;
+      }
+      if (found === current) return;
+      if (current) current.removeAttribute('aria-current');
+      if (found) found.setAttribute('aria-current', 'true');
+      current = found;
+      if (found) reveal(found);
+    }
+
+    // Keep the marked row inside the rail. The rail is capped at the viewport
+    // and scrolls internally, so on a long contents the row being read drifts
+    // out of sight and the highlight becomes useless — you can see that you
+    // are somewhere, but not where.
+    //
+    // nav.scrollTop is set directly rather than calling scrollIntoView, which
+    // walks up the ancestor chain and will scroll the window as readily as the
+    // rail: the page would yank itself around while the reader is scrolling
+    // it. Assigning scrollTop can move nothing but the rail. Nudged only when
+    // the row is actually out of the band, so an entry already comfortably in
+    // view does not cause the rail to twitch on every section boundary.
+    function reveal(link) {
+      var pad = 32;
+      var railTop = nav.getBoundingClientRect().top;
+      var railBottom = nav.getBoundingClientRect().bottom;
+      var row = link.getBoundingClientRect();
+      if (row.top < railTop + pad) {
+        nav.scrollTop -= (railTop + pad) - row.top;
+      } else if (row.bottom > railBottom - pad) {
+        nav.scrollTop += row.bottom - (railBottom - pad);
+      }
+    }
+
+    function schedule() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+  }
+
+  if (document.readyState === 'complete') init();
+  else window.addEventListener('load', init);
+})();
+          </script><title>StableHLO</title><meta property="og:title" content="StableHLO"></meta></head><body><ninja-keys placeholder="Start typing a note title or ID"></ninja-keys><header class="header"><nav class="nav"><a class="home-link" href="/index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.75 3.5 5.25 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Home</span></a></nav></header><div id="grid-wrapper"><article><section xmlns="" lang="en" class="block"><details id="id1" open="open"><summary><header><h1>
+<span class="taxon"></span>StableHLO <a class="slug" href="/84N5/">[84N5]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">The <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> dialect JAX lowers to and XLA ingests — the versioned, portable contract between frameworks and compilers (<span xmlns="" class="link local"><a href="/NR79/" title="Lifecycle of a JAX program [NR79]">Lifecycle of a </a><span class="link local"><a href="/OGCRY/" title="JAX [OGCRY]">JAX</a></span><a href="/NR79/" title="Lifecycle of a JAX program [NR79]"> program</a></span>). Print it with <code>jax.jit(f).lower(x).as_text()</code> (<span xmlns="" class="link local"><a href="/AGEG/" title="Three calls, three IR levels [AGEG]">Three calls, three IR levels</a></span>).</p><p xmlns="http://www.w3.org/1999/xhtml">The word doing the work in the name is <em>stable</em>. It is one of three HLO-family dialects and the only one with compatibility guarantees: <code>chlo</code> above it is sugar that gets decomposed, <code>mhlo</code> below it is XLA's unstable internal dialect (<span xmlns="" class="link local"><a href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal [FLKN]">chlo desugars, </a><span class="link local"><a href="/84N5/" title="StableHLO [84N5]">stablehlo</a></span><a href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal [FLKN]"> is stable, mhlo is internal</a></span>). A serialised StableHLO program is expected to keep deserialising across compiler versions, which is what makes it a sensible artifact to ship, cache, or hand to a different backend.</p><p xmlns="http://www.w3.org/1999/xhtml">Read it to answer one specific question: what did JAX actually ask for? It sits at the boundary where a JAX bug becomes an XLA bug. Above it the shapes are still recognisably yours; below it, in optimized <span xmlns="" class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span>, fusion and layout assignment have rewritten the program past easy comparison (<span xmlns="" class="link local"><a href="/BQUG/" title="Only after_optimizations matches the profile [BQUG]">Only after_optimizations matches the profile</a></span>).</p><p xmlns="http://www.w3.org/1999/xhtml">A hand-written kernel — <span xmlns="" class="link local"><a href="/060Z/" title="Pallas [060Z]">Pallas</a></span> or <span xmlns="" class="link local"><a href="/CQ6W/" title="Triton [CQ6W]">Triton</a></span> — appears here as an opaque <code>custom_call</code> whose body is serialised into an attribute (<span xmlns="" class="link local"><a href="/QRDW/" title="A Pallas kernel is an opaque custom call [QRDW]">A </a><span class="link local"><a href="/060Z/" title="Pallas [060Z]">Pallas</a></span><a href="/QRDW/" title="A Pallas kernel is an opaque custom call [QRDW]"> kernel is an opaque </a><span class="link local"><a href="/M18X/" title="XLA custom call [M18X]">custom call</a></span></span>), which is the first place you can see that XLA has been handed something it cannot look inside.</p>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
+  <p><strong>The same function one level down.</strong> <code>tanh(x @ w + b)</code>, lowered with <code>jax.jit(f).lower(x, w, b).as_text()</code>. Compare it against the <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span> of the same function:</p>
+
+  <pre><code class="language-llvm">module @jit_f attributes {mhlo.num_partitions = 1 : i32, mhlo.num_replicas = 1 : i32} {
+  func.func public @main(%arg0: tensor&lt;8x16xf32&gt;, %arg1: tensor&lt;16x4xf32&gt;,
+                         %arg2: tensor&lt;4xf32&gt;)
+      -&gt; (tensor&lt;8x4xf32&gt; {jax.result_info = "result"}) {
+    %0 = stablehlo.dot_general %arg0, %arg1, contracting_dims = [1] x [0],
+         precision = [DEFAULT, DEFAULT] : (tensor&lt;8x16xf32&gt;, tensor&lt;16x4xf32&gt;) -&gt; tensor&lt;8x4xf32&gt;
+    %1 = stablehlo.broadcast_in_dim %arg2, dims = [1] : (tensor&lt;4xf32&gt;) -&gt; tensor&lt;1x4xf32&gt;
+    %2 = stablehlo.broadcast_in_dim %1, dims = [0, 1] : (tensor&lt;1x4xf32&gt;) -&gt; tensor&lt;8x4xf32&gt;
+    %3 = stablehlo.add %0, %2 : tensor&lt;8x4xf32&gt;
+    %4 = stablehlo.tanh %3 : tensor&lt;8x4xf32&gt;
+    return %4 : tensor&lt;8x4xf32&gt;
+  }
+}</code></pre>
+
+  <p>Four things are worth noticing, and each is a card.</p>
+
+  <ul><li>It is ordinary <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span>: a <code>builtin.module</code> with attributes (<span xmlns="" class="link local"><a href="/R2O9/" title="Every dump is wrapped in a module [R2O9]">Every dump is wrapped in a module</a></span>), a <code>func.func</code> whose result carries an attribute JAX put there (<span xmlns="" class="link local"><a href="/ZZHW/" title="Three attribute positions on a function [ZZHW]">Three attribute positions on a function</a></span>), and pretty-printed ops (<span xmlns="" class="link local"><a href="/T1YS/" title="The pretty form is optional, the generic form always works [T1YS]">The pretty form is optional, the generic form always works</a></span>).</li>
+    <li>The <code>dot_general</code> uses the sugar form <code>contracting_dims = [1] x [0]</code> rather than the <code>#stablehlo.dot&lt;&gt;</code> attribute (<span xmlns="" class="link local"><a href="/BVPY/" title="Batch, contract, free, and the output order is fixed [BVPY]">Batch, contract, free, and the output order is fixed</a></span>) — same information, shorter.</li>
+    <li><strong>The bias broadcast became <em>two</em> ops.</strong> <code>dims = [1]</code> maps the operand's single dimension to output dim 1, giving <code>1x4</code>; a second <code>broadcast_in_dim</code> then stretches the size-1 dimension to 8 (<span xmlns="" class="link local"><a href="/5LSA/" title="broadcast_in_dim maps operand dims onto output dims [5LSA]">broadcast_in_dim maps operand dims onto output dims</a></span>). One jaxpr equation, two StableHLO ops.</li>
+    <li>No layouts anywhere. Those are assigned later, inside XLA (<span xmlns="" class="link local"><a href="/RR6G/" title="The layout is minor-to-major [RR6G]">The layout is minor-to-major</a></span>).</li></ul>
+</div>
+
+<section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>chlo desugars, <span class="link local"><a href="/84N5/" title="StableHLO [84N5]">stablehlo</a></span> is stable, mhlo is internal <a class="slug" href="/FLKN/">[FLKN]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">In a JAX/XLA dump, what are the <code>chlo</code>, <code>stablehlo</code>, and <code>mhlo</code> dialects, and how do they relate?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <ul><li><strong><code>chlo</code></strong> — "client" HLO: higher-level sugar that gets decomposed. Implicitly broadcasting binary ops, <code>erf</code>, top-k style helpers.</li>
+    <li><strong><code>stablehlo</code></strong> — the stable, versioned, portable IR (<span xmlns="" class="link local"><a href="/84N5/" title="StableHLO [84N5]">StableHLO</a></span>). This is what JAX emits and serialises today, and the compatibility boundary between frameworks and compilers.</li>
+    <li><strong><code>mhlo</code></strong> — "meta" HLO: XLA's internal, unstable dialect, what <code>stablehlo</code> is converted into before XLA's own HLO proto (<span xmlns="" class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span>).</li></ul>
+
+  The pipeline, in full (<span xmlns="" class="link local"><a href="/NR79/" title="Lifecycle of a JAX program [NR79]">Lifecycle of a </a><span class="link local"><a href="/OGCRY/" title="JAX [OGCRY]">JAX</a></span><a href="/NR79/" title="Lifecycle of a JAX program [NR79]"> program</a></span>):
+
+  <pre><code class="language-plaintext">Python -&gt; jaxpr -&gt; chlo/stablehlo -&gt; mhlo -&gt; HLO -&gt; optimized HLO -&gt; backend (LLVM/PTX, Mosaic/LLO)</code></pre>
+
+  <strong>Only one of the three is a contract.</strong> <code>stablehlo</code> has version guarantees so a serialised program keeps deserialising; <code>chlo</code> and <code>mhlo</code> are implementation details you may read but must not depend on.
+</details>
+</div>
+
+
+
+</details></section><section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>broadcast_in_dim maps operand dims onto output dims <a class="slug" href="/5LSA/">[5LSA]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read <code>%0 = stablehlo.broadcast_in_dim %a, dims = [1] : (tensor&lt;3xf32&gt;) -&gt; tensor&lt;2x3xf32&gt;</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <code>dims</code> maps each <em>operand</em> dimension to the output dimension it lands in. Here operand dim 0 (size 3) becomes output dim 1. Every output dimension not listed is a new broadcast dimension, and a listed dimension of size 1 may be stretched.
+
+  Two invariants make the attribute self-checking: the list length always equals the operand rank, and the values must be strictly increasing — so a broadcast can add and stretch dimensions but never permute them. A permutation needs a separate <code>transpose</code> (<span xmlns="" class="link local"><a href="/8721/" title="transpose dimensions read output from operand [8721]">transpose dimensions read output from operand</a></span>).
+
+  <strong>This is one of two dimension-list conventions and they read in opposite directions.</strong> Broadcast lists a target per operand dim; transpose lists a source per output dim. HLO's <code>broadcast</code> uses this same convention (<span xmlns="" class="link local"><a href="/XML3/" title="broadcast dimensions read operand to output [XML3]">broadcast dimensions read operand to output</a></span>).
+</details>
+</div>
+
+
+
+</details></section><section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Batch, contract, free, and the output order is fixed <a class="slug" href="/BVPY/">[BVPY]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">How do you read a <code>dot_general</code>'s dimension numbers? <code>#stablehlo.dot&lt;lhs_batching_dimensions = [0], rhs_batching_dimensions = [0], lhs_contracting_dimensions = [2], rhs_contracting_dimensions = [1]&gt;</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Every dimension is one of three kinds:
+
+  <ol><li><strong>Batching</strong> — matched pairwise between lhs and rhs, and <em>kept</em>. These are independent problems solved side by side.</li>
+    <li><strong>Contracting</strong> — matched pairwise and <em>summed away</em>. This is the reduction.</li>
+    <li><strong>Free</strong> — everything else, and it survives into the output.</li></ol>
+
+  <strong>The output order is fixed, not chosen</strong>: batch dimensions, then lhs free dimensions in order, then rhs free dimensions in order. So the result shape is fully determined by the attribute and you never have to guess. Newer printers use the sugar <code>contracting_dims = [2] x [1]</code>.
+
+  The same three-way split appears at every level — as <code>dimension_numbers</code> in a jaxpr (<span xmlns="" class="link local"><a href="/CCL2/" title="dimension_numbers is contracting then batch [CCL2]">dimension_numbers is contracting then batch</a></span>) and as <code>lhs_batch_dims</code> and friends in HLO (<span xmlns="" class="link local"><a href="/7EEZ/" title="A dot's output order is batch, lhs free, rhs free [7EEZ]">A dot's output order is batch, lhs free, rhs free</a></span>) — which is what makes a matmul traceable straight down the stack.
+</details>
+</div>
+
+
+
+</details></section><section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>reduce takes a computation, not an enum <a class="slug" href="/KLBR/">[KLBR]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Why does a <code>stablehlo.reduce</code> body look like a region? <code>%r = stablehlo.reduce(%a init: %zero) applies stablehlo.add across dimensions = [1]</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Because <code>reduce</code> takes a reducer <em>computation</em> — a region (<span xmlns="" class="link local"><a href="/MKYF/" title="A region is nesting, not a flat CFG [MKYF]">A region is nesting, not a flat CFG</a></span>) taking two scalars and yielding one — rather than an enum of built-in reductions. Any associative operation can therefore be expressed, including ones the dialect never enumerated.
+
+  The form above is sugar for the common case; the general form spells the region out with a <code>stablehlo.return</code>. <code>dimensions</code> lists the dims removed from the operand shape.
+
+  <strong>The init value is not decoration — it is the identity of the reducer</strong>, and it is also what a zero-sized reduction returns. Getting it wrong (0 for a max, say) produces a reduction that is right on non-empty input and silently wrong at the edge.
+
+  HLO's <code>reduce</code> is the same design with <code>to_apply</code> naming the computation (<span xmlns="" class="link local"><a href="/EE3R/" title="reduce removes the dims it lists [EE3R]">reduce removes the dims it lists</a></span>).
+</details>
+</div>
+
+
+
+</details></section><section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>A <span class="link local"><a href="/060Z/" title="Pallas [060Z]">Pallas</a></span> kernel is an opaque <span class="link local"><a href="/M18X/" title="XLA custom call [M18X]">custom call</a></span> <a class="slug" href="/QRDW/">[QRDW]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">How does a <span xmlns="" class="link local"><a href="/060Z/" title="Pallas [060Z]">Pallas</a></span> or <span xmlns="" class="link local"><a href="/CQ6W/" title="Triton [CQ6W]">Triton</a></span> kernel appear in a <span xmlns="" class="link local"><a href="/84N5/" title="StableHLO [84N5]">StableHLO</a></span> dump?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  As an opaque custom call (<span xmlns="" class="link local"><a href="/M18X/" title="XLA custom call [M18X]">XLA custom call</a></span>):
+
+  <pre><code class="language-llvm">stablehlo.custom_call @tpu_custom_call(%a, %b) {backend_config = "...", api_version = 2 : i32}
+  : (tensor&lt;8x128xf32&gt;, ...) -&gt; tensor&lt;8x128xf32&gt;</code></pre>
+
+  On GPU the target is <code>@triton_kernel_call</code> instead.
+
+  <strong>The kernel body is not in this IR.</strong> It is serialised inside <code>backend_config</code> — a <span xmlns="" class="link local"><a href="/M3MH/" title="Mosaic [M3MH]">Mosaic</a></span> module, or Triton IR (<span xmlns="" class="link local"><a href="/9N7G/" title="The prefix says which side of layout assignment [9N7G]">The prefix says which side of layout assignment</a></span>) — and XLA treats the whole thing as a black box with declared operands, results, and effects.
+
+  That is the trade you accept when you write a kernel by hand: you get control of the inner loop, and you give up every cross-op optimisation at the boundary, because the compiler cannot fuse across something it cannot see (<span xmlns="" class="link local"><a href="/2MM7/" title="A custom call is a black box XLA cannot fuse across [2MM7]">A </a><span class="link local"><a href="/M18X/" title="XLA custom call [M18X]">custom call</a></span><a href="/2MM7/" title="A custom call is a black box XLA cannot fuse across [2MM7]"> is a black box </a><span class="link local"><a href="/M74N/" title="XLA Compilation [M74N]">XLA</a></span><a href="/2MM7/" title="A custom call is a black box XLA cannot fuse across [2MM7]"> cannot fuse across</a></span>).
+</details>
+</div>
+
+
+
+</details></section></details></section><footer xmlns="">
+    
+    
+    <section lang="en" class="block hide-metadata"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon"></span>Backlinks  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        
+        
+        
+        
+        
+        
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/NR79/">Lifecycle of a <span class="link local"><a href="/OGCRY/" title="JAX [OGCRY]">JAX</a></span> program</a> <a class="slug" href="/NR79/">[NR79]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/G981/">jaxpr</a> <a class="slug" href="/G981/">[G981]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/NO8J/">HLO</a> <a class="slug" href="/NO8J/">[NO8J]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/IR7B/">MLIR</a> <a class="slug" href="/IR7B/">[IR7B]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/M74N/">XLA Compilation</a> <a class="slug" href="/M74N/">[M74N]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/CQ6W/">Triton</a> <a class="slug" href="/CQ6W/">[CQ6W]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/NR79/">Lifecycle of a <span class="link local"><a href="/OGCRY/" title="JAX [OGCRY]">JAX</a></span> program</a> <a class="slug" href="/NR79/">[NR79]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/G981/">jaxpr</a> <a class="slug" href="/G981/">[G981]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/NO8J/">HLO</a> <a class="slug" href="/NO8J/">[NO8J]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/IR7B/">MLIR</a> <a class="slug" href="/IR7B/">[IR7B]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/060Z/">Pallas</a> <a class="slug" href="/060Z/">[060Z]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">March 23, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
+    
+  </footer></article></div></body></html>

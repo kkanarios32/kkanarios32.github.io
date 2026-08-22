@@ -49,6 +49,67 @@ section.block:has(> details > summary > header > .frontmatter-image) {
  font-size: 1.15em !important;
 }
 
+/* Alegreya — serif body text, on trial against XCharter. Juan Pablo del Peral's
+   calligraphic text face: a humanist serif with a small x-height, long
+   extenders, and a lively italic, drawn for long-form reading rather than for
+   the screen-first evenness Charter was cut for.
+
+   One variable file per style, wght 400-900, so the two files below replace
+   XCharter's four static faces at roughly the same total weight. Subset to
+   Latin-1, Latin Extended-A/B, Latin Extended Additional, the combining marks,
+   punctuation, currency, and the fi/fl ligatures — everything this site's prose
+   and bibliography actually set. License: OFL, theme/LICENSES/Alegreya.txt
+
+   No size-adjust: the font-size below is the one number that sets type on this
+   site, and it is left to mean what it says. Alegreya's x-height is 0.452em
+   against XCharter's 0.481, so the face sets about six percent smaller on the
+   page at the same size, and the measure — set in ex — narrows with it, which
+   is the intended behaviour: the line stays the same length in characters. If
+   the result reads small, the fix is the font-size on `body`, not a per-face
+   correction that hides the difference from every other rule. */
+@font-face {
+  font-display: swap;
+  font-family: 'Alegreya';
+  font-style: normal;
+  font-weight: 400 900;
+  src: url('fonts/Alegreya-Variable.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Alegreya';
+  font-style: italic;
+  font-weight: 400 900;
+  src: url('fonts/Alegreya-Italic-Variable.woff2') format('woff2-variations');
+}
+
+/* Silent Autograph — the wordmark on the home page, and nothing else. Timur
+   Type Studio's monoline signature hand: even stroke weight, a slight forward
+   lean, an irregular baseline. The demo cut, 117 glyphs, which is 102 more
+   than the only string it ever sets.
+
+   The one face in this directory that is not subset, and that is a licence
+   term rather than an oversight. It ships under the 1001fonts Free For
+   Personal Use licence (theme/LICENSES/SilentAutograph.txt), whose clause 5
+   permits exactly this — conversion to WOFF for the web — while clause 4
+   forbids modifying the typeface, and dropping glyphs is modifying it. So the
+   OTF was converted whole, name table and all, and costs 47KB instead of the
+   6KB a name's worth of letters would. Clause 2 is the one that has to keep
+   being true: personal use means the site generates no income. If that ever
+   changes — ads, a paid tier, anything — this face has to come out or be
+   licensed from timurtype.com, and nothing else on the site cares.
+
+   Clause 7 permits the embedding on the condition that the page does not
+   offer the font as a download, so leave it where it is: served to draw a
+   heading, never linked as a file. */
+@font-face {
+  font-display: swap;
+  font-family: 'Silent Autograph';
+  font-style: normal;
+  font-weight: 400;
+  src: url('fonts/SilentAutograph-Regular.woff2') format('woff2');
+}
+
 /* XCharter — serif body text. Michael Sharpe's extension of Bitstream Charter.
    License: theme/LICENSES/Bitstream-Charter.txt (font files) + theme/LICENSES/XCharter.txt */
 @font-face {
@@ -368,7 +429,7 @@ html {
 }
 
 body {
-  font-family: XCharter, Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+  font-family: Alegreya, XCharter, Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
   /* The site's one absolute size — everything else, code included, is set in
      em against it, so this is the single number that resizes the page, and it
      is the only place a breakpoint has to touch type.
@@ -846,13 +907,22 @@ details[open]>summary>p {
   margin-bottom: 1em;
 }
 
+/* The sizes on this and every heading rule below are cut against the body
+   face's cap height, not picked in the abstract: a title is mixed case, so
+   what sets its apparent size is the capitals. Alegreya's cap height is
+   0.637em against XCharter's 0.671, so each of these carries a 1.055 factor
+   over the number the same rule held when the site set in XCharter — 13pt
+   became 13.7, 1.083em became 1.14, and so on down the ramp. Swap the serif
+   again and these want re-cutting by the same ratio; leave them alone and the
+   headings quietly shrink while the prose looks fine, which is exactly how
+   this showed up. */
 details h1 {
-  font-size: 13pt;
+  font-size: 13.7pt;
   display: inline;
 }
 
 section .block[data-taxon] details>summary>header>h1 {
-  font-size: 12pt;
+  font-size: 12.7pt;
 }
 
 span.taxon {
@@ -863,7 +933,66 @@ span.taxon {
 
 article>section>details>summary>header>h1 {
   font-family: inherit;
-  font-size: 1.2em;
+  font-size: 1.27em;
+}
+
+/* The wordmark. The home page's title is a name rather than a subject, and it
+   is the one heading on the site that is allowed to behave like signage.
+
+   Scoped by the slug it carries, not by the tree's position: `article >
+   section.index-page` is every index page's own title — Blog, Notebooks, the
+   Research Bible — and those are subjects, which want the ramp. :has() on the
+   slug href pins the rule to /index/ alone. The same name set as a backlink or
+   a Context row sits deeper than `article > section`, so those listings keep
+   the serif and stay scannable, which is the point of listing them.
+
+   Weight comes from the face, not from font-weight. Silent Autograph ships a
+   single weight, so the 700 the global h1 rule sets would hand the name to the
+   browser's synthetic bold — a glyph smeared sideways. 400 instead, and a
+   monoline hand that carries its colour in the drawing.
+
+   2.5em, where the copperplate this replaced needed 3.1 to look smaller. The
+   x-height here is 0.5em against Pinyon Script's 0.371, over extenders less
+   than half as long, so the smaller number sets the visibly larger name. The line-height sits at
+   1 for the other half of that: ascent-plus-descent is 1.13em against the
+   copperplate's 2.55, and at the body's 1.55 the name would float in a line
+   box taller than the letters in it.
+
+   The slug and edit link are pulled back to a fixed size because they inherit
+   the h1's, and at display size [index] would set larger than the section
+   headings below it.
+
+   The headroom below is what keeps the capitals on the page. A heading here is
+   display: inline — that is what holds the slug and the metadata on the
+   title's own line — so its line box is 1em tall while the letters in it stand
+   half again that, and the overflow goes straight up past the top of the
+   document. Padding on the h1 cannot fix it: an inline box's vertical padding
+   reserves no layout space.
+
+   It goes on the grid wrapper rather than on the article's section, and that
+   is the whole of the TOC's alignment. The rail is the wrapper's other child,
+   in the same grid row, and it takes its vertical origin from that row — so
+   space added inside the article moves the title out from under the rail's
+   label and leaves the two 17px apart, while the same space on the wrapper
+   moves both columns together and the pair stays level. Anything this page
+   ever needs at the top belongs here for the same reason. */
+article > section.index-page > details > summary > header > h1:has(> a.slug[href="/index/"]) {
+  font-family: 'Silent Autograph', 'Snell Roundhand', cursive;
+  font-size: 3.0em;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1;
+}
+
+#grid-wrapper:has(> article > section.index-page > details > summary > header > h1 > a.slug[href="/index/"]) {
+  padding-top: 1.2em;
+}
+
+article > section.index-page > details > summary > header > h1:has(> a.slug[href="/index/"]) > a.slug,
+article > section.index-page > details > summary > header > h1:has(> a.slug[href="/index/"]) > a.edit-button {
+  font-family: var(--sans);
+  font-size: 12pt;
+  vertical-align: 0.35em;
 }
 
 /* Section headings, by depth.
@@ -894,9 +1023,9 @@ article section.block > details > summary > header > h1 {
   font-family: inherit;
 }
 
-/* The ramp is anchored at the top: a top-level section is 1.083em, which is
-   the 13pt `details h1` has always set, so the largest heading on a page is
-   exactly the size it was before there were levels at all. The lower levels
+/* The ramp is anchored at the top: a top-level section is 1.14em, which is
+   the 13.7pt `details h1` sets, so the largest heading on a page is exactly
+   the size it was before there were levels at all. The lower levels
    are compressed rather than scaled — the same factor applied down the ramp
    would have put the fourth and fifth levels under 10pt, setting a heading in
    less type than the prose beneath it. So the sizes bottom out at body size
@@ -905,14 +1034,14 @@ article section.block > details > summary > header > h1 {
 /* h2 — a top-level section. */
 article > section:not(.index-page) > details > section.block > details > summary > header > h1 {
   font-family: inherit;
-  font-size: 1.083em;
+  font-size: 1.14em;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 /* The ramp keeps off index pages, which left their listing headings — Research
-   and Blog on the home page — on the bare 13pt of `details h1`, a hair under
-   the 1.2em the page's own title sets. Six percent between them, both bold,
+   and Blog on the home page — on the bare 13.7pt of `details h1`, a hair
+   under the 1.27em the page's own title sets. Six percent between them, both bold,
    both serif: they read as the same size, and a site map that competes with
    the name at the top of the page has the hierarchy backwards. A step below
    the article ramp's own h2 puts real distance there. Sized in em rather than
@@ -922,25 +1051,25 @@ article > section:not(.index-page) > details > section.block > details > summary
    The second selector is not optional. Sizing only the first level inverts the
    hierarchy the moment an index page holds anything two deep: /dev/null
    transcludes Old Talks, which carries Full Group Meeting Talks and Mini Talks
-   inside it, and those inner headings kept the 13pt fallback while their own
-   parent came down to 1.04em — a subsection set larger than the section
+   inside it, and those inner headings kept the 13.7pt fallback while their
+   own parent came down to 1.1em — a subsection set larger than the section
    containing it. It is a descendant combinator rather than another exact chain
    so there is no depth at which the fallback comes back; below the first level
    everything is one size, which is all an index page needs. Size only, no
    weight: a taxon'd block nested on an index page would otherwise be
    de-bolded on its way past. */
 article > section.index-page > details > section.block > details > summary > header > h1 {
-  font-size: 1.04em;
+  font-size: 1.1em;
 }
 
 article > section.index-page > details > section.block > details section.block > details > summary > header > h1 {
-  font-size: 1em;
+  font-size: 1.05em;
 }
 
 /* h3 — a subsection. */
 article > section:not(.index-page) > details > section.block > details > section.block > details > summary > header > h1 {
   font-family: inherit;
-  font-size: 1.04em;
+  font-size: 1.1em;
   font-weight: 400;
   letter-spacing: normal;
 }

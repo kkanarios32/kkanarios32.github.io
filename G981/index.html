@@ -131,21 +131,569 @@ window.addEventListener('load', function () { setTimeout(function () {
 <div class="metadata"><ul>
 <li class="meta-item">August 7, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary><p xmlns="http://www.w3.org/1999/xhtml">JAX's trace-level representation: the record of what abstract execution captured when your Python ran once on tracers instead of arrays (<span xmlns="" class="link local"><a href="/NR79/" title="Lifecycle of a JAX program [NR79]">Lifecycle of a </a><span class="link local"><a href="/OGCRY/" title="JAX [OGCRY]">JAX</a></span><a href="/NR79/" title="Lifecycle of a JAX program [NR79]"> program</a></span>). Print one with <code>jax.make_jaxpr(f)(x)</code> (<span xmlns="" class="link local"><a href="/AGEG/" title="Three calls, three IR levels [AGEG]">Three calls, three IR levels</a></span>).</p><p xmlns="http://www.w3.org/1999/xhtml">Its defining feature is the square bracket. An equation reads <code>outvars = primitive[static_params] invars</code>, and that bracket is exactly the compile-time / runtime line (<span xmlns="" class="link local"><a href="/VTPS/" title="Brackets are compile-time, operands are runtime [VTPS]">Brackets are compile-time, operands are runtime</a></span>) — everything inside it is baked into this compilation, everything outside flows at run time. The same split appears in <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> as attributes versus operands (<span xmlns="" class="link local"><a href="/CZBE/" title="Position separates attributes from regions [CZBE]">Position separates attributes from regions</a></span>).</p><p xmlns="http://www.w3.org/1999/xhtml">So a jaxpr answers a different class of question from the IR below it. Why is a constant baked in, why did a cast appear (<span xmlns="" class="link local"><a href="/WMKA/" title="A weak type adopts the other operand's dtype [WMKA]">A weak type adopts the other operand's dtype</a></span>), at what precision is this matmul accumulated (<span xmlns="" class="link local"><a href="/CCL2/" title="dimension_numbers is contracting then batch [CCL2]">dimension_numbers is contracting then batch</a></span>), what did my custom gradient rule actually do (<span xmlns="" class="link local"><a href="/MO87/" title="A grad jaxpr is the forward program plus its transpose [MO87]">A grad </a><span class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span><a href="/MO87/" title="A grad jaxpr is the forward program plus its transpose [MO87]"> is the forward program plus its transpose</a></span>) — none of these survive into optimized <span xmlns="" class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span>, where fusion and layout have already scrambled the correspondence. Read the jaxpr for meaning and the HLO for cost.</p><p xmlns="http://www.w3.org/1999/xhtml">Not every JAX transformation appears here. <code>jit</code>, <code>scan</code>, <code>cond</code>, <code>while</code>, and <span xmlns="" class="link local"><a href="/IMBB/" title="shard_map [IMBB]">shard_map</a></span> are primitives with nested jaxprs; <code>vmap</code> is a trace-time rewrite that leaves no trace but the shapes (<span xmlns="" class="link local"><a href="/ROHH/" title="vmap leaves no primitive behind [ROHH]">vmap leaves no primitive behind</a></span>).</p><p xmlns="http://www.w3.org/1999/xhtml">The traces below were produced with JAX 0.11 on CPU. <strong>The printed form drifts between releases</strong> — <code>scan</code> dropped <code>num_consts</code> for <code>ft_in</code>, and <code>pjit</code> now prints as <code>jit</code> — so read a trace from your own installation before trusting the punctuation in anyone's notes, including these.</p>
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
+  <p><strong>A whole function.</strong> One dense layer, <code>tanh(x @ w + b)</code>, traced with <code>jax.make_jaxpr(f)(x, w, b)</code>. Four equations, in dependency order, each one a primitive (<span xmlns="" class="link local"><a href="/VTPS/" title="Brackets are compile-time, operands are runtime [VTPS]">Brackets are compile-time, operands are runtime</a></span>):</p>
+
+  <pre><code class="language-haskell">{ lambda ; a:f32[8,16] b:f32[16,4] c:f32[4]. let
+    d:f32[8,4] = dot_general[
+      dimension_numbers=(([1], [0]), ([], []))
+      preferred_element_type=float32
+    ] a b
+    e:f32[1,4] = broadcast_in_dim[broadcast_dimensions=(1,)] c
+    f:f32[8,4] = add d e
+    g:f32[8,4] = tanh f
+  in (g,) }</code></pre>
+
+  <p>Nothing before the semicolon, so nothing was captured (<span xmlns="" class="link local"><a href="/2KEW/" title="constvars before the semicolon, invars after [2KEW]">constvars before the semicolon, invars after</a></span>). Note what the source did <em>not</em> say: the broadcast of the bias is explicit, and so is the accumulation type on the matmul (<span xmlns="" class="link local"><a href="/CCL2/" title="dimension_numbers is contracting then batch [CCL2]">dimension_numbers is contracting then batch</a></span>). Following this same function down to <span xmlns="" class="link local"><a href="/84N5/" title="StableHLO [84N5]">StableHLO</a></span> and <span xmlns="" class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span> is worth doing once.</p>
+</div>
+
+
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
+  <p><strong>A closure.</strong> The same trace with <code>w</code> captured from the enclosing scope instead of passed in:</p>
+
+  <pre><code class="language-haskell">{ lambda a:f32[8,4]; b:f32[8]. let
+    c:f32[] = reduce_sum[axes=(0, 1) out_sharding=None] a
+    d:f32[8] = mul b c
+  in (d,) }</code></pre>
+
+  <p><code>a</code> is now a <em>constvar</em>, left of the semicolon — baked into this compilation rather than supplied by the caller. A large array on that side of the semicolon is a closure you probably did not mean to make (<span xmlns="" class="link local"><a href="/2KEW/" title="constvars before the semicolon, invars after [2KEW]">constvars before the semicolon, invars after</a></span>).</p>
+</div>
+
+
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
+  <p><strong><code>grad</code>.</strong> <code>jax.make_jaxpr(jax.grad(f))(x, w)</code> for <code>f = tanh(x @ w).sum()</code> — the forward pass, then its transpose in reverse order (<span xmlns="" class="link local"><a href="/MO87/" title="A grad jaxpr is the forward program plus its transpose [MO87]">A grad </a><span class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span><a href="/MO87/" title="A grad jaxpr is the forward program plus its transpose [MO87]"> is the forward program plus its transpose</a></span>):</p>
+
+  <pre><code class="language-haskell">{ lambda ; a:f32[8] b:f32[8,4]. let
+    c:f32[4] = dot_general[dimension_numbers=(([0], [0]), ([], []))
+                           preferred_element_type=float32] a b
+    d:f32[4] = tanh c
+    e:f32[4] = sub 1.0:f32[] d
+    _:f32[] = reduce_sum[axes=(0,) out_sharding=None] d
+    f:f32[4] = broadcast_in_dim 1.0:f32[]
+    g:f32[4] = mul f e
+    h:f32[4] = mul g d
+    i:f32[4] = add_any g h
+    j:f32[8] = dot_general[dimension_numbers=(([0], [1]), ([], []))
+                           preferred_element_type=float32] i b
+  in (j,) }</code></pre>
+
+  <p>Three things to read off it. The final <code>dot_general</code> contracts <code>[0]</code> against <code>[1]</code> where the forward one contracted <code>[0]</code> against <code>[0]</code> — that swap <em>is</em> the transpose rule for a matmul. The <code>sub 1.0 d</code> is \(1 - \tanh ^2\) being built from the saved output rather than recomputed. And the <code>reduce_sum</code> is a dropvar (<span xmlns="" class="link local"><a href="/E9J1/" title="An underscore is an output nobody consumes [E9J1]">An underscore is an output nobody consumes</a></span>): the primal value the sum would have produced is not needed, only its gradient, and the cotangent <code>broadcast_in_dim 1.0</code> is what replaces it.</p>
+</div>
+
+
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
+  <p><strong><code>vmap</code> leaves nothing behind</strong> (<span xmlns="" class="link local"><a href="/ROHH/" title="vmap leaves no primitive behind [ROHH]">vmap leaves no primitive behind</a></span>). Mapping <code>lambda a, b: a * b</code> over the leading axis of <code>a</code> only:</p>
+
+  <pre><code class="language-haskell">{ lambda ; a:f32[3,4] b:f32[4]. let
+    c:f32[1,4] = broadcast_in_dim[broadcast_dimensions=(1,)] b
+    d:f32[3,4] = mul a c
+  in (d,) }</code></pre>
+
+  <p>There is no <code>vmap</code> equation — only a <code>mul</code> whose avals grew a dimension, plus the <code>broadcast_in_dim</code> that lifted the unmapped argument to match. When <code>vmap</code> can push the batch dimension into an existing primitive it emits nothing at all: <code>jax.vmap(jnp.dot, in_axes=(0, None))</code> over <code>f32[3,4]</code> and <code>f32[4,2]</code> is a single <code>dot_general</code>, because a batched matvec <em>is</em> a matmul.</p>
+</div>
+
+
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
+  <p><strong><code>scan</code></strong> (<span xmlns="" class="link local"><a href="/W8NM/" title="consts, then carry, then xs [W8NM]">consts, then carry, then xs</a></span>). Two carries, one scanned input, one const closed over:</p>
+
+  <pre><code class="language-haskell">{ lambda ; a:f32[] b:f32[] c:f32[4]. let
+    d:f32[] e:f32[] f:f32[4] = scan[
+      ft_in=((), (None, None), (None,))
+      jaxpr={ lambda ; g:f32[] h:f32[] i:f32[]. let
+          j:f32[] = mul g 3.0:f32[]
+          k:f32[] = add j i
+          l:f32[] = add h g
+          m:f32[] = mul g 2.0:f32[]
+        in (k, l, m) }
+      length=4  reverse=False  unroll=1
+    ] a b c
+  in (d, e, f) }</code></pre>
+
+  <p>Read <code>ft_in</code> first: no consts, two carries, one <code>xs</code>. So invars <code>a</code> and <code>b</code> are the carry and <code>c</code> is scanned, and the body returns two new carries then one <code>ys</code> element, which stacks to <code>f32[4]</code>. The captured <code>3.0</code> was constant-folded into the body rather than passed as a const.</p>
+</div>
+
+
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
+  <p><strong><code>cond</code></strong> (<span xmlns="" class="link local"><a href="/2LKO/" title="The nconsts numbers locate the carry [2LKO]">The nconsts numbers locate the carry</a></span>). Note that the predicate is converted to an integer index, and that branch 0 is the <em>false</em> branch:</p>
+
+  <pre><code class="language-haskell">{ lambda ; a:bool[] b:f32[] c:f32[]. let
+    d:i32[] = convert_element_type[new_dtype=int32 weak_type=False] a
+    e:f32[] = cond[
+      branches=(
+        { lambda ; f:f32[] g:f32[]. let h:f32[] = sub f g in (h,) }
+        { lambda ; i:f32[] j:f32[]. let k:f32[] = add i j in (k,) }
+      )
+    ] d b c
+  in (e,) }</code></pre>
+
+  <p>Both branches take the same operands and return the same type — <code>cond</code> is an \(n\)-way switch on an index, and the two-branch boolean case is the special case.</p>
+</div>
+
+
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
+  <p><strong>Weak types</strong> (<span xmlns="" class="link local"><a href="/WMKA/" title="A weak type adopts the other operand's dtype [WMKA]">A weak type adopts the other operand's dtype</a></span>). A Python literal against a bf16 array:</p>
+
+  <pre><code class="language-haskell">{ lambda ; a:bf16[3]. let b:bf16[3] = mul a 2.0:bf16[] in (b,) }</code></pre>
+
+  <p>The literal adopted bf16 and nothing was promoted. Replace <code>2.0</code> with <code>np.float32(2.0)</code> — an explicitly typed scalar, so no longer weak — and the same line becomes:</p>
+
+  <pre><code class="language-haskell">{ lambda ; a:bf16[3]. let
+    b:f32[3] = convert_element_type[new_dtype=float32 weak_type=False] a
+    c:f32[3] = mul b 2.0:f32[]
+  in (c,) }</code></pre>
+
+  <p>The whole array was widened to f32 by one scalar. This is the promotion bug the weak-type rule exists to prevent, and the <code>convert_element_type</code> equation is how you catch it.</p>
+</div>
+
+
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   "><span style="font-weight: 500; color: rgb(38, 97, 69);">Example.</span> 
+  <p><strong><code>shard_map</code> and <code>pmap</code></strong> (<span xmlns="" class="link local"><a href="/KWVD/" title="Collectives are primitives parameterised by axis name [KWVD]">Collectives are primitives parameterised by axis name</a></span>). A <code>psum</code> over a mesh axis of 8:</p>
+
+  <pre><code class="language-haskell">{ lambda ; a:f32[8]. let
+    b:f32[1] = shard_map[
+      in_specs=(P('x',),)  out_specs=(P(),)  check_vma=True
+      mesh=Mesh('x': 8, axis_types=(Auto,))
+      jaxpr={ lambda ; c:f32[1]{V:x}. let
+          d:f32[1] = psum_invariant[axes=('x',)] c
+        in (d,) }
+    ] a
+  in (b,) }</code></pre>
+
+  <p>The global shape is <code>f32[8]</code> and the body's is <code>f32[1]</code> — inside the region you are writing per-device code, which is the whole point of <span xmlns="" class="link local"><a href="/IMBB/" title="shard_map [IMBB]">shard_map</a></span>. <code>pmap</code> is not a separate mechanism: it traces to a <code>jit</code> wrapping a <code>shard_map</code>, with a <code>squeeze</code> and a <code>broadcast_in_dim</code> around the body to move between the mapped axis and the per-device rank.</p>
+</div>
+
+
+  <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+<span class="taxon">1. </span>Reading one  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></summary>
- <div xmlns="http://www.w3.org/1999/xhtml" class="stub-notice" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(38, 97, 69);   color: rgb(38, 97, 69);   font-style: italic;   ">🌱 Stub — this concept is referenced but not yet written.</div>
+  
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id3" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>constvars before the semicolon, invars after <a class="slug" href="/2KEW/">[2KEW]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Name every part of <code>{ lambda a:f32[8] ; b:f32[8] c:f32[8]. let d:f32[8] = mul b c; e:f32[8] = add d a in (e,) }</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <pre><code class="language-haskell">{ lambda &lt;constvars&gt; ; &lt;invars&gt;. let &lt;equations&gt; in (&lt;outvars&gt;) }</code></pre>
+
+  <ul><li><strong>Before the semicolon: constvars.</strong> Values closed over — captured arrays — supplied by the <code>ClosedJaxpr</code>'s consts rather than by the caller.</li>
+    <li><strong>Between semicolon and dot: invars.</strong> The traced arguments.</li>
+    <li><strong>The <code>let</code> block:</strong> equations in dependency order (<span xmlns="" class="link local"><a href="/VTPS/" title="Brackets are compile-time, operands are runtime [VTPS]">Brackets are compile-time, operands are runtime</a></span>).</li>
+    <li><strong><code>in (...)</code>:</strong> the output tuple, always parenthesised even for a single value.</li></ul>
+
+  <strong>The constvar / invar split is where a performance surprise hides.</strong> Anything on the left of the semicolon was captured at trace time and is baked into this compilation, so changing it means retracing (<span xmlns="" class="link local"><a href="/M74N/" title="XLA Compilation [M74N]">XLA Compilation</a></span>). Large constvars in a <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span> you expected to be pure are a closure you did not mean to make.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id4" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Brackets are compile-time, operands are runtime <a class="slug" href="/VTPS/">[VTPS]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What is the shape of a single <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span> equation?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <pre><code class="language-haskell">outvars = primitive[static_params] invars</code></pre>
+
+  for example
+
+  <pre><code class="language-haskell">e:f32[1,4] = broadcast_in_dim[broadcast_dimensions=(1,)] c
+d:f32[8,4] = dot_general[dimension_numbers=(([1], [0]), ([], []))
+                         preferred_element_type=float32] a b</code></pre>
+
+  <strong>The square brackets hold <em>static</em> parameters</strong> — known at trace time and baked into the primitive — and everything after them is a traced operand or a literal. The printer shows only the interesting ones; the equation carries more (<code>broadcast_in_dim</code> also holds <code>shape</code> and <code>sharding</code>), reachable from <code>eqn.params</code>.
+
+  That bracket-versus-operand split is the most useful thing on the page. A quantity inside the brackets is a constant this compilation is specialised to; move it out and you retrace. It is the same distinction <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> draws between attributes and operands (<span xmlns="" class="link local"><a href="/CZBE/" title="Position separates attributes from regions [CZBE]">Position separates attributes from regions</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id5" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>An aval is shape and dtype, no value <a class="slug" href="/9M15/">[9M15]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read the <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span> shorthand <code>f32[8,128]</code>, <code>i32[]</code>, <code>bool[3]</code>, <code>key&lt;fry&gt;[2]</code>, <code>bf16[8]</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Compact <em>aval</em> — abstract value — printing: dtype then shape, with empty brackets for a scalar.
+
+  <code>key&lt;fry&gt;[2]</code> is a typed PRNG key array using the threefry implementation: the new-style key dtype rather than a raw <code>uint32[2]</code>. Seeing the typed form tells you the key is opaque to shape-manipulating code, which is the point of it.
+
+  <strong>The aval is what tracing actually propagates</strong>: shape, dtype, and <span xmlns="" class="link local"><a href="/XGI0/" title="Sharding [XGI0]">Sharding</a></span> — no values. Everything a jaxpr knows, it knows from these, which is why a Python <code>if</code> on a traced value fails and why the shapes in a jaxpr are always fully static.
+
+  HLO's shapes are the same information in a different notation (<span xmlns="" class="link local"><a href="/31V3/" title="Tuples are first-class in HLO [31V3]">Tuples are first-class in </a><span class="link local"><a href="/NO8J/" title="HLO [NO8J]">HLO</a></span></span>), and <span xmlns="" class="link local"><a href="/IR7B/" title="MLIR [IR7B]">MLIR</a></span> adds dynamic dimensions that JAX never produces (<span xmlns="" class="link local"><a href="/L3F6/" title="Question mark is a dynamic dimension, star is unknown rank [L3F6]">Question mark is a dynamic dimension, star is unknown rank</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id6" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>An underscore is an output nobody consumes <a class="slug" href="/E9J1/">[E9J1]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What is <code>_:f32[8]</code> on the left of a <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span> equation?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  A <em>dropvar</em>: an output that nothing consumes.
+
+  It shows up for multi-output primitives where only some results are used — a <code>custom_vjp</code>'s residuals when you asked only for the primal, an unused <code>scan</code> carry (<span xmlns="" class="link local"><a href="/W8NM/" title="consts, then carry, then xs [W8NM]">consts, then carry, then xs</a></span>), the second output of a primitive whose first is all you wanted.
+
+  <strong>It does not mean the work happens.</strong> Dead code elimination may or may not have run when you print a jaxpr, so dropvars are entirely normal in a freshly traced one, and their presence says nothing about the compiled program. XLA will drop the computation if it is genuinely unused.
+
+  What they do tell you is which primitive produced more than you asked for — useful when you are trying to work out where a residual came from (<span xmlns="" class="link local"><a href="/MO87/" title="A grad jaxpr is the forward program plus its transpose [MO87]">A grad </a><span class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span><a href="/MO87/" title="A grad jaxpr is the forward program plus its transpose [MO87]"> is the forward program plus its transpose</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id7" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>jit is the pjit primitive <a class="slug" href="/WNHA/">[WNHA]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Why does almost every <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span> from a jitted function contain a single <code>jit[name=f jaxpr={...}]</code> equation?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Because <code>jax.jit</code> is implemented as a primitive — <code>pjit_p</code>, printed as <code>jit</code> — rather than being inlined. The callee's jaxpr is nested inside as a static parameter, so each <code>jit</code> boundary in your code becomes another level of nesting.
+
+  <strong>That nesting is preserved all the way down.</strong> It reappears in HLO as the slash-separated <code>op_name</code> path, <code>jit(f)/jit(g)/...</code> (<span xmlns="" class="link local"><a href="/FG58/" title="op_name is the trace path back to Python [FG58]">op_name is the trace path back to Python</a></span>), which is what lets you attribute an optimized HLO instruction to a particular function in a program full of them.
+
+  It also means the boundaries are real to the compiler, not just to you: each is a place where donation, <span xmlns="" class="link local"><a href="/XGI0/" title="Sharding [XGI0]">Sharding</a></span>, and compilation caching are decided (<span xmlns="" class="link local"><a href="/M74N/" title="XLA Compilation [M74N]">XLA Compilation</a></span>). Nesting <code>jit</code> inside <code>jit</code> is free at run time but is not invisible in the IR.
+</details>
+</div>
+
+
+
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id8" open="open"><summary><header><h1>
+<span class="taxon">2. </span>Control flow and collectives  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id9" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>consts, then carry, then xs <a class="slug" href="/W8NM/">[W8NM]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read <code>scan[ft_in=((), (None, None), (None,)) length=4 reverse=False unroll=1]</code>. How are the invars laid out?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  In one fixed order: first the loop-invariant <em>consts</em>, then the <em>carry</em>, then the <em>xs</em>, each scanned along a leading axis of size <code>length</code>. The inner jaxpr's invars follow the same convention, and it returns <code>(new_carry..., ys...)</code>.
+
+  <strong><code>ft_in</code> is where the split is written down.</strong> It is a three-tuple — one group per role — so the group <em>lengths</em> give the counts: none here, then two carries, then one scanned input. Older JAX printed the same information as <code>num_consts</code> and <code>num_carry</code>, and you will still see that form in written material.
+
+  <strong>Counting is the only way to read a scan body.</strong> The names carry nothing; the group sizes do. Given <code>((), (None, None), (None,))</code>, invars 0 and 1 are the carry and invar 2 is scanned.
+
+  The same explicit carry appears as <code>iter_args</code> in <code>scf.for</code> (<span xmlns="" class="link local"><a href="/ON39/" title="iter_args and yield are the mutable accumulator [ON39]">iter_args and yield are the mutable accumulator</a></span>) and as a state tuple in HLO's <code>while</code> (<span xmlns="" class="link local"><a href="/YXTI/" title="A while loop's whole state is one tuple [YXTI]">A while loop's whole state is one tuple</a></span>), where the three-way split is flattened into tuple indices you have to recover by counting.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id10" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>The nconsts numbers locate the carry <a class="slug" href="/2LKO/">[2LKO]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">How do <code>cond</code> and <code>while</code> print in a <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span>?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <pre><code class="language-haskell">cond[branches=(...)] index a b
+while[cond_jaxpr={...} cond_nconsts=1 body_jaxpr={...} body_nconsts=2] ...</code></pre>
+
+  For <code>cond</code>, the first invar is the branch <em>index</em> and the rest are the operands passed to every branch. <code>branches</code> is a tuple of jaxprs, all with the same signature — which is why both sides of a JAX conditional must agree on shapes and dtypes.
+
+  For <code>while</code>, the invars run: cond consts, then body consts, then the carry.
+
+  <strong>The <code>nconsts</code> numbers are the only thing telling you where the carry starts.</strong> There is no punctuation in the operand list and the names are meaningless, so you count: skip <code>cond_nconsts</code>, skip <code>body_nconsts</code>, and everything left is the loop state. Same discipline as <code>scan</code> (<span xmlns="" class="link local"><a href="/W8NM/" title="consts, then carry, then xs [W8NM]">consts, then carry, then xs</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id11" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>Collectives are primitives parameterised by axis name <a class="slug" href="/KWVD/">[KWVD]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What do <code>psum[axes=('x',) axis_index_groups=None]</code> and <span xmlns="" class="link local"><a href="/IMBB/" title="shard_map [IMBB]">shard_map</a></span> look like in a <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span>?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  Collectives are ordinary primitives parameterised by an <em>axis name</em>; they only mean anything inside a mapped context that binds that name. <span xmlns="" class="link local"><a href="/IMBB/" title="shard_map [IMBB]">shard_map</a></span> appears as
+
+  <pre><code class="language-haskell">shard_map[jaxpr={...} mesh=Mesh('x': 8, axis_types=(Auto,))
+          in_specs=(P('x',),) out_specs=(P(),) check_vma=True]</code></pre>
+
+  with the per-device program nested inside (<span xmlns="" class="link local"><a href="/ROHH/" title="vmap leaves no primitive behind [ROHH]">vmap leaves no primitive behind</a></span>). Inside that body a collective whose result is already replicated may print as <code>psum_invariant</code> rather than <code>psum</code> — same reduction, tagged as producing an axis-invariant value.
+
+  <strong>So the jaxpr level is logical and the physical level is elsewhere.</strong> Here you see a named axis and per-device shapes; the device assignment appears only later, as HLO <code>sharding</code> attributes (<span xmlns="" class="link local"><a href="/3IWB/" title="A sharding annotation is a tiling plus a device order [3IWB]">A </a><span class="link local"><a href="/XGI0/" title="Sharding [XGI0]">sharding</a></span><a href="/3IWB/" title="A sharding annotation is a tiling plus a device order [3IWB]"> annotation is a tiling plus a device order</a></span>) and concrete <code>all-reduce</code> instructions (<span xmlns="" class="link local"><a href="/6SKD/" title="replica_groups says who reduces with whom [6SKD]">replica_groups says who reduces with whom</a></span>).
+
+  That separation is why the axis name is the right thing to reason about: it is stable, whereas which devices land in which <code>replica_groups</code> depends on the mesh and the compiler (<span xmlns="" class="link local"><a href="/XGI0/" title="Sharding [XGI0]">Sharding</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+</details></section>
+
+  <section lang="en" class="block hide-metadata"><details id="id12" open="open"><summary><header><h1>
+<span class="taxon">3. </span>Numerics and transformations  </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id13" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>dimension_numbers is contracting then batch <a class="slug" href="/CCL2/">[CCL2]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Read <code>dot_general[dimension_numbers=(((1,), (0,)), ((), ())) precision=None preferred_element_type=float32]</code></p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <code>dimension_numbers</code> is <code>((lhs_contracting, rhs_contracting), (lhs_batch, rhs_batch))</code> — contracting pair first, batch pair second. Here lhs dim 1 contracts with rhs dim 0 and there are no batch dims: a plain matmul (<span xmlns="" class="link local"><a href="/BVPY/" title="Batch, contract, free, and the output order is fixed [BVPY]">Batch, contract, free, and the output order is fixed</a></span>, <span xmlns="" class="link local"><a href="/7EEZ/" title="A dot's output order is batch, lhs free, rhs free [7EEZ]">A dot's output order is batch, lhs free, rhs free</a></span>).
+
+  <strong>The two other parameters are where numerics live, and they are easy to skim past.</strong>
+
+  <ul><li><code>preferred_element_type</code> is the <em>accumulation</em> type. bf16 inputs accumulating into f32 is the standard configuration, and it is what makes low-precision training work at all — the inputs are cheap, the running sum is not.</li>
+    <li><code>precision</code> controls the backend tradeoff: TF32, bf16x3 passes, or full f32.</li></ul>
+
+  So a jaxpr answers "at what precision is this matmul actually done" directly, which the HLO line does not.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id14" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>A weak type adopts the other operand's dtype <a class="slug" href="/WMKA/">[WMKA]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What does <code>convert_element_type[new_dtype=float32 weak_type=False]</code> mean, and what is a weak type?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  An explicit cast that tracing inserted.
+
+  <strong><code>weak_type</code> marks a value whose dtype came from a Python scalar</strong> — <code>3.0</code>, <code>2</code> — rather than from an explicitly typed array. A weakly typed value adopts the other operand's dtype in promotion instead of forcing a widening, so <code>x * 2.0</code> on a bf16 array stays bf16 rather than becoming f32.
+
+  That rule exists precisely so writing a literal in your model does not silently change its precision.
+
+  <strong>An unexpected <code>convert_element_type</code> in a jaxpr is therefore worth reading as a diagnosis</strong>, not as noise: it is the trace of a promotion you did not intend, usually a NumPy scalar or an f32 constant meeting a lower-precision array. It costs a full pass over the data, and it can defeat the accumulation choice you made on the neighbouring <code>dot_general</code> (<span xmlns="" class="link local"><a href="/CCL2/" title="dimension_numbers is contracting then batch [CCL2]">dimension_numbers is contracting then batch</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id15" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>vmap leaves no primitive behind <a class="slug" href="/ROHH/">[ROHH]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">Does <code>vmap</code> appear as a primitive in a <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span>?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  <strong>No.</strong> Batching is a trace-time rewrite, not a wrapper. The jaxpr you get back has no <code>vmap</code> equation at all — just the same primitives with a batch dimension added to their avals (<span xmlns="" class="link local"><a href="/9M15/" title="An aval is shape and dtype, no value [9M15]">An aval is shape and dtype, no value</a></span>), plus extra <code>broadcast_in_dim</code> and <code>transpose</code> equations wherever the batch axis had to be moved.
+
+  So to see what <code>vmap</code> decided, read the <em>shapes</em>; there is no op to look for. Those stray transposes are the mapping decisions, and they are also where a vmapped function quietly costs more than the loop you replaced.
+
+  <strong>Contrast the ones that do appear as primitives with nested jaxprs</strong>: <code>pjit</code> (<span xmlns="" class="link local"><a href="/WNHA/" title="jit is the pjit primitive [WNHA]">jit is the pjit primitive</a></span>), <code>scan</code> (<span xmlns="" class="link local"><a href="/W8NM/" title="consts, then carry, then xs [W8NM]">consts, then carry, then xs</a></span>), <code>cond</code> and <code>while</code> (<span xmlns="" class="link local"><a href="/2LKO/" title="The nconsts numbers locate the carry [2LKO]">The nconsts numbers locate the carry</a></span>), <code>custom_jvp_call</code>, and <span xmlns="" class="link local"><a href="/IMBB/" title="shard_map [IMBB]">shard_map</a></span> (<span xmlns="" class="link local"><a href="/KWVD/" title="Collectives are primitives parameterised by axis name [KWVD]">Collectives are primitives parameterised by axis name</a></span>). The distinction is whether the transformation changes the <em>program structure</em> or only the shapes flowing through it.
+</details>
+</div>
+
+
+
+</details></section>
+  <section lang="en" class="block hide-metadata" data-taxon="Card"><details id="id16" open="open"><summary><header><h1>
+<span class="taxon">Card. </span>A grad <span class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span> is the forward program plus its transpose <a class="slug" href="/MO87/">[MO87]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></summary>
+  <p xmlns="http://www.w3.org/1999/xhtml">What tells you a <span xmlns="" class="link local"><a href="/G981/" title="jaxpr [G981]">jaxpr</a></span> came from <code>grad</code>?</p>
+  
+  
+  
+ <div xmlns="http://www.w3.org/1999/xhtml" class="jms-callout" style="   margin: 1.1rem 0;   padding: 0.1rem 0 0.1rem 0.9rem;   border-left: 2px solid rgb(63, 83, 127);   "><span style="font-weight: 500; color: rgb(63, 83, 127);"></span> 
+  <details><summary><span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</span></summary>
+  The layout: the forward equations appear first, then their transposes in reverse order, with residual values threaded between them.
+
+  Concrete tells — <code>mul</code> and <code>dot_general</code> with swapped <code>dimension_numbers</code> (<span xmlns="" class="link local"><a href="/CCL2/" title="dimension_numbers is contracting then batch [CCL2]">dimension_numbers is contracting then batch</a></span>), <code>transpose</code> equations, and <code>custom_vjp_call_jaxpr</code> or <code>remat</code> wrappers. Dropvars (<span xmlns="" class="link local"><a href="/E9J1/" title="An underscore is an output nobody consumes [E9J1]">An underscore is an output nobody consumes</a></span>) mark residuals that this particular jaxpr does not consume.
+
+  <strong><code>jax.make_jaxpr(jax.grad(f))(x)</code> gives the whole forward-plus-backward program as one jaxpr</strong>, and that is the cheapest way to see what a custom rule actually did — far cheaper than reasoning about what it should have done. It is also where you can see, directly, which intermediates the backward pass keeps alive, which is the memory question <code>remat</code> exists to answer.
+
+  In HLO the same structure is visible through the <code>jvp</code> and <code>transpose</code> scopes in <code>op_name</code> (<span xmlns="" class="link local"><a href="/FG58/" title="op_name is the trace path back to Python [FG58]">op_name is the trace path back to Python</a></span>).
+</details>
+</div>
+
+
+
+</details></section>
+</details></section>
 </details></section><footer xmlns="">
     
     
-    <section lang="en" class="block hide-metadata"><details id="id2" open="open"><summary><header><h1>
+    <section lang="en" class="block hide-metadata"><details id="id17" open="open"><summary><header><h1>
 <span class="taxon"></span>Backlinks  </h1>
 <div class="metadata"><ul></ul></div></header></summary>
         <section class="block index-entry"><header><h1>
-<span class="taxon"></span><a class="index-entry-link" href="/NR79/">Lifecycle of a JAX program</a> <a class="slug" href="/NR79/">[NR79]</a> </h1>
+<span class="taxon"></span><a class="index-entry-link" href="/84N5/">StableHLO</a> <a class="slug" href="/84N5/">[84N5]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/NR79/">Lifecycle of a <span class="link local"><a href="/OGCRY/" title="JAX [OGCRY]">JAX</a></span> program</a> <a class="slug" href="/NR79/">[NR79]</a> </h1>
 <div class="metadata"><ul>
 <li class="meta-item">August 7, 2026</li>
 <li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
 </ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/M74N/">XLA Compilation</a> <a class="slug" href="/M74N/">[M74N]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">May 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+      </details></section>
+    <section lang="en" class="block hide-metadata"><details id="id18" open="open"><summary><header><h1>
+<span class="taxon"></span>Related  </h1>
+<div class="metadata"><ul></ul></div></header></summary>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/84N5/">StableHLO</a> <a class="slug" href="/84N5/">[84N5]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/IMBB/">shard_map</a> <a class="slug" href="/IMBB/">[IMBB]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 22, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/NR79/">Lifecycle of a <span class="link local"><a href="/OGCRY/" title="JAX [OGCRY]">JAX</a></span> program</a> <a class="slug" href="/NR79/">[NR79]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/NO8J/">HLO</a> <a class="slug" href="/NO8J/">[NO8J]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">August 7, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
+        <section class="block index-entry"><header><h1>
+<span class="taxon"></span><a class="index-entry-link" href="/IR7B/">MLIR</a> <a class="slug" href="/IR7B/">[IR7B]</a> </h1>
+<div class="metadata"><ul>
+<li class="meta-item">July 15, 2026</li>
+<li class="meta-item"><address class="author"><span class="link local"><a href="/kellenkanarios/" title="Kellen Kanarios [kellenkanarios]">Kellen Kanarios</a></span></address></li>
+</ul></div></header></section>
       </details></section>
     
-    
-  </footer></article></div></body></html>
+  </footer></article><nav id="toc"><div class="block"><h1>Table of Contents</h1><ul xmlns="" class="block">
+<li>
+<a class="bullet" href="#id2" title="Reading one">■</a><span class="link local" data-target="#id2"><span class="taxon">1. </span>Reading one</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id8" title="Control flow and collectives">■</a><span class="link local" data-target="#id8"><span class="taxon">2. </span>Control flow and collectives</span><ul class="block"></ul>
+</li>
+<li>
+<a class="bullet" href="#id12" title="Numerics and transformations">■</a><span class="link local" data-target="#id12"><span class="taxon">3. </span>Numerics and transformations</span><ul class="block"></ul>
+</li>
+</ul></div></nav></div></body></html>

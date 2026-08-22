@@ -60,7 +60,7 @@
             <fr:route>/IR7B/</fr:route>
             <fr:title text="MLIR">MLIR</fr:title>
           </fr:frontmatter>
-          <fr:mainmatter><html:p>Collection of resources</html:p><html:ul><html:li>https://llvm.org/devmtg/2020-09/slides/MLIR_Tutorial.pdf</html:li>
+          <fr:mainmatter><html:p>An extensible compiler infrastructure: rather than one instruction set, a framework in which each domain defines its own <html:em>dialect</html:em> of operations, types, and attributes, all sharing one syntax and one pass infrastructure. That shared syntax is why an unfamiliar dialect is still readable on sight: the op grammar is fixed even when the ops are not, and <fr:link href="/KWH2/" title="Five sigils make any dialect readable" uri="https://kellenkanarios.com/KWH2/" display-uri="KWH2" type="local">Five sigils make any dialect readable</fr:link> is most of what reading one takes.</html:p><html:p>Collection of resources</html:p><html:ul><html:li>https://llvm.org/devmtg/2020-09/slides/MLIR_Tutorial.pdf</html:li>
   <html:li>https://www.lei.chat/posts/mlir-linalg-dialect-and-patterns/</html:li>
   <html:li>https://www.lei.chat/posts/mlir-vector-dialect-and-patterns/</html:li></html:ul><html:p><html:strong style="font-family: var(--serif); font-weight: 400; font-style: italic;">Dialects.</html:strong> This is effectively a syntax. For your given DSL, you must write each of the operations in this <html:em>MLIR dialect</html:em> in order to inherit the benefits of the MLIR ecosystem.</html:p>
  <html:blockquote class="jms-quote" style="
@@ -84,10 +84,632 @@
       <html:li>The <html:code>ttgir</html:code> dialect is the <fr:link href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations" uri="https://kellenkanarios.com/tilletTritonIntermediateLanguage2019/" display-uri="tilletTritonIntermediateLanguage2019" type="local">Triton</fr:link> GPU IR.</html:li></html:ul></html:ul>
   <html:li>Write a lowering pass from your MLIR dialect to the MLIR dialect of an MLIR with codegen backing i.e.</html:li>
   <html:ul><html:li>MLIR has an LLVM dialect</html:li>
-    <html:li>Alternatively, <fr:link href="/xla2017/" title="XLA - TensorFlow, compiled" uri="https://kellenkanarios.com/xla2017/" display-uri="xla2017" type="local">XLA</fr:link> ingests StableHLO which is an MLIR dialect. In theory, this means that if your DSL is similar to that of a JAX / LinAlg dialect, then you can get a lot of the optimizations Google has come up with for free.</html:li>
-    <html:ul><html:li>However, XLA works by translating StableHLO to HLO, which is then optimized by XLA. HLO is NOT an MLIR dialect and therefore in order to use XLA your backend needs to have an appropriate conversion from HLO to an executable on their backend.</html:li>
+    <html:li>Alternatively, <fr:link href="/xla2017/" title="XLA - TensorFlow, compiled" uri="https://kellenkanarios.com/xla2017/" display-uri="xla2017" type="local">XLA</fr:link> ingests <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">StableHLO</fr:link>, which is an MLIR dialect. In theory, this means that if your DSL is similar to that of a JAX / LinAlg dialect, then you can get a lot of the optimizations Google has come up with for free.</html:li>
+    <html:ul><html:li>However, XLA works by translating StableHLO to <fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link> (via the internal <html:code>mhlo</html:code> dialect, <fr:link href="/FLKN/" title="chlo desugars, stablehlo is stable, mhlo is internal" uri="https://kellenkanarios.com/FLKN/" display-uri="FLKN" type="local">chlo desugars, <fr:link href="/84N5/" title="StableHLO" uri="https://kellenkanarios.com/84N5/" display-uri="84N5" type="local">stablehlo</fr:link> is stable, mhlo is internal</fr:link>), which is then optimized by XLA. HLO is NOT an MLIR dialect and therefore in order to use XLA your backend needs to have an appropriate conversion from HLO to an executable on their backend.</html:li>
       <html:li>This is what is done for trainium. Namely, the <fr:link href="https://awsdocs-neuron.readthedocs-hosted.com/en/latest/compiler/index.html" type="external">neuronx-cc</fr:link> compiler performs the translation from optimized HLO to optimized executable code on their ASIC.</html:li></html:ul>
-    <html:li><fr:link href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations" uri="https://kellenkanarios.com/tilletTritonIntermediateLanguage2019/" display-uri="tilletTritonIntermediateLanguage2019" type="local">Triton</fr:link> and the GPU backend for XLA are the LLVM + NVVM MLIR, which is the MLIR dialect for LLVM with added GPU instructions.</html:li></html:ul></html:ol></fr:mainmatter>
+    <html:li><fr:link href="/tilletTritonIntermediateLanguage2019/" title="Triton: An intermediate language and compiler for tiled neural network computations" uri="https://kellenkanarios.com/tilletTritonIntermediateLanguage2019/" display-uri="tilletTritonIntermediateLanguage2019" type="local">Triton</fr:link> and the GPU backend for XLA are the LLVM + NVVM MLIR, which is the MLIR dialect for LLVM with added GPU instructions.</html:li></html:ul></html:ol>
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>15</fr:day></fr:date><fr:title text="Reading a dump">Reading a dump</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p>Because the dialect is open-ended, what you can rely on is the <html:em>structure</html:em>: one op syntax (<fr:link href="/JE7W/" title="One shape for every op" uri="https://kellenkanarios.com/JE7W/" display-uri="JE7W" type="local">One shape for every op</fr:link>), five sigils (<fr:link href="/KWH2/" title="Five sigils make any dialect readable" uri="https://kellenkanarios.com/KWH2/" display-uri="KWH2" type="local">Five sigils make any dialect readable</fr:link>), regions for nesting, attributes for compile-time data, and a location on every op. That fixed part is enough to read a dialect whose documentation you have never opened.</html:p>
+  
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/JE7W/</fr:uri><fr:display-uri>JE7W</fr:display-uri><fr:route>/JE7W/</fr:route><fr:title text="One shape for every op">One shape for every op</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404868545</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>In <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link>'s generic form, what does each part of <html:code><![CDATA[%0 = "foo.add"(%a, %b) : (i32, i32) -> i32]]></html:code> mean?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Every op, in every dialect, prints to one shape:
+
+  <html:pre><html:code class="language-llvm"><![CDATA[results = "dialect.opname"(operands) ({regions}) {attributes} : (operand types) -> result types]]></html:code></html:pre>
+
+  <html:ul><html:li>The quoted name is always <html:code>dialect.op</html:code>. The prefix is what makes an unfamiliar op findable — it names the dialect whose docs define it.</html:li>
+    <html:li>The type after the colon is a <html:em>function type</html:em>: operand types before the arrow, result types after. So the signature is always readable off the one line.</html:li>
+    <html:li>Only operands sit in the parens. Attributes are the brace dictionary and are compile-time constants, not <fr:link href="/4SV9/" title="Static single assignment" uri="https://kellenkanarios.com/4SV9/" display-uri="4SV9" type="local">Static single assignment</fr:link> values — that split is exactly what is known at compile time versus what flows at runtime.</html:li></html:ul>
+
+  Learn this shape once and any dialect is parseable; the pretty forms are sugar over it (<fr:link href="/T1YS/" title="The pretty form is optional, the generic form always works" uri="https://kellenkanarios.com/T1YS/" display-uri="T1YS" type="local">The pretty form is optional, the generic form always works</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/T1YS/</fr:uri><fr:display-uri>T1YS</fr:display-uri><fr:route>/T1YS/</fr:route><fr:title text="The pretty form is optional, the generic form always works">The pretty form is optional, the generic form always works</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404870096</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Why does the same op print two different ways — <html:code><![CDATA[arith.addi %a, %b : i32]]></html:code> versus <html:code><![CDATA["arith.addi"(%a, %b) : (i32, i32) -> i32]]></html:code>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  An op may define a custom <html:em>pretty</html:em> printer and parser; the generic form (<fr:link href="/JE7W/" title="One shape for every op" uri="https://kellenkanarios.com/JE7W/" display-uri="JE7W" type="local">One shape for every op</fr:link>) is the fallback that always works. Most dialects define one, so most dumps are pretty.
+
+  <html:strong>The consequence when reading a dump.</html:strong> The type after the colon in pretty form is whatever the op's printer chose to show — usually just the element or result type, not the full signature. Operands, regions, and attributes may all be elided or rearranged.
+
+  When a pretty form is ambiguous, re-dump with <html:code>--mlir-print-op-generic</html:code> (<fr:link href="/7R2Y/" title="Print generic, print locations, disable threading" uri="https://kellenkanarios.com/7R2Y/" display-uri="7R2Y" type="local">Print generic, print locations, disable threading</fr:link>) and read the unambiguous version.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/KWH2/</fr:uri><fr:display-uri>KWH2</fr:display-uri><fr:route>/KWH2/</fr:route><fr:title text="Five sigils make any dialect readable">Five sigils make any dialect readable</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869020</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What do the five <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> sigils <html:code><![CDATA[%]]></html:code>, <html:code>^</html:code>, <html:code>@</html:code>, <html:code><![CDATA[#]]></html:code>, <html:code>!</html:code> mark?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:ul><html:li><html:code><![CDATA[%]]></html:code> — an <fr:link href="/4SV9/" title="Static single assignment" uri="https://kellenkanarios.com/4SV9/" display-uri="4SV9" type="local">Static single assignment</fr:link> value (<fr:link href="/MOVC/" title="SSA names are printing hints" uri="https://kellenkanarios.com/MOVC/" display-uri="MOVC" type="local"><fr:link href="/4SV9/" title="Static single assignment" uri="https://kellenkanarios.com/4SV9/" display-uri="4SV9" type="local">SSA</fr:link> names are printing hints</fr:link>).</html:li>
+    <html:li><html:code>^</html:code> — a block label (<fr:link href="/QZFU/" title="Block arguments replace phi nodes" uri="https://kellenkanarios.com/QZFU/" display-uri="QZFU" type="local">Block arguments replace phi nodes</fr:link>).</html:li>
+    <html:li><html:code>@</html:code> — a symbol: function, global (<fr:link href="/45LB/" title="Symbols are looked up, values are defined" uri="https://kellenkanarios.com/45LB/" display-uri="45LB" type="local">Symbols are looked up, values are defined</fr:link>).</html:li>
+    <html:li><html:code><![CDATA[#]]></html:code> — an attribute or attribute alias: <html:code><![CDATA[#map0]]></html:code>, <html:code><![CDATA[#stablehlo.dot<...>]]></html:code>, <html:code><![CDATA[#tpu.memory_space<vmem>]]></html:code>.</html:li>
+    <html:li><html:code>!</html:code> — a type or type alias: <html:code><![CDATA[!llvm.ptr]]></html:code>, <html:code><![CDATA[!tt.ptr<f32>]]></html:code>.</html:li></html:ul>
+
+  <html:strong>This is the whole trick to reading an unfamiliar dialect.</html:strong> <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> is extensible in ops, types, and attributes, so you will constantly meet names you do not know — but the sigil tells you <html:em>which kind of thing</html:em> it is, and therefore where it may legally appear. <html:code><![CDATA[#]]></html:code> and <html:code>!</html:code> in particular are the escape hatches every dialect uses for its own metadata (<fr:link href="/9N7G/" title="The prefix says which side of layout assignment" uri="https://kellenkanarios.com/9N7G/" display-uri="9N7G" type="local">The prefix says which side of layout assignment</fr:link>, <fr:link href="/64A0/" title="Mosaic is explicit memory spaces and explicit copies" uri="https://kellenkanarios.com/64A0/" display-uri="64A0" type="local"><fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> is explicit memory spaces and explicit copies</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/OBP3/</fr:uri><fr:display-uri>OBP3</fr:display-uri><fr:route>/OBP3/</fr:route><fr:title text="A multi-result op binds one name and indexes into it">A multi-result op binds one name and indexes into it</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869496</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>In an <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> dump, what is <html:code><![CDATA[%2#1]]></html:code>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  The second result — index 1 — of the op that defined the value group <html:code><![CDATA[%2]]></html:code>. A multi-result op binds <html:em>one</html:em> name and you index into it:
+
+  <html:pre><html:code class="language-llvm"><![CDATA[%2:3 = "foo.split"(%x) : (tensor<6xf32>) -> (tensor<2xf32>, tensor<2xf32>, tensor<2xf32>)]]></html:code></html:pre>
+
+  then <html:code><![CDATA[%2#0]]></html:code>, <html:code><![CDATA[%2#1]]></html:code>, <html:code><![CDATA[%2#2]]></html:code>. The declaration syntax <html:code><![CDATA[%2:3]]></html:code> means "three results named <html:code><![CDATA[%2]]></html:code>", not a type annotation.
+
+  This is <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link>'s alternative to HLO's tuple-plus-<html:code>get-tuple-element</html:code> idiom (<fr:link href="/W0FU/" title="get-tuple-element is free aliasing" uri="https://kellenkanarios.com/W0FU/" display-uri="W0FU" type="local">get-tuple-element is free aliasing</fr:link>): multiple results are native, so no packing op is needed.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/MOVC/</fr:uri><fr:display-uri>MOVC</fr:display-uri><fr:route>/MOVC/</fr:route><fr:title text="SSA names are printing hints"><fr:link href="/4SV9/" title="Static single assignment" uri="https://kellenkanarios.com/4SV9/" display-uri="4SV9" type="local">SSA</fr:link> names are printing hints</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869371</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Are <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> value names like <html:code><![CDATA[%arg0]]></html:code>, <html:code><![CDATA[%c0_i32]]></html:code>, <html:code><![CDATA[%lhs]]></html:code> semantically meaningful?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong>No.</html:strong> They are printing hints only. Internally <fr:link href="/4SV9/" title="Static single assignment" uri="https://kellenkanarios.com/4SV9/" display-uri="4SV9" type="local">Static single assignment</fr:link> values are positional and unnamed; the asm printer reconstructs a name from a name-hint interface, which is why constants come out as <html:code><![CDATA[%c0_i32]]></html:code> or <html:code><![CDATA[%cst]]></html:code> and block arguments as <html:code><![CDATA[%arg0]]></html:code>.
+
+  Two things follow, and both bite when reading dumps:
+
+  <html:ul><html:li><html:code><![CDATA[%arg0]]></html:code> in two different functions or regions are unrelated. The name is scoped to its region and carries no identity across one.</html:li>
+    <html:li>The numbering is not stable across passes. Diffing two per-pass dumps (<fr:link href="/8U47/" title="Per-pass dumps find the pass that broke it" uri="https://kellenkanarios.com/8U47/" display-uri="8U47" type="local">Per-pass dumps find the pass that broke it</fr:link>) on value names produces noise; diff on structure instead.</html:li></html:ul>
+
+  The <fr:link href="/NRD2/" title="Locations are the provenance of an op" uri="https://kellenkanarios.com/NRD2/" display-uri="NRD2" type="local">Locations are the provenance of an op</fr:link> is the stable thing to key on — it survives the passes that renumber values.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/QZFU/</fr:uri><fr:display-uri>QZFU</fr:display-uri><fr:route>/QZFU/</fr:route><fr:title text="Block arguments replace phi nodes">Block arguments replace phi nodes</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869720</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Read this line: <html:code><![CDATA[^bb1(%arg0: i32, %arg1: f32):]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  A block label with <html:em>block arguments</html:em>. <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> has no phi nodes — instead each predecessor passes the merged values as branch operands:
+
+  <html:pre><html:code class="language-llvm"><![CDATA[cf.br ^bb1(%x, %y : i32, f32)]]></html:code></html:pre>
+
+  Block arguments <html:em>are</html:em> the <fr:link href="/4SV9/" title="Static single assignment" uri="https://kellenkanarios.com/4SV9/" display-uri="4SV9" type="local">Static single assignment</fr:link> merge mechanism. The trade is that a value's incoming edges are recorded at the branches rather than collected at the merge, which makes CFG edits local: rewriting one predecessor touches one op.
+
+  The entry block of a function-like op takes the function's parameters this same way, which is why <html:code><![CDATA[%arg0]]></html:code> is the conventional name for a function argument.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/MKYF/</fr:uri><fr:display-uri>MKYF</fr:display-uri><fr:route>/MKYF/</fr:route><fr:title text="A region is nesting, not a flat CFG">A region is nesting, not a flat CFG</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869321</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What is a <html:em>region</html:em> in <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link>, and which ops have them?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  A region is an ordered list of blocks nested inside an op, written in braces. It is how <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> encodes structured control flow and nesting instead of flattening everything into one CFG.
+
+  <html:ul><html:li><html:code>func.func</html:code> — one region, the body.</html:li>
+    <html:li><html:code>scf.for</html:code> — one region (<fr:link href="/ON39/" title="iter_args and yield are the mutable accumulator" uri="https://kellenkanarios.com/ON39/" display-uri="ON39" type="local">iter_args and yield are the mutable accumulator</fr:link>); <html:code>scf.if</html:code> — two, then and else (<fr:link href="/1U5S/" title="Both scf.if regions must yield the same types" uri="https://kellenkanarios.com/1U5S/" display-uri="1U5S" type="local">Both scf.if regions must yield the same types</fr:link>).</html:li>
+    <html:li><html:code>stablehlo.reduce</html:code> — one region holding the reducer (<fr:link href="/KLBR/" title="reduce takes a computation, not an enum" uri="https://kellenkanarios.com/KLBR/" display-uri="KLBR" type="local">reduce takes a computation, not an enum</fr:link>).</html:li></html:ul>
+
+  Every block in a region ends in a terminator: <html:code>scf.yield</html:code>, <html:code>func.return</html:code>, <html:code>cf.br</html:code>.
+
+  Regions are the structural reason <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> can host both high-level tensor dialects and low-level CFGs in one module — a pass lowering <html:code>scf.for</html:code> to blocks is just replacing a region with a CFG.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/CZBE/</fr:uri><fr:display-uri>CZBE</fr:display-uri><fr:route>/CZBE/</fr:route><fr:title text="Position separates attributes from regions">Position separates attributes from regions</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867720</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>In an <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> dump, how do you tell an attribute dictionary from a region?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  By what is inside, and in generic form by position.
+
+  <html:strong>Content.</html:strong> An attribute dict is <html:code><![CDATA[{name = value, name2 = value2}]]></html:code> — every entry is <html:code>key = constant</html:code>. A region contains operations, and possibly block labels (<fr:link href="/QZFU/" title="Block arguments replace phi nodes" uri="https://kellenkanarios.com/QZFU/" display-uri="QZFU" type="local">Block arguments replace phi nodes</fr:link>).
+
+  <html:strong>Position.</html:strong> In generic form (<fr:link href="/JE7W/" title="One shape for every op" uri="https://kellenkanarios.com/JE7W/" display-uri="JE7W" type="local">One shape for every op</fr:link>) the slots are fixed:
+
+  <html:pre><html:code class="language-llvm"><![CDATA["scf.if"(%cond) ({ ...then... }, { ...else... }) {some_attr = 1} : (i1) -> ()]]></html:code></html:pre>
+
+  Regions come in parens straight after the operands; attributes come after the regions, before the colon type.
+
+  The distinction matters because it is the compile-time / runtime line: an attribute is known to the compiler now, a region is code that runs.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/45LB/</fr:uri><fr:display-uri>45LB</fr:display-uri><fr:route>/45LB/</fr:route><fr:title text="Symbols are looked up, values are defined">Symbols are looked up, values are defined</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404866520</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>In <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link>, what is <html:code>@foo</html:code> versus <html:code><![CDATA[%foo]]></html:code>?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:code>@foo</html:code> is a <html:em>symbol</html:em> reference — a name resolved by lookup in a SymbolTable (a <html:code>func.func</html:code>, a global). <html:code><![CDATA[%foo]]></html:code> is an <fr:link href="/4SV9/" title="Static single assignment" uri="https://kellenkanarios.com/4SV9/" display-uri="4SV9" type="local">Static single assignment</fr:link> value defined earlier in the same region.
+
+  Nested symbols use <html:code>@parent::@child</html:code>.
+
+  The distinction shows up in the type list, which is the tell when reading a call:
+
+  <html:pre><html:code class="language-llvm"><![CDATA[func.call @foo(%a) : (i32) -> i32]]></html:code></html:pre>
+
+  The callee is a symbol, not an operand, so it does <html:em>not</html:em> appear in the operand types — only <html:code><![CDATA[%a]]></html:code> does. A symbol is resolved at compile time; a value flows at runtime.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/R2O9/</fr:uri><fr:display-uri>R2O9</fr:display-uri><fr:route>/R2O9/</fr:route><fr:title text="Every dump is wrapped in a module">Every dump is wrapped in a module</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869746</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What wraps every <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> dump, and what does a named one look like?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  A <html:code>builtin.module</html:code>. Printed bare as <html:code><![CDATA[module { ... }]]></html:code>, or with a name and attributes:
+
+  <html:pre><html:code class="language-llvm"><![CDATA[module @jit_f attributes {mhlo.num_partitions = 1 : i32} { ... }]]></html:code></html:pre>
+
+  The outer braces are a region (<fr:link href="/MKYF/" title="A region is nesting, not a flat CFG" uri="https://kellenkanarios.com/MKYF/" display-uri="MKYF" type="local">A region is nesting, not a flat CFG</fr:link>), so the module is an ordinary op — there is nothing special about the top level.
+
+  <html:strong>Read the module attributes first.</html:strong> In a JAX or XLA dump they carry the information the body assumes: partition and replica counts, <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharding</fr:link> configuration, target features. A body that looks like it does too little often makes sense once you see <html:code>num_partitions</html:code> up here.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/ZZHW/</fr:uri><fr:display-uri>ZZHW</fr:display-uri><fr:route>/ZZHW/</fr:route><fr:title text="Three attribute positions on a function">Three attribute positions on a function</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404870870</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Decode the three annotation positions in <html:code><![CDATA[func.func @main(%arg0: tensor<8xf32> {jax.arg_info = "x"}) -> (tensor<8xf32> {jax.result_info = ""}) attributes {llvm.emit_c_interface}]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Three different kinds of attribute, distinguished only by where they sit:
+
+  <html:ol><html:li><html:strong>Argument attributes</html:strong> — braces after an argument's type. Per-argument metadata.</html:li>
+    <html:li><html:strong>Result attributes</html:strong> — braces after a result's type, inside the result parens. Per-result metadata.</html:li>
+    <html:li><html:strong>Op attributes</html:strong> — after the keyword <html:code>attributes</html:code>. These belong to the function op itself.</html:li></html:ol>
+
+  JAX uses the first two to record what tracing threw away: the original Python argument names, donation, and per-argument <fr:link href="/XGI0/" title="Sharding" uri="https://kellenkanarios.com/XGI0/" display-uri="XGI0" type="local">Sharding</fr:link>. When you need to know which HLO parameter (<fr:link href="/W9HX/" title="parameter(i) is positional" uri="https://kellenkanarios.com/W9HX/" display-uri="W9HX" type="local">parameter(i) is positional</fr:link>) was which Python argument, <html:code>jax.arg_info</html:code> is the record.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/51XY/</fr:uri><fr:display-uri>51XY</fr:display-uri><fr:route>/51XY/</fr:route><fr:title text="An affine map separates dimensions from symbols">An affine map separates dimensions from symbols</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404866545</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[#map = affine_map<(d0, d1)[s0] -> (d0 * s0 + d1)>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  An <html:em>affine map</html:em>: a multi-dimensional affine function used for indexing and loop bounds.
+
+  <html:ul><html:li><html:code><![CDATA[(d0, d1)]]></html:code> — dimension operands: loop induction variables, indices. These vary within the iteration space.</html:li>
+    <html:li><html:code><![CDATA[[s0]]]></html:code> — symbol operands: quantities loop-invariant over the map's use, such as sizes and strides.</html:li>
+    <html:li>The results are affine expressions over both — addition, subtraction, multiplication by a constant, <html:code>floordiv</html:code>, <html:code>ceildiv</html:code>, <html:code>mod</html:code>.</html:li></html:ul>
+
+  <html:strong>The dimension/symbol split is the point.</html:strong> Restricting to affine expressions of dims and symbols is what makes dependence analysis decidable, which is what lets the affine dialect tile, fuse, and interchange loops automatically. You will meet these on <html:code>affine.load</html:code>, <html:code>affine.for</html:code> bounds, and <html:code>linalg</html:code> <html:code>indexing_maps</html:code>, where the map says how the iteration space lands in memory.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/Y070/</fr:uri><fr:display-uri>Y070</fr:display-uri><fr:route>/Y070/</fr:route><fr:title text="An unrealized cast that survives is a missing pattern">An unrealized cast that survives is a missing pattern</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404870570</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What does <html:code>builtin.unrealized_conversion_cast</html:code> mean when you see it in an <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> dump?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  A placeholder bridging two type systems mid-conversion — <html:code>tensor</html:code> to <html:code>memref</html:code> (<fr:link href="/B1A1/" title="A memref names storage, a tensor is a value" uri="https://kellenkanarios.com/B1A1/" display-uri="B1A1" type="local">A memref names storage, a tensor is a value</fr:link>), a dialect type to <html:code><![CDATA[!llvm.ptr]]></html:code>. The dialect conversion framework inserts them so that a <html:em>partial</html:em> conversion still verifies while some ops are converted and others are not.
+
+  <html:strong>If one survives to the end of the pipeline, that is the bug.</html:strong> It means no pattern claimed the op on one side of the cast, so the conversion never closed. Chase the missing pattern rather than the cast.
+
+  Mid-pipeline, in a <html:code>--mlir-print-ir-after-all</html:code> dump (<fr:link href="/8U47/" title="Per-pass dumps find the pass that broke it" uri="https://kellenkanarios.com/8U47/" display-uri="8U47" type="local">Per-pass dumps find the pass that broke it</fr:link>), they are expected noise; at the boundary where the IR is supposed to be one dialect, they are a failure.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>15</fr:day></fr:date><fr:title text="Locations">Locations</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p>Value names are printing hints and instruction order changes every pass, so provenance has to be carried explicitly. The location is the only thing in the IR that survives rewriting well enough to answer "which line of Python produced this op".</html:p>
+  
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/NRD2/</fr:uri><fr:display-uri>NRD2</fr:display-uri><fr:route>/NRD2/</fr:route><fr:title text="Locations are the provenance of an op">Locations are the provenance of an op</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869470</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What does <html:code><![CDATA[loc("model.py":42:8)]]></html:code> on an <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> op tell you, and how do you get locations printed?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  It is the op's <html:em>Location</html:em> — the provenance the compiler carries for diagnostics and for mapping generated code back to source. An op that was never given one prints <html:code><![CDATA[loc(unknown)]]></html:code>.
+
+  Print them with <html:code>--mlir-print-debuginfo</html:code>, or <html:code>--mlir-print-debuginfo --mlir-pretty-debuginfo</html:code> for a compact form (<fr:link href="/7R2Y/" title="Print generic, print locations, disable threading" uri="https://kellenkanarios.com/7R2Y/" display-uri="7R2Y" type="local">Print generic, print locations, disable threading</fr:link>).
+
+  <html:strong>Why it is the tool that matters.</html:strong> Value names are unstable (<fr:link href="/MOVC/" title="SSA names are printing hints" uri="https://kellenkanarios.com/MOVC/" display-uri="MOVC" type="local"><fr:link href="/4SV9/" title="Static single assignment" uri="https://kellenkanarios.com/4SV9/" display-uri="4SV9" type="local">SSA</fr:link> names are printing hints</fr:link>) and op ordering changes every pass, but a location survives rewrites — passes are expected to propagate it, fusing into <html:code>fused</html:code> and inlining into <html:code>callsite</html:code> (<fr:link href="/SE0U/" title="Fused means merged, callsite means inlined" uri="https://kellenkanarios.com/SE0U/" display-uri="SE0U" type="local">Fused means merged, callsite means inlined</fr:link>). So "which line of Python produced this op" is a location question, and only a location question. It is the <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> analogue of HLO's <html:code>metadata</html:code> field (<fr:link href="/FG58/" title="op_name is the trace path back to Python" uri="https://kellenkanarios.com/FG58/" display-uri="FG58" type="local">op_name is the trace path back to Python</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/SE0U/</fr:uri><fr:display-uri>SE0U</fr:display-uri><fr:route>/SE0U/</fr:route><fr:title text="Fused means merged, callsite means inlined">Fused means merged, callsite means inlined</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404870071</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What do these two location forms mean? <html:code><![CDATA[loc(fused["a.py":1:1, "b.py":2:2])]]></html:code> and <html:code><![CDATA[loc(callsite("inner" at "outer"))]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:strong>fused</html:strong> — the op came from several source ops that a pass merged: <fr:link href="/38CM/" title="Operator fusion" uri="https://kellenkanarios.com/38CM/" display-uri="38CM" type="local">Operator fusion</fr:link>, canonicalization, a rewrite that collapsed a chain. A fused location may carry a tag naming the culprit, <html:code><![CDATA[loc(fused<"fusion">[...])]]></html:code>.
+
+  <html:strong>callsite</html:strong> — an inlining chain. Read it inner-to-outer: the callee's location first, then the site it was called from. Chains nest one level per inlining.
+
+  Both are how a <fr:link href="/NRD2/" title="Locations are the provenance of an op" uri="https://kellenkanarios.com/NRD2/" display-uri="NRD2" type="local">Locations are the provenance of an op</fr:link> stays honest under transformation: rather than picking one survivor and losing the rest, the location grows to record what happened. So a long fused location is itself the evidence that this op is several of your source ops.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/7Z9D/</fr:uri><fr:display-uri>7Z9D</fr:display-uri><fr:route>/7Z9D/</fr:route><fr:title text="Aliases are deduplicated printing">Aliases are deduplicated printing</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867145</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What are the <html:code><![CDATA[#loc3 = loc(...)]]></html:code> lines at the bottom of an <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> dump?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Location aliases. The printer hoists a repeated <fr:link href="/NRD2/" title="Locations are the provenance of an op" uri="https://kellenkanarios.com/NRD2/" display-uri="NRD2" type="local">Locations are the provenance of an op</fr:link> into a named definition, and ops then reference it as <html:code><![CDATA[... loc(#loc3)]]></html:code>.
+
+  It is the same mechanism as attribute aliases (<html:code><![CDATA[#map0]]></html:code>, <fr:link href="/51XY/" title="An affine map separates dimensions from symbols" uri="https://kellenkanarios.com/51XY/" display-uri="51XY" type="local">An affine map separates dimensions from symbols</fr:link>) and type aliases (<html:code><![CDATA[!my_type]]></html:code>): purely printing deduplication, with no semantic content. Two ops sharing <html:code><![CDATA[#loc3]]></html:code> have equal locations, nothing more.
+
+  Practically: when you jump to an op and find <html:code><![CDATA[loc(#loc3)]]></html:code>, the answer is at the bottom of the file, not missing.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>15</fr:day></fr:date><fr:title text="The type system">The type system</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p>The type grammar is where a dump's abstraction level is written down. Tensors mean you are above bufferization, memrefs mean storage and therefore aliasing, vectors mean register width and proximity to the hardware.</html:p>
+  
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/L3F6/</fr:uri><fr:display-uri>L3F6</fr:display-uri><fr:route>/L3F6/</fr:route><fr:title text="Question mark is a dynamic dimension, star is unknown rank">Question mark is a dynamic dimension, star is unknown rank</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869096</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What do <html:code><![CDATA[tensor<4x?xf32>]]></html:code>, <html:code><![CDATA[tensor<*xf32>]]></html:code>, and <html:code><![CDATA[tensor<f32>]]></html:code> mean?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:ul><html:li><html:code><![CDATA[4x?xf32]]></html:code> — ranked, with the second dimension <html:em>dynamic</html:em>: <html:code>?</html:code> means unknown at compile time.</html:li>
+    <html:li><html:code><![CDATA[*xf32]]></html:code> — unranked; even the rank is unknown.</html:li>
+    <html:li><html:code><![CDATA[tensor<f32>]]></html:code> — a rank-0 tensor, which is <html:em>not</html:em> the same type as a bare <html:code>f32</html:code>.</html:li></html:ul>
+
+  <html:strong>The rank-0 distinction is the one that catches people.</html:strong> A scalar tensor is still a tensor and takes tensor ops; <html:code>f32</html:code> is a scalar and takes <html:code>arith</html:code> ops. Conversions between them are explicit.
+
+  A tensor is a value with no memory location — it cannot alias, so a pass may duplicate or reorder it freely. That freedom is exactly what a <html:code>memref</html:code> gives up (<fr:link href="/B1A1/" title="A memref names storage, a tensor is a value" uri="https://kellenkanarios.com/B1A1/" display-uri="B1A1" type="local">A memref names storage, a tensor is a value</fr:link>). By contrast HLO has no dynamic shapes at all: every dimension is known at compile time (<fr:link href="/5QXE/" title="An HLO line is self-contained" uri="https://kellenkanarios.com/5QXE/" display-uri="5QXE" type="local">An <fr:link href="/NO8J/" title="HLO" uri="https://kellenkanarios.com/NO8J/" display-uri="NO8J" type="local">HLO</fr:link> line is self-contained</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/B1A1/</fr:uri><fr:display-uri>B1A1</fr:display-uri><fr:route>/B1A1/</fr:route><fr:title text="A memref names storage, a tensor is a value">A memref names storage, a tensor is a value</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867370</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Read <html:code><![CDATA[memref<8x128xf32, strided<[128, 1], offset: ?>, #tpu.memory_space<vmem>>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  A buffer reference: shape and element type, then two optional slots.
+
+  <html:ul><html:li><html:code><![CDATA[strided<[128, 1], offset: ?>]]></html:code> — the layout. Strides are in <html:em>elements</html:em>, not bytes; the offset is dynamic. Strides of <html:code><![CDATA[[128, 1]]]></html:code> on an <html:code><![CDATA[8x128]]></html:code> shape is the contiguous row-major case, the <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> spelling of HLO's <html:code><![CDATA[{1,0}]]></html:code> (<fr:link href="/RR6G/" title="The layout is minor-to-major" uri="https://kellenkanarios.com/RR6G/" display-uri="RR6G" type="local">The layout is minor-to-major</fr:link>).</html:li>
+    <html:li><html:code><![CDATA[#tpu.memory_space<vmem>]]></html:code> — which memory this lives in (<fr:link href="/GFK2/" title="VMEM" uri="https://kellenkanarios.com/GFK2/" display-uri="GFK2" type="local">VMEM</fr:link> / smem / hbm on TPU; <html:code>1</html:code> and <html:code>3</html:code> for shared and global on GPU).</html:li></html:ul>
+
+  <html:strong>The difference from a tensor is aliasing.</html:strong> A <html:code>memref</html:code> names storage, so two of them may refer to the same bytes and a pass must prove otherwise before reordering. A <html:code>tensor</html:code> is a value and cannot alias (<fr:link href="/L3F6/" title="Question mark is a dynamic dimension, star is unknown rank" uri="https://kellenkanarios.com/L3F6/" display-uri="L3F6" type="local">Question mark is a dynamic dimension, star is unknown rank</fr:link>). Bufferization is the pass that trades the second for the first, and it is where most "why did a copy appear" questions live.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/1XJ4/</fr:uri><fr:display-uri>1XJ4</fr:display-uri><fr:route>/1XJ4/</fr:route><fr:title text="Vectors are register-level, tensors are abstract">Vectors are register-level, tensors are abstract</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404866196</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Distinguish <html:code><![CDATA[vector<4x8xf32>]]></html:code>, <html:code><![CDATA[vector<[4]xf32>]]></html:code>, and <html:code><![CDATA[tensor<4x8xf32>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  A <html:code>vector</html:code> is a fixed-size, register-level SIMD value — always ranked, always static. A <html:code>tensor</html:code> is an abstract n-dimensional value that still needs bufferization and lowering (<fr:link href="/L3F6/" title="Question mark is a dynamic dimension, star is unknown rank" uri="https://kellenkanarios.com/L3F6/" display-uri="L3F6" type="local">Question mark is a dynamic dimension, star is unknown rank</fr:link>).
+
+  Brackets around a dimension, <html:code><![CDATA[[4]]]></html:code>, mark it <html:em>scalable</html:em>: the length is <html:code>4 * vscale</html:code>, fixed by the hardware at run time rather than compile time. That is the SVE / RVV style of vector target, where the register width is not known when you compile.
+
+  <html:strong>What seeing vector types tells you about the dump.</html:strong> You are past the tensor level and close to hardware — the shapes are now register tiles, not logical arrays. On TPU that is the <html:code><![CDATA[8x128]]></html:code> native tile you see all through a Mosaic dump (<fr:link href="/64A0/" title="Mosaic is explicit memory spaces and explicit copies" uri="https://kellenkanarios.com/64A0/" display-uri="64A0" type="local"><fr:link href="/M3MH/" title="Mosaic" uri="https://kellenkanarios.com/M3MH/" display-uri="M3MH" type="local">Mosaic</fr:link> is explicit memory spaces and explicit copies</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/I4UP/</fr:uri><fr:display-uri>I4UP</fr:display-uri><fr:route>/I4UP/</fr:route><fr:title text="Signedness lives in the op, not the type">Signedness lives in the op, not the type</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404868295</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Why is it <html:code>arith.divsi</html:code> and <html:code>arith.divui</html:code> rather than one divide over a signed type?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  Because integer types in <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> are <html:em>signless</html:em>: <html:code>i32</html:code> is thirty-two raw bits and nothing more. Signedness lives in the operation, not the type.
+
+  So the op suffix is the interpretation — <html:code>si</html:code> signed, <html:code>ui</html:code> unsigned — and it appears exactly on the ops where it changes the answer: divide, remainder, comparison, widening extension, shift right. Addition and multiplication need no suffix, because two's complement makes them agree.
+
+  <html:strong>Why design it this way.</html:strong> One type means one canonical form, so a pattern that matches <html:code>i32</html:code> matches everything, and frontends with different signedness rules can share the dialect. Some dialects do carry <html:code>si32</html:code> and <html:code>ui32</html:code> for frontend fidelity, but core <html:code>arith</html:code> is signless plus typed ops.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/2QC3/</fr:uri><fr:display-uri>2QC3</fr:display-uri><fr:route>/2QC3/</fr:route><fr:title text="index is the type of sizes and offsets">index is the type of sizes and offsets</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404866370</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>What is the <html:code>index</html:code> type in <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> and where does it show up?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  A target-dependent-width integer for sizes, offsets, and loop induction variables. It lowers to <html:code>i32</html:code> or <html:code>i64</html:code> depending on the target, so the IR does not have to commit to a pointer width.
+
+  You will see it constantly in the shape of
+
+  <html:pre><html:code class="language-llvm"><![CDATA[%c0 = arith.constant 0 : index]]></html:code></html:pre>
+
+  feeding <html:code>memref.dim</html:code>, <html:code>scf.for</html:code> bounds (<fr:link href="/ON39/" title="iter_args and yield are the mutable accumulator" uri="https://kellenkanarios.com/ON39/" display-uri="ON39" type="local">iter_args and yield are the mutable accumulator</fr:link>), <html:code>tensor.extract</html:code> indices, and <html:code>memref.subview</html:code> offsets.
+
+  <html:strong>Read it as a type-level statement of intent</html:strong>: this value addresses the iteration space, it is not data. That is why <html:code>index</html:code> and <html:code>i32</html:code> do not implicitly convert — <html:code>arith.index_cast</html:code> is required, and its appearance in a dump marks the boundary where an index became a number or the reverse.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/5B7I/</fr:uri><fr:display-uri>5B7I</fr:display-uri><fr:route>/5B7I/</fr:route><fr:title text="A scalar inside dense is a splat">A scalar inside dense is a splat</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404866745</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Read these three <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> constants: <html:code><![CDATA[dense<[1, 2, 3, 4]> : tensor<4xi32>]]></html:code>, <html:code><![CDATA[dense<0.000000e+00> : tensor<8x128xf32>]]></html:code>, <html:code><![CDATA[dense_resource<__elided__> : tensor<1024x1024xf32>]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:ul><html:li><html:strong>Bracketed list</html:strong> — a full elementwise literal, one entry per element, with one level of bracket nesting per dimension: a rank-2 constant is a list of rows.</html:li>
+    <html:li><html:strong>A single scalar inside <html:code><![CDATA[dense<>]]></html:code></html:strong> — a <html:em>splat</html:em>: every element takes that value. This is the common case and is stored as one number, not as the expanded array.</html:li>
+    <html:li><html:strong><html:code><![CDATA[dense_resource<__elided__>]]></html:code></html:strong> — the printer dropped the payload because it was large. The data still exists in the real module; only the text you are reading lost it.</html:li></html:ul>
+
+  Elision is controlled by <html:code>--mlir-elide-elementsattrs-if-larger=N</html:code>. Raise it when you actually need to see the weights, and leave it alone otherwise — a dump of a real model is otherwise mostly constants. HLO does the same thing, printing a big <html:code>constant</html:code> as <html:code><![CDATA[{...}]]></html:code> (<fr:link href="/58OB/" title="iota builds indices without a constant" uri="https://kellenkanarios.com/58OB/" display-uri="58OB" type="local">iota builds indices without a constant</fr:link>).
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>15</fr:day></fr:date><fr:title text="Structured control flow">Structured control flow</fr:title></fr:frontmatter><fr:mainmatter>
+  <html:p>The <html:code>scf</html:code> dialect keeps a loop as one op with a region rather than as a CFG, which is what lets a pass reason about it as a loop. The carry is explicit and typed — the same design the jaxpr <html:code>scan</html:code> (<fr:link href="/W8NM/" title="consts, then carry, then xs" uri="https://kellenkanarios.com/W8NM/" display-uri="W8NM" type="local">consts, then carry, then xs</fr:link>) and the HLO <html:code>while</html:code> (<fr:link href="/YXTI/" title="A while loop's whole state is one tuple" uri="https://kellenkanarios.com/YXTI/" display-uri="YXTI" type="local">A while loop's whole state is one tuple</fr:link>) arrive at independently.</html:p>
+  
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/ON39/</fr:uri><fr:display-uri>ON39</fr:display-uri><fr:route>/ON39/</fr:route><fr:title text="iter_args and yield are the mutable accumulator">iter_args and yield are the mutable accumulator</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404869520</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Read this loop: <html:code><![CDATA[%r = scf.for %i = %c0 to %c8 step %c1 iter_args(%acc = %init) -> (f32) { %n = arith.addf %acc, %x : f32; scf.yield %n : f32 }]]></html:code></html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  A structured loop that carries state.
+
+  <html:ul><html:li><html:code><![CDATA[%i]]></html:code> is a block argument of the loop body (<fr:link href="/QZFU/" title="Block arguments replace phi nodes" uri="https://kellenkanarios.com/QZFU/" display-uri="QZFU" type="local">Block arguments replace phi nodes</fr:link>), not a value from the enclosing scope.</html:li>
+    <html:li><html:code><![CDATA[iter_args(%acc = %init)]]></html:code> declares the loop-carried values and initialises them once, before the first iteration.</html:li>
+    <html:li><html:code>scf.yield</html:code> supplies the next iteration's <html:code>iter_args</html:code> and, on the final iteration, the loop's results <html:code><![CDATA[%r]]></html:code>.</html:li></html:ul>
+
+  <html:strong>So <html:code>iter_args</html:code> plus <html:code>scf.yield</html:code> is the functional spelling of a mutable accumulator.</html:strong> Nothing is stored; each iteration produces a new value. That is what keeps the loop in <fr:link href="/4SV9/" title="Static single assignment" uri="https://kellenkanarios.com/4SV9/" display-uri="4SV9" type="local">Static single assignment</fr:link> form and lets it be analysed and rewritten as a pure region (<fr:link href="/MKYF/" title="A region is nesting, not a flat CFG" uri="https://kellenkanarios.com/MKYF/" display-uri="MKYF" type="local">A region is nesting, not a flat CFG</fr:link>).
+
+  Both the jaxpr <html:code>scan</html:code> (<fr:link href="/W8NM/" title="consts, then carry, then xs" uri="https://kellenkanarios.com/W8NM/" display-uri="W8NM" type="local">consts, then carry, then xs</fr:link>) and the HLO <html:code>while</html:code> (<fr:link href="/YXTI/" title="A while loop's whole state is one tuple" uri="https://kellenkanarios.com/YXTI/" display-uri="YXTI" type="local">A while loop's whole state is one tuple</fr:link>) use the same idea — the carry is explicit and typed — differing only in how the carried values are packed.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/1U5S/</fr:uri><fr:display-uri>1U5S</fr:display-uri><fr:route>/1U5S/</fr:route><fr:title text="Both scf.if regions must yield the same types">Both scf.if regions must yield the same types</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404866183</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>How does an <html:code>scf.if</html:code> produce a value?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  By declaring result types on the op and having <html:em>both</html:em> regions (<fr:link href="/MKYF/" title="A region is nesting, not a flat CFG" uri="https://kellenkanarios.com/MKYF/" display-uri="MKYF" type="local">A region is nesting, not a flat CFG</fr:link>) terminate in <html:code>scf.yield</html:code> with matching types:
+
+  <html:pre><html:code class="language-llvm"><![CDATA[%v = scf.if %pred -> (f32) { scf.yield %a : f32 } else { scf.yield %b : f32 }]]></html:code></html:pre>
+
+  If the op has no results, the else region may be omitted entirely and the yields are empty.
+
+  <html:strong>The type match is the invariant worth remembering.</html:strong> It is what makes the construct an expression rather than control flow — the op has one well-defined type regardless of which branch runs, so it composes like any other value-producing op (<fr:link href="/ON39/" title="iter_args and yield are the mutable accumulator" uri="https://kellenkanarios.com/ON39/" display-uri="ON39" type="local">iter_args and yield are the mutable accumulator</fr:link>). A verifier error on <html:code>scf.if</html:code> is almost always the two branches disagreeing.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+
+  <fr:tree show-metadata="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>7</fr:month><fr:day>15</fr:day></fr:date><fr:title text="Debugging a lowering">Debugging a lowering</fr:title></fr:frontmatter><fr:mainmatter>
+  
+  <fr:tree show-metadata="false" toc="false"><fr:frontmatter><fr:authors><fr:author><fr:link href="/kellenkanarios/" title="Kellen Kanarios" uri="https://kellenkanarios.com/kellenkanarios/" display-uri="kellenkanarios" type="local">Kellen Kanarios</fr:link></fr:author></fr:authors><fr:date><fr:year>2026</fr:year><fr:month>8</fr:month><fr:day>22</fr:day></fr:date><fr:uri>https://kellenkanarios.com/7R2Y/</fr:uri><fr:display-uri>7R2Y</fr:display-uri><fr:route>/7R2Y/</fr:route><fr:title text="Print generic, print locations, disable threading">Print generic, print locations, disable threading</fr:title><fr:taxon>Card</fr:taxon><fr:meta name="anki">1787404867045</fr:meta><fr:meta name="anki-deck">MLSys</fr:meta></fr:frontmatter><fr:mainmatter>
+  <html:p>Which <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> debugging flags do you reach for when a lowering looks wrong?</html:p>
+  
+  
+  
+ <html:div class="jms-callout" style="
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 0.9rem;
+  border-left: 2px solid rgb(63, 83, 127);
+  "><html:span style="font-weight: 500; color: rgb(63, 83, 127);" /> 
+  <html:details><html:summary><html:span class="foldout" style="font-family: var(--sans); font-size: 11pt; font-weight: 500; color: rgba(0, 0, 0, 0.65);">Answer</html:span></html:summary>
+  <html:ul><html:li><html:code>--mlir-print-ir-after-all</html:code> (or <html:code>--mlir-print-ir-after-change</html:code>, or <html:code>-before=&lt;pass&gt;</html:code>) — IR snapshots per pass. The <fr:link href="/IR7B/" title="MLIR" uri="https://kellenkanarios.com/IR7B/" display-uri="IR7B" type="local">MLIR</fr:link> counterpart to <html:code>--xla_dump_hlo_pass_re</html:code> (<fr:link href="/8U47/" title="Per-pass dumps find the pass that broke it" uri="https://kellenkanarios.com/8U47/" display-uri="8U47" type="local">Per-pass dumps find the pass that broke it</fr:link>).</html:li>
+    <html:li><html:code>--mlir-print-op-generic</html:code> — removes pretty-printer ambiguity (<fr:link href="/T1YS/" title="The pretty form is optional, the generic form always works" uri="https://kellenkanarios.com/T1YS/" display-uri="T1YS" type="local">The pretty form is optional, the generic form always works</fr:link>).</html:li>
+    <html:li><html:code>--mlir-print-debuginfo</html:code> — locations, so ops trace back to source (<fr:link href="/NRD2/" title="Locations are the provenance of an op" uri="https://kellenkanarios.com/NRD2/" display-uri="NRD2" type="local">Locations are the provenance of an op</fr:link>).</html:li>
+    <html:li><html:code>--mlir-disable-threading</html:code> — serialises the pass manager so per-pass output is ordered and readable.</html:li>
+    <html:li><html:code>--debug-only=&lt;pass-name&gt;</html:code> — pattern-level tracing, in a debug build only.</html:li></html:ul>
+
+  <html:strong>Turn off threading first.</html:strong> Without it, per-pass dumps from parallel op processing interleave, and you spend the session reading a file whose disorder is the tooling's, not the compiler's.
+</html:details>
+</html:div>
+
+
+
+</fr:mainmatter></fr:tree>
+</fr:mainmatter></fr:tree>
+</fr:mainmatter>
         </fr:tree>
         <fr:tree show-metadata="true" expanded="false" toc="false" numbered="false">
           <fr:frontmatter>
